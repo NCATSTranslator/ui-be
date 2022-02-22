@@ -1,3 +1,9 @@
+; TODO
+; * parse results
+; * unit tests for parsers
+; * handle parsing errors
+; * handle network errors
+
 #lang racket/base
 
 (require racket/match
