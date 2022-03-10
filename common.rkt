@@ -2,7 +2,7 @@
 
 (provide (all-defined-out))
 
-(define head:acc/app/json (string->bytes/utf-8 "accept: application/json"))
+(define header:acc/json (string->bytes/utf-8 "accept: application/json"))
 
 (define mime:text (string->bytes/utf-8 "text/plain;charset=utf-8"))
 (define mime:html (string->bytes/utf-8 "text/html;charset=utf-8"))
