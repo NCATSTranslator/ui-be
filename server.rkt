@@ -9,6 +9,7 @@
   web-server/templates
   web-server/dispatch
   web-server/servlet-env
+  json
   "common.rkt")
 
 (define document-root
@@ -23,6 +24,15 @@
     (lambda (op)
       (write-bytes resp op))))
 
+(define (response/bad-request resp)
+  (response
+    400 #"Bad request"
+    (current-seconds)
+    mime:json
+    '()
+    (lambda (op)
+      (write-bytes resp op))))
+
 (define (response/not-found)
   (response/xexpr
     #:code    404
@@ -30,6 +40,9 @@
       `(html
         (body
           (p "Not found")))))
+
+(define (failure reason)
+  (jsexpr->bytes (hash 'reason reason)))
 
 (define (handle-static-file-request req)
   (define uri (request-uri req))
@@ -45,12 +58,20 @@
         (else (response/not-found))))
 
 (define (/index req)
-  (response/output
-    (lambda (op) (display (include-template "build/index.html") op))))
+  (response/OK (include-template "build/index.html") mime:html))
+
+#;(define (/query req)
+  (let* ((post-data (request-post-data/raw req))
+         (query (and post-data (bytes->jsexpr post-data))))
+    (cond (query
+      )
+      (else (response/bad-request (failure "No query data"))))))
+   
 
 (define-values (dispatcher _)
   (dispatch-rules
-    (("")  #:method "get" /index)
+    (("")       #:method "get" /index)
+    #;(("/query") #:method "post" /query)
      (else                handle-static-file-request)))
         
 (serve/servlet dispatcher 
