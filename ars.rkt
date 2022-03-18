@@ -44,7 +44,7 @@
 (define (get-qcode qstatus)
   (car qstatus))
 (define (query-done? qstatus)
-  (and (equal? (get-qcode qstaus) 200)
+  (and (equal? (get-qcode qstatus) 200)
        (equal? (cdr qstatus) "Done")))
 
 

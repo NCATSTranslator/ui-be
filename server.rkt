@@ -9,6 +9,7 @@
   racket/string
   racket/path
   racket/file
+  racket/match
   net/url-structs
   web-server/http
   web-server/templates
@@ -87,9 +88,9 @@
     (define trapi-query (and post-data (qgraph->trapi-qgraph (bytes->jsexpr post-data))))
     (cond (trapi-query
             (define post-resp (ars:post-query trapi-query))
-            (match (get-qcode (car post-resp))
+            (match (ars:get-qcode (car post-resp))
               (200 (response/OK (string->bytes/utf-8 (cdr post-resp)) mime:text))
-              (else (response/internal-error (failure "The ARS could not process the query"))))
+              (_   (response/internal-error (failure "The ARS could not process the query")))))
           ((not post-data)
             (response/bad-request (failure "No query data")))
           (else
