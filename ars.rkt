@@ -14,6 +14,7 @@
   "common.rkt")
 
 (provide 
+  get-qcode 
   post-query
   pull-query-status
   pull-query-result)
@@ -40,8 +41,10 @@
 (define (get-children jse) (jsexpr-object-ref jse 'children))
 (define (get-qid      jse) (jsexpr-object-ref jse 'pk))
 
+(define (get-qcode qstatus)
+  (car qstatus))
 (define (query-done? qstatus)
-  (and (equal? (car qstatus) 200)
+  (and (equal? (get-qcode qstaus) 200)
        (equal? (cdr qstatus) "Done")))
 
 
@@ -50,8 +53,9 @@
   (cons (get-code resp) (get-status resp)))
 
 (define (parse-submit-query-resp resp)
-  (let ((qstatus (parse-query-status resp))
-        (qid     (get-qid resp)))
+  (let* ((fields (get-fields resp))
+         (qstatus (parse-query-status fields))
+         (qid     (get-qid resp)))
     (cons qstatus qid)))
 
 (define (parse-query-result resp)
