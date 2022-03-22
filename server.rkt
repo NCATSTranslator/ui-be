@@ -15,6 +15,7 @@
   web-server/templates
   web-server/dispatch
   web-server/servlet-env
+  web-server/safety-limits
   json
   "common.rkt"
   "trapi.rkt"
@@ -110,8 +111,7 @@
   (define qstatus (ars:pull-query-status qid))
   (pretty-print qid)
   (pretty-print qstatus)
-  (match qstatus
-    ('done
+  (match qstatus ('done
       (let ((result (ars:pull-query-result qid)))
         (response/OK/jsexpr (make-response "done" result))))
     ('running
@@ -124,7 +124,7 @@
   (dispatch-rules
     (("")       #:method "get"  /index)
     (("query")  #:method "post" /query)
-    (("result") #:method "post"  /result)
+    (("result") #:method "post" /result)
      (else                handle-static-file-request)))
         
 (serve/servlet dispatcher 
@@ -132,4 +132,6 @@
     #:servlet-regexp #rx""
     #:launch-browser? #f
     #:listen-ip #f
-    #:port 8386)
+    #:port 8386
+    #:safety-limits (make-safety-limits 
+                      #:response-timeout 300))
