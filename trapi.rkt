@@ -10,7 +10,7 @@
   "common.rkt"
   "curie-search.rkt")
 
-(provide qgraph->trapi-qgraph)
+(provide qgraph->trapi-query)
 
 (define (index->node-id i) (string-add-prefix "n" (number->string i)))
 (define (index->edge-id i) (string-add-prefix "e" (number->string i)))
@@ -41,6 +41,11 @@
                         trapi-os)))))
     (hasheq 'nodes (objs->trapi-objs 'nodes index->node-id qnode->trapi-qnode) 
             'edges (objs->trapi-objs 'edges index->edge-id qedge->trapi-qedge))))
+
+(define (qgraph->trapi-query qgraph)
+  (define trapi-qgraph (qgraph->trapi-qgraph qgraph))
+  (and trapi-qgraph
+       (hasheq 'message (hasheq 'query_graph trapi-qgraph))))
     
 
 (module+ test

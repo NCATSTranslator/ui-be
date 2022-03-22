@@ -18,10 +18,25 @@
   json
   "common.rkt"
   "trapi.rkt"
-  (prefix-in ars: "ars.rkt"))
+  (prefix-in ars: "ars.rkt")
+  
+  racket/pretty)
+
+(define (get-qid req-data)
+  (jsexpr-object-ref req-data 'qid))
 
 (define document-root
   (path->string (current-directory)))
+
+(define (response/jsexpr code message jse)
+  (response
+    code
+    message
+    (current-seconds)
+    mime:json
+    '()
+    (lambda (op)
+      (write-bytes (jsexpr->bytes jse) op))))
 
 (define (response/OK resp mime-type)
   (response
@@ -32,14 +47,11 @@
     (lambda (op)
       (write-bytes resp op))))
 
-(define (response/bad-request resp)
-  (response
-    400 #"Bad request"
-    (current-seconds)
-    mime:json
-    '()
-    (lambda (op)
-      (write-bytes resp op))))
+(define (response/OK/jsexpr jse)
+  (response/jsexpr 200 #"OK" jse))
+
+(define (response/bad-request jse)
+  (response/jsexpr 400 #"Bad request" jse))
 
 (define (response/not-found)
   (response/xexpr
@@ -49,17 +61,15 @@
         (body
           (p "Not found")))))
 
-(define (response/internal-error resp)
-  (response
-    500 #"Internal server error"
-    (current-seconds)
-    mime:json
-    '()
-    (lambda (op)
-      (write-bytes resp op))))
+(define (response/internal-error jse)
+  (response/jsexpr 500 #"Internal server error" jse))
 
-(define (failure reason)
-  (jsexpr->bytes (hash 'reason reason)))
+(define (make-response status (data '()))
+  (hash 'status status
+        'data   data))
+
+(define (failure-response reason)
+  (make-response "error" reason))
 
 (define (handle-static-file-request req)
   (define uri (request-uri req))
@@ -77,29 +87,44 @@
 (define (/index req)
   (response/OK (string->bytes/utf-8 (include-template "build/index.html")) mime:html))
 
-;X 1. Query cannot be converted to jsexpr (conversion to jsexpr)
-;X 2. Query is not valid TRAPI (response from ARS)
-;? 3. ARS is down (no response from ARS)
-;X 4. ARS failed to post query (response from ARS)
+;TODO: ARS is down (no response from ARS)
 (define (/query req)
   (with-handlers ((exn:fail:contract?
-                  (lambda (e) (response/bad-request (failure "Query is not valid JSON")))))
+                  (lambda (e) (response/bad-request (failure-response "Query is not valid JSON")))))
     (define post-data (request-post-data/raw req))
-    (define trapi-query (and post-data (qgraph->trapi-qgraph (bytes->jsexpr post-data))))
+    (define trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data))))
     (cond (trapi-query
             (define post-resp (ars:post-query trapi-query))
-            (match (ars:get-qcode (car post-resp))
-              (200 (response/OK (string->bytes/utf-8 (cdr post-resp)) mime:text))
-              (_   (response/internal-error (failure "The ARS could not process the query")))))
+            (pretty-print post-resp)
+            (match (car post-resp)
+              ('error (response/internal-error (failure-response "The ARS could not process the query")))
+              (_  (response/OK (string->bytes/utf-8 (cdr post-resp)) mime:text))))
           ((not post-data)
-            (response/bad-request (failure "No query data")))
+            (response/bad-request (failure-response "No query data")))
           (else
-            (response/bad-request (failure "Query could not be converted to TRAPI"))))))
+            (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))
+
+(define (/result req)
+  (define post-data (request-post-data/raw req))
+  (define qid (and post-data (get-qid (bytes->jsexpr post-data))))
+  (define qstatus (ars:pull-query-status qid))
+  (pretty-print qid)
+  (pretty-print qstatus)
+  (match qstatus
+    ('done
+      (let ((result (ars:pull-query-result qid)))
+        (response/OK/jsexpr (make-response "done" result))))
+    ('running
+      (response/OK/jsexpr (make-response "running")))
+    (_
+      (response/internal-error (failure-response "Something went wrong")))))
+        
 
 (define-values (dispatcher _)
   (dispatch-rules
-    (("")      #:method "get"  /index)
-    (("query") #:method "post" /query)
+    (("")       #:method "get"  /index)
+    (("query")  #:method "post" /query)
+    (("result") #:method "post"  /result)
      (else                handle-static-file-request)))
         
 (serve/servlet dispatcher 

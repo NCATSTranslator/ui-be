@@ -14,7 +14,6 @@
   "common.rkt")
 
 (provide 
-  get-qcode 
   post-query
   pull-query-status
   pull-query-result)
@@ -33,6 +32,7 @@
                    #:data data))
   (read-json resp-out))
 
+(define (get-results  jse) (jsexpr-object-ref jse 'results))
 (define (get-message  jse) (jsexpr-object-ref jse 'message))
 (define (get-fields   jse) (jsexpr-object-ref jse 'fields))
 (define (get-status   jse) (jsexpr-object-ref jse 'status))
@@ -41,19 +41,19 @@
 (define (get-children jse) (jsexpr-object-ref jse 'children))
 (define (get-qid      jse) (jsexpr-object-ref jse 'pk))
 
-(define (get-qcode qstatus)
-  (car qstatus))
 (define (query-done? qstatus)
-  (and (equal? (get-qcode qstatus) 200)
-       (equal? (cdr qstatus) "Done")))
+  (equal? qstatus 'done))
 
 
 
 (define (parse-query-status resp)
-  (cons (get-code resp) (get-status resp)))
+  (match (cons (get-code resp) (get-status resp))
+    ('(200 . "Done")    'done)
+    ('(200 . "Running") 'running)
+    (_                'error)))
 
 (define (parse-submit-query-resp resp)
-  (let* ((fields (get-fields resp))
+  (let* ((fields  (get-fields resp))
          (qstatus (parse-query-status fields))
          (qid     (get-qid resp)))
     (cons qstatus qid)))
@@ -71,9 +71,15 @@
         #f)))
 
 (define (parse-query-actor-result resp)
-  (let ((fields (get-fields resp)))
-    (and (query-done? (parse-query-status fields))
-         (get-message (get-data fields)))))
+  (let* ((fields (get-fields resp))
+         (qstatus (parse-query-status fields)))
+    (if (query-done? qstatus)
+      (let* ((message (get-message (get-data fields)))
+             (results (get-results message)))
+        (and (not (null? results))
+             message))
+      qstatus)))
+    
 
 (define (post-query query)
   (parse-submit-query-resp
@@ -85,21 +91,10 @@
   (ars-sendrecv (pull-query-uri qid trace?)))
 
 (define (pull-query-status qid)
-  (parse-query-status (pull-query qid)))
+  (parse-query-status (get-fields (pull-query qid))))
 
 (define (pull-query-actor-result qid)
   (parse-query-actor-result (pull-query qid)))
 
 (define (pull-query-result qid)
   (parse-query-result (pull-query qid #t)))
-
-;(pretty-print (post-query (read-json (open-input-file "test/workflowA/A.0_RHOBTB2_direct.json"))))
-#;(write-json
-  (pull-query-status "490236a7-ec86-4776-9a4d-d8d117b6df9f")
-  (open-output-file "./test/workflowA/resp/A.0_RHOBTB2_direct_status.json" #:exists 'replace))
-#;(write-json
-  (pull-query-result "490236a7-ec86-4776-9a4d-d8d117b6df9f")
-  (open-output-file "./test/workflowA/resp/A.0_RHOBTB2_direct_result.json" #:exists 'replace))
-(write-json
-  (pull-query-actor-result "ada9d2b3-2a75-47f9-86e3-dbb295c1a0bb")
-  (open-output-file "./test/workflowA/resp/A.0_RHOBTB2_direct_aragorn.json" #:exists 'replace))
