@@ -99,7 +99,7 @@
             (pretty-print post-resp)
             (match (car post-resp)
               ('error (response/internal-error (failure-response "The ARS could not process the query")))
-              (_  (response/OK (string->bytes/utf-8 (cdr post-resp)) mime:text))))
+              (_  (response/OK/jsexpr (make-response "success" (cdr post-resp))))))
           ((not post-data)
             (response/bad-request (failure-response "No query data")))
           (else
