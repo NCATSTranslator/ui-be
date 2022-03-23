@@ -6,6 +6,7 @@
 
 (require 
   racket/string
+  racket/match
   json
   "common.rkt"
   "curie-search.rkt")
@@ -17,10 +18,19 @@
 (define (biolink-tag str) (string-add-prefix "biolink:" str))
 
 (define (qnode->trapi-qnode qnode curie-searcher)
-  (if (empty-string? (jsexpr-object-ref qnode 'name))
-      (hasheq 'categories `(,(biolink-tag (jsexpr-object-ref qnode 'type))))
-      (hasheq 'ids        (curie-searcher (jsexpr-object-ref qnode 'name))
-              'categories `(,(biolink-tag (jsexpr-object-ref qnode 'type))))))
+  (let loop ((trapi-qnode-alist '())
+             (qnode-alist (jsexpr-object->alist qnode)))
+    (if (null? qnode-alist)
+        (make-immutable-hasheq trapi-qnode-alist)
+        (let ((trapi-entry (match (car qnode-alist)
+                            (`(type . ,type) `(categories . (,(biolink-tag type))))
+                            (`(name . ,name) (and (not (empty-string? name))
+                                                   `(ids . ,(curie-searcher name))))
+                            (_ #f))))
+          (loop (if trapi-entry
+                    (cons trapi-entry trapi-qnode-alist)
+                    trapi-qnode-alist)
+                (cdr qnode-alist))))))
 
 (define (qedge->trapi-qedge qedge)
   (hasheq 'subject    (index->node-id (jsexpr-object-ref qedge 'source))

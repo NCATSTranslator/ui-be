@@ -32,3 +32,5 @@
   (hash-has-key? je k))
 (define (jsexpr-object-ref je k)
   (hash-ref je k))
+(define (jsexpr-object->alist je)
+  (hash->list je))
