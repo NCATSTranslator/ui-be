@@ -106,18 +106,22 @@
             (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))
 
 (define (/result req)
-  (define post-data (request-post-data/raw req))
-  (define qid (and post-data (get-qid (bytes->jsexpr post-data))))
-  (define qstatus (ars:pull-query-status qid))
-  (pretty-print qid)
-  (pretty-print qstatus)
-  (match qstatus ('done
-      (let ((result (ars:pull-query-result qid)))
-        (response/OK/jsexpr (make-response "done" result))))
-    ('running
-      (response/OK/jsexpr (make-response "running")))
-    (_
-      (response/internal-error (failure-response "Something went wrong")))))
+  (with-handlers ((exn:fail:contract?
+                  (lambda (e) (response/bad-request
+                                (failure-response "Result poll does not contain a 'qid' attribute")))))
+    (define post-data (request-post-data/raw req))
+    (define qid (and post-data (get-qid (bytes->jsexpr post-data))))
+    (define qstatus (ars:pull-query-status qid))
+    (pretty-print qid)
+    (pretty-print qstatus)
+    (match qstatus
+      ('done
+        (let ((result (ars:pull-query-result qid)))
+          (response/OK/jsexpr (make-response "done" result))))
+      ('running
+        (response/OK/jsexpr (make-response "running")))
+      (_
+        (response/internal-error (failure-response "Something went wrong"))))))
         
 
 (define-values (dispatcher _)
