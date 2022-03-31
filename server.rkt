@@ -19,15 +19,24 @@
   json
   "common.rkt"
   "trapi.rkt"
-  (prefix-in ars: "ars.rkt")
+  (prefix-in ars:  "ars.rkt")
+  (prefix-in mock: "mock/ars.rkt")
+  "config.rkt"
   
   racket/pretty)
+
+(define-values (post-query pull-query-status pull-query-result)
+  (match (config-server-mode server-config) 
+    ('dev (values ars:poster ars:status-puller ars:result-puller))
+    ('demo (values mock:poster mock:status-puller mock:result-puller))
+    (_ (raise (server-config-exception
+                (format "Invalid server-mode given: ~a" (symbol->string (config-server-mode server-config)))
+                (current-continuation-marks))))))
 
 (define (get-qid req-data)
   (jsexpr-object-ref req-data 'qid))
 
-(define document-root
-  (path->string (current-directory)))
+(define document-root (config-document-root server-config))
 
 (define (response/jsexpr code message jse)
   (response
@@ -95,7 +104,7 @@
     (define post-data (request-post-data/raw req))
     (define trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data))))
     (cond (trapi-query
-            (define post-resp (ars:post-query trapi-query))
+            (define post-resp (post-query trapi-query))
             (pretty-print post-resp)
             (match (car post-resp)
               ('error (response/internal-error (failure-response "The ARS could not process the query")))
@@ -111,12 +120,12 @@
                                 (failure-response "Result poll does not contain a 'qid' attribute")))))
     (define post-data (request-post-data/raw req))
     (define qid (and post-data (get-qid (bytes->jsexpr post-data))))
-    (define qstatus (ars:pull-query-status qid))
+    (define qstatus (pull-query-status qid))
     (pretty-print qid)
     (pretty-print qstatus)
     (match qstatus
       ('done
-        (let ((result (ars:pull-query-result qid)))
+        (let ((result (pull-query-result qid)))
           (response/OK/jsexpr (make-response "done" result))))
       ('running
         (response/OK/jsexpr (make-response "running")))

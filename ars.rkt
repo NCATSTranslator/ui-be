@@ -14,13 +14,13 @@
   "common.rkt")
 
 (provide 
-  post-query
-  pull-query-status
-  pull-query-result)
+  poster 
+  status-puller 
+  result-puller)
 
 (define ars-host "ars.transltr.io")
-(define post-query-uri "/ars/api/submit")
-(define (pull-query-uri qid trace?)
+(define ars-post-uri "/ars/api/submit")
+(define (ars-pull-query-uri qid trace?)
   (format "/ars/api/messages/~a~a" qid (if trace? "?trace=y" "")))
 
 (define (ars-sendrecv uri (method #"GET") (data #f))
@@ -31,6 +31,18 @@
                    #:method method
                    #:data data))
   (read-json resp-out))
+
+(define (poster query)
+  (parse-submit-query-resp
+    (ars-sendrecv ars-post-uri #"POST" (jsexpr->bytes query))))
+
+(define (status-puller qid)
+  (parse-query-status
+    (get-fields (ars-sendrecv (ars-pull-query-uri qid #f)))))
+
+(define (result-puller qid)
+  (parse-query-result
+    (ars-sendrecv (ars-pull-query-uri qid #t))))
 
 (define (get-results  jse) (jsexpr-object-ref jse 'results))
 (define (get-message  jse) (jsexpr-object-ref jse 'message))
@@ -44,13 +56,11 @@
 (define (query-done? qstatus)
   (equal? qstatus 'done))
 
-
-
 (define (parse-query-status resp)
   (match (cons (get-code resp) (get-status resp))
     ('(200 . "Done")    'done)
     ('(200 . "Running") 'running)
-    (_                'error)))
+    (_                  'error)))
 
 (define (parse-submit-query-resp resp)
   (let* ((fields  (get-fields resp))
@@ -59,6 +69,10 @@
     (cons qstatus qid)))
 
 (define (parse-query-result resp)
+  (define (pull-query-actor-result qid)
+    (parse-query-actor-result
+      (ars-sendrecv (ars-pull-query-uri qid #f))))
+
   (let ((status (get-status resp)))
     (if (equal? status "Done")
         (for/fold ((actors-data '()))
@@ -79,22 +93,3 @@
         (and (not (null? results))
              message))
       qstatus)))
-    
-
-(define (post-query query)
-  (parse-submit-query-resp
-    (ars-sendrecv post-query-uri
-                  #"POST"
-                  (jsexpr->bytes query))))
-
-(define (pull-query qid (trace? #f))
-  (ars-sendrecv (pull-query-uri qid trace?)))
-
-(define (pull-query-status qid)
-  (parse-query-status (get-fields (pull-query qid))))
-
-(define (pull-query-actor-result qid)
-  (parse-query-actor-result (pull-query qid)))
-
-(define (pull-query-result qid)
-  (parse-query-result (pull-query qid #t)))
