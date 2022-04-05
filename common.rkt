@@ -28,6 +28,8 @@
 
 (define (jsexpr-object-keys je)
   (hash-keys je))
+(define (jsexpr-object-values je)
+  (hash-values je))
 (define (jsexpr-object-has-key? je k)
   (hash-has-key? je k))
 (define (jsexpr-object-ref je k)
