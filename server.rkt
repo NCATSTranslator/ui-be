@@ -125,7 +125,7 @@
     (pretty-print qstatus)
     (match qstatus
       ('done
-        (let ((result (pull-query-result qid)))
+        (let ((result (add-summary (pull-query-result qid))))
           (response/OK/jsexpr (make-response "done" result))))
       ('running
         (response/OK/jsexpr (make-response "running")))

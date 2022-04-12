@@ -35,7 +35,7 @@
 (define (jsexpr-object-has-key? je k)
   (hash-has-key? je k))
 (define (jsexpr-object-ref je k (default #f))
-  (if default (hash-ref je k) (hash-ref je k default)))
+  (hash-ref je k default))
 (define (jsexpr-object-set je k v)
   (hash-set je k v))
 (define (jsexpr-object->alist je)
@@ -46,4 +46,3 @@
   (list? je))
 (define (jsexpr-null? je)
   (equal? je 'null))
-(define (identity x) x)

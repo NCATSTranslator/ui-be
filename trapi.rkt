@@ -1,7 +1,5 @@
 ;TODO
-; * Name resolution search should be injectable
-;   - Change unit tests to use a mocked name resolution search
-; * qnode->trapi-qnode: make more robust to missing ids/categories
+; See !!1
 #lang racket/base
 
 (require 
@@ -12,53 +10,70 @@
   "common.rkt"
   "curie-search.rkt")
 
-(provide qgraph->trapi-query)
+(provide
+  qgraph->trapi-query
+  add-summary)
 
 (define (index->node-id i) (string-add-prefix "n" (number->string i)))
 (define (index->edge-id i) (string-add-prefix "e" (number->string i)))
 (define (biolink-tag str) (string-add-prefix "biolink:" str))
 
 ; Extracting TRAPI properties and attributes
-(define (trapi-obj-property-transformer old-key new-key f (default 'null))
+(define (make-mapping key transformer updater default)
   (lambda (obj)
-    (define v (jsexpr-object-ref obj old-key #f))
-    (cons new-key (if v (f v) default))))
-(define (get-prop k)
-  (trapi-obj-property-transformer k k (lambda (x) x)))
-(define (rename-prop ok nk)
-  (trapi-obj-property-transformer ok nk (lambda (x) x)))
+    (define v (jsexpr-object-ref obj key #f))
+    (lambda (acc) (updater (if v (transformer v) default) acc))))
 
-(define (attribute-transformer aid f (default 'null))
+(define (rename-and-change-property src-key tgt-key transformer)
+  (make-mapping
+    src-key 
+    transformer
+    (lambda (v obj) (jsexpr-object-set obj tgt-key v))
+    'null))
+(define (change-property key transformer)
+  (rename-and-change-property key key transformer))
+(define (rename-property src-key tgt-key)
+  (rename-and-change-property src-key tgt-key (lambda (x) x)))
+(define (get-property key)
+  (rename-property key key))
+
+(define (rename-attribute attribute-id tgt-key)
+  (make-mapping
+    'attributes
+    (lambda (attributes)
+      (let loop ((as attributes)
+                 (result #f))
+        (cond (result result)
+              ((null? as) 'null)
+              (else 
+                (define a (car as))
+                (loop (cdr as)
+                      (and (equal? attribute-id (jsexpr-object-ref a 'attribute_type_id))
+                           (jsexpr-object-ref a 'value)))))))
+    (lambda (v obj) (jsexpr-object-set obj tgt-key v))
+    'null))
+(define (aggregate-attributes attribute-ids tgt-key)
+  (make-mapping
+    'attributes
+    (lambda (attributes)
+      (let loop ((as attributes)
+                 (result '()))
+        (cond ((null? as) result)
+              (else
+                (define a (car as))
+                (define aid (member (jsexpr-object-ref a 'attribute_type_id) attribute-ids))
+                (define v (if aid (jsexpr-object-ref a 'value) '()))
+                (loop (cdr as)
+                      (append result (if (list? v) v (list v))))))))
+    (lambda (v obj) (jsexpr-object-set obj
+                                       tgt-key
+                                       (append (jsexpr-object-ref obj tgt-key '()) v)))
+    '()))
+
+(define (trapi-answer-query mappings)
   (lambda (obj)
-    (define v (and (equal? (jsexpr-object-ref obj 'attribute_type_id) aid)
-                           (jsexpr-object-ref obj 'value)))
-    (if v (f v) default)))
-(define (identity-attribute-transformer aid)
-  (attribute-transformer aid (lambda (x) x)))
-(define (attribute-renamer new-aid attrs t)
-  (cons new-aid
-        (if attrs
-            (let loop ((as attrs)
-                      (res 'null))
-              (if (or (null? as) (not (jsexpr-null? res)))
-                  res
-                  (loop (cdr as)
-                        (t (car as)))))
-            'null)))
-(define (attribute-accumulator new-aid attrs transformers)
-  (cons new-aid
-        (foldl (lambda (attr acc)
-                 (let loop ((ts transformers)
-                            (result acc))
-                   (if (null? ts)
-                       result 
-                       (loop (cdr ts)
-                             (let ((v ((car ts) attr)))
-                               (cond ((or (jsexpr-null? v) (false? v)) result)
-                                     ((list? v) (append result v))
-                                     (else (cons v result))))))))
-               '()
-               (if attrs attrs '()))))
+    (map (lambda (mapping) (mapping obj))
+         mappings)))
 
 (define (id->link id)
   (match id
@@ -125,17 +140,7 @@
 (define (trapi-node-binding->trapi-knode knowledge-graph node-binding)
   (trapi-binding->kobj knowledge-graph node-binding 'nodes))
 
-(define (make-mapping key transformer updater default)
-  (lambda (obj)
-    (define v (jsexpr-object-ref obj key #f))
-    (lambda (acc) (updater (if v (transformer v) default) acc))))
-
-(define (make-processor mappings)
-  (lambda (obj)
-    (map (lambda (mapping) (mapping obj))
-         mappings)))
-
-(define (trapi-answers->summary trapi-answers primary-predicates node-processor edge-processor)
+(define (trapi-answers->summary trapi-answers primary-predicates node-query edge-query)
   (define (update-result-summary summary edge-summary)
     (define result-id (car edge-summary))
     (list (if result-id result-id (car summary))
@@ -143,7 +148,6 @@
           (append (caddr summary) (caddr edge-summary)))) 
     
   (define (update-summary summary result-summary var-node)
-    (displayln result-summary)
     (define result-id (car result-summary)) ; Must have a result ID at this point to be valid
     (if result-id
       (let ((rs (if (jsexpr-object-has-key? summary result-id)
@@ -169,9 +173,10 @@
     (define kedge (trapi-edge-binding->trapi-kedge knowledge-graph edge-binding))
     (define node-binding (string->symbol (jsexpr-object-ref kedge var-node)))
     (define primary-predicate (member (jsexpr-object-ref kedge 'predicate) primary-predicates))
+    (displayln primary-predicate)
     (list (and primary-predicate (cons (car primary-predicate) node-binding))
-          (node-processor (trapi-node-binding->trapi-knode knowledge-graph node-binding))
-          (edge-processor kedge)))
+          (node-query (trapi-node-binding->trapi-knode knowledge-graph node-binding))
+          (edge-query kedge)))
 
   (define (summarize-result result var-node knowledge-graph)
     (let loop ((edge-bindings (map (lambda (b)
@@ -211,6 +216,21 @@
         (loop (cdr answers)
               (summarize-answer (car answers) summary)))))
 
+; TODO !!1
+; * post processing
+;   - all evidence needs to be distinct (some evidence needs to be split)
+;   - all evidence needs to be converted to URLs
+;   - add hard coded elements for toxicity and tags
+; * fda 
+;   - make utility updater to add by a path of keys to support internal fda structure
+;   - figure out mapping (fda_status -> <integer>)
+; * secondary predicates
+;   - drop?
+;   - figure out why it is including the secondary predicate in one of the summarized results
+(define (add-summary result)
+  result)
+
+
 (module+ test
   (require rackunit)
   (define test-qgraph (read-json (open-input-file "test/trapi/qgraph.json")))
@@ -223,16 +243,24 @@
 
   (define test-result-summarization (read-json (open-input-file "test-local/workflowA/resp/A.0_RHOBTB2_direct_result.json")))
   (define summary (trapi-answers->summary test-result-summarization
-                                          `(,(biolink-tag "entity_negatively_regulates_entity"))
-                                          (make-processor
-                                            `(,(make-mapping 'name
-                                                             identity
-                                                             (lambda (v jse) (jsexpr-object-set jse 'name v))
-                                                             'null)))
-                                          (make-processor
-                                            `(,(make-mapping 'predicate
-                                                             identity
-                                                             (lambda (v jse) (jsexpr-object-set jse 'predicate v))
-                                                             'null)))))
+                                          `(,(biolink-tag "entity_negatively_regulates_entity")
+                                            ,(biolink-tag "increases_expression_of")
+                                           )
+                                          (trapi-answer-query
+                                            `(,(get-property 'name)
+                                              ,(rename-property 'categories 'types)
+                                              ,(rename-attribute
+                                                (biolink-tag "highest_FDA_approval_status")
+                                                'highest_fda_approval_status))
+                                          )
+                                          (trapi-answer-query
+                                            `(,(get-property 'predicate)
+                                              ,(aggregate-attributes
+                                                `(,(biolink-tag "supporting_document")
+                                                  ,(biolink-tag "Publication")
+                                                  ,(biolink-tag "publications")
+                                                 )
+                                                'evidence)
+                                          ))))
   (write-json summary (open-output-file "test-local/example-summary.json" #:exists 'replace))
 )
