@@ -34,6 +34,15 @@
   (rename-and-change-property key key transformer))
 (define (rename-property src-key tgt-key)
   (rename-and-change-property src-key tgt-key (lambda (x) x)))
+(define (get-property-when key update?)
+  (make-mapping
+    key
+    (lambda (x) x)
+    (lambda (v obj) (if (update? v)
+                        (jsexpr-object-set obj key v)
+                        obj))
+    'null))
+
 (define (get-property key)
   (rename-property key key))
 
@@ -173,7 +182,6 @@
     (define kedge (trapi-edge-binding->trapi-kedge knowledge-graph edge-binding))
     (define node-binding (string->symbol (jsexpr-object-ref kedge var-node)))
     (define primary-predicate (member (jsexpr-object-ref kedge 'predicate) primary-predicates))
-    (displayln primary-predicate)
     (list (and primary-predicate (cons (car primary-predicate) node-binding))
           (node-query (trapi-node-binding->trapi-knode knowledge-graph node-binding))
           (edge-query kedge)))
@@ -226,7 +234,7 @@
 ;   - figure out mapping (fda_status -> <integer>)
 ; * secondary predicates
 ;   - drop?
-;   - figure out why it is including the secondary predicate in one of the summarized results
+; * what to do with reversed results?
 (define (add-summary result)
   result)
 
@@ -242,19 +250,22 @@
   (check-false (qgraph->trapi-query test-invalid-qgraph))
 
   (define test-result-summarization (read-json (open-input-file "test-local/workflowA/resp/A.0_RHOBTB2_direct_result.json")))
+  (define primary-predicates `(,(biolink-tag "entity_negatively_regulates_entity")
+                               ,(biolink-tag "increases_expression_of")
+                              ))
   (define summary (trapi-answers->summary test-result-summarization
-                                          `(,(biolink-tag "entity_negatively_regulates_entity")
-                                            ,(biolink-tag "increases_expression_of")
-                                           )
-                                          (trapi-answer-query
+                                          primary-predicates
+                                          (trapi-answer-query ; node rules
                                             `(,(get-property 'name)
                                               ,(rename-property 'categories 'types)
                                               ,(rename-attribute
                                                 (biolink-tag "highest_FDA_approval_status")
                                                 'highest_fda_approval_status))
                                           )
-                                          (trapi-answer-query
-                                            `(,(get-property 'predicate)
+                                          (trapi-answer-query ; edge rules
+                                            `(,(get-property-when
+                                                'predicate
+                                                (lambda (p) (member p primary-predicates)))
                                               ,(aggregate-attributes
                                                 `(,(biolink-tag "supporting_document")
                                                   ,(biolink-tag "Publication")
