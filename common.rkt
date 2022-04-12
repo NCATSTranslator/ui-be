@@ -46,3 +46,13 @@
   (list? je))
 (define (jsexpr-null? je)
   (equal? je 'null))
+(define (jsexpr-object-set-recursive jse ks v)
+  (let loop ((ks ks)
+             (o jse))
+    (cond ((null? (cdr ks))
+            (jsexpr-object-set o (car ks) v))
+          (else
+            (define k (car ks))
+            (jsexpr-object-set o k
+              (loop (cdr ks)
+                    (jsexpr-object-ref o k (hash))))))))

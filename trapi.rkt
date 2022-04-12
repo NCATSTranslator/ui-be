@@ -6,6 +6,7 @@
   racket/bool
   racket/string
   racket/match
+  racket/function
   json
   "common.rkt"
   "curie-search.rkt")
@@ -24,44 +25,46 @@
     (define v (jsexpr-object-ref obj key #f))
     (lambda (acc) (updater (if v (transformer v) default) acc))))
 
-(define (rename-and-change-property src-key tgt-key transformer)
+(define (rename-and-change-property src-key kpath transformer)
   (make-mapping
     src-key 
     transformer
-    (lambda (v obj) (jsexpr-object-set obj tgt-key v))
+    (lambda (v obj) (jsexpr-object-set-recursive obj kpath v))
     'null))
 (define (change-property key transformer)
-  (rename-and-change-property key key transformer))
-(define (rename-property src-key tgt-key)
-  (rename-and-change-property src-key tgt-key (lambda (x) x)))
+  (rename-and-change-property key (list key) transformer))
+(define (rename-property key kpath)
+  (rename-and-change-property key kpath identity))
 (define (get-property-when key update?)
   (make-mapping
     key
-    (lambda (x) x)
+    identity
     (lambda (v obj) (if (update? v)
                         (jsexpr-object-set obj key v)
                         obj))
     'null))
-
 (define (get-property key)
-  (rename-property key key))
+  (rename-property key (list key)))
 
-(define (rename-attribute attribute-id tgt-key)
+(define (rename-and-change-attribute attribute-id kpath transformer)
   (make-mapping
     'attributes
     (lambda (attributes)
       (let loop ((as attributes)
                  (result #f))
-        (cond (result result)
+        (cond (result (transformer result))
               ((null? as) 'null)
               (else 
                 (define a (car as))
                 (loop (cdr as)
                       (and (equal? attribute-id (jsexpr-object-ref a 'attribute_type_id))
                            (jsexpr-object-ref a 'value)))))))
-    (lambda (v obj) (jsexpr-object-set obj tgt-key v))
+    (lambda (v obj) (jsexpr-object-set-recursive obj kpath v))
     'null))
-(define (aggregate-attributes attribute-ids tgt-key)
+(define (rename-attribute attribute-id kpath)
+  (rename-and-change-attribute attribute-id kpath identity))
+
+(define (aggregate-and-transformer-attributes attribute-ids tgt-key transformer)
   (make-mapping
     'attributes
     (lambda (attributes)
@@ -73,11 +76,14 @@
                 (define aid (member (jsexpr-object-ref a 'attribute_type_id) attribute-ids))
                 (define v (if aid (jsexpr-object-ref a 'value) '()))
                 (loop (cdr as)
-                      (append result (if (list? v) v (list v))))))))
+                      (append result (map transformer (if (list? v) v (list v)))))))))
     (lambda (v obj) (jsexpr-object-set obj
                                        tgt-key
                                        (append (jsexpr-object-ref obj tgt-key '()) v)))
     '()))
+
+(define (aggregate-attributes attribute-ids tgt-key)
+  (aggregate-and-transformer-attributes attribute-ids tgt-key identity))
 
 (define (trapi-answer-query mappings)
   (lambda (obj)
@@ -230,7 +236,6 @@
 ;   - all evidence needs to be converted to URLs
 ;   - add hard coded elements for toxicity and tags
 ; * fda 
-;   - make utility updater to add by a path of keys to support internal fda structure
 ;   - figure out mapping (fda_status -> <integer>)
 ; * secondary predicates
 ;   - drop?
@@ -250,17 +255,15 @@
   (check-false (qgraph->trapi-query test-invalid-qgraph))
 
   (define test-result-summarization (read-json (open-input-file "test-local/workflowA/resp/A.0_RHOBTB2_direct_result.json")))
-  (define primary-predicates `(,(biolink-tag "entity_negatively_regulates_entity")
-                               ,(biolink-tag "increases_expression_of")
-                              ))
+  (define primary-predicates `(,(biolink-tag "entity_negatively_regulates_entity")))
   (define summary (trapi-answers->summary test-result-summarization
                                           primary-predicates
                                           (trapi-answer-query ; node rules
                                             `(,(get-property 'name)
-                                              ,(rename-property 'categories 'types)
+                                              ,(rename-property 'categories '(types))
                                               ,(rename-attribute
                                                 (biolink-tag "highest_FDA_approval_status")
-                                                'highest_fda_approval_status))
+                                                '(fda_info highest_fda_approval_status)))
                                           )
                                           (trapi-answer-query ; edge rules
                                             `(,(get-property-when
