@@ -64,7 +64,6 @@
     'null))
 (define (rename-attribute attribute-id kpath)
   (rename-and-transform-attribute attribute-id kpath identity))
-
 (define (aggregate-and-transform-attributes attribute-ids tgt-key transform)
   (make-mapping
     'attributes
@@ -110,7 +109,7 @@
   (string-append "https://www.doi.org/" id))
 
 (define (fda-description->fda-level description)
-  5)
+  1)
 
 (define (qnode->trapi-qnode qnode curie-searcher)
   (let loop ((trapi-qnode-alist '())
@@ -249,19 +248,13 @@
           answer
           '(edge evidence)))))
   (define fda-path '(fda_info highest_fda_approval_status))
-  (define (add-fda-level answer)
-    (define fda-description (jsexpr-object-ref-recursive answer fda-path))
-    (if (equal? fda-description 'null)
-        answer
-        (jsexpr-object-set-recursive
-          answer
-          '(fda_info max_level)
-          (fda-description->fda-level fda-description))))
   (define (add-toxicity-info answer)
     (jsexpr-object-set-recursive
       answer
-      '(toxicitiy_info level)
-      5))
+      '(subject toxicity_info level)
+      "Low"))
+  (define (add-last-publication_date answer)
+    (jsexpr-object-set-recursive answer '(edge last_publication_date) "1/1/2022"))
   (define summary
     (trapi-answers->summary
       (jsexpr-object-ref result 'data)
@@ -269,9 +262,12 @@
       (make-summarize-rules ; node rules
         `(,(get-property 'name)
           ,(rename-property 'categories '(types))
-          ,(rename-attribute
+          ,(rename-and-transform-attribute
             (biolink-tag "highest_FDA_approval_status")
-            fda-path)))
+            '(fda_info)
+            (lambda (fda-description)
+              (hash 'highest_fda_approval_status fda-description
+                    'max_level (fda-description->fda-level fda-description))))))
       (make-summarize-rules ; edge rules
         `(,(get-property-when
             'predicate
@@ -286,8 +282,8 @@
                   (map id->link evidence)
                   (map id->link (string-split evidence "|")))))))
       (lambda (answer) ; answer post-processing 
-        (remove-duplicate-evidence
-          (add-fda-level
+        (add-last-publication_date
+          (remove-duplicate-evidence
             (add-toxicity-info answer))))))
   (jsexpr-object-set result 'summary summary))
 
