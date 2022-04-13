@@ -7,6 +7,7 @@
   racket/string
   racket/match
   racket/function
+  racket/list
   json
   "common.rkt"
   "curie-search.rkt")
@@ -46,13 +47,13 @@
 (define (get-property key)
   (rename-property key (list key)))
 
-(define (rename-and-change-attribute attribute-id kpath transformer)
+(define (rename-and-transform-attribute attribute-id kpath transform)
   (make-mapping
     'attributes
     (lambda (attributes)
       (let loop ((as attributes)
                  (result #f))
-        (cond (result (transformer result))
+        (cond (result (transform result))
               ((null? as) 'null)
               (else 
                 (define a (car as))
@@ -62,9 +63,9 @@
     (lambda (v obj) (jsexpr-object-set-recursive obj kpath v))
     'null))
 (define (rename-attribute attribute-id kpath)
-  (rename-and-change-attribute attribute-id kpath identity))
+  (rename-and-transform-attribute attribute-id kpath identity))
 
-(define (aggregate-and-transformer-attributes attribute-ids tgt-key transformer)
+(define (aggregate-and-transform-attributes attribute-ids tgt-key transform)
   (make-mapping
     'attributes
     (lambda (attributes)
@@ -76,19 +77,22 @@
                 (define aid (member (jsexpr-object-ref a 'attribute_type_id) attribute-ids))
                 (define v (if aid (jsexpr-object-ref a 'value) '()))
                 (loop (cdr as)
-                      (append result (map transformer (if (list? v) v (list v)))))))))
+                      (append result (transform v)))))))
     (lambda (v obj) (jsexpr-object-set obj
                                        tgt-key
                                        (append (jsexpr-object-ref obj tgt-key '()) v)))
     '()))
 
 (define (aggregate-attributes attribute-ids tgt-key)
-  (aggregate-and-transformer-attributes attribute-ids tgt-key identity))
+  (aggregate-and-transform-attributes
+    attribute-ids
+    tgt-key
+    (lambda (v) (if (list? v) v (list v)))))
 
-(define (trapi-answer-query mappings)
+(define (make-summarize-rules rules)
   (lambda (obj)
-    (map (lambda (mapping) (mapping obj))
-         mappings)))
+    (map (lambda (rule) (rule obj))
+         rules)))
 
 (define (id->link id)
   (match id
@@ -104,6 +108,9 @@
   (string-append "https://pubmed.ncbi.nlm.nih.gov/" id))
 (define (doi-id->doi-link id)
   (string-append "https://www.doi.org/" id))
+
+(define (fda-description->fda-level description)
+  5)
 
 (define (qnode->trapi-qnode qnode curie-searcher)
   (let loop ((trapi-qnode-alist '())
@@ -155,7 +162,7 @@
 (define (trapi-node-binding->trapi-knode knowledge-graph node-binding)
   (trapi-binding->kobj knowledge-graph node-binding 'nodes))
 
-(define (trapi-answers->summary trapi-answers primary-predicates node-query edge-query)
+(define (trapi-answers->summary trapi-answers primary-predicates node-query edge-query post-processing)
   (define (update-result-summary summary edge-summary)
     (define result-id (car edge-summary))
     (list (if result-id result-id (car summary))
@@ -209,7 +216,7 @@
     (define kgraph (jsexpr-object-ref answer 'knowledge_graph))
     (define qnodes (jsexpr-object-ref qgraph 'nodes))
     (define qedges (jsexpr-object-ref qgraph 'edges))
-    (define qedge (jsexpr-object-ref qedges 'e01))
+    (define qedge  (cdar (jsexpr-object->alist qedges)))
     (define var-node (if (jsexpr-object-has-key?
                           (jsexpr-object-ref qnodes 
                             (string->symbol (jsexpr-object-ref qedge 'object)))
@@ -217,31 +224,73 @@
                         'subject
                         'object))
     (let loop ((results (jsexpr-object-ref answer 'results))
-              (summary summary))
+               (summary summary))
       (if (null? results)
           summary
           (loop (cdr results)
                 (update-summary summary (summarize-result (car results) var-node kgraph) var-node)))))
   
-  (let loop ((answers trapi-answers)
-             (summary (jsexpr-object)))
-    (if (null? answers)
-        (jsexpr-object-values summary)
-        (loop (cdr answers)
-              (summarize-answer (car answers) summary)))))
+  (map post-processing
+       (let loop ((answers trapi-answers)
+                 (summary (jsexpr-object)))
+         (if (null? answers)
+             (jsexpr-object-values summary)
+             (loop (cdr answers)
+                   (summarize-answer (car answers) summary))))))
 
-; TODO !!1
-; * post processing
-;   - all evidence needs to be distinct (some evidence needs to be split)
-;   - all evidence needs to be converted to URLs
-;   - add hard coded elements for toxicity and tags
-; * fda 
-;   - figure out mapping (fda_status -> <integer>)
-; * secondary predicates
-;   - drop?
-; * what to do with reversed results?
 (define (add-summary result)
-  result)
+  (define primary-predicates `(,(biolink-tag "treats")))
+  (define (remove-duplicate-evidence answer)
+    (jsexpr-object-set-recursive
+      answer
+      '(edge evidence)
+      (remove-duplicates
+        (jsexpr-object-ref-recursive
+          answer
+          '(edge evidence)))))
+  (define fda-path '(fda_info highest_fda_approval_status))
+  (define (add-fda-level answer)
+    (define fda-description (jsexpr-object-ref-recursive answer fda-path))
+    (if (equal? fda-description 'null)
+        answer
+        (jsexpr-object-set-recursive
+          answer
+          '(fda_info max_level)
+          (fda-description->fda-level fda-description))))
+  (define (add-toxicity-info answer)
+    (jsexpr-object-set-recursive
+      answer
+      '(toxicitiy_info level)
+      5))
+  (define summary
+    (trapi-answers->summary
+      (jsexpr-object-ref result 'data)
+      primary-predicates
+      (make-summarize-rules ; node rules
+        `(,(get-property 'name)
+          ,(rename-property 'categories '(types))
+          ,(rename-attribute
+            (biolink-tag "highest_FDA_approval_status")
+            fda-path)))
+      (make-summarize-rules ; edge rules
+        `(,(get-property-when
+            'predicate
+            (lambda (p) (member p primary-predicates)))
+          ,(aggregate-and-transform-attributes
+            `(,(biolink-tag "supporting_document")
+              ,(biolink-tag "Publication")
+              ,(biolink-tag "publications"))
+            'evidence
+            (lambda (evidence)
+              (if (list? evidence)
+                  (map id->link evidence)
+                  (map id->link (string-split evidence "|")))))))
+      (lambda (answer) ; answer post-processing 
+        (remove-duplicate-evidence
+          (add-fda-level
+            (add-toxicity-info answer))))))
+  (jsexpr-object-set result 'summary summary))
+
 
 
 (module+ test
@@ -253,28 +302,4 @@
 
   (define test-invalid-qgraph (read-json (open-input-file "test/trapi/invalid-qgraph.json")))
   (check-false (qgraph->trapi-query test-invalid-qgraph))
-
-  (define test-result-summarization (read-json (open-input-file "test-local/workflowA/resp/A.0_RHOBTB2_direct_result.json")))
-  (define primary-predicates `(,(biolink-tag "entity_negatively_regulates_entity")))
-  (define summary (trapi-answers->summary test-result-summarization
-                                          primary-predicates
-                                          (trapi-answer-query ; node rules
-                                            `(,(get-property 'name)
-                                              ,(rename-property 'categories '(types))
-                                              ,(rename-attribute
-                                                (biolink-tag "highest_FDA_approval_status")
-                                                '(fda_info highest_fda_approval_status)))
-                                          )
-                                          (trapi-answer-query ; edge rules
-                                            `(,(get-property-when
-                                                'predicate
-                                                (lambda (p) (member p primary-predicates)))
-                                              ,(aggregate-attributes
-                                                `(,(biolink-tag "supporting_document")
-                                                  ,(biolink-tag "Publication")
-                                                  ,(biolink-tag "publications")
-                                                 )
-                                                'evidence)
-                                          ))))
-  (write-json summary (open-output-file "test-local/example-summary.json" #:exists 'replace))
 )

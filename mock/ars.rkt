@@ -13,8 +13,7 @@
 ; Format:
 ;   qid '(<path to result> ...)
 (define mock-queries
-  (hash "1" '("test/ars/1-1.json" "test/ars/1-2.json")
-        "2" '("test/ars/2-1.json")
+  (hash "3" '("test/ars/3-1.json" "test/ars/3-2.json" "test/ars/3-3.json")
   ))
 
 (define (poster query) "mock query posted")

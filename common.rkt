@@ -36,6 +36,13 @@
   (hash-has-key? je k))
 (define (jsexpr-object-ref je k (default #f))
   (hash-ref je k default))
+(define (jsexpr-object-ref-recursive je ks (default #f))
+  (let loop ((ks ks)
+             (v je))
+    (if (or (not v) (null? ks))
+        v
+        (loop (cdr ks)
+              (jsexpr-object-ref v (car ks) default)))))
 (define (jsexpr-object-set je k v)
   (hash-set je k v))
 (define (jsexpr-object->alist je)
