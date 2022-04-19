@@ -43,12 +43,30 @@
   (make-mapping
     key
     identity
-    (lambda (v obj) (if (update? v)
-                        (jsexpr-object-set obj key v)
-                        obj))
+    (lambda (v obj)
+      (define cv (jsexpr-object-ref obj key))
+      (cond ((update? v) (jsexpr-object-set obj key v))
+            (cv obj)
+            (else (jsexpr-object-set obj key 'null))))
     'null))
 (define (get-property key)
   (rename-property key (list key)))
+(define (aggregate-property-when src-key kpath update?)
+  (make-mapping
+    src-key
+    identity
+    (lambda (v obj)
+      (define cv (jsexpr-object-ref-recursive obj kpath))
+      (cond ((update? v)
+             (jsexpr-object-set-recursive
+               obj
+               kpath
+               (append (if cv cv '()) (if (list? v) v (list v)))))
+            (cv obj)
+            (else (jsexpr-object-set-recursive obj kpath '()))))
+    '()))
+(define (aggregate-property src-key kpath)
+  (aggregate-property-when src-key kpath (lambda (_) #t)))
 
 (define (rename-and-transform-attribute attribute-id kpath transform)
   (make-mapping
@@ -169,6 +187,7 @@
 
 (define (trapi-answers->summary trapi-answers primary-predicates node-rules edge-rules post-processing)
   (define (make-static-node slot ids) (cons slot (list->set ids)))
+  (define (static-node-slot node) (car node))
   (define (edge-valid? static-node kedge)
     (set-member? (cdr static-node) (jsexpr-object-ref kedge (car static-node))))
   (define (update-result-summary summary edge-summary)
@@ -202,10 +221,9 @@
   (define (summarize-edge edge-binding static-node var-slot knowledge-graph)
     (define kedge (trapi-edge-binding->trapi-kedge knowledge-graph edge-binding))
     (if (edge-valid? static-node kedge) ; Valid if the predicate matches the direction in the qgraph
-        (let ((node-binding (string->symbol (jsexpr-object-ref kedge var-slot)))
-              (primary-predicate (member (jsexpr-object-ref kedge 'predicate) primary-predicates)))
-          (list (and primary-predicate (cons (car primary-predicate) node-binding))
-                (node-rules (trapi-node-binding->trapi-knode knowledge-graph node-binding))
+        (let ((var-binding (string->symbol (jsexpr-object-ref kedge var-slot))))
+          (list var-binding
+                (node-rules (trapi-node-binding->trapi-knode knowledge-graph var-binding))
                 (edge-rules kedge)))
         (list #f '() '())))
 
@@ -258,15 +276,17 @@
                    (summarize-answer (car answers) summary))))))
 
 (define (add-summary result)
-  (define primary-predicates `(,(biolink-tag "treats")))
-  (define (remove-duplicate-evidence answer)
-    (jsexpr-object-set-recursive
-      answer
-      '(edge evidence)
-      (remove-duplicates
-        (jsexpr-object-ref-recursive
-          answer
-          '(edge evidence)))))
+  (define primary-predicates `(,(biolink-tag "treats") ,(biolink-tag "affects")))
+  (define (jsexpr-remove-duplicates answer kpaths)
+    (let loop ((kps kpaths)
+               (a answer)) 
+      (if (null? kps)
+          a
+          (loop (cdr kps)
+                (jsexpr-object-set-recursive a (car kps) 
+                  (remove-duplicates
+                    (jsexpr-object-ref-recursive a (car kps))))))))
+
   (define fda-path '(fda_info highest_fda_approval_status))
   (define (add-toxicity-info answer)
     (jsexpr-object-set-recursive
@@ -292,6 +312,10 @@
         `(,(get-property-when
             'predicate
             (lambda (p) (member p primary-predicates)))
+          ,(aggregate-property-when
+            'predicate
+            '(secondary_predicates)
+            (lambda (p) (not (member p primary-predicates))))
           ,(aggregate-and-transform-attributes
             `(,(biolink-tag "supporting_document")
               ,(biolink-tag "Publication")
@@ -303,8 +327,9 @@
                   (map id->link (string-split evidence #rx",|\\|")))))))
       (lambda (answer) ; answer post-processing 
         (add-last-publication_date
-          (remove-duplicate-evidence
-            (add-toxicity-info answer))))))
+          (jsexpr-remove-duplicates 
+            (add-toxicity-info answer)
+            '((edge evidence) (edge secondary_predicates)))))))
   (jsexpr-object-set result 'summary summary))
 
 
