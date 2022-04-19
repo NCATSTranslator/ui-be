@@ -1,5 +1,7 @@
 ;TODO
-; See !!1
+; Secondary Predicates
+; Summarizing Static Node
+; Create FDA mapping
 #lang racket/base
 
 (require 
@@ -8,6 +10,7 @@
   racket/match
   racket/function
   racket/list
+  racket/set
   json
   "common.rkt"
   "curie-search.rkt")
@@ -162,25 +165,28 @@
   (trapi-binding->kobj knowledge-graph node-binding 'nodes))
 
 (define (trapi-answers->summary trapi-answers primary-predicates node-query edge-query post-processing)
+  (define (make-static-node slot ids) (cons slot (list->set ids)))
+  (define (edge-valid? static-node kedge)
+    (set-member? (cdr static-node) (jsexpr-object-ref kedge (car static-node))))
   (define (update-result-summary summary edge-summary)
     (define result-id (car edge-summary))
     (list (if result-id result-id (car summary))
           (append (cadr summary) (cadr edge-summary))
           (append (caddr summary) (caddr edge-summary)))) 
     
-  (define (update-summary summary result-summary var-node)
+  (define (update-summary summary result-summary var-slot)
     (define result-id (car result-summary)) ; Must have a result ID at this point to be valid
     (if result-id
       (let ((rs (if (jsexpr-object-has-key? summary result-id)
                     (jsexpr-object-ref summary result-id)
-                    (hash var-node (hash)
+                    (hash var-slot (hash)
                           'edge    (hash)))))
         (let loop ((node-updaters (cadr result-summary))
                    (edge-updaters (caddr result-summary))
-                   (ns (jsexpr-object-ref rs var-node))
+                   (ns (jsexpr-object-ref rs var-slot))
                    (es (jsexpr-object-ref rs 'edge)))
           (cond ((and (null? node-updaters) (null? edge-updaters))
-                 (let ((result (hash-set (hash-set rs var-node ns) 'edge es)))
+                 (let ((result (hash-set (hash-set rs var-slot ns) 'edge es)))
                    (hash-set summary result-id result)))
                 ((null? node-updaters)
                  (loop '() (cdr edge-updaters) ns ((car edge-updaters) es)))
@@ -190,15 +196,17 @@
                             ((car node-updaters) ns) ((car edge-updaters) es))))))
       summary))
 
-  (define (summarize-edge edge-binding var-node knowledge-graph)
+  (define (summarize-edge edge-binding static-node var-slot knowledge-graph)
     (define kedge (trapi-edge-binding->trapi-kedge knowledge-graph edge-binding))
-    (define node-binding (string->symbol (jsexpr-object-ref kedge var-node)))
-    (define primary-predicate (member (jsexpr-object-ref kedge 'predicate) primary-predicates))
-    (list (and primary-predicate (cons (car primary-predicate) node-binding))
-          (node-query (trapi-node-binding->trapi-knode knowledge-graph node-binding))
-          (edge-query kedge)))
+    (if (edge-valid? static-node kedge) ; Valid if the predicate matches the direction in the qgraph
+        (let ((node-binding (string->symbol (jsexpr-object-ref kedge var-slot)))
+              (primary-predicate (member (jsexpr-object-ref kedge 'predicate) primary-predicates)))
+          (list (and primary-predicate (cons (car primary-predicate) node-binding))
+                (node-query (trapi-node-binding->trapi-knode knowledge-graph node-binding))
+                (edge-query kedge)))
+        (list #f '() '())))
 
-  (define (summarize-result result var-node knowledge-graph)
+  (define (summarize-result result static-node var-slot knowledge-graph)
     (let loop ((edge-bindings (map (lambda (b)
                                      (string->symbol (jsexpr-object-ref (car b) 'id)))
                                      (jsexpr-object-values (jsexpr-object-ref result 'edge_bindings))))
@@ -208,7 +216,7 @@
           (loop (cdr edge-bindings)
                 (update-result-summary
                   summary
-                  (summarize-edge (car edge-bindings) var-node knowledge-graph))))))
+                  (summarize-edge (car edge-bindings) static-node var-slot knowledge-graph))))))
   
   (define (summarize-answer answer summary)
     (define qgraph (jsexpr-object-ref answer 'query_graph))
@@ -216,18 +224,27 @@
     (define qnodes (jsexpr-object-ref qgraph 'nodes))
     (define qedges (jsexpr-object-ref qgraph 'edges))
     (define qedge  (cdar (jsexpr-object->alist qedges)))
-    (define var-node (if (jsexpr-object-has-key?
-                          (jsexpr-object-ref qnodes 
-                            (string->symbol (jsexpr-object-ref qedge 'object)))
-                          'ids)
-                        'subject
-                        'object))
+    (define qobj (string->symbol (jsexpr-object-ref qedge 'object)))
+    (define qsub (string->symbol (jsexpr-object-ref qedge 'subject)))
+    (define-values (static-slot var-slot)
+      (if (jsexpr-object-has-key? (jsexpr-object-ref qnodes qobj) 'ids)
+          (values 'object 'subject)
+          (values 'subject 'object)))
+    (define static-node (make-static-node
+                          static-slot
+                          (jsexpr-object-ref
+                            (jsexpr-object-ref
+                              qnodes
+                              (string->symbol (jsexpr-object-ref qedge static-slot)))
+                            'ids)))
     (let loop ((results (jsexpr-object-ref answer 'results))
                (summary summary))
       (if (null? results)
           summary
           (loop (cdr results)
-                (update-summary summary (summarize-result (car results) var-node kgraph) var-node)))))
+                (update-summary
+                  summary
+                  (summarize-result (car results) static-node var-slot kgraph) var-slot)))))
   
   (map post-processing
        (let loop ((answers trapi-answers)
@@ -298,4 +315,9 @@
 
   (define test-invalid-qgraph (read-json (open-input-file "test/trapi/invalid-qgraph.json")))
   (check-false (qgraph->trapi-query test-invalid-qgraph))
+  
+  ; If the predicate is not in the correct direction the edge is skipped
+  (define summary-skip-edge (read-json (open-input-file "test/trapi/summary-skip-edge.json")))
+  (check-equal? (add-summary summary-skip-edge)
+                (hash-set summary-skip-edge 'summary '()))
 )
