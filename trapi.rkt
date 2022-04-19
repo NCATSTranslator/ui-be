@@ -29,16 +29,16 @@
     (define v (jsexpr-object-ref obj key #f))
     (lambda (acc) (updater (if v (transformer v) default) acc))))
 
-(define (rename-and-change-property src-key kpath transformer)
+(define (rename-and-transform-property src-key kpath transformer)
   (make-mapping
     src-key 
     transformer
     (lambda (v obj) (jsexpr-object-set-recursive obj kpath v))
     'null))
-(define (change-property key transformer)
-  (rename-and-change-property key (list key) transformer))
+(define (transform-property key transformer)
+  (rename-and-transform-property key (list key) transformer))
 (define (rename-property key kpath)
-  (rename-and-change-property key kpath identity))
+  (rename-and-transform-property key kpath identity))
 (define (get-property-when key update?)
   (make-mapping
     key
@@ -101,6 +101,7 @@
     ((pregexp "^PMC[0-9]+$") (pmc-id->pubmed-article-link id))
     ((pregexp "^PMID:")      (pm-id->pubmed-link (strip-id-tag id)))
     ((pregexp "^DOI:")       (doi-id->doi-link (strip-id-tag id)))
+    ((pregexp "^NCT[0-9]+$") (nct-id->nct-link id))
     (_ "Unknown supporting document type")))
 (define (strip-id-tag id)
   (cadr (string-split id ":")))
@@ -110,6 +111,8 @@
   (string-append "https://pubmed.ncbi.nlm.nih.gov/" id))
 (define (doi-id->doi-link id)
   (string-append "https://www.doi.org/" id))
+(define (nct-id->nct-link id)
+  (format "https://clinicaltrials.gov/search?id=%22~a%22" id))
 
 (define (fda-description->fda-level description)
   1)
@@ -164,7 +167,7 @@
 (define (trapi-node-binding->trapi-knode knowledge-graph node-binding)
   (trapi-binding->kobj knowledge-graph node-binding 'nodes))
 
-(define (trapi-answers->summary trapi-answers primary-predicates node-query edge-query post-processing)
+(define (trapi-answers->summary trapi-answers primary-predicates node-rules edge-rules post-processing)
   (define (make-static-node slot ids) (cons slot (list->set ids)))
   (define (edge-valid? static-node kedge)
     (set-member? (cdr static-node) (jsexpr-object-ref kedge (car static-node))))
@@ -172,7 +175,7 @@
     (define result-id (car edge-summary))
     (list (if result-id result-id (car summary))
           (append (cadr summary) (cadr edge-summary))
-          (append (caddr summary) (caddr edge-summary)))) 
+          (append (caddr summary) (caddr edge-summary))))
     
   (define (update-summary summary result-summary var-slot)
     (define result-id (car result-summary)) ; Must have a result ID at this point to be valid
@@ -202,8 +205,8 @@
         (let ((node-binding (string->symbol (jsexpr-object-ref kedge var-slot)))
               (primary-predicate (member (jsexpr-object-ref kedge 'predicate) primary-predicates)))
           (list (and primary-predicate (cons (car primary-predicate) node-binding))
-                (node-query (trapi-node-binding->trapi-knode knowledge-graph node-binding))
-                (edge-query kedge)))
+                (node-rules (trapi-node-binding->trapi-knode knowledge-graph node-binding))
+                (edge-rules kedge)))
         (list #f '() '())))
 
   (define (summarize-result result static-node var-slot knowledge-graph)
@@ -297,7 +300,7 @@
             (lambda (evidence)
               (if (list? evidence)
                   (map id->link evidence)
-                  (map id->link (string-split evidence "|")))))))
+                  (map id->link (string-split evidence #rx",|\\|")))))))
       (lambda (answer) ; answer post-processing 
         (add-last-publication_date
           (remove-duplicate-evidence
