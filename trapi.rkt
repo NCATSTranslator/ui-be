@@ -1,6 +1,4 @@
 ;TODO
-; Secondary Predicates
-; Summarizing Static Node
 ; Create FDA mapping
 #lang racket/base
 
@@ -185,7 +183,8 @@
 (define (trapi-node-binding->trapi-knode knowledge-graph node-binding)
   (trapi-binding->kobj knowledge-graph node-binding 'nodes))
 
-(define (trapi-answers->summary trapi-answers primary-predicates node-rules edge-rules post-processing)
+(define (trapi-answers->summary trapi-answers primary-predicates static-node-rules
+    variable-node-rules edge-rules)
   (define (make-static-node slot ids) (cons slot (list->set ids)))
   (define (static-node-slot node) (car node))
   (define (edge-valid? static-node kedge)
@@ -194,50 +193,65 @@
     (define result-id (car edge-summary))
     (list (if result-id result-id (car summary))
           (append (cadr summary) (cadr edge-summary))
-          (append (caddr summary) (caddr edge-summary))))
+          (append (caddr summary) (caddr edge-summary))
+          (append (cadddr summary) (cadddr edge-summary))))
     
   (define (update-summary summary result-summary var-slot)
     (define result-id (car result-summary)) ; Must have a result ID at this point to be valid
+    (define static-summary (car summary))
+    (define var-summary (cdr summary))
+    (define (update updates)
+      (let loop ((ups updates)
+                 (result '()))
+        (if (null? ups)
+            result
+            (let ((updaters (caar ups))
+                  (obj      (cdar ups)))
+              (loop (cdr ups)
+                    (append result
+                            (if (null? updaters)
+                                `(,updaters ,obj)
+                                `(,(cdr updaters) ,((car updaters) obj)))))))))
     (if result-id
-      (let ((rs (if (jsexpr-object-has-key? summary result-id)
-                    (jsexpr-object-ref summary result-id)
+      (let ((rs (if (jsexpr-object-has-key? var-summary result-id)
+                    (jsexpr-object-ref var-summary result-id)
                     (hash var-slot (hash)
                           'edge    (hash)))))
-        (let loop ((node-updaters (cadr result-summary))
-                   (edge-updaters (caddr result-summary))
-                   (ns (jsexpr-object-ref rs var-slot))
-                   (es (jsexpr-object-ref rs 'edge)))
-          (cond ((and (null? node-updaters) (null? edge-updaters))
-                 (let ((result (hash-set (hash-set rs var-slot ns) 'edge es)))
-                   (hash-set summary result-id result)))
-                ((null? node-updaters)
-                 (loop '() (cdr edge-updaters) ns ((car edge-updaters) es)))
-                ((null? edge-updaters)
-                 (loop (cdr node-updaters) '() ((car node-updaters) ns) es))
-                (else (loop (cdr node-updaters) (cdr edge-updaters)
-                            ((car node-updaters) ns) ((car edge-updaters) es))))))
+        (let loop ((static-updaters (cadr result-summary))
+                   (sn              static-summary)
+                   (var-updaters    (caddr result-summary))
+                   (vns             (jsexpr-object-ref rs var-slot))
+                   (edge-updaters   (cadddr result-summary))
+                   (es              (jsexpr-object-ref rs 'edge)))
+          (if (and (null? static-updaters) (null? var-updaters) (null? edge-updaters))
+              (let ((result (hash-set (hash-set rs var-slot vns) 'edge es)))
+                (cons sn (hash-set var-summary result-id result)))
+              (apply loop (update `((,static-updaters . ,sn)
+                                    (,var-updaters    . ,vns)
+                                    (,edge-updaters   . ,es)))))))
       summary))
 
   (define (summarize-edge edge-binding static-node var-slot knowledge-graph)
     (define kedge (trapi-edge-binding->trapi-kedge knowledge-graph edge-binding))
     (if (edge-valid? static-node kedge) ; Valid if the predicate matches the direction in the qgraph
-        (let ((var-binding (string->symbol (jsexpr-object-ref kedge var-slot))))
+        (let ((var-binding (string->symbol (jsexpr-object-ref kedge var-slot)))
+              (static-binding (string->symbol (jsexpr-object-ref kedge (static-node-slot static-node)))))
           (list var-binding
-                (node-rules (trapi-node-binding->trapi-knode knowledge-graph var-binding))
+                (static-node-rules (trapi-node-binding->trapi-knode knowledge-graph static-binding))
+                (variable-node-rules (trapi-node-binding->trapi-knode knowledge-graph var-binding))
                 (edge-rules kedge)))
-        (list #f '() '())))
+        (list #f '() '() '())))
 
   (define (summarize-result result static-node var-slot knowledge-graph)
     (let loop ((edge-bindings (map (lambda (b)
                                      (string->symbol (jsexpr-object-ref (car b) 'id)))
                                      (jsexpr-object-values (jsexpr-object-ref result 'edge_bindings))))
-               (summary (list #f '() '())))
-      (if (null? edge-bindings)
-          summary
-          (loop (cdr edge-bindings)
-                (update-result-summary
-                  summary
-                  (summarize-edge (car edge-bindings) static-node var-slot knowledge-graph))))))
+               (summary (list #f '() '() '())))
+      (cond ((null? edge-bindings) summary)
+            (else
+              (define edge-summary (summarize-edge (car edge-bindings) static-node var-slot knowledge-graph))
+              (loop (cdr edge-bindings)
+                    (update-result-summary summary edge-summary))))))
   
   (define (summarize-answer answer summary)
     (define qgraph (jsexpr-object-ref answer 'query_graph))
@@ -267,39 +281,30 @@
                   summary
                   (summarize-result (car results) static-node var-slot kgraph) var-slot)))))
   
-  (map post-processing
-       (let loop ((answers trapi-answers)
-                 (summary (jsexpr-object)))
-         (if (null? answers)
-             (jsexpr-object-values summary)
-             (loop (cdr answers)
-                   (summarize-answer (car answers) summary))))))
+  (let loop ((answers trapi-answers)
+            (summary (cons (jsexpr-object) (jsexpr-object))))
+    (if (null? answers)
+        summary
+        (loop (cdr answers)
+              (summarize-answer (car answers) summary)))))
 
 (define (add-summary result)
   (define primary-predicates `(,(biolink-tag "treats") ,(biolink-tag "affects")))
-  (define (jsexpr-remove-duplicates answer kpaths)
-    (let loop ((kps kpaths)
-               (a answer)) 
-      (if (null? kps)
-          a
-          (loop (cdr kps)
-                (jsexpr-object-set-recursive a (car kps) 
-                  (remove-duplicates
-                    (jsexpr-object-ref-recursive a (car kps))))))))
-
   (define fda-path '(fda_info highest_fda_approval_status))
-  (define (add-toxicity-info answer)
-    (jsexpr-object-set-recursive
-      answer
-      '(subject toxicity_info level)
-      "Low"))
-  (define (add-last-publication_date answer)
-    (jsexpr-object-set-recursive answer '(edge last_publication_date) "1/1/2022"))
+
   (define summary
     (trapi-answers->summary
       (jsexpr-object-ref result 'data)
       primary-predicates
-      (make-summarize-rules ; node rules
+      (make-summarize-rules ; static node rules
+        `(,(aggregate-property 'name '(names))
+          ,(aggregate-property 'categories '(types))
+          ,(aggregate-attributes
+            `(,(biolink-tag "xref"))
+            'curies)
+        )
+      )
+      (make-summarize-rules ; variable node rules
         `(,(get-property 'name)
           ,(rename-property 'categories '(types))
           ,(rename-and-transform-attribute
@@ -324,15 +329,53 @@
             (lambda (evidence)
               (if (list? evidence)
                   (map id->link evidence)
-                  (map id->link (string-split evidence #rx",|\\|")))))))
-      (lambda (answer) ; answer post-processing 
-        (add-last-publication_date
-          (jsexpr-remove-duplicates 
-            (add-toxicity-info answer)
-            '((edge evidence) (edge secondary_predicates)))))))
-  (jsexpr-object-set result 'summary summary))
+                  (map id->link (string-split evidence #rx",|\\|")))))))))
+  
+  ; Post processing stuff
+  (define (add-toxicity-info answer)
+    (jsexpr-object-set-recursive
+      answer
+      '(subject toxicity_info level)
+      "Low"))
+  (define (add-last-publication_date answer)
+    (jsexpr-object-set-recursive answer '(edge last_publication_date) "1/1/2022"))
+  (define (jsexpr-remove-duplicates answer kpaths)
+    (let loop ((kps kpaths)
+               (a answer)) 
+      (if (null? kps)
+          a
+          (loop (cdr kps)
+                (jsexpr-object-set-recursive a (car kps) 
+                  (remove-duplicates
+                    (jsexpr-object-ref-recursive a (car kps))))))))
+  (define (apply-post-processing obj fs)
+    (let loop ((fs fs)
+               (obj obj))
+      (if (null? fs)
+          obj
+          (loop (cdr fs)
+                (map (car fs) obj)))))
 
-
+  (let ((sns (car summary))
+        (vs  (cdr summary)))
+    (jsexpr-object-set 
+      (jsexpr-object-set
+        result
+        'summary
+        (if (hash-empty? vs)
+            'null
+            (apply-post-processing
+              (jsexpr-object-values vs)
+              `(,add-toxicity-info
+                ,add-last-publication_date
+                ,(lambda (obj)
+                  (jsexpr-remove-duplicates
+                    obj
+                    '((edge evidence) (edge secondary_predicates))))))))
+      'static_node
+      (if (hash-empty? sns)
+          'null
+          (jsexpr-remove-duplicates sns '((names) (curies) (types)))))))
 
 (module+ test
   (require rackunit)
@@ -347,5 +390,7 @@
   ; If the predicate is not in the correct direction the edge is skipped
   (define summary-skip-edge (read-json (open-input-file "test/trapi/summary-skip-edge.json")))
   (check-equal? (add-summary summary-skip-edge)
-                (hash-set summary-skip-edge 'summary '()))
+                (hash-set (hash-set summary-skip-edge 'summary 'null)
+                          'static_node 'null))
+                          
 )

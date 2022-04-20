@@ -39,7 +39,7 @@
 (define (jsexpr-object-ref-recursive je ks (default #f))
   (let loop ((ks ks)
              (v je))
-    (if (or (not v) (null? ks))
+    (if (or (equal? v default) (null? ks))
         v
         (loop (cdr ks)
               (jsexpr-object-ref v (car ks) default)))))
