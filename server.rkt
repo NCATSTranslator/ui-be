@@ -127,7 +127,7 @@
     (match qstatus
       ('done
         (let ((result (pull-query-result qid)))
-          (response/OK/jsexpr (add-summary (make-response "done" result)))))
+          (response/OK/jsexpr (trapi:add-summary (make-response "done" result)))))
       ('running
         (response/OK/jsexpr (make-response "running")))
       (_
