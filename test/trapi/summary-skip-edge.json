@@ -1,0 +1,216 @@
+{
+  "data": [
+    {
+      "knowledge_graph": {
+        "edges": {
+          "35d85b622e9c3ec299409fe38588d3f0": {
+            "attributes": [
+              {
+                "attribute_type_id": "biolink:aggregator_knowledge_source",
+                "value": [
+                  "infores:biothings-explorer"
+                ],
+                "value_type_id": "biolink:InformationResource"
+              },
+              {
+                "attribute_type_id": "biolink:primary_knowledge_source",
+                "value": [
+                  "infores:semmeddb"
+                ],
+                "value_type_id": "biolink:InformationResource"
+              },
+              {
+                "attribute_type_id": "biolink:aggregator_knowledge_source",
+                "value": [
+                  "infores:biothings-semmeddb"
+                ],
+                "value_type_id": "biolink:InformationResource"
+              },
+              {
+                "attribute_type_id": "biolink:publications",
+                "value": [
+                  "PMID:17201744",
+                  "PMID:33358232",
+                  "PMID:16488434"
+                ]
+              },
+              {
+                "attribute_type_id": "biolink:original_object",
+                "value": "C0027497"
+              },
+              {
+                "attribute_type_id": "biolink:original_predicate",
+                "value": "TREATS"
+              },
+              {
+                "attribute_type_id": "biolink:original_subject",
+                "value": "C0002772"
+              },
+              {
+                "attribute_type_id": "original_object_name",
+                "value": "Nausea"
+              },
+              {
+                "attribute_type_id": "original_subject_name",
+                "value": "Analgesics, Opioid"
+              }
+            ],
+            "object": "UMLS:C0002772",
+            "predicate": "biolink:treats",
+            "subject": "HP:0002018"
+          }
+        },
+        "nodes": {
+          "HP:0002018": {
+            "attributes": [
+              {
+                "attribute_type_id": "biolink:xref",
+                "value": [
+                  "HP:0002018",
+                  "NCIT:C3258",
+                  "UMLS:C0027497",
+                  "MEDDRA:10016361",
+                  "MEDDRA:10028813",
+                  "MEDDRA:10028822",
+                  "MEDDRA:10028823",
+                  "MEDDRA:10037730",
+                  "SNOMEDCT:422587007",
+                  "MESH:D009325"
+                ]
+              },
+              {
+                "attribute_type_id": "biolink:synonym",
+                "value": [
+                  "Nausea"
+                ]
+              },
+              {
+                "attribute_type_id": "num_source_nodes",
+                "value": 442
+              },
+              {
+                "attribute_type_id": "num_target_nodes",
+                "value": 0
+              },
+              {
+                "attribute_type_id": "source_qg_nodes",
+                "value": [
+                  "n0"
+                ]
+              },
+              {
+                "attribute_type_id": "target_qg_nodes",
+                "value": []
+              }
+            ],
+            "categories": [
+              "biolink:PhenotypicFeature"
+            ],
+            "name": "Nausea"
+          },
+          "UMLS:C0002772": {
+            "attributes": [
+              {
+                "attribute_type_id": "biolink:xref",
+                "value": [
+                  "UMLS:C0002772"
+                ]
+              },
+              {
+                "attribute_type_id": "biolink:synonym",
+                "value": [
+                  "Analgesics, Opioid"
+                ]
+              },
+              {
+                "attribute_type_id": "num_source_nodes",
+                "value": 0
+              },
+              {
+                "attribute_type_id": "num_target_nodes",
+                "value": 2
+              },
+              {
+                "attribute_type_id": "source_qg_nodes",
+                "value": []
+              },
+              {
+                "attribute_type_id": "target_qg_nodes",
+                "value": [
+                  "n1"
+                ]
+              }
+            ],
+            "categories": [
+              "biolink:ChemicalEntity"
+            ],
+            "name": "Analgesics, Opioid"
+          }
+        }
+      },
+      "query_graph": {
+        "edges": {
+          "e0": {
+            "object": "n1",
+            "predicates": [
+              "biolink:treats"
+            ],
+            "subject": "n0"
+          }
+        },
+        "nodes": {
+          "n0": {
+            "categories": [
+              "biolink:ChemicalEntity"
+            ]
+          },
+          "n1": {
+            "categories": [
+              "biolink:NamedThing",
+              "biolink:Disease",
+              "biolink:PhenotypicFeature"
+            ],
+            "ids": [
+              "NCIT:C146764",
+              "UMLS:C0375548",
+              "NCIT:C131982",
+              "NCIT:C131983",
+              "UMLS:C3839628",
+              "EFO:0004888",
+              "HP:0002018",
+              "NCIT:C57839",
+              "UMLS:C0423584",
+              "MONDO:0008015"
+            ]
+          }
+        }
+      },
+      "results": [
+        {
+          "edge_bindings": {
+            "e0": [
+              {
+                "id": "35d85b622e9c3ec299409fe38588d3f0"
+              }
+            ]
+          },
+          "node_bindings": {
+            "n0": [
+              {
+                "id": "UMLS:C0002772"
+              }
+            ],
+            "n1": [
+              {
+                "id": "HP:0002018"
+              }
+            ]
+          },
+          "reasoner_id": "BTE",
+          "score": 1.2887853828146454
+        }
+      ]
+    }
+  ],
+  "status": "done"
+}

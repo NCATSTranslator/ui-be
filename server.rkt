@@ -117,8 +117,8 @@
 
 (define (/result req)
   (with-handlers ((exn:fail:contract?
-                  (lambda (e) (response/bad-request
-                                (failure-response "Result poll does not contain a 'qid' attribute")))))
+                  (lambda (e) (raise e))));(response/bad-request
+                                ;(failure-response "Result poll does not contain a 'qid' attribute")))))
     (define post-data (request-post-data/raw req))
     (define qid (and post-data (get-qid (bytes->jsexpr post-data))))
     (define qstatus (pull-query-status qid))
@@ -127,7 +127,7 @@
     (match qstatus
       ('done
         (let ((result (pull-query-result qid)))
-          (response/OK/jsexpr (make-response "done" result))))
+          (response/OK/jsexpr (add-summary (make-response "done" result)))))
       ('running
         (response/OK/jsexpr (make-response "running")))
       (_
