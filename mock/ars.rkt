@@ -16,7 +16,9 @@
   (hash "3" '("test/ars/3-1.json" "test/ars/3-2.json" "test/ars/3-3.json")
   ))
 
-(define (poster query) "mock query posted")
+(define (poster query)
+  (cons 'done query))
+
 (define (status-puller qid)
   (if (hash-has-key? mock-queries qid)
       'done
