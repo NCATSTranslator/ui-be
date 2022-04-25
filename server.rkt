@@ -18,17 +18,18 @@
   web-server/safety-limits
   json
   "common.rkt"
-  "trapi.rkt"
+  (prefix-in trapi: "trapi.rkt")
   (prefix-in ars:  "ars.rkt")
   (prefix-in mock: "mock/ars.rkt")
+  (prefix-in mock: "mock/trapi.rkt")
   "config.rkt"
   
   racket/pretty)
 
-(define-values (post-query pull-query-status pull-query-result)
+(define-values (post-query pull-query-status pull-query-result qgraph->trapi-query)
   (match (config-server-mode server-config) 
-    ('dev (values ars:poster ars:status-puller ars:result-puller))
-    ('demo (values mock:poster mock:status-puller mock:result-puller))
+    ('dev (values ars:poster ars:status-puller ars:result-puller trapi:qgraph->trapi-query))
+    ('demo (values mock:poster mock:status-puller mock:result-puller mock:qgraph->trapi-query))
     (_ (raise (server-config-exception
                 (format "Invalid server-mode given: ~a" (symbol->string (config-server-mode server-config)))
                 (current-continuation-marks))))))
