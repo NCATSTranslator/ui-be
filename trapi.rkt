@@ -11,7 +11,8 @@
   racket/set
   json
   "common.rkt"
-  "curie-search.rkt")
+  "curie-search.rkt"
+  "evidence.rkt")
 
 (provide
   qgraph->trapi-query
@@ -112,23 +113,6 @@
     (map (lambda (rule) (rule obj))
          rules)))
 
-(define (id->link id)
-  (match id
-    ((pregexp "^PMC[0-9]+$") (pmc-id->pubmed-article-link id))
-    ((pregexp "^PMID:")      (pm-id->pubmed-link (strip-id-tag id)))
-    ((pregexp "^DOI:")       (doi-id->doi-link (strip-id-tag id)))
-    ((pregexp "^NCT[0-9]+$") (nct-id->nct-link id))
-    (_ "Unknown supporting document type")))
-(define (strip-id-tag id)
-  (cadr (string-split id ":")))
-(define (pmc-id->pubmed-article-link id) 
-  (string-append "https://www.ncbi.nlm.nih.gov/pmc/articles/" id))
-(define (pm-id->pubmed-link id)
-  (string-append "https://pubmed.ncbi.nlm.nih.gov/" id))
-(define (doi-id->doi-link id)
-  (string-append "https://www.doi.org/" id))
-(define (nct-id->nct-link id)
-  (format "https://clinicaltrials.gov/search?id=%22~a%22" id))
 
 (define (fda-description->fda-level description)
   1)
@@ -328,17 +312,10 @@
             'evidence
             (lambda (evidence)
               (if (list? evidence)
-                  (map id->link evidence)
-                  (map id->link (string-split evidence #rx",|\\|")))))))))
+                  evidence
+                  (string-split evidence #rx",|\\|"))))))))
   
   ; Post processing stuff
-  (define (add-toxicity-info answer)
-    (jsexpr-object-set-recursive
-      answer
-      '(subject toxicity_info level)
-      "Low"))
-  (define (add-last-publication_date answer)
-    (jsexpr-object-set-recursive answer '(edge last_publication_date) "1/1/2022"))
   (define (jsexpr-remove-duplicates answer kpaths)
     (let loop ((kps kpaths)
                (a answer)) 
@@ -348,6 +325,7 @@
                 (jsexpr-object-set-recursive a (car kps) 
                   (remove-duplicates
                     (jsexpr-object-ref-recursive a (car kps))))))))
+
   (define (apply-post-processing obj fs)
     (let loop ((fs fs)
                (obj obj))
@@ -364,14 +342,9 @@
         'summary
         (if (hash-empty? vs)
             'null
-            (apply-post-processing
-              (jsexpr-object-values vs)
-              `(,add-toxicity-info
-                ,add-last-publication_date
-                ,(lambda (obj)
-                  (jsexpr-remove-duplicates
-                    obj
-                    '((edge evidence) (edge secondary_predicates))))))))
+              (apply-post-processing
+                (expand-evidence (jsexpr-object-values vs))
+                `(,add-last-publication-date))))
       'static_node
       (if (hash-empty? sns)
           'null
