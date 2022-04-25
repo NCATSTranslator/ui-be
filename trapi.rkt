@@ -183,19 +183,25 @@
 (define (trapi-node-binding->trapi-knode knowledge-graph node-binding)
   (trapi-binding->kobj knowledge-graph node-binding 'nodes))
 
+; ****
+; trapi-answers: a list of json results' `message` fields, one per KP
 (define (trapi-answers->summary trapi-answers primary-predicates static-node-rules
     variable-node-rules edge-rules)
   (define (make-static-node slot ids) (cons slot (list->set ids)))
   (define (static-node-slot node) (car node))
   (define (edge-valid? static-node kedge)
     (set-member? (cdr static-node) (jsexpr-object-ref kedge (car static-node))))
+
+  ; at this point it's impossible to follow what pieces the c[ad]*r's are pulling at
+  ; edge-summary looks like [^1]; `summary` is whatever happens when an edge-summary is integrated into it
   (define (update-result-summary summary edge-summary)
     (define result-id (car edge-summary))
     (list (if result-id result-id (car summary))
           (append (cadr summary) (cadr edge-summary))
           (append (caddr summary) (caddr edge-summary))
           (append (cadddr summary) (cadddr edge-summary))))
-    
+
+  ; * Oh, jesus, there's more
   (define (update-summary summary result-summary var-slot)
     (define result-id (car result-summary)) ; Must have a result ID at this point to be valid
     (define static-summary (car summary))
@@ -231,6 +237,7 @@
                                     (,edge-updaters   . ,es)))))))
       summary))
 
+  ; Tackle a single edge in the result set by looking at what the KG has for that edge
   (define (summarize-edge edge-binding static-node var-slot knowledge-graph)
     (define kedge (trapi-edge-binding->trapi-kedge knowledge-graph edge-binding))
     (if (edge-valid? static-node kedge) ; Valid if the predicate matches the direction in the qgraph
@@ -242,17 +249,22 @@
                 (edge-rules kedge)))
         (list #f '() '() '())))
 
+  ; tackles a single result element, with the two qgraph nodes + entire KG as input
   (define (summarize-result result static-node var-slot knowledge-graph)
     (let loop ((edge-bindings (map (lambda (b)
                                      (string->symbol (jsexpr-object-ref (car b) 'id)))
-                                     (jsexpr-object-values (jsexpr-object-ref result 'edge_bindings))))
+                                   (jsexpr-object-values (jsexpr-object-ref result 'edge_bindings)))) ; list of the ids of the edges in the KG
                (summary (list #f '() '() '())))
       (cond ((null? edge-bindings) summary)
             (else
-              (define edge-summary (summarize-edge (car edge-bindings) static-node var-slot knowledge-graph))
+             ; edge-summary = (<something-i-dont-understand>, <result of applying static node rules to static node>
+             ;                 <result of applying var node rules to var node>, <result of applying edge rules to edge>) [^1]
+              (define edge-summary (summarize-edge (car edge-bindings) static-node var-slot knowledge-graph)) ; ==summarize-edge
               (loop (cdr edge-bindings)
-                    (update-result-summary summary edge-summary))))))
-  
+                    (update-result-summary summary edge-summary)))))) ;; ==update-result-summary basically integrates `edge-summary` into `summary`
+
+  ; ****
+  ; this builds per-KP summary. answer = per KP result; summary = result accumulator
   (define (summarize-answer answer summary)
     (define qgraph (jsexpr-object-ref answer 'query_graph))
     (define kgraph (jsexpr-object-ref answer 'knowledge_graph))
@@ -272,21 +284,25 @@
                               qnodes
                               (string->symbol (jsexpr-object-ref qedge static-slot)))
                             'ids)))
+    ; * body of per-kp summary building, loops over each item in the message `results` array
     (let loop ((results (jsexpr-object-ref answer 'results))
                (summary summary))
       (if (null? results)
           summary
           (loop (cdr results)
-                (update-summary
+                (update-summary ;; update-summary is impossible to understand
                   summary
-                  (summarize-result (car results) static-node var-slot kgraph) var-slot)))))
-  
+                  (summarize-result (car results) static-node var-slot kgraph) ; static-node and var-slot are constructed from the qgraph; ==summarize-result
+                  var-slot)))))
+
+  ; ****
+  ; trapi-answers->summary MAIN BODY
   (let loop ((answers trapi-answers)
             (summary (cons (jsexpr-object) (jsexpr-object))))
     (if (null? answers)
         summary
         (loop (cdr answers)
-              (summarize-answer (car answers) summary)))))
+              (summarize-answer (car answers) summary))))) ; ==summarize-answer
 
 (define (add-summary result)
   (define primary-predicates `(,(biolink-tag "treats") ,(biolink-tag "affects")))
@@ -294,8 +310,10 @@
 
   (define summary
     (trapi-answers->summary
-      (jsexpr-object-ref result 'data)
+      (jsexpr-object-ref result 'data) ;; we presume this is a list of json objects, one per KP
       primary-predicates
+
+      ; static node rules
       (make-summarize-rules ; static node rules
         `(,(aggregate-property 'name '(names))
           ,(aggregate-property 'categories '(types))
@@ -304,6 +322,8 @@
             'curies)
         )
       )
+
+      ; variable node rules 
       (make-summarize-rules ; variable node rules
         `(,(get-property 'name)
           ,(rename-property 'categories '(types))
@@ -313,6 +333,8 @@
             (lambda (fda-description)
               (hash 'highest_fda_approval_status fda-description
                     'max_level (fda-description->fda-level fda-description))))))
+
+      ; edge rules
       (make-summarize-rules ; edge rules
         `(,(get-property-when
             'predicate
@@ -339,6 +361,8 @@
       "Low"))
   (define (add-last-publication_date answer)
     (jsexpr-object-set-recursive answer '(edge last_publication_date) "1/1/2022"))
+
+  ; why is this function so complex?
   (define (jsexpr-remove-duplicates answer kpaths)
     (let loop ((kps kpaths)
                (a answer)) 
@@ -348,6 +372,8 @@
                 (jsexpr-object-set-recursive a (car kps) 
                   (remove-duplicates
                     (jsexpr-object-ref-recursive a (car kps))))))))
+
+
   (define (apply-post-processing obj fs)
     (let loop ((fs fs)
                (obj obj))
@@ -356,8 +382,14 @@
           (loop (cdr fs)
                 (map (car fs) obj)))))
 
-  (let ((sns (car summary))
-        (vs  (cdr summary)))
+  ; ****
+  ; final result is put together here. It has keys: data, static_node, status, and summary
+  ; summary and static node are explicitly added here, so presumably the `result` object
+  ; already contains the other two
+  ;;; it would be great if the layout of this were not so nested and containing so much computation,
+  ;;; but were more directly attaching final answers to fields
+  (let ((sns (car summary)) ; helps to construct static node
+        (vs  (cdr summary))) ; helps to construct the `summary` property from our json
     (jsexpr-object-set 
       (jsexpr-object-set
         result
