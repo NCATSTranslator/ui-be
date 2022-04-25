@@ -14,56 +14,33 @@
   add-last-publication-date
   expand-evidence)
 
-(define (param->url-param param)
-  (format "&~a" (string-join param "=")))
-(define (params->url-params params)
-  (format "?~a~a"
-          (param->url-param (car params))
-          (apply string-append
-          (map param->url-param (cdr params)))))
 (define (id->link id)
   (match id
-    ((pregexp "^PMC[0-9]+$") (pmc-id->pubmed-article-link id))
-    ((pregexp "^PMID:")      (pm-id->pubmed-link (strip-id-tag id)))
-    ((pregexp "^DOI:")       (doi-id->doi-link (strip-id-tag id)))
-    ((pregexp "^NCT[0-9]+$") (nct-id->nct-link id))
+    ((pregexp "^PMC[0-9]+$") (pmcid->pubmed-article-link id))
+    ((pregexp "^PMID:")      (pmid->pubmed-link (strip-id-tag id)))
+    ((pregexp "^DOI:")       (doiid->doi-link (strip-id-tag id)))
+    ((pregexp "^NCT[0-9]+$") (nctid->nct-link id))
     (_ "Unknown supporting document type")))
 (define (strip-id-tag id)
   (cadr (string-split id ":")))
-(define (pmc-id->pubmed-article-link id) 
+(define (tag-pmid id)
+  (string-append "PMID:" id))
+(define (pmcid->pubmed-article-link id) 
   (string-append "https://www.ncbi.nlm.nih.gov/pmc/articles/" id))
-(define (pm-id->pubmed-link id)
+(define (pmid->pubmed-link id)
   (string-append "https://pubmed.ncbi.nlm.nih.gov/" id))
-(define (doi-id->doi-link id)
+(define (doiid->doi-link id)
   (string-append "https://www.doi.org/" id))
-(define (nct-id->nct-link id)
+(define (nctid->nct-link id)
   (format "https://clinicaltrials.gov/search?id=%22~a%22" id))
 
-(define (make-eutils-request action params)
-  (define eutils-host "eutils.ncbi.nlm.nih.gov")
-  (define eutils-uri (format "/entrez/eutils/~a.fcgi~a"
-                             action
-                             (params->url-params params)))
-  (match-define-values (_ _ resp-in)
-    (http-sendrecv eutils-host
-                  eutils-uri
-                  #:ssl? #t
-                  #:method #"GET"))
-  (xml->xexpr (document-element (read-xml resp-in))))
-
-(define (pubmed-fetch pmids)
-  (make-eutils-request "efetch" `(("db" "pubmed")
-                                  ("id" ,(string-join pmids ","))
-                                  ("retmode" "xml")
-                                  ("version" "2.0"))))
-
-(define (xexpr-date->string xexpr-date)
+(define (eutils-date->string eutils-date)
   (define (numeric-month? m)
     (string->number m))
 
-  (let ((date-elements (list (se-path* '(Day) xexpr-date)
-                             (se-path* '(Month) xexpr-date)
-                             (se-path* '(Year) xexpr-date))))
+  (let ((date-elements (list (se-path* '(Day) eutils-date)
+                             (se-path* '(Month) eutils-date)
+                             (se-path* '(Year) eutils-date))))
     (match date-elements 
       ((list #f #f #f) 'null)
       ((list _ #f y) y)
@@ -72,8 +49,23 @@
       ((list d m y) (date->string (string->date (string-join date-elements) "~d ~b ~Y") "~d/~m/~Y"))
       (_ 'null))))
 
-(define (tag-pmid id)
-  (string-append "PMID:" id))
+(define (make-eutils-request action params)
+  (define eutils-host "eutils.ncbi.nlm.nih.gov")
+  (define eutils-uri (format "/entrez/eutils/~a.fcgi~a"
+                             action
+                             (make-url-params params)))
+  (match-define-values (_ _ resp-in)
+    (http-sendrecv eutils-host
+                  eutils-uri
+                  #:ssl? #t
+                  #:method #"GET"))
+  (xml->xexpr (document-element (read-xml resp-in))))
+
+(define (pubmed-fetch pmids)
+  (make-eutils-request "efetch" `(("db" . "pubmed")
+                                  ("id" . ,(string-join pmids ","))
+                                  ("retmode" . "xml")
+                                  ("version" . "2.0"))))
 
 (define (expand-pmid-evidence pmids)
   (define (update-evidence evidence key attrs)
@@ -86,7 +78,7 @@
                    (cons (match abstract-fragment
                            ((? string?) abstract-fragment)
                            ((list _ _ text) text)
-                           (_ "<!!GDP!!>"))
+                           (_ abstract-fragment))
                          acc))
                  '() abstract-elements))))
 
@@ -112,7 +104,7 @@
                                           (make-immutable-hash
                                           `((url . ,(id->link tagged-pmid))
                                             (title . ,(or title 'null))
-                                            (pubdate . ,(xexpr-date->string pubdate))
+                                            (pubdate . ,(eutils-date->string pubdate))
                                             (abstract . ,(parse-abstract abstract-elements))))))))))))
 
   (define (expand-evidence answer)
@@ -125,7 +117,6 @@
                                                                          '())))))
              '()
              answer))
-    (displayln (length evidence-ids))
     (define test-evidence-ids (take evidence-ids 400))
     (define expanded-evidence (expand-pmid-evidence test-evidence-ids))
     (map (lambda (a)

@@ -26,6 +26,7 @@
   
   racket/pretty)
 
+; Expose mockable procedures based on config
 (define-values (post-query pull-query-status pull-query-result qgraph->trapi-query)
   (match (config-server-mode server-config) 
     ('dev (values ars:poster ars:status-puller ars:result-puller trapi:qgraph->trapi-query))
@@ -127,7 +128,7 @@
     (match qstatus
       ('done
         (let ((result (pull-query-result qid)))
-          (response/OK/jsexpr (add-summary (make-response "done" result)))))
+          (response/OK/jsexpr (trapi:add-summary (make-response "done" result)))))
       ('running
         (response/OK/jsexpr (make-response "running")))
       (_

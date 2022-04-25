@@ -26,6 +26,19 @@
     ((#"svg")  mime:svg)
     (else      mime:text)))
 
+(define (make-url-params params)
+  (define (make-url-param param)
+    (if param
+        (format "&~a" (if (pair? param)
+                          (string-append (car param) "=" (cdr param))
+                          param))
+        ""))
+
+  (format "?~a~a"
+          (make-url-param (car params))
+          (apply string-append
+          (map make-url-param (cdr params)))))
+
 (define (jsexpr-object)
   (hash))
 (define (jsexpr-object-keys je)
