@@ -19,9 +19,9 @@
   json
   "common.rkt"
   (prefix-in trapi: "trapi.rkt")
-  (prefix-in ars:  "ars.rkt")
-  (prefix-in mock: "mock/ars.rkt")
-  (prefix-in mock: "mock/trapi.rkt")
+  (prefix-in ars:   "ars.rkt")
+  (prefix-in mock:  "mock/ars.rkt")
+  (prefix-in mock:  "mock/trapi.rkt")
   "config.rkt"
   
   racket/pretty)
@@ -82,12 +82,7 @@
 (define (failure-response reason)
   (make-response "error" reason))
 
-(define (handle-static-file-request req)
-  (define uri (request-uri req))
-  (define resource (map path/param-path (url-path uri))) 
-  (define f (string-append document-root
-                              "/build/"
-                              (string-join resource "/")))
+(define (file->response f)
   (cond ((file-exists? f)
           (define ext (filename-extension f))
           (define mime-type (ext->mime-type ext))
@@ -95,8 +90,15 @@
           (response/OK data mime-type))
         (else (response/not-found))))
 
+(define (handle-static-file-request req)
+  (define uri (request-uri req))
+  (define resource (map path/param-path (url-path uri))) 
+  (define f (string-append document-root "build/" (string-join resource "/")))
+  (file->response f))
+
 (define (/index req)
-  (response/OK (string->bytes/utf-8 (include-template "build/index.html")) mime:html))
+  (define index.html (string-append document-root "build/index.html"))
+  (file->response index.html))
 
 ;TODO: ARS is down (no response from ARS)
 (define (/query req)
