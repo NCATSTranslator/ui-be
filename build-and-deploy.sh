@@ -4,6 +4,7 @@ user=${TRANSLTR_USER}
 host=${TRANSLTR_HOST}
 echo "Switching to main branch"
 git checkout main
+git pull
 ./frontend-build.sh
 
 echo "Packaging front end and back end build together"

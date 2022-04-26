@@ -9,6 +9,7 @@ echo "Downloading front end"
 git clone ${ui_repo}
 echo "Building front end"
 pushd ${ui_src} > /dev/null
+git pull
 echo "Installing front end dependencies"
 npm install
 echo "Building front end source"
