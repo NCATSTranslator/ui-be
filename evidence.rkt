@@ -117,7 +117,7 @@
                                                                          '())))))
              '()
              answer))
-    (define test-evidence-ids (take evidence-ids 400))
+    (define test-evidence-ids (take evidence-ids (min 400 (length evidence-ids))))
     (define expanded-evidence (expand-pmid-evidence test-evidence-ids))
     (map (lambda (a)
            (let loop ((edge-evidence (jsexpr-object-ref-recursive a '(edge evidence) '()))
