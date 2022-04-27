@@ -109,14 +109,13 @@
 
   (define (expand-evidence answer)
     (define evidence-ids
-      (foldl (lambda (a ids)
-               (append ids 
-                 (filter (lambda (id) (regexp-match (pregexp "^PMID:") id))
-                         (remove-duplicates (jsexpr-object-ref-recursive a
-                                                                         '(edge evidence) 
-                                                                         '())))))
-             '()
-             answer))
+      (remove-duplicates
+        (foldl (lambda (a ids)
+                (append ids 
+                  (filter (lambda (id) (regexp-match (pregexp "^PMID:") id))
+                          (jsexpr-object-ref-recursive a '(edge evidence) '()))))
+              '()
+              answer)))
     (define test-evidence-ids (take evidence-ids (min 400 (length evidence-ids))))
     (define expanded-evidence (expand-pmid-evidence test-evidence-ids))
     (map (lambda (a)

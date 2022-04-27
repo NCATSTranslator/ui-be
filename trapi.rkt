@@ -348,7 +348,11 @@
         (if (hash-empty? vs)
             'null
               (apply-post-processing
-                (expand-evidence (jsexpr-object-values vs))
+                (expand-evidence
+                  (map (lambda (answer)
+                         (jsexpr-remove-duplicates answer
+                                                   '((edge evidence))))
+                       (jsexpr-object-values vs)))
                 `(,add-last-publication-date))))
       'static_node
       (if (hash-empty? sns)
