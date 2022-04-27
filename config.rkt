@@ -11,5 +11,5 @@
 
 (define server-config (config
   'demo ; Server mode ('dev or 'demo)
-  (path->string (current-directory)) ; Document root for the server
+  (string-append (path->string (current-directory)) "/") ; Document root for the server
 ))
