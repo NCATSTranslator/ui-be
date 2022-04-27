@@ -19,7 +19,9 @@
 
 (define nr-host "name-resolution-sri.renci.org")
 (define (nr-lookup-uri term offset limit)
-  (format "/lookup?string=~a&offset=~a&limit=~a" term offset limit))
+  (format "/lookup~a" (make-url-params `(("string" . ,term)
+                                         ("offset" . ,offset)
+                                         ("limit"  . ,limit)))))
 (define (nr-searcher term offset limit)
   (match-define-values (_ _ resp-in)
     (http-sendrecv nr-host
@@ -27,7 +29,7 @@
                   #:ssl? #t
                   #:method #"POST"
                   #:headers `(,header:acc/json)))
-    (read-json resp-in))
+  (read-json resp-in))
 
 (module+ test
   (require rackunit)

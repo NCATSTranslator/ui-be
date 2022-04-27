@@ -26,6 +26,7 @@
   
   racket/pretty)
 
+; Expose mockable procedures based on config
 (define-values (post-query pull-query-status pull-query-result qgraph->trapi-query)
   (match (config-server-mode server-config) 
     ('dev (values ars:poster ars:status-puller ars:result-puller trapi:qgraph->trapi-query))
