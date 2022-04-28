@@ -2,10 +2,22 @@
 
 user=${TRANSLTR_USER}
 host=${TRANSLTR_HOST}
-echo "Switching to main branch"
-git checkout main
+while getopts b:f: arg; do
+  case $arg in
+  b) be_branch="${OPTARG}";;
+  f) fe_branch="${OPTARG}";;
+  ?) printf "Usage: %s: [-b <backend-branch>] [-f <frontend-branch>]\n" $0
+     exit 2;;
+  esac
+done
+
+if [ -z "${be_branch}" ]; then
+  be_branch="main"
+fi
+
+git checkout ${be_branch} 
 git pull
-./frontend-build.sh
+./frontend-build.sh ${fe_branch}
 
 echo "Packaging front end and back end build together"
 mkdir -p ui-build
