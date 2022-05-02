@@ -11,6 +11,7 @@
   racket/set
   json
   "common.rkt"
+  "config.rkt"
   "curie-search.rkt"
   "evidence.rkt")
 
@@ -20,8 +21,6 @@
 
 (define (index->node-id i) (string-add-prefix "n" (number->string i)))
 (define (index->edge-id i) (string-add-prefix "e" (number->string i)))
-(define (biolink-tag str) (string-add-prefix "biolink:" str))
-(define (make-biolink-tags strs) (map biolink-tag strs))
 
 ; Extracting TRAPI properties and attributes
 (define (make-mapping key transformer updater default)
@@ -274,12 +273,8 @@
               (summarize-answer (car answers) summary)))))
 
 (define (add-summary result)
-  (define primary-predicates (make-biolink-tags '("treats"
-                                                  "affects"
-                                                  "disrupts"
-                                                  "treated_by"
-                                                  "entity_negatively_regulates_entity")))
   (define fda-path '(fda_info highest_fda_approval_status))
+  (define primary-predicates (config-primary-predicates server-config))
 
   (define summary
     (trapi-answers->summary

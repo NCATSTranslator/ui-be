@@ -8,27 +8,18 @@
   xml
   xml/path
   srfi/19 
-  "common.rkt")
+  "common.rkt"
+  "config.rkt")
 
 (provide
   add-last-publication-date
   expand-evidence)
 
-(define (id->link id)
-  (match id
-    ((pregexp "^PMC[0-9]+$") (pmcid->pubmed-article-link id))
-    ((pregexp "^PMID:")      (pmid->pubmed-link (strip-id-tag id)))
-    ((pregexp "^DOI:")       (doiid->doi-link (strip-id-tag id)))
-    ((pregexp "^NCT[0-9]+$") (nctid->nct-link id))
-    (_ "Unknown supporting document type")))
-(define (strip-id-tag id)
-  (cadr (string-split id ":")))
+(define id->link (config-id->url server-config))
 (define (tag-pmid id)
   (string-append "PMID:" id))
 (define (pmcid->pubmed-article-link id) 
   (string-append "https://www.ncbi.nlm.nih.gov/pmc/articles/" id))
-(define (pmid->pubmed-link id)
-  (string-append "https://pubmed.ncbi.nlm.nih.gov/" id))
 (define (doiid->doi-link id)
   (string-append "https://www.doi.org/" id))
 (define (nctid->nct-link id)
@@ -50,15 +41,15 @@
       (_ 'null))))
 
 (define (make-eutils-request action params)
-  (define eutils-host "eutils.ncbi.nlm.nih.gov")
-  (define eutils-uri (format "/entrez/eutils/~a.fcgi~a"
-                             action
-                             (make-url-params params)))
+  (define eutils-endpoint (config-eutils-endpoint server-config))
+  (define eutils-host   (host eutils-endpoint))
+  (define eutils-uri    (uri  eutils-endpoint))
+  (define eutils-params (make-url-params params))
   (match-define-values (_ _ resp-in)
     (http-sendrecv eutils-host
-                  eutils-uri
-                  #:ssl? #t
-                  #:method #"GET"))
+                   (string-append eutils-uri eutils-params) 
+                   #:ssl? #t
+                   #:method #"GET"))
   (xml->xexpr (document-element (read-xml resp-in))))
 
 (define (pubmed-fetch pmids)

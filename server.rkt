@@ -27,13 +27,14 @@
   racket/pretty)
 
 ; Expose mockable procedures based on config
-(define-values (post-query pull-query-status pull-query-result qgraph->trapi-query)
-  (match (config-server-mode server-config) 
-    ('dev (values ars:poster ars:status-puller ars:result-puller trapi:qgraph->trapi-query))
-    ('demo (values mock:poster mock:status-puller mock:result-puller mock:qgraph->trapi-query))
-    (_ (raise (server-config-exception
-                (format "Invalid server-mode given: ~a" (symbol->string (config-server-mode server-config)))
-                (current-continuation-marks))))))
+(define-values (post-query pull-query-status pull-query-result)
+  (if (config-mock-ars? server-config)
+      (values mock:poster mock:status-puller mock:result-puller)
+      (values ars:poster ars:status-puller ars:result-puller)))
+(define qgraph->trapi-query
+  (if (config-mock-query? server-config)
+      mock:qgraph->trapi-query
+      trapi:qgraph->trapi-query))
 
 (define (get-qid req-data)
   (jsexpr-object-ref req-data 'qid))

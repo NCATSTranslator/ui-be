@@ -1,0 +1,19 @@
+---
+  document-root: No 
+  query-endpoint: No
+  curie-search-endpoint: No
+  eutils-endpoint:
+    host: "eutils.ncbi.nlm.nih.gov"
+    uri:  "/entrez/eutils/efetch.fcgi"
+  primary-predicates:
+    - "treats"
+    - "affects"
+    - "disrupts"
+    - "treated_by"
+    - "entity_negatively_regulates_entity"
+  id-url-mappings:
+    - id-pattern: "^PMID:"
+      url-format: "https://pubmed.ncbi.nlm.nih.gov/~a"
+      strip-tag?: Yes
+  mock-ars?: Yes
+  mock-query?: Yes 
