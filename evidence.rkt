@@ -9,7 +9,9 @@
   xml/path
   srfi/19 
   "common.rkt"
-  "config.rkt")
+  "config.rkt"
+  
+  racket/pretty)
 
 (provide
   add-last-publication-date
@@ -40,7 +42,7 @@
       ((list d m y) (date->string (string->date (string-join date-elements) "~d ~b ~Y") "~d/~m/~Y"))
       (_ 'null))))
 
-(define (make-eutils-request action params)
+(define (make-eutils-request action params (data #f))
   (define eutils-endpoint (config-eutils-endpoint server-config))
   (define eutils-host   (host eutils-endpoint))
   (define eutils-uri    (uri  eutils-endpoint))
@@ -49,29 +51,34 @@
     (http-sendrecv eutils-host
                    (string-append eutils-uri eutils-params) 
                    #:ssl? #t
-                   #:method #"GET"))
+                   #:method (if data #"POST" "#GET")
+                   #:data data))
   (xml->xexpr (document-element (read-xml resp-in))))
 
 (define (pubmed-fetch pmids)
-  (make-eutils-request "efetch" `(("db" . "pubmed")
-                                  ("id" . ,(string-join pmids ","))
+  (make-eutils-request "efetch" '(("db" . "pubmed")
                                   ("retmode" . "xml")
-                                  ("version" . "2.0"))))
+                                  ("version" . "2.0"))
+                                  (string->bytes/utf-8 (format "id=~a" (string-join pmids ",")))))
 
 (define (expand-pmid-evidence pmids)
   (define (update-evidence evidence key attrs)
     (jsexpr-object-set evidence key (make-immutable-hash attrs)))
+  (define (parse-fragment abstract-fragment)
+    (match abstract-fragment
+      ((? string?) abstract-fragment)
+      ((list _ _ fragment) (parse-fragment fragment))
+      ((list _ _ (and strs (? string?)) ...) (string-join strs))
+      (_ (pretty-print (format "Warning: skipping abstract fragment ~a" abstract-fragment))
+         "")))
   (define (parse-abstract abstract-elements)
     (if (null? abstract-elements)
         'null
         (string-join
+          (reverse
           (foldl (lambda (abstract-fragment acc)
-                   (cons (match abstract-fragment
-                           ((? string?) abstract-fragment)
-                           ((list _ _ text) text)
-                           (_ abstract-fragment))
-                         acc))
-                 '() abstract-elements))))
+                     (cons (parse-fragment abstract-fragment) acc))
+                   '() abstract-elements)))))
 
   (define untagged-ids (map (lambda (pmid) (cadr (string-split pmid ":")))
                        pmids))
@@ -107,8 +114,7 @@
                           (jsexpr-object-ref-recursive a '(edge evidence) '()))))
               '()
               answer)))
-    (define test-evidence-ids (take evidence-ids (min 400 (length evidence-ids))))
-    (define expanded-evidence (expand-pmid-evidence test-evidence-ids))
+    (define expanded-evidence (expand-pmid-evidence evidence-ids))
     (map (lambda (a)
            (let loop ((edge-evidence (jsexpr-object-ref-recursive a '(edge evidence) '()))
                       (expanded-edge-evidence '()))
