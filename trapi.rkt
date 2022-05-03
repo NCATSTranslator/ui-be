@@ -169,7 +169,8 @@
 
 (define (trapi-answers->summary trapi-answers primary-predicates static-node-rules
     variable-node-rules edge-rules)
-  (define (make-static-node slot ids) (cons slot (list->set ids)))
+  (define (make-static-node slot ids)
+    (and ids (not (jsexpr-null? ids)) (cons slot (list->set ids))))
   (define (static-node-slot node) (car node))
   (define (edge-valid? static-node kedge)
     (set-member? (cdr static-node) (jsexpr-object-ref kedge (car static-node))))
@@ -245,32 +246,34 @@
     (define qedge  (cdar (jsexpr-object->alist qedges)))
     (define qobj (string->symbol (jsexpr-object-ref qedge 'object)))
     (define qsub (string->symbol (jsexpr-object-ref qedge 'subject)))
+    (define qobj-ids (jsexpr-object-ref-recursive qnodes `(,qobj ids)))
+    (define qsub-ids (jsexpr-object-ref-recursive qnodes `(,qsub ids)))
     (define-values (static-slot var-slot)
-      (if (jsexpr-object-has-key? (jsexpr-object-ref qnodes qobj) 'ids)
+      (if (and qobj-ids (not (jsexpr-null? qobj-ids)))
           (values 'object 'subject)
           (values 'subject 'object)))
     (define static-node (make-static-node
                           static-slot
-                          (jsexpr-object-ref
-                            (jsexpr-object-ref
-                              qnodes
-                              (string->symbol (jsexpr-object-ref qedge static-slot)))
-                            'ids)))
-    (let loop ((results (jsexpr-object-ref answer 'results))
-               (summary summary))
-      (if (null? results)
-          summary
-          (loop (cdr results)
-                (update-summary
-                  summary
-                  (summarize-result (car results) static-node var-slot kgraph) var-slot)))))
+                          (if (equal? static-slot 'object)
+                              qobj-ids
+                              qsub-ids)))
+    (if (not static-node)
+        summary ; Skipping because there is an edge with only variable nodes 
+        (let loop ((results (jsexpr-object-ref answer 'results))
+                    (summary summary))
+          (if (null? results)
+              summary
+              (loop (cdr results)
+                    (update-summary
+                      summary
+                      (summarize-result (car results) static-node var-slot kgraph) var-slot))))))
   
-  (let loop ((answers trapi-answers)
-            (summary (cons (jsexpr-object) (jsexpr-object))))
-    (if (null? answers)
-        summary
-        (loop (cdr answers)
-              (summarize-answer (car answers) summary)))))
+      (let loop ((answers trapi-answers)
+                 (summary (cons (jsexpr-object) (jsexpr-object))))
+        (if (null? answers)
+            summary
+            (loop (cdr answers)
+                  (summarize-answer (car answers) summary)))))
 
 (define (add-summary result)
   (define fda-path '(fda_info highest_fda_approval_status))

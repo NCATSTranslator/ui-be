@@ -11,17 +11,22 @@
   racket/file
   net/http-client
   json
-  "common.rkt")
+  "common.rkt"
+  "config.rkt")
 
 (provide 
-  poster 
-  status-puller 
-  result-puller)
+  post-query 
+  pull-query-status 
+  pull-query-result)
 
-(define ars-host "ars.transltr.io")
-(define ars-post-uri "/ars/api/submit")
-(define (ars-pull-query-uri qid trace?)
-  (format "/ars/api/messages/~a~a" qid (if trace? "?trace=y" "")))
+(define ars-host (get-ars-config 'host))
+(define ars-post-uri (get-ars-config 'post-uri))
+(define (ars-pull-uri qid trace?)
+  (format "~a/~a~a" (get-ars-config 'pull-uri)
+                    qid
+                    (if trace?
+                        (make-url-params '(("trace" . "y")))
+                        "")))
 
 (define (ars-sendrecv uri (method #"GET") (data #f))
   (match-define-values (_ _ resp-out)
@@ -32,17 +37,17 @@
                    #:data data))
   (read-json resp-out))
 
-(define (poster query)
+(define (post-query query)
   (parse-submit-query-resp
     (ars-sendrecv ars-post-uri #"POST" (jsexpr->bytes query))))
 
-(define (status-puller qid)
+(define (pull-query-status qid)
   (parse-query-status
-    (get-fields (ars-sendrecv (ars-pull-query-uri qid #f)))))
+    (get-fields (ars-sendrecv (ars-pull-uri qid #f)))))
 
-(define (result-puller qid)
+(define (pull-query-result qid)
   (parse-query-result
-    (ars-sendrecv (ars-pull-query-uri qid #t))))
+    (ars-sendrecv (ars-pull-uri qid #t))))
 
 (define (get-results  jse) (jsexpr-object-ref jse 'results))
 (define (get-message  jse) (jsexpr-object-ref jse 'message))
@@ -71,7 +76,7 @@
 (define (parse-query-result resp)
   (define (pull-query-actor-result qid)
     (parse-query-actor-result
-      (ars-sendrecv (ars-pull-query-uri qid #f))))
+      (ars-sendrecv (ars-pull-uri qid #f))))
 
   (let ((status (get-status resp)))
     (if (equal? status "Done")

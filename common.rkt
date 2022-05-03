@@ -79,8 +79,8 @@
               (loop (cdr ks)
                     (jsexpr-object-ref o k (hash))))))))
 
-(define (yaml-ref ye k)
-  (hash-ref ye (symbol->string k)))
+(define (yaml-ref ye k (default #f))
+  (hash-ref ye (symbol->string k) default))
 
 (define (biolink-tag str) (string-add-prefix "biolink:" str))
 (define (make-biolink-tags strs) (map biolink-tag strs))

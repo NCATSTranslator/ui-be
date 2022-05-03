@@ -29,8 +29,8 @@
 ; Expose mockable procedures based on config
 (define-values (post-query pull-query-status pull-query-result)
   (if (config-mock-ars? server-config)
-      (values mock:poster mock:status-puller mock:result-puller)
-      (values ars:poster ars:status-puller ars:result-puller)))
+      (values mock:post-query mock:pull-query-status mock:pull-query-result)
+      (values ars:post-query ars:pull-query-status ars:pull-query-result)))
 (define qgraph->trapi-query
   (if (config-mock-query? server-config)
       mock:qgraph->trapi-query

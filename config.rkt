@@ -9,12 +9,13 @@
 (provide
   server-config 
   server-config-exception
+  get-ars-config
   (struct-out config)
 )
 
 (struct config
   (document-root
-   query-endpoint
+   ars-endpoint
    curie-search-endpoint
    eutils-endpoint
    primary-predicates
@@ -46,7 +47,7 @@
 
   (config
     (default-for (get 'document-root) (string-append (path->string (current-directory)) "/"))
-    (get 'query-endpoint) 
+    (get 'ars-endpoint) 
     (get 'curie-search-endpoint) 
     (get 'eutils-endpoint) 
     (make-biolink-tags (get 'primary-predicates))
@@ -55,6 +56,9 @@
     (get 'mock-query?)))
 
 (define server-config (make-server-config "configurations/full-mock.yaml"))
+(define (get-ars-config k)
+  (let ((ars-endpoint (config-ars-endpoint server-config)))
+    (if ars-endpoint (yaml-ref ars-endpoint k) #f)))
 
 ; TODO
 ; Set configuration file from command line
