@@ -45,7 +45,7 @@
 (define (pull-query-result qid)
   (define result (hash-ref mock-queries qid))
   (map (lambda (path)
-         (call-with-input-file (string-add-prefix (config-document-root server-config) path)
+         (call-with-input-file (string-add-prefix (config-document-root SERVER-CONFIG) path)
            (lambda (input-port)
               (jsexpr-object-ref (read-json input-port) 'message))))
        result))

@@ -2,12 +2,14 @@
 
 (require
   racket/function
+  racket/vector
+  racket/pretty
   yaml
   "common.rkt"
 )
 
 (provide
-  server-config 
+  SERVER-CONFIG 
   server-config-exception
   ars-config
   curie-search-config 
@@ -16,13 +18,16 @@
 
 (struct config
   (document-root
+   port
+   response-timeout
    ars-endpoint
    curie-search-endpoint
    eutils-endpoint
    primary-predicates
    id->url 
    mock-ars?
-   mock-query?)
+   mock-query?
+   yaml)
   #:prefab)
 (struct server-config-exception exn:fail:user ())
 
@@ -48,23 +53,27 @@
 
   (config
     (default-for (get 'document-root) (string-append (path->string (current-directory)) "/"))
+    (get 'port)
+    (get 'response-timeout)
     (get 'ars-endpoint) 
     (get 'curie-search-endpoint) 
     (get 'eutils-endpoint) 
     (make-biolink-tags (get 'primary-predicates))
     (id-url-mappings->proc (get 'id-url-mappings))
     (get 'mock-ars?) 
-    (get 'mock-query?)))
+    (get 'mock-query?)
+    config-data))
 
-(define server-config (make-server-config "configurations/production.yaml"))
+(define SERVER-CONFIG
+  (let ((cmd-args (current-command-line-arguments)))
+    (make-server-config (if (vector-empty? cmd-args)
+                            "configurations/full-mock.yaml"
+                            (vector-ref cmd-args 0)))))
 (define (get-config accessor key)
-  (let ((config (accessor server-config)))
+  (let ((config (accessor SERVER-CONFIG)))
     (if config (yaml-ref config key) #f)))
 (define (ars-config k) (get-config config-ars-endpoint k))
 (define (curie-search-config k) (get-config config-curie-search-endpoint k))
 
-; TODO
-; Set configuration file from command line
-
-; evidence.rkt
-; specify eutils service
+(pretty-display "\nSERVER CONFIGURATION")
+(pretty-display (yaml->string (config-yaml SERVER-CONFIG)))

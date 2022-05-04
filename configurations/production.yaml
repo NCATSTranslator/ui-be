@@ -1,5 +1,7 @@
 ---
   document-root: False
+  port: 8386
+  response-timeout: 300
   ars-endpoint:
     host: "ars.transltr.io" 
     post-uri: "/ars/api/submit"

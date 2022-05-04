@@ -297,7 +297,7 @@
 
 (define (add-summary result)
   (define fda-path '(fda_info highest_fda_approval_status))
-  (define primary-predicates (config-primary-predicates server-config))
+  (define primary-predicates (config-primary-predicates SERVER-CONFIG))
 
   (define summary
     (trapi-answers->summary

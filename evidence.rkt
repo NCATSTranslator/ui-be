@@ -17,7 +17,7 @@
   add-last-publication-date
   expand-evidence)
 
-(define id->link (config-id->url server-config))
+(define id->link (config-id->url SERVER-CONFIG))
 (define (tag-pmid id)
   (string-append "PMID:" id))
 (define (pmcid->pubmed-article-link id) 
@@ -43,7 +43,7 @@
       (_ 'null))))
 
 (define (make-eutils-request action params (data #f))
-  (define eutils-endpoint (config-eutils-endpoint server-config))
+  (define eutils-endpoint (config-eutils-endpoint SERVER-CONFIG))
   (define eutils-host   (host eutils-endpoint))
   (define eutils-uri    (uri  eutils-endpoint))
   (define eutils-params (make-url-params params))
