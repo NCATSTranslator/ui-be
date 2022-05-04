@@ -9,7 +9,8 @@
 (provide
   server-config 
   server-config-exception
-  get-ars-config
+  ars-config
+  curie-search-config 
   (struct-out config)
 )
 
@@ -55,23 +56,15 @@
     (get 'mock-ars?) 
     (get 'mock-query?)))
 
-(define server-config (make-server-config "configurations/full-mock.yaml"))
-(define (get-ars-config k)
-  (let ((ars-endpoint (config-ars-endpoint server-config)))
-    (if ars-endpoint (yaml-ref ars-endpoint k) #f)))
+(define server-config (make-server-config "configurations/production.yaml"))
+(define (get-config accessor key)
+  (let ((config (accessor server-config)))
+    (if config (yaml-ref config key) #f)))
+(define (ars-config k) (get-config config-ars-endpoint k))
+(define (curie-search-config k) (get-config config-curie-search-endpoint k))
 
 ; TODO
 ; Set configuration file from command line
-
-; ars.rkt
-; host
-; uri
-; params?
-
-; curie-search.rkt
-; host
-; uri
-; params?
 
 ; evidence.rkt
 ; specify eutils service

@@ -19,10 +19,10 @@
   pull-query-status 
   pull-query-result)
 
-(define ars-host (get-ars-config 'host))
-(define ars-post-uri (get-ars-config 'post-uri))
+(define ars-host (ars-config 'host))
+(define ars-post-uri (ars-config 'post-uri))
 (define (ars-pull-uri qid trace?)
-  (format "~a/~a~a" (get-ars-config 'pull-uri)
+  (format "~a/~a~a" (ars-config 'pull-uri)
                     qid
                     (if trace?
                         (make-url-params '(("trace" . "y")))

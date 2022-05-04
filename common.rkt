@@ -62,6 +62,8 @@
   (hash-set je k v))
 (define (jsexpr-object->alist je)
   (hash->list je))
+(define (jsexpr-object-count je)
+  (hash-count je))
 (define (jsexpr-object? je)
   (hash? je))
 (define (jsexpr-array? je)
