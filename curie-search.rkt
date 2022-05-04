@@ -4,7 +4,8 @@
   racket/match
   net/http-client
   json
-  "common.rkt")
+  "common.rkt"
+  "config.rkt")
 
 (provide 
   curie-search
@@ -17,11 +18,12 @@
 (define (curie-search searcher term offset limit)
   (parse-curie-search-result (searcher term offset limit)))
 
-(define nr-host "name-resolution-sri.renci.org")
+(define nr-host (curie-search-config 'host))
 (define (nr-lookup-uri term offset limit)
-  (format "/lookup~a" (make-url-params `(("string" . ,term)
-                                         ("offset" . ,offset)
-                                         ("limit"  . ,limit)))))
+  (format "~a~a" (curie-search-config 'uri)
+                 (make-url-params `(("string" . ,term)
+                                    ("offset" . ,(number->string offset))
+                                    ("limit"  . ,(number->string limit))))))
 (define (nr-searcher term offset limit)
   (match-define-values (_ _ resp-in)
     (http-sendrecv nr-host

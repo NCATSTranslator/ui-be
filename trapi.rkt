@@ -11,6 +11,7 @@
   racket/set
   json
   "common.rkt"
+  "config.rkt"
   "curie-search.rkt"
   "evidence.rkt")
 
@@ -20,8 +21,6 @@
 
 (define (index->node-id i) (string-add-prefix "n" (number->string i)))
 (define (index->edge-id i) (string-add-prefix "e" (number->string i)))
-(define (biolink-tag str) (string-add-prefix "biolink:" str))
-(define (make-biolink-tags strs) (map biolink-tag strs))
 
 ; Extracting TRAPI properties and attributes
 (define (make-mapping key transformer updater default)
@@ -126,7 +125,7 @@
         (let ((trapi-entry (match (car qnode-alist)
                             (`(type . ,type) `(categories . (,(biolink-tag type))))
                             (`(name . ,name) (and (not (empty-string? name))
-                                                   `(ids . ,(curie-searcher name))))
+                                                  `(ids . ,(curie-searcher name))))
                             (_ #f))))
           (loop (if trapi-entry
                     (cons trapi-entry trapi-qnode-alist)
@@ -170,10 +169,28 @@
 
 (define (trapi-answers->summary trapi-answers primary-predicates static-node-rules
     variable-node-rules edge-rules)
-  (define (make-static-node slot ids) (cons slot (list->set ids)))
+  (define (make-static-node slot ids)
+    (and ids (not (jsexpr-null? ids)) (cons slot (list->set ids))))
   (define (static-node-slot node) (car node))
+  (define (find-valid-qedge qedges)
+    (let loop ((qes (jsexpr-object->alist qedges))
+               (res #f))
+      (if (or res (null? qes))
+          res
+          (let ((qe (cdar qes)))
+            (loop (cdr qes)
+                  (if (ormap (lambda (p) (member p primary-predicates))
+                             (jsexpr-object-ref qe 'predicates))
+                      qe
+                      res))))))
   (define (edge-valid? static-node kedge)
     (set-member? (cdr static-node) (jsexpr-object-ref kedge (car static-node))))
+  (define (answer-valid? answer)
+    (let ((qg (jsexpr-object-ref answer 'query_graph)))
+      (and qg
+           (find-valid-qedge (jsexpr-object-ref qg 'edges))
+           (jsexpr-object-has-key? answer 'knowledge_graph)
+           (< (jsexpr-object-count (jsexpr-object-ref qg 'nodes))))))
   (define (update-result-summary summary edge-summary)
     (define result-id (car edge-summary))
     (list (if result-id result-id (car summary))
@@ -243,43 +260,44 @@
     (define kgraph (jsexpr-object-ref answer 'knowledge_graph))
     (define qnodes (jsexpr-object-ref qgraph 'nodes))
     (define qedges (jsexpr-object-ref qgraph 'edges))
-    (define qedge  (cdar (jsexpr-object->alist qedges)))
+    (define qedge  (find-valid-qedge qedges))
     (define qobj (string->symbol (jsexpr-object-ref qedge 'object)))
     (define qsub (string->symbol (jsexpr-object-ref qedge 'subject)))
+    (define qobj-ids (jsexpr-object-ref-recursive qnodes `(,qobj ids)))
+    (define qsub-ids (jsexpr-object-ref-recursive qnodes `(,qsub ids)))
     (define-values (static-slot var-slot)
-      (if (jsexpr-object-has-key? (jsexpr-object-ref qnodes qobj) 'ids)
+      (if (and qobj-ids (not (jsexpr-null? qobj-ids)))
           (values 'object 'subject)
           (values 'subject 'object)))
     (define static-node (make-static-node
                           static-slot
-                          (jsexpr-object-ref
-                            (jsexpr-object-ref
-                              qnodes
-                              (string->symbol (jsexpr-object-ref qedge static-slot)))
-                            'ids)))
-    (let loop ((results (jsexpr-object-ref answer 'results))
-               (summary summary))
-      (if (null? results)
-          summary
-          (loop (cdr results)
-                (update-summary
-                  summary
-                  (summarize-result (car results) static-node var-slot kgraph) var-slot)))))
+                          (if (equal? static-slot 'object)
+                              qobj-ids
+                              qsub-ids)))
+    (if (not static-node)
+        summary ; Skipping because there is an edge with only variable nodes 
+        (let loop ((results (jsexpr-object-ref answer 'results))
+                    (summary summary))
+          (if (null? results)
+              summary
+              (loop (cdr results)
+                    (update-summary
+                      summary
+                      (summarize-result (car results) static-node var-slot kgraph) var-slot))))))
   
-  (let loop ((answers trapi-answers)
-            (summary (cons (jsexpr-object) (jsexpr-object))))
-    (if (null? answers)
-        summary
-        (loop (cdr answers)
-              (summarize-answer (car answers) summary)))))
+      (let loop ((answers trapi-answers)
+                 (summary (cons (jsexpr-object) (jsexpr-object))))
+        (if (null? answers)
+            summary
+            (let ((a (car answers)))
+              (loop (cdr answers)
+                    (if (answer-valid? a)
+                        (summarize-answer a summary)
+                        summary))))))
 
 (define (add-summary result)
-  (define primary-predicates (make-biolink-tags '("treats"
-                                                  "affects"
-                                                  "disrupts"
-                                                  "treated_by"
-                                                  "entity_negatively_regulates_entity")))
   (define fda-path '(fda_info highest_fda_approval_status))
+  (define primary-predicates (config-primary-predicates SERVER-CONFIG))
 
   (define summary
     (trapi-answers->summary

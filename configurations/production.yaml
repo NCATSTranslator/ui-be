@@ -1,0 +1,26 @@
+---
+  document-root: False
+  port: 8386
+  response-timeout: 300
+  ars-endpoint:
+    host: "ars.transltr.io" 
+    post-uri: "/ars/api/submit"
+    pull-uri: "/ars/api/messages"
+  curie-search-endpoint:
+    host: "name-resolution-sri.renci.org" 
+    uri: "/lookup"
+  eutils-endpoint:
+    host: "eutils.ncbi.nlm.nih.gov"
+    uri:  "/entrez/eutils/efetch.fcgi"
+  primary-predicates:
+    - "treats"
+    - "affects"
+    - "disrupts"
+    - "treated_by"
+    - "entity_negatively_regulates_entity"
+  id-url-mappings:
+    - id-pattern: "^PMID:"
+      url-format: "https://pubmed.ncbi.nlm.nih.gov/~a"
+      strip-tag?: True
+  mock-ars?: False 
+  mock-query?: False 

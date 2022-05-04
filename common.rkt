@@ -1,5 +1,7 @@
 #lang racket/base
 
+(require racket/string)
+
 (provide (all-defined-out))
 
 (define (empty-string? str)
@@ -60,6 +62,8 @@
   (hash-set je k v))
 (define (jsexpr-object->alist je)
   (hash->list je))
+(define (jsexpr-object-count je)
+  (hash-count je))
 (define (jsexpr-object? je)
   (hash? je))
 (define (jsexpr-array? je)
@@ -76,3 +80,12 @@
             (jsexpr-object-set o k
               (loop (cdr ks)
                     (jsexpr-object-ref o k (hash))))))))
+
+(define (yaml-ref ye k (default #f))
+  (hash-ref ye (symbol->string k) default))
+
+(define (biolink-tag str) (string-add-prefix "biolink:" str))
+(define (make-biolink-tags strs) (map biolink-tag strs))
+(define (strip-id-tag id) (cadr (string-split id ":")))
+(define (host endpoint) (yaml-ref endpoint 'host))
+(define (uri endpoint)  (yaml-ref endpoint 'uri))

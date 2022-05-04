@@ -1,0 +1,21 @@
+---
+  document-root: False
+  port: 8386
+  response-timeout: 300
+  ars-endpoint: False
+  curie-search-endpoint: False
+  eutils-endpoint:
+    host: "eutils.ncbi.nlm.nih.gov"
+    uri:  "/entrez/eutils/efetch.fcgi"
+  primary-predicates:
+    - "treats"
+    - "affects"
+    - "disrupts"
+    - "treated_by"
+    - "entity_negatively_regulates_entity"
+  id-url-mappings:
+    - id-pattern: "^PMID:"
+      url-format: "https://pubmed.ncbi.nlm.nih.gov/~a"
+      strip-tag?: True
+  mock-ars?: True
+  mock-query?: True

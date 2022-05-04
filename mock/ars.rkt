@@ -6,9 +6,9 @@
   "../config.rkt")
 
 (provide
-  poster
-  status-puller
-  result-puller)
+  post-query 
+  pull-query-status 
+  pull-query-result)
 
 ; Format:
 ;   qid '(<path to result> ...)
@@ -35,17 +35,17 @@
         "e19" '("test/ars/e19.out-response.ara-explanatory.029df5b8-ee15-4319-9ae3-ec1013d44314.nres-135")
   ))
 
-(define (poster query)
+(define (post-query query)
   (cons 'done query))
 
-(define (status-puller qid)
+(define (pull-query-status qid)
   (if (hash-has-key? mock-queries qid)
       'done
       'error))
-(define (result-puller qid)
+(define (pull-query-result qid)
   (define result (hash-ref mock-queries qid))
   (map (lambda (path)
-         (call-with-input-file (string-add-prefix (config-document-root server-config) path)
+         (call-with-input-file (string-add-prefix (config-document-root SERVER-CONFIG) path)
            (lambda (input-port)
               (jsexpr-object-ref (read-json input-port) 'message))))
        result))
