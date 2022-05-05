@@ -18,14 +18,13 @@
   expand-evidence)
 
 (define id->link (config-id->url SERVER-CONFIG))
+(define id-patterns (config-id-patterns SERVER-CONFIG))
 (define (tag-pmid id)
   (string-append "PMID:" id))
 (define (pmcid->pubmed-article-link id) 
   (string-append "https://www.ncbi.nlm.nih.gov/pmc/articles/" id))
 (define (doiid->doi-link id)
   (string-append "https://www.doi.org/" id))
-(define (nctid->nct-link id)
-  (format "https://clinicaltrials.gov/search?id=%22~a%22" id))
 
 (define (eutils-date->string eutils-date)
   (define (numeric-month? m)
@@ -61,7 +60,7 @@
                                   ("version" . "2.0"))
                                   (string->bytes/utf-8 (format "id=~a" (string-join pmids ",")))))
 
-(define (expand-pmid-evidence pmids)
+(define (expand-pmid-evidence pmids expanded-evidence)
   (define (update-evidence evidence key attrs)
     (jsexpr-object-set evidence key (make-immutable-hash attrs)))
   (define (parse-fragment abstract-fragment)
@@ -85,7 +84,7 @@
   (define pubmed-articles (se-path*/list '(PubmedArticleSet)
                                          (pubmed-fetch untagged-ids)))
   (let loop ((articles pubmed-articles)
-             (expanded-evidence (jsexpr-object)))
+             (expanded-evidence expanded-evidence))
     (if (null? articles)
         expanded-evidence
         (let* ((a (car articles))
@@ -105,16 +104,43 @@
                                             (pubdate . ,(eutils-date->string pubdate))
                                             (abstract . ,(parse-abstract abstract-elements))))))))))))
 
-  (define (expand-evidence answer)
-    (define evidence-ids
+(define (expand-nct-evidence nctids expanded-evidence)
+  (let loop ((ids nctids)
+             (expanded-evidence expanded-evidence))
+    (if (null? ids)
+        expanded-evidence
+        (loop (cdr ids)
+              (jsexpr-object-set expanded-evidence
+                                 (string->symbol (car ids))
+                                 (make-immutable-hash
+                                   `((url . ,(id->link (car ids)))
+                                     (pubdate . null))))))))
+
+(define (expand-evidence answers)
+  (define (id->equiv-class id)
+    (let loop ((ps id-patterns)
+                (i 0))
+      (if (regexp-match? (pregexp (car ps)) id)
+          i
+          (loop (cdr ps) (+ i 1)))))
+  (define (get-all-valid-ids answers)
       (remove-duplicates
         (foldl (lambda (a ids)
                 (append ids 
-                  (filter (lambda (id) (regexp-match (pregexp "^PMID:") id))
+                (filter (lambda (id)
+                          (let loop ((ps id-patterns))
+                            (cond ((null? ps) #f)
+                                  ((regexp-match? (pregexp (car ps)) id) #t)
+                                  (else (loop (cdr ps))))))
                           (jsexpr-object-ref-recursive a '(edge evidence) '()))))
               '()
-              answer)))
-    (define expanded-evidence (expand-pmid-evidence evidence-ids))
+            answers)))
+  (define evidence-ids (group-by id->equiv-class (get-all-valid-ids answers)))
+  (define expanded-evidence (foldl (lambda (id-expander ids evidence)
+                                     (id-expander ids evidence))
+                                 (jsexpr-object)
+                                 (list expand-pmid-evidence expand-nct-evidence) ; This relies on ordering in config file :(
+                                 evidence-ids))
     (map (lambda (a)
            (let loop ((edge-evidence (jsexpr-object-ref-recursive a '(edge evidence) '()))
                       (expanded-edge-evidence '()))
@@ -124,7 +150,7 @@
                        (let* ((e (car edge-evidence))
                               (ee (jsexpr-object-ref expanded-evidence (string->symbol e))))
                          (if ee (cons ee expanded-edge-evidence) expanded-edge-evidence))))))
-         answer))
+        answers))
 
   (define (add-last-publication-date answer)
     (define (pad-date d)

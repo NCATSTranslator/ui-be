@@ -24,6 +24,7 @@
    curie-search-endpoint
    eutils-endpoint
    primary-predicates
+   id-patterns
    id->url 
    mock-ars?
    mock-query?
@@ -32,12 +33,12 @@
 (struct server-config-exception exn:fail:user ())
 
 (define (make-server-config config-file)
-  (define config-data (file->yaml config-file))
-  (define (get k) (yaml-ref config-data k))
-  (define (default-for v default)
-    (if v v default))
-
-  (define (id-url-mappings->proc id-url-mappings)
+(define config-data (file->yaml config-file))
+(define (get k) (yaml-ref config-data k))
+(define (default-for v default)
+  (if v v default))
+  
+(define (id-url-mappings->proc id-url-mappings)
     (lambda (id)
       (let loop ((res #f)
                  (mappings id-url-mappings))
@@ -59,6 +60,7 @@
     (get 'curie-search-endpoint) 
     (get 'eutils-endpoint) 
     (make-biolink-tags (get 'primary-predicates))
+    (map (lambda (mapping) (yaml-ref mapping 'id-pattern)) (get 'id-url-mappings))
     (id-url-mappings->proc (get 'id-url-mappings))
     (get 'mock-ars?) 
     (get 'mock-query?)
