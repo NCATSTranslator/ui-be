@@ -7,6 +7,9 @@
   eutils-endpoint:
     host: "eutils.ncbi.nlm.nih.gov"
     uri:  "/entrez/eutils/efetch.fcgi"
+  nct-endpoint:
+    host: "clinicaltrials.gov"
+    uri: "/api/query/study_fields"
   primary-predicates:
     - "treats"
     - "affects"

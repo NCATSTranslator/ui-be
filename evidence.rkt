@@ -6,8 +6,8 @@
   racket/list
   net/http-client
   xml
-  xml/path
   srfi/19 
+  json
   "common.rkt"
   "config.rkt"
   
@@ -17,6 +17,13 @@
   add-last-publication-date
   expand-evidence)
 
+  (define nct-fields '("NCTId"
+                       "BriefTitle"
+                       "StartDate"
+                       "CompletionDate"
+                       "BriefSummary"
+                       "LocationFacility"
+                       "LocationCountry"))
 (define id->link (config-id->url SERVER-CONFIG))
 (define id-patterns (config-id-patterns SERVER-CONFIG))
 (define (tag-pmid id)
@@ -26,20 +33,28 @@
 (define (doiid->doi-link id)
   (string-append "https://www.doi.org/" id))
 
-(define (eutils-date->string eutils-date)
+(define (date-elements->string date-elements)
   (define (numeric-month? m)
     (string->number m))
+  (define (abbrv-month? m)
+    (member m '("Jan" "Feb" "Mar" "Apr" "May" "Jun" "Jul" "Aug" "Sep" "Oct" "Nov" "Dec")))
 
-  (let ((date-elements (list (se-path* '(Day) eutils-date)
-                             (se-path* '(Month) eutils-date)
-                             (se-path* '(Year) eutils-date))))
-    (match date-elements 
-      ((list #f #f #f) 'null)
-      ((list _ #f y) y)
-      ((list d (? numeric-month? m) y) (string-join (if d date-elements (cdr date-elements)) "/"))
-      ((list #f m y) (date->string (string->date (string-join (cdr date-elements)) "~b ~Y") "~m/~Y"))
-      ((list d m y) (date->string (string->date (string-join date-elements) "~d ~b ~Y") "~d/~m/~Y"))
-      (_ 'null))))
+  (if (or (null? date-elements) (not (last date-elements)))
+      'null
+      (let ((padded-date (map (lambda (e) (if e e "01"))
+                              date-elements)))
+        (date->string
+          (match padded-date
+            ((list d (? numeric-month? m) y) (string->date (string-join padded-date) "~d ~m ~Y"))
+            ((list d (? abbrv-month?   m) y) (string->date (string-join padded-date) "~d ~b ~Y"))
+            ((list d m y) (string->date (string-join padded-date) "~d ~B ~Y")))
+          "~d/~m/~Y"))))
+
+(define (eutils-date->string eutils-date)
+  (let ((date-elements (list (tag->xexpr-value eutils-date 'Day)
+                             (tag->xexpr-value eutils-date 'Month)
+                             (tag->xexpr-value eutils-date 'Year))))
+    (date-elements->string date-elements)))
 
 (define (make-eutils-request action params (data #f))
   (define eutils-endpoint (config-eutils-endpoint SERVER-CONFIG))
@@ -62,7 +77,7 @@
 
 (define (expand-pmid-evidence pmids expanded-evidence)
   (define (update-evidence evidence key attrs)
-    (jsexpr-object-set evidence key (make-immutable-hash attrs)))
+    (jsexpr-object-set evidence key (make-jsexpr-object attrs)))
   (define (parse-fragment abstract-fragment)
     (match abstract-fragment
       ((? string?) abstract-fragment)
@@ -70,51 +85,117 @@
       ((list _ _ (and strs (? string?)) ...) (string-join strs))
       (_ (pretty-print (format "Warning: skipping abstract fragment ~a" abstract-fragment))
          "")))
-  (define (parse-abstract abstract-elements)
-    (if (null? abstract-elements)
+  (define (parse-abstract abstract-fragments)
+    (if (null? abstract-fragments)
         'null
         (string-join
-          (reverse
-          (foldl (lambda (abstract-fragment acc)
-                     (cons (parse-fragment abstract-fragment) acc))
-                   '() abstract-elements)))))
+          (reverse (foldl (lambda (abstract-fragment acc)
+                            (cons (parse-fragment abstract-fragment) acc))
+                            '() abstract-fragments)))))
+  (define (parse-journal journal-xexpr)
+    (let ((title  (tag->xexpr-value journal-xexpr 'Title))
+          (volume `("Volume" . ,(tag->xexpr-value journal-xexpr 'Volume)))
+          (issue  `("Issue"  . ,(tag->xexpr-value journal-xexpr 'Issue))))
+      (if (not title)
+          'null
+          (string-join
+            `(,title ,@(filter (lambda (str) str)
+                               (map (lambda (journal-fragment)
+                                       (let ((jfv (cdr journal-fragment)))
+                                         (and jfv (string-join (list (car journal-fragment) jfv)))))
+                                    (list volume issue))))
+                       ", "))))
 
   (define untagged-ids (map (lambda (pmid) (cadr (string-split pmid ":")))
                        pmids))
-  (define pubmed-articles (se-path*/list '(PubmedArticleSet)
-                                         (pubmed-fetch untagged-ids)))
+  (define pubmed-articles (tag->xexpr-fragments (pubmed-fetch untagged-ids)
+                                                'PubmedArticleSet))
   (let loop ((articles pubmed-articles)
              (expanded-evidence expanded-evidence))
     (if (null? articles)
         expanded-evidence
         (let* ((a (car articles))
-               (pmid (se-path* '(PMID) a))
-               (title (se-path* '(ArticleTitle) a))
-               (pubdate `(PubDate ,@(se-path*/list '(PubDate) a)))
-               (abstract-elements (se-path*/list '(AbstractText) a)))
+               (pmid               (tag->xexpr-value     a 'PMID))
+               (title              (tag->xexpr-value     a 'ArticleTitle))
+               (pubdate-xexpr      (tag->xexpr-subtree   a 'PubDate))
+               (journal-xexpr      (tag->xexpr-subtree   a 'Journal))
+               (abstract-fragments (tag->xexpr-fragments a 'AbstractText)))
           (loop (cdr articles)
                 (if (null? pmid)
                     expanded-evidence
                     (let ((tagged-pmid (tag-pmid pmid)))
                       (jsexpr-object-set expanded-evidence
                                           (string->symbol tagged-pmid)
-                                          (make-immutable-hash
-                                          `((url . ,(id->link tagged-pmid))
-                                            (title . ,(or title 'null))
-                                            (pubdate . ,(eutils-date->string pubdate))
-                                            (abstract . ,(parse-abstract abstract-elements))))))))))))
+                                          (make-jsexpr-object
+                                          `((type    . "publication")
+                                            (url     . ,(id->link tagged-pmid))
+                                            (title   . ,(or title 'null))
+                                            (dates   . ,(list (eutils-date->string pubdate-xexpr)))
+                                            (summary . ,(parse-abstract abstract-fragments))
+                                            (source  . ,(parse-journal journal-xexpr))))))))))))
+
+(define (nct-date->string date)
+  (if (jsexpr-null? date)
+      'null
+      (let ((date-elements (map (lambda (s) (string-trim s ","))
+                                (string-split date))))
+        (date-elements->string
+          (match date-elements
+            ((list y)     (list #f #f y))
+            ((list m y)   (list #f m y))
+            ((list m d y) (list d m y))
+            (_ date-elements))))))
+
+(define (nct-fetch nctids)
+  (define nct-endpoint (config-nct-endpoint SERVER-CONFIG))
+  (define nct-host     (host nct-endpoint))
+  (define nct-uri      (uri nct-endpoint))
+  (define nct-params (make-url-params `(("expr"   . ,(string-join nctids "+OR+"))
+                                        ("fields" . ,(string-join nct-fields "%2C"))
+                                        ("fmt"    . "json"))))
+  (match-define-values (_ _ resp-in)
+    (http-sendrecv nct-host
+                   (string-append nct-uri nct-params)
+                   #:ssl? #t
+                   #:method #"GET"))
+  
+  (with-handlers ((exn:fail:read?
+                    (lambda (ex) 
+                      (pretty-display "Warning: response from nct-fetch is not valid JSON")
+                      (pretty-display ex)
+                      (jsexpr-object))))
+    (read-json resp-in)))
 
 (define (expand-nct-evidence nctids expanded-evidence)
-  (let loop ((ids nctids)
+  (define clinical-trial-data (jsexpr-object-ref-recursive (nct-fetch nctids)
+                                                           '(StudyFieldsResponse StudyFields)
+                                                           '()))
+  (let loop ((ctes clinical-trial-data)
              (expanded-evidence expanded-evidence))
-    (if (null? ids)
+    (if (null? ctes)
         expanded-evidence
-        (loop (cdr ids)
-              (jsexpr-object-set expanded-evidence
-                                 (string->symbol (car ids))
-                                 (make-immutable-hash
-                                   `((url . ,(id->link (car ids)))
-                                     (pubdate . null))))))))
+        (let*-values (((e) (car ctes))
+                      ((nctid title start-date end-date summary facility country)
+                       (apply values (map (lambda (field)
+                                            (let ((v (jsexpr-object-ref e (string->symbol field) '())))
+                                              (if (null? v) 'null (car v))))
+                                          nct-fields))))
+          (loop (cdr ctes)
+                (jsexpr-object-set expanded-evidence
+                                  (string->symbol nctid)
+                                  (make-jsexpr-object
+                                    `((type    . "trial")
+                                      (url     . ,(id->link nctid))
+                                      (title   . ,title)
+                                      (dates   . ,(filter (lambda (d) (not (jsexpr-null? d)))
+                                                          (map nct-date->string
+                                                               (list start-date end-date))))
+                                      (summary . ,summary)
+                                      (source  . ,(match `(,facility ,country)
+                                                    ((list 'null 'null) 'null)
+                                                    ((list f 'null) f)
+                                                    ((list 'null c) c)
+                                                    (_ (string-append facility ", " country))))))))))))
 
 (define (expand-evidence answers)
   (define (id->equiv-class id)
@@ -153,33 +234,24 @@
         answers))
 
   (define (add-last-publication-date answer)
-    (define (pad-date d)
-      (let loop ((d d)
-                 (l (length d)))
-        (if (equal? (length d) 3)
-            d
-            (loop (cons "00" d)
-                  (+ l 1)))))
-    (define (date>? a b)
-      (let* ((aes (string-split a "/"))
-             (bes (string-split b "/"))
-             (res (foldl (lambda (ae be cmp)
-                           (cond ((not (equal? cmp '=)) cmp)
-                                 ((string>? ae be) '>)
-                                 ((string<? ae be) '<)
-                                 (else '=)))
-                         '=
-                         (reverse (pad-date aes))
-                         (reverse (pad-date bes)))))
-        (cond ((equal? res '<) #f)
-              ((equal? res '>) #t)
-              (else (> (length aes) (length bes)))))) ; If all else is equal choose the more specific one
+    (define (date>=? a b)
+      (let ((res (foldl (lambda (ae be cmp)
+                          (cond ((not (equal? cmp '=)) cmp)
+                                ((string>? ae be) '>)
+                                ((string<? ae be) '<)
+                                (else '=)))
+                        '=
+                        (reverse (string-split a "/"))
+                        (reverse (string-split b "/")))))
+        (not (equal? res '<))))
 
-    (define publication-dates (filter (lambda (e) (not (jsexpr-null? e)))
-                                      (map (lambda (e) (jsexpr-object-ref e 'pubdate))
-                                           (jsexpr-object-ref-recursive answer '(edge evidence)))))
+    (define publication-dates (filter (lambda (d) (and (not (jsexpr-null? d)) d))
+                                      (map (lambda (e)
+                                             (let ((dates (jsexpr-object-ref e 'dates)))
+                                               (and (not (null? dates)) (last dates))))
+                                      (jsexpr-object-ref-recursive answer '(edge evidence)))))
     (jsexpr-object-set-recursive answer
                                  '(edge last_publication_date)
                                  (if (null? publication-dates)
                                      'null
-                                     (car (sort publication-dates date>?)))))
+                                     (car (sort publication-dates date>=?)))))

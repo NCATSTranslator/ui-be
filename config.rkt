@@ -23,6 +23,7 @@
    ars-endpoint
    curie-search-endpoint
    eutils-endpoint
+   nct-endpoint
    primary-predicates
    id-patterns
    id->url 
@@ -59,6 +60,7 @@
     (get 'ars-endpoint) 
     (get 'curie-search-endpoint) 
     (get 'eutils-endpoint) 
+    (get 'nct-endpoint)
     (make-biolink-tags (get 'primary-predicates))
     (map (lambda (mapping) (yaml-ref mapping 'id-pattern)) (get 'id-url-mappings))
     (id-url-mappings->proc (get 'id-url-mappings))
