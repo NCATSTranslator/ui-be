@@ -76,6 +76,7 @@
                                   (string->bytes/utf-8 (format "id=~a" (string-join pmids ",")))))
 
 (define (expand-pmid-evidence pmids expanded-evidence)
+  (displayln (format "Processing ~a PMIDs" (length pmids)))
   (define (update-evidence evidence key attrs)
     (jsexpr-object-set evidence key (make-jsexpr-object attrs)))
   (define (parse-fragment abstract-fragment)
@@ -167,6 +168,7 @@
     (read-json resp-in)))
 
 (define (expand-nct-evidence nctids expanded-evidence)
+  (displayln (format "Processing ~a NCT IDs" (length nctids)))
   (define clinical-trial-data (jsexpr-object-ref-recursive (nct-fetch nctids)
                                                            '(StudyFieldsResponse StudyFields)
                                                            '()))
@@ -217,10 +219,11 @@
               '()
             answers)))
   (define evidence-ids (group-by id->equiv-class (get-all-valid-ids answers)))
+  (define evidence-expanders (take (list expand-pmid-evidence expand-nct-evidence) (length evidence-ids)))
   (define expanded-evidence (foldl (lambda (id-expander ids evidence)
                                      (id-expander ids evidence))
                                  (jsexpr-object)
-                                 (list expand-pmid-evidence expand-nct-evidence) ; This relies on ordering in config file :(
+                                 evidence-expanders
                                  evidence-ids))
     (map (lambda (a)
            (let loop ((edge-evidence (jsexpr-object-ref-recursive a '(edge evidence) '()))
