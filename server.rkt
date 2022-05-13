@@ -90,7 +90,7 @@
           (define mime-type (ext->mime-type ext))
           (define data (file->bytes f))
           (response/OK data mime-type))
-        (else (response/not-found))))
+        (else (/index))))
 
 (define (handle-static-file-request req)
   (define uri (request-uri req))
@@ -98,7 +98,7 @@
   (define f (string-append document-root "build/" (string-join resource "/")))
   (file->response f))
 
-(define (/index req)
+(define (/index (req #f))
   (define index.html (string-append document-root "build/index.html"))
   (file->response index.html))
 
