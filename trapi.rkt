@@ -369,7 +369,8 @@
                 (expand-evidence
                   (map (lambda (answer)
                          (jsexpr-remove-duplicates answer '((edge evidence))))
-                       (jsexpr-object-values vs)))
+                       (jsexpr-object-values vs))
+                  `(,(make-pmid-expander) ,(make-nct-expander)))
                 `(,add-last-publication-date))))
       'static_node
       (if (hash-empty? sns)

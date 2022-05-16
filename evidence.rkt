@@ -9,25 +9,33 @@
   srfi/19 
   json
   "common.rkt"
-  "config.rkt"
-  
+
   racket/pretty)
 
 (provide
   add-last-publication-date
-  expand-evidence)
+  expand-evidence
+  make-pmid-expander
+  make-nct-expander)
 
-  (define nct-fields '("NCTId"
-                       "BriefTitle"
-                       "StartDate"
-                       "CompletionDate"
-                       "BriefSummary"
-                       "LocationFacility"
-                       "LocationCountry"))
-(define id->link (config-id->url SERVER-CONFIG))
-(define id-patterns (config-id-patterns SERVER-CONFIG))
-(define (tag-pmid id)
-  (string-append "PMID:" id))
+(define (make-expander id-pattern
+                       ids->data
+                       data-parser)
+  (list id-pattern ids->data data-parser))
+(define (id-pattern expander) (car expander))
+(define (ids->data expander) (cadr expander))
+(define (data-parser expander) (caddr expander))
+
+(define (make-nct-expander (fetch-method nct-fetch))
+  (make-expander "^NCT[0-9]*"
+                 fetch-method
+                 nct-data-parser))
+
+(define (make-pmid-expander (fetch-method pubmed-fetch))
+  (make-expander "^PMID:"
+                 fetch-method
+                 pubmed-data-parser))
+
 (define (pmcid->pubmed-article-link id) 
   (string-append "https://www.ncbi.nlm.nih.gov/pmc/articles/" id))
 (define (doiid->doi-link id)
@@ -50,16 +58,10 @@
             ((list d m y) (string->date (string-join padded-date) "~d ~B ~Y")))
           "~d/~m/~Y"))))
 
-(define (eutils-date->string eutils-date)
-  (let ((date-elements (list (tag->xexpr-value eutils-date 'Day)
-                             (tag->xexpr-value eutils-date 'Month)
-                             (tag->xexpr-value eutils-date 'Year))))
-    (date-elements->string date-elements)))
-
+; Expander procedures for PubMed evidence
 (define (make-eutils-request action params (data #f))
-  (define eutils-endpoint (config-eutils-endpoint SERVER-CONFIG))
-  (define eutils-host   (host eutils-endpoint))
-  (define eutils-uri    (uri  eutils-endpoint))
+  (define eutils-host "eutils.ncbi.nlm.nih.gov")
+  (define eutils-uri  "/entrez/eutils/efetch.fcgi")
   (define eutils-params (make-url-params params))
   (match-define-values (_ _ resp-in)
     (http-sendrecv eutils-host
@@ -70,15 +72,26 @@
   (xml->xexpr (document-element (read-xml resp-in))))
 
 (define (pubmed-fetch pmids)
+  (displayln (format "Processing ~a PMIDs" (length pmids)))
+  (define untagged-ids (map (lambda (pmid) (cadr (string-split pmid ":")))
+                       pmids))
   (make-eutils-request "efetch" '(("db" . "pubmed")
                                   ("retmode" . "xml")
                                   ("version" . "2.0"))
-                                  (string->bytes/utf-8 (format "id=~a" (string-join pmids ",")))))
+                                  (string->bytes/utf-8 (format "id=~a" (string-join untagged-ids ",")))))
 
-(define (expand-pmid-evidence pmids expanded-evidence)
-  (displayln (format "Processing ~a PMIDs" (length pmids)))
+(define (pubmed-data-parser article-set expanded-evidence)
   (define (update-evidence evidence key attrs)
     (jsexpr-object-set evidence key (make-jsexpr-object attrs)))
+  (define (parse-date pubmed-date)
+    (let ((date-elements (list (tag->xexpr-value pubmed-date 'Day)
+                               (tag->xexpr-value pubmed-date 'Month)
+                               (tag->xexpr-value pubmed-date 'Year))))
+      (date-elements->string date-elements)))
+  (define (id->link id)
+    (format "https://pubmed.ncbi.nlm.nih.gov/~a" id))
+  (define (tag-pmid id)
+    (string-append "PMID:" id))
   (define (parse-fragment abstract-fragment)
     (match abstract-fragment
       ((? string?) abstract-fragment)
@@ -107,10 +120,7 @@
                                     (list volume issue))))
                        ", "))))
 
-  (define untagged-ids (map (lambda (pmid) (cadr (string-split pmid ":")))
-                       pmids))
-  (define pubmed-articles (tag->xexpr-fragments (pubmed-fetch untagged-ids)
-                                                'PubmedArticleSet))
+  (define pubmed-articles (tag->xexpr-fragments article-set 'PubmedArticleSet))
   (let loop ((articles pubmed-articles)
              (expanded-evidence expanded-evidence))
     (if (null? articles)
@@ -131,26 +141,23 @@
                                           `((type    . "publication")
                                             (url     . ,(id->link tagged-pmid))
                                             (title   . ,(or title 'null))
-                                            (dates   . ,(list (eutils-date->string pubdate-xexpr)))
+                                            (dates   . ,(list (parse-date pubdate-xexpr)))
                                             (summary . ,(parse-abstract abstract-fragments))
                                             (source  . ,(parse-journal journal-xexpr))))))))))))
 
-(define (nct-date->string date)
-  (if (jsexpr-null? date)
-      'null
-      (let ((date-elements (map (lambda (s) (string-trim s ","))
-                                (string-split date))))
-        (date-elements->string
-          (match date-elements
-            ((list y)     (list #f #f y))
-            ((list m y)   (list #f m y))
-            ((list m d y) (list d m y))
-            (_ date-elements))))))
+; Expander procedures for NCT evidence
+(define nct-fields '("NCTId"
+                     "BriefTitle"
+                     "StartDate"
+                     "CompletionDate"
+                     "BriefSummary"
+                     "LocationFacility"
+                     "LocationCountry"))
 
 (define (nct-fetch nctids)
-  (define nct-endpoint (config-nct-endpoint SERVER-CONFIG))
-  (define nct-host     (host nct-endpoint))
-  (define nct-uri      (uri nct-endpoint))
+  (displayln (format "Processing ~a NCT IDs" (length nctids)))
+  (define nct-host "clinicaltrials.gov")
+  (define nct-uri  "/api/query/study_fields")
   (define nct-params (make-url-params `(("expr"   . ,(string-join nctids "+OR+"))
                                         ("fields" . ,(string-join nct-fields "%2C"))
                                         ("fmt"    . "json"))))
@@ -167,12 +174,24 @@
                       (jsexpr-object))))
     (read-json resp-in)))
 
-(define (expand-nct-evidence nctids expanded-evidence)
-  (displayln (format "Processing ~a NCT IDs" (length nctids)))
-  (define clinical-trial-data (jsexpr-object-ref-recursive (nct-fetch nctids)
-                                                           '(StudyFieldsResponse StudyFields)
-                                                           '()))
-  (let loop ((ctes clinical-trial-data)
+(define (nct-data-parser trial-data expanded-evidence)
+  (define (id->link id)
+    (format "https://clinicaltrials.gov/search?id=%22~a%22" id))
+  (define (parse-date date)
+    (if (jsexpr-null? date)
+        'null
+        (let ((date-elements (map (lambda (s) (string-trim s ","))
+                                  (string-split date))))
+          (date-elements->string
+            (match date-elements
+              ((list y)     (list #f #f y))
+              ((list m y)   (list #f m y))
+              ((list m d y) (list d m y))
+              (_ date-elements))))))
+  (define clinical-trials (jsexpr-object-ref-recursive trial-data
+                                                       '(StudyFieldsResponse StudyFields)
+                                                       '()))
+  (let loop ((ctes clinical-trials)
              (expanded-evidence expanded-evidence))
     (if (null? ctes)
         expanded-evidence
@@ -190,7 +209,7 @@
                                       (url     . ,(id->link nctid))
                                       (title   . ,title)
                                       (dates   . ,(filter (lambda (d) (not (jsexpr-null? d)))
-                                                          (map nct-date->string
+                                                          (map parse-date 
                                                                (list start-date end-date))))
                                       (summary . ,summary)
                                       (source  . ,(match `(,facility ,country)
@@ -199,7 +218,8 @@
                                                     ((list 'null c) c)
                                                     (_ (string-append facility ", " country))))))))))))
 
-(define (expand-evidence answers)
+(define (expand-evidence answers expanders)
+  (define id-patterns (map id-pattern expanders))
   (define (id->equiv-class id)
     (let loop ((ps id-patterns)
                 (i 0))
@@ -219,11 +239,11 @@
               '()
             answers)))
   (define evidence-ids (group-by id->equiv-class (get-all-valid-ids answers)))
-  (define evidence-expanders (take (list expand-pmid-evidence expand-nct-evidence) (length evidence-ids)))
-  (define expanded-evidence (foldl (lambda (id-expander ids evidence)
-                                     (id-expander ids evidence))
+  (define expanded-evidence (foldl (lambda (expander ids evidence)
+                                     (let ((data ((ids->data expander) ids)))
+                                       ((data-parser expander) data evidence)))
                                  (jsexpr-object)
-                                 evidence-expanders
+                                 expanders 
                                  evidence-ids))
     (map (lambda (a)
            (let loop ((edge-evidence (jsexpr-object-ref-recursive a '(edge evidence) '()))
