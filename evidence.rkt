@@ -90,9 +90,9 @@
     (if (null? abstract-fragments)
         'null
         (string-join
-          (reverse (foldl (lambda (abstract-fragment acc)
-                            (cons (parse-fragment abstract-fragment) acc))
-                            '() abstract-fragments)))))
+          (map (lambda (af)
+                 (parse-fragment af))
+               abstract-fragments))))
   (define (parse-journal journal-xexpr)
     (let ((title  (tag->xexpr-value journal-xexpr 'Title))
           (volume `("Volume" . ,(tag->xexpr-value journal-xexpr 'Volume)))
