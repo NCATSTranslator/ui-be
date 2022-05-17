@@ -79,20 +79,18 @@
   (displayln (format "Processing ~a PMIDs" (length pmids)))
   (define (update-evidence evidence key attrs)
     (jsexpr-object-set evidence key (make-jsexpr-object attrs)))
-  (define (parse-fragment abstract-fragment)
-    (match abstract-fragment
-      ((? string?) abstract-fragment)
-      ((list _ _ fragment) (parse-fragment fragment))
-      ((list _ _ (and strs (? string?)) ...) (string-join strs))
-      (_ (pretty-print (format "Warning: skipping abstract fragment ~a" abstract-fragment))
-         "")))
   (define (parse-abstract abstract-fragments)
+    (define (parse-fragment abstract-fragment)
+      (match abstract-fragment
+        ((? string?) abstract-fragment)
+        ((list _ _ fragment) (parse-fragment fragment))
+        ((list _ _ (and strs (? string?)) ...) (string-join strs))
+        (_ (pretty-print (format "Warning: skipping abstract fragment ~a" abstract-fragment))
+          "")))
+
     (if (null? abstract-fragments)
         'null
-        (string-join
-          (map (lambda (af)
-                 (parse-fragment af))
-               abstract-fragments))))
+        (string-join (map parse-fragment abstract-fragments))))
   (define (parse-journal journal-xexpr)
     (let ((title  (tag->xexpr-value journal-xexpr 'Title))
           (volume `("Volume" . ,(tag->xexpr-value journal-xexpr 'Volume)))
