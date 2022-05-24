@@ -1,6 +1,9 @@
 #lang racket/base
 
-(require racket/string)
+(require
+  racket/string
+  xml/path)
+
 
 (provide (all-defined-out))
 
@@ -29,20 +32,24 @@
     (else      mime:text)))
 
 (define (make-url-params params)
-  (define (make-url-param param)
+  (define (make-url-param param separator)
     (if param
-        (format "&~a" (if (pair? param)
-                          (string-append (car param) "=" (cdr param))
-                          param))
+        (format "~a~a" separator
+                       (if (pair? param)
+                           (string-append (car param) "=" (cdr param))
+                           param))
         ""))
 
-  (format "?~a~a"
-          (make-url-param (car params))
+  (format "~a~a"
+          (make-url-param (car params) "?")
           (apply string-append
-          (map make-url-param (cdr params)))))
+                 (map (lambda (p) (make-url-param p "&"))
+                      (cdr params)))))
 
 (define (jsexpr-object)
   (hash))
+(define (make-jsexpr-object kvps)
+  (make-immutable-hash kvps))
 (define (jsexpr-object-keys je)
   (hash-keys je))
 (define (jsexpr-object-values je)
@@ -80,6 +87,13 @@
             (jsexpr-object-set o k
               (loop (cdr ks)
                     (jsexpr-object-ref o k (hash))))))))
+
+(define (tag->xexpr-value xexpr tag)
+  (se-path* `(,tag) xexpr))
+(define (tag->xexpr-fragments xexpr tag)
+  (se-path*/list `(,tag) xexpr))
+(define (tag->xexpr-subtree xexpr tag)
+  `(,tag ,@(tag->xexpr-fragments xexpr tag)))
 
 (define (yaml-ref ye k (default #f))
   (hash-ref ye (symbol->string k) default))

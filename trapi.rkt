@@ -368,8 +368,7 @@
               (apply-post-processing
                 (expand-evidence
                   (map (lambda (answer)
-                         (jsexpr-remove-duplicates answer
-                                                   '((edge evidence))))
+                         (jsexpr-remove-duplicates answer '((edge evidence))))
                        (jsexpr-object-values vs)))
                 `(,add-last-publication-date))))
       'static_node
