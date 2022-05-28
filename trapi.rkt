@@ -2,7 +2,7 @@
 ; Create FDA mapping
 #lang racket/base
 
-(require 
+(require
   racket/bool
   racket/string
   racket/match
@@ -30,7 +30,7 @@
 
 (define (rename-and-transform-property src-key kpath transformer)
   (make-mapping
-    src-key 
+    src-key
     transformer
     (lambda (v obj) (jsexpr-object-set-recursive obj kpath v))
     'null))
@@ -75,7 +75,7 @@
                  (result #f))
         (cond (result (transform result))
               ((null? as) 'null)
-              (else 
+              (else
                 (define a (car as))
                 (loop (cdr as)
                       (and (equal? attribute-id (jsexpr-object-ref a 'attribute_type_id))
@@ -136,7 +136,7 @@
   (hasheq 'subject    (index->node-id (jsexpr-object-ref qedge 'source))
           'object     (index->node-id (jsexpr-object-ref qedge 'target))
           'predicates `(,(biolink-tag (jsexpr-object-ref qedge 'type)))))
-  
+
 (define (qgraph->trapi-qgraph qgraph curie-searcher)
   (with-handlers ((exn:fail:contract? (lambda (e) #f)))
     (define (objs->trapi-objs key id-generator obj-converter)
@@ -150,7 +150,7 @@
                   (cons `(,(string->symbol (id-generator i)) . ,(obj-converter (car os)))
                         trapi-os)))))
     (hasheq 'nodes (objs->trapi-objs 'nodes index->node-id (lambda (qnode)
-                                                            (qnode->trapi-qnode qnode curie-searcher))) 
+                                                            (qnode->trapi-qnode qnode curie-searcher)))
             'edges (objs->trapi-objs 'edges index->edge-id qedge->trapi-qedge))))
 
 (define (qgraph->trapi-query qgraph (curie-searcher
@@ -197,7 +197,7 @@
           (append (cadr summary) (cadr edge-summary))
           (append (caddr summary) (caddr edge-summary))
           (append (cadddr summary) (cadddr edge-summary))))
-    
+
   (define (update-summary summary result-summary var-slot)
     (define result-id (car result-summary)) ; Must have a result ID at this point to be valid
     (define static-summary (car summary))
@@ -254,7 +254,7 @@
               (define edge-summary (summarize-edge (car edge-bindings) static-node var-slot knowledge-graph))
               (loop (cdr edge-bindings)
                     (update-result-summary summary edge-summary))))))
-  
+
   (define (summarize-answer answer summary)
     (define qgraph (jsexpr-object-ref answer 'query_graph))
     (define kgraph (jsexpr-object-ref answer 'knowledge_graph))
@@ -275,7 +275,7 @@
                               qobj-ids
                               qsub-ids)))
     (if (not static-node)
-        summary ; Skipping because there is an edge with only variable nodes 
+        summary ; Skipping because there is an edge with only variable nodes
         (let loop ((results (jsexpr-object-ref answer 'results))
                     (summary summary))
           (if (null? results)
@@ -284,7 +284,7 @@
                     (update-summary
                       summary
                       (summarize-result (car results) static-node var-slot kgraph) var-slot))))))
-  
+
       (let loop ((answers trapi-answers)
                  (summary (cons (jsexpr-object) (jsexpr-object))))
         (if (null? answers)
@@ -295,7 +295,7 @@
                         (summarize-answer a summary)
                         summary))))))
 
-(define (add-summary result)
+(define (add-summary result expanders)
   (define fda-path '(fda_info highest_fda_approval_status))
   (define primary-predicates (config-primary-predicates SERVER-CONFIG))
 
@@ -337,15 +337,15 @@
               (if (list? evidence)
                   evidence
                   (string-split evidence #rx",|\\|"))))))))
-  
+
   ; Post processing stuff
   (define (jsexpr-remove-duplicates answer kpaths)
     (let loop ((kps kpaths)
-               (a answer)) 
+               (a answer))
       (if (null? kps)
           a
           (loop (cdr kps)
-                (jsexpr-object-set-recursive a (car kps) 
+                (jsexpr-object-set-recursive a (car kps)
                   (remove-duplicates
                     (jsexpr-object-ref-recursive a (car kps))))))))
 
@@ -359,7 +359,7 @@
 
   (let ((sns (car summary))
         (vs  (cdr summary)))
-    (jsexpr-object-set 
+    (jsexpr-object-set
       (jsexpr-object-set
         result
         'summary
@@ -370,7 +370,7 @@
                   (map (lambda (answer)
                          (jsexpr-remove-duplicates answer '((edge evidence))))
                        (jsexpr-object-values vs))
-                  `(,(make-pmid-expander) ,(make-nct-expander)))
+                  expanders)
                 `(,add-last-publication-date))))
       'static_node
       (if (hash-empty? sns)
@@ -386,11 +386,10 @@
 
   (define test-invalid-qgraph (read-json (open-input-file "test/trapi/invalid-qgraph.json")))
   (check-false (qgraph->trapi-query test-invalid-qgraph))
-  
+
   ; If the predicate is not in the correct direction the edge is skipped
   (define summary-skip-edge (read-json (open-input-file "test/trapi/summary-skip-edge.json")))
   (check-equal? (add-summary summary-skip-edge)
                 (hash-set (hash-set summary-skip-edge 'summary 'null)
                           'static_node 'null))
-                          
 )
