@@ -6,7 +6,7 @@
   racket/list
   net/http-client
   xml
-  srfi/19 
+  srfi/19
   json
   "common.rkt"
 
@@ -36,7 +36,7 @@
                  fetch-method
                  pubmed-data-parser))
 
-(define (pmcid->pubmed-article-link id) 
+(define (pmcid->pubmed-article-link id)
   (string-append "https://www.ncbi.nlm.nih.gov/pmc/articles/" id))
 (define (doiid->doi-link id)
   (string-append "https://www.doi.org/" id))
@@ -65,7 +65,7 @@
   (define eutils-params (make-url-params params))
   (match-define-values (_ _ resp-in)
     (http-sendrecv eutils-host
-                   (string-append eutils-uri eutils-params) 
+                   (string-append eutils-uri eutils-params)
                    #:ssl? #t
                    #:method (if data #"POST" "#GET")
                    #:data data))
@@ -164,9 +164,9 @@
                    (string-append nct-uri nct-params)
                    #:ssl? #t
                    #:method #"GET"))
-  
+
   (with-handlers ((exn:fail:read?
-                    (lambda (ex) 
+                    (lambda (ex)
                       (pretty-display "Warning: response from nct-fetch is not valid JSON")
                       (pretty-display ex)
                       (jsexpr-object))))
@@ -207,7 +207,7 @@
                                       (url     . ,(id->link nctid))
                                       (title   . ,title)
                                       (dates   . ,(filter (lambda (d) (not (jsexpr-null? d)))
-                                                          (map parse-date 
+                                                          (map parse-date
                                                                (list start-date end-date))))
                                       (summary . ,summary)
                                       (source  . ,(match `(,facility ,country)
@@ -227,7 +227,7 @@
   (define (get-all-valid-ids answers)
       (remove-duplicates
         (foldl (lambda (a ids)
-                (append ids 
+                (append ids
                 (filter (lambda (id)
                           (let loop ((ps id-patterns))
                             (cond ((null? ps) #f)
@@ -241,7 +241,7 @@
                                      (let ((data ((ids->data expander) ids)))
                                        ((data-parser expander) data evidence)))
                                  (jsexpr-object)
-                                 expanders 
+                                 expanders
                                  evidence-ids))
     (map (lambda (a)
            (let loop ((edge-evidence (jsexpr-object-ref-recursive a '(edge evidence) '()))
@@ -276,3 +276,4 @@
                                  (if (null? publication-dates)
                                      'null
                                      (car (sort publication-dates date>=?)))))
+

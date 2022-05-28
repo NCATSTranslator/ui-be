@@ -5,7 +5,7 @@
 
 #lang racket/base
 
-(require 
+(require
   racket/string
   racket/path
   racket/file
@@ -23,7 +23,7 @@
   (prefix-in mock:  "mock/ars.rkt")
   (prefix-in mock:  "mock/trapi.rkt")
   "config.rkt"
-  
+
   racket/pretty)
 
 ; Expose mockable procedures based on config
@@ -94,7 +94,7 @@
 
 (define (handle-static-file-request req)
   (define uri (request-uri req))
-  (define resource (map path/param-path (url-path uri))) 
+  (define resource (map path/param-path (url-path uri)))
   (define f (string-append document-root "build/" (string-join resource "/")))
   (file->response f))
 
@@ -136,7 +136,7 @@
         (response/OK/jsexpr (make-response "running")))
       (_
         (response/internal-error (failure-response "Something went wrong"))))))
-        
+
 
 (define-values (dispatcher _)
   (dispatch-rules
@@ -144,12 +144,13 @@
     (("query")  #:method "post" /query)
     (("result") #:method "post" /result)
      (else                handle-static-file-request)))
-        
-(serve/servlet dispatcher 
+
+(serve/servlet dispatcher
     #:servlet-path ""
     #:servlet-regexp #rx""
     #:launch-browser? #f
     #:listen-ip #f
-    #:port (config-port SERVER-CONFIG) 
-    #:safety-limits (make-safety-limits 
+    #:port (config-port SERVER-CONFIG)
+    #:safety-limits (make-safety-limits
                       #:response-timeout (config-response-timeout SERVER-CONFIG)))
+

@@ -9,10 +9,10 @@
 )
 
 (provide
-  SERVER-CONFIG 
+  SERVER-CONFIG
   server-config-exception
   ars-config
-  curie-search-config 
+  curie-search-config
   (struct-out config)
 )
 
@@ -34,7 +34,7 @@
 (define (get k) (yaml-ref config-data k))
 (define (default-for v default)
   (if v v default))
-  
+
 (define (id-url-mappings->proc id-url-mappings)
     (lambda (id)
       (let loop ((res #f)
@@ -53,10 +53,10 @@
     (default-for (get 'document-root) (string-append (path->string (current-directory)) "/"))
     (get 'port)
     (get 'response-timeout)
-    (get 'ars-endpoint) 
-    (get 'curie-search-endpoint) 
+    (get 'ars-endpoint)
+    (get 'curie-search-endpoint)
     (make-biolink-tags (get 'primary-predicates))
-    (get 'mock-ars?) 
+    (get 'mock-ars?)
     (get 'mock-query?)
     config-data))
 
@@ -73,3 +73,4 @@
 
 (pretty-display "\nSERVER CONFIGURATION")
 (pretty-display (yaml->string (config-yaml SERVER-CONFIG)))
+

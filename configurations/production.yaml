@@ -3,11 +3,11 @@
   port: 8386
   response-timeout: 300
   ars-endpoint:
-    host: "ars.transltr.io" 
+    host: "ars.transltr.io"
     post-uri: "/ars/api/submit"
     pull-uri: "/ars/api/messages"
   curie-search-endpoint:
-    host: "name-resolution-sri.renci.org" 
+    host: "name-resolution-sri.renci.org"
     uri: "/lookup"
   primary-predicates:
     - "treats"
@@ -15,5 +15,6 @@
     - "disrupts"
     - "treated_by"
     - "entity_negatively_regulates_entity"
-  mock-ars?: False 
-  mock-query?: False 
+  mock-ars?: False
+  mock-query?: False
+
