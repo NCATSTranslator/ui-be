@@ -9,10 +9,10 @@
 )
 
 (provide
-  SERVER-CONFIG
+  SERVER-CONFIG 
   server-config-exception
   ars-config
-  curie-search-config
+  curie-search-config 
   (struct-out config)
 )
 
@@ -25,8 +25,6 @@
    primary-predicates
    mock-ars?
    mock-query?
-   mock-pmid?
-   mock-nct?
    yaml)
   #:prefab)
 (struct server-config-exception exn:fail:user ())
@@ -36,7 +34,7 @@
 (define (get k) (yaml-ref config-data k))
 (define (default-for v default)
   (if v v default))
-
+  
 (define (id-url-mappings->proc id-url-mappings)
     (lambda (id)
       (let loop ((res #f)
@@ -52,16 +50,14 @@
                   (loop res (cdr mappings))))))))
 
   (config
-    (default-for (get 'document-root) (path->string (current-directory)))
+    (default-for (get 'document-root) (string-append (path->string (current-directory)) "/"))
     (get 'port)
     (get 'response-timeout)
-    (get 'ars-endpoint)
-    (get 'curie-search-endpoint)
+    (get 'ars-endpoint) 
+    (get 'curie-search-endpoint) 
     (make-biolink-tags (get 'primary-predicates))
-    (get 'mock-ars?)
+    (get 'mock-ars?) 
     (get 'mock-query?)
-    (get 'mock-pmid?)
-    (get 'mock-nct?)
     config-data))
 
 (define SERVER-CONFIG
