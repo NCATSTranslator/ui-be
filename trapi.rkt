@@ -295,7 +295,7 @@
                         (summarize-answer a summary)
                         summary))))))
 
-(define (add-summary result)
+(define (add-summary result expanders)
   (define fda-path '(fda_info highest_fda_approval_status))
   (define primary-predicates (config-primary-predicates SERVER-CONFIG))
 
@@ -370,7 +370,7 @@
                   (map (lambda (answer)
                          (jsexpr-remove-duplicates answer '((edge evidence))))
                        (jsexpr-object-values vs))
-                  `(,(make-pmid-expander) ,(make-nct-expander)))
+                  expanders)
                 `(,add-last-publication-date))))
       'static_node
       (if (hash-empty? sns)
@@ -393,4 +393,3 @@
                 (hash-set (hash-set summary-skip-edge 'summary 'null)
                           'static_node 'null))
 )
-

@@ -18,10 +18,12 @@
   web-server/safety-limits
   json
   "common.rkt"
+  "evidence.rkt"
   (prefix-in trapi: "trapi.rkt")
   (prefix-in ars:   "ars.rkt")
   (prefix-in mock:  "mock/ars.rkt")
   (prefix-in mock:  "mock/trapi.rkt")
+  (prefix-in mock:  "mock/evidence.rkt")
   "config.rkt"
 
   racket/pretty)
@@ -35,6 +37,13 @@
   (if (config-mock-query? SERVER-CONFIG)
       mock:qgraph->trapi-query
       trapi:qgraph->trapi-query))
+(define evidence-expanders
+  (list (if (config-mock-pmid? SERVER-CONFIG)
+            (mock:make-pmid-expander)
+            (make-pmid-expander))
+        (if (config-mock-nct? SERVER-CONFIG)
+            (mock:make-nct-expander)
+            (make-nct-expander))))
 
 (define (get-qid req-data)
   (jsexpr-object-ref req-data 'qid))
@@ -131,12 +140,12 @@
     (match qstatus
       ('done
         (let ((result (pull-query-result qid)))
-          (response/OK/jsexpr (trapi:add-summary (make-response "done" result)))))
+          (response/OK/jsexpr (trapi:add-summary (make-response "done" result)
+                                                 evidence-expanders))))
       ('running
         (response/OK/jsexpr (make-response "running")))
       (_
         (response/internal-error (failure-response "Something went wrong"))))))
-
 
 (define-values (dispatcher _)
   (dispatch-rules
@@ -153,4 +162,3 @@
     #:port (config-port SERVER-CONFIG)
     #:safety-limits (make-safety-limits
                       #:response-timeout (config-response-timeout SERVER-CONFIG)))
-

@@ -12,4 +12,5 @@
     - "entity_negatively_regulates_entity"
   mock-ars?: True
   mock-query?: True
-
+  mock-pmid?: True
+  mock-nct?: True

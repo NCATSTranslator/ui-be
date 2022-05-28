@@ -137,7 +137,7 @@
                                           (string->symbol tagged-pmid)
                                           (make-jsexpr-object
                                           `((type    . "publication")
-                                            (url     . ,(id->link tagged-pmid))
+                                            (url     . ,(id->link pmid))
                                             (title   . ,(or title 'null))
                                             (dates   . ,(list (parse-date pubdate-xexpr)))
                                             (summary . ,(parse-abstract abstract-fragments))
@@ -215,7 +215,6 @@
                                                     ((list f 'null) f)
                                                     ((list 'null c) c)
                                                     (_ (string-append facility ", " country))))))))))))
-
 (define (expand-evidence answers expanders)
   (define id-patterns (map id-pattern expanders))
   (define (id->equiv-class id)
@@ -276,4 +275,3 @@
                                  (if (null? publication-dates)
                                      'null
                                      (car (sort publication-dates date>=?)))))
-
