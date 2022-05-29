@@ -275,25 +275,25 @@
                               qobj-ids
                               qsub-ids)))
     (if (not static-node)
-        summary ; Skipping because there is an edge with only variable nodes
-        (let loop ((results (jsexpr-object-ref answer 'results))
-                    (summary summary))
-          (if (null? results)
-              summary
-              (loop (cdr results)
-                    (update-summary
-                      summary
-                      (summarize-result (car results) static-node var-slot kgraph) var-slot))))))
+      summary ; Skipping because there is an edge with only variable nodes
+      (let loop ((results (jsexpr-object-ref answer 'results))
+                  (summary summary))
+        (if (null? results)
+          summary
+          (loop (cdr results)
+                (update-summary
+                  summary
+                  (summarize-result (car results) static-node var-slot kgraph) var-slot))))))
 
-      (let loop ((answers trapi-answers)
-                 (summary (cons (jsexpr-object) (jsexpr-object))))
-        (if (null? answers)
-            summary
-            (let ((a (car answers)))
-              (loop (cdr answers)
-                    (if (answer-valid? a)
-                        (summarize-answer a summary)
-                        summary))))))
+  (let loop ((answers trapi-answers)
+             (summary (cons (jsexpr-object) (jsexpr-object))))
+    (if (null? answers)
+      summary
+      (let ((a (car answers)))
+        (loop (cdr answers)
+              (if (answer-valid? a)
+                (summarize-answer a summary)
+                summary))))))
 
 (define (add-summary result expanders)
   (define fda-path '(fda_info highest_fda_approval_status))

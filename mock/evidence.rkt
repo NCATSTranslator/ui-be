@@ -40,14 +40,15 @@
                      ids))))))
 
 (define (mock-pubmed-fetch ids)
-  `(PubmedArticleSet ()
-                     ,@(map (lambda (article-set)
-                              (define as-xexpr (xml->xexpr (document-element article-set)))
-                              (tag->xexpr-subtree as-xexpr 'PubmedArticle))
-                            ((make-id-fetch 'pmid read-xml) ids))))
+  `(PubmedArticleSet
+     ()
+     ,@(map (lambda (article-set)
+              (define as-xexpr (xml->xexpr (document-element article-set)))
+              (tag->xexpr-subtree as-xexpr 'PubmedArticle))
+            ((make-id-fetch 'pmid read-xml) ids))))
 (define (mock-nct-fetch ids)
   (make-jsexpr-object
-    `((StudyFieldsResponse .
-                           ,(make-jsexpr-object
-                              `((StudyFields .
-                                             ,((make-id-fetch 'nct read-json) ids))))))))
+    `((StudyFieldsResponse
+        . ,(make-jsexpr-object
+             `((StudyFields
+                 . ,((make-id-fetch 'nct read-json) ids))))))))

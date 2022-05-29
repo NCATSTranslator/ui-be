@@ -74,7 +74,7 @@
 (define (pubmed-fetch pmids)
   (displayln (format "Processing ~a PMIDs" (length pmids)))
   (define untagged-ids (map (lambda (pmid) (cadr (string-split pmid ":")))
-                       pmids))
+                            pmids))
   (make-eutils-request "efetch" '(("db" . "pubmed")
                                   ("retmode" . "xml")
                                   ("version" . "2.0"))
