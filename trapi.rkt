@@ -277,7 +277,7 @@
     (if (not static-node)
       summary ; Skipping because there is an edge with only variable nodes
       (let loop ((results (jsexpr-object-ref answer 'results))
-                  (summary summary))
+                 (summary summary))
         (if (null? results)
           summary
           (loop (cdr results)

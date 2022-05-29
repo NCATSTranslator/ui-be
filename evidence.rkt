@@ -219,20 +219,19 @@
   (define id-patterns (map id-pattern expanders))
   (define (group-ids ids)
     (define (id->equiv-class id)
-      (let loop ((ps id-patterns)
-                  (i 0))
-        (if (regexp-match? (pregexp (car ps)) id)
-            i
-            (loop (cdr ps) (+ i 1)))))
+      (ormap
+        (lambda (pattern i)
+          (and (regexp-match? (pregexp pattern) id) i))
+        id-patterns (range (length id-patterns))))
 
     (define groups (make-vector (length expanders) '()))
-    (let loop ((ids ids))
-      (if (null? ids)
-        (vector->list groups)
-        (let* ((id (car ids))
-               (id-class (id->equiv-class id)))
-          (vector-set! groups id-class (cons id (vector-ref groups id-class)))
-          (loop (cdr ids))))))
+    (for-each
+      (lambda (id)
+        (let ((id-class (id->equiv-class id)))
+          (vector-set! groups id-class (cons id (vector-ref groups id-class)))))
+      ids)
+    (vector->list groups))
+
   (define (get-all-valid-ids answers)
       (remove-duplicates
         (foldl (lambda (a ids)
