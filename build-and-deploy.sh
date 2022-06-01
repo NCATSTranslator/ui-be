@@ -15,7 +15,7 @@ if [ -z "${be_branch}" ]; then
   be_branch="main"
 fi
 
-git checkout ${be_branch} 
+git checkout ${be_branch}
 git pull
 ./frontend-build.sh ${fe_branch}
 
