@@ -5,7 +5,7 @@
 
 #lang racket/base
 
-(require 
+(require
   racket/string
   racket/path
   racket/file
@@ -18,12 +18,14 @@
   web-server/safety-limits
   json
   "common.rkt"
+  "evidence.rkt"
   (prefix-in trapi: "trapi.rkt")
   (prefix-in ars:   "ars.rkt")
   (prefix-in mock:  "mock/ars.rkt")
   (prefix-in mock:  "mock/trapi.rkt")
+  (prefix-in mock:  "mock/evidence.rkt")
   "config.rkt"
-  
+
   racket/pretty)
 
 ; Expose mockable procedures based on config
@@ -35,6 +37,13 @@
   (if (config-mock-query? SERVER-CONFIG)
       mock:qgraph->trapi-query
       trapi:qgraph->trapi-query))
+(define evidence-expanders
+  (list (if (config-mock-pmid? SERVER-CONFIG)
+            (mock:make-pmid-expander)
+            (make-pmid-expander))
+        (if (config-mock-nct? SERVER-CONFIG)
+            (mock:make-nct-expander)
+            (make-nct-expander))))
 
 (define (get-qid req-data)
   (jsexpr-object-ref req-data 'qid))
@@ -94,7 +103,7 @@
 
 (define (handle-static-file-request req)
   (define uri (request-uri req))
-  (define resource (map path/param-path (url-path uri))) 
+  (define resource (map path/param-path (url-path uri)))
   (define f (string-append document-root "build/" (string-join resource "/")))
   (file->response f))
 
@@ -131,12 +140,12 @@
     (match qstatus
       ('done
         (let ((result (pull-query-result qid)))
-          (response/OK/jsexpr (trapi:add-summary (make-response "done" result)))))
+          (response/OK/jsexpr (trapi:add-summary (make-response "done" result)
+                                                 evidence-expanders))))
       ('running
         (response/OK/jsexpr (make-response "running")))
       (_
         (response/internal-error (failure-response "Something went wrong"))))))
-        
 
 (define-values (dispatcher _)
   (dispatch-rules
@@ -144,12 +153,12 @@
     (("query")  #:method "post" /query)
     (("result") #:method "post" /result)
      (else                handle-static-file-request)))
-        
-(serve/servlet dispatcher 
+
+(serve/servlet dispatcher
     #:servlet-path ""
     #:servlet-regexp #rx""
     #:launch-browser? #f
     #:listen-ip #f
-    #:port (config-port SERVER-CONFIG) 
-    #:safety-limits (make-safety-limits 
+    #:port (config-port SERVER-CONFIG)
+    #:safety-limits (make-safety-limits
                       #:response-timeout (config-response-timeout SERVER-CONFIG)))

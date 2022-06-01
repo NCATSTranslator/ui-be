@@ -4,24 +4,13 @@
   response-timeout: 300
   ars-endpoint: False
   curie-search-endpoint: False
-  eutils-endpoint:
-    host: "eutils.ncbi.nlm.nih.gov"
-    uri:  "/entrez/eutils/efetch.fcgi"
-  nct-endpoint:
-    host: "clinicaltrials.gov"
-    uri: "/api/query/study_fields"
   primary-predicates:
     - "treats"
     - "affects"
     - "disrupts"
     - "treated_by"
     - "entity_negatively_regulates_entity"
-  id-url-mappings:
-    - id-pattern: "^PMID:"
-      url-format: "https://pubmed.ncbi.nlm.nih.gov/~a"
-      strip-tag?: True
-    - id-pattern: "^NCT[0-9]*"
-      url-format: "https://clinicaltrials.gov/search?id=%22~a%22"
-      strip-tag?: False
   mock-ars?: True
   mock-query?: True
+  mock-pmid?: True
+  mock-nct?: True
