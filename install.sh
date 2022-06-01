@@ -2,6 +2,7 @@
 build_dir="$( pwd )/ui-build"
 backend_target=/opt/transltr
 frontend_target=/srv/build
+config_target=/etc/transltr
 test_target=/srv/test
 
 function backup
@@ -20,6 +21,7 @@ echo "Beginning install"
 echo "Backing up old UI installation"
 backup ${backend_target}
 backup ${frontend_target}
+backup ${config_target}
 backup ${test_target}
 echo "Done backing up old UI installation"
 
@@ -27,6 +29,7 @@ echo "Installing UI"
 pushd ${build_dir} > /dev/null
 cp -r *.rkt mock ${backend_target}
 cp -r build/* ${frontend_target}
+cp -r configurations/* ${config_target}
 cp -r test/* ${test_target}
 popd > /dev/null
 echo "Done installing UI"
