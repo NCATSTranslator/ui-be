@@ -2,6 +2,10 @@
 ; Create FDA mapping
 #lang racket/base
 
+(provide
+  qgraph->trapi-query
+  add-summary)
+
 (require
   racket/bool
   racket/string
@@ -13,11 +17,10 @@
   "common.rkt"
   "config.rkt"
   "curie-search.rkt"
-  "evidence.rkt")
+  "evidence.rkt"
 
-(provide
-  qgraph->trapi-query
-  add-summary)
+  racket/pretty)
+
 
 (define (index->node-id i) (string-add-prefix "n" (number->string i)))
 (define (index->edge-id i) (string-add-prefix "e" (number->string i)))
@@ -166,6 +169,134 @@
   (trapi-binding->kobj knowledge-graph edge-binding 'edges))
 (define (trapi-node-binding->trapi-knode knowledge-graph node-binding)
   (trapi-binding->kobj knowledge-graph node-binding 'nodes))
+
+(define (get-binding-id bindings key)
+  (string->symbol (jsexpr-object-ref (car (jsexpr-object-ref bindings key)) 'id)))
+(define (flatten-bindings bindings)
+  (foldl (lambda (binding ids)
+            (append ids (jsexpr-map (lambda (obj) (string->symbol (jsexpr-object-ref obj 'id)))
+                                    binding)))
+          '() (jsexpr-object-values bindings)))
+
+; An rgraph is a list of nodes and a list of directed edges
+(define (make-rgraph nodes edges) (cons nodes edges))
+(define (rgraph-nodes rgraph) (car rgraph))
+(define (rgraph-edges rgraph) (cdr rgraph))
+(define (result->rgraph result)
+  (make-rgraph (flatten-bindings (jsexpr-object-ref result 'node_bindings))
+               (flatten-bindings (jsexpr-object-ref result 'edge_bindings))))
+
+(define (make-redge->edge-id rgraph kgraph)
+  (define redge->edge-id
+    (make-immutable-hash
+      (map (lambda (eid)
+             (let ((kedge (trapi-edge-binding->trapi-kedge kgraph eid)))
+               (cons eid (cons (string->symbol (jsexpr-object-ref kedge 'subject))
+                               (string->symbol (jsexpr-object-ref kedge 'object))))))
+           (rgraph-edges rgraph))))
+
+  (lambda (redge)
+    (hash-ref redge->edge-id redge)))
+
+(define (make-rnode->out-edges rgraph kgraph)
+  (define redge->edge-id (make-redge->edge-id rgraph kgraph))
+  (define rnode->out-edges
+    (let loop ((edges (rgraph-edges rgraph))
+               (res (hash)))
+      (if (null? edges)
+        res
+        (loop (cdr edges)
+              (let* ((redge (car edges))
+                     (edge-id (redge->edge-id redge))
+                     (subject (car edge-id))
+                     (object (cdr edge-id)))
+                (hash-set res
+                          subject
+                          (cons (cons redge object) (hash-ref res subject '()))))))))
+  (lambda (rnode)
+    ; By defaulting to an empty list we are saying to ignore all paths that are not the
+    ; terminal node and where the node does not appear in any edge where the node is the
+    ; subject.
+    (hash-ref rnode->out-edges rnode '())))
+
+(define (rgraph-fold proc init acc)
+  (let loop ((obj-left init)
+             (res acc))
+    (if (null? obj-left)
+      res
+      (let* ((expansion (proc (car obj-left)))
+             (new-obj-left (car expansion))
+             (new-res (cdr expansion)))
+        (loop (append new-obj-left (cdr obj-left))
+              (append new-res res))))))
+
+; Node rules must be able to support several different types
+(define (trapi-creative-answers->summary trapi-answers node-rules edge-rules)
+  (define empty-summary (hash 'paths '()   ; Result trees
+                              'nodes '()   ; Node set
+                              'edges '())) ; Edge set
+  (define (merge-summaries s r)
+    (define (merge-attribute-by-key s r k)
+      (append (hash-ref s k) (hash-ref r k)))
+    (hash 'paths (merge-attribute-by-key s r 'paths)
+          'nodes (merge-attribute-by-key s r 'nodes)
+          'edges (merge-attribute-by-key s r 'edges)))
+
+  (define (summarize-list summary objs update summarize)
+    (foldl (lambda (obj s) (update s (summarize obj)))
+           summary
+           objs))
+
+  ; Return a pair (key, update) for an edge
+  (define (summarize-edge edge-binding-id kgraph)
+    (let* ((edge (trapi-edge-binding->trapi-kedge kgraph edge-binding-id))
+           (edge-key (cons (jsexpr-object-ref edge 'subject)
+                           (jsexpr-object-ref edge 'object))))
+      (cons edge-key (edge-rules edge))))
+
+  ; Return a pair (key, update) for a node
+  (define (summarize-node node-binding-id kgraph)
+    (cons node-binding-id (node-rules (trapi-node-binding->trapi-knode kgraph node-binding-id))))
+
+  (define (rgraph->summary result kgraph)
+    (define node-bindings (jsexpr-object-ref result 'node_bindings))
+    (define rgraph (result->rgraph result))
+    (define drug    (get-binding-id node-bindings 'drug))
+    (define disease (get-binding-id node-bindings 'disease))
+    (define rnode->out-edges (make-rnode->out-edges rgraph kgraph))
+    (define rgraph-paths
+      (rgraph-fold (lambda (path)
+                     (let ((current-rnode (car path)))
+                       (if (equal? current-rnode disease)
+                         (cons '() `(,path))
+                         (cons (filter (lambda (p) p)
+                                       (map (lambda (e)
+                                              (let ((next-edge (car e))
+                                                    (next-node (cdr e)))
+                                                (if (member next-node path)
+                                                  #f
+                                                  (cons next-node (cons next-edge path)))))
+                                       (rnode->out-edges current-rnode)))
+                               '()))))
+                   `((,drug))
+                   '()))
+    (hash 'paths rgraph-paths
+          'nodes (rgraph-nodes rgraph)
+          'edges (rgraph-edges rgraph)))
+
+  (define (summarize-answer answer)
+    (summarize-list
+      empty-summary
+      (jsexpr-object-ref answer 'results)
+      merge-summaries
+      (lambda (result)
+        (rgraph->summary result (jsexpr-object-ref answer 'knowledge_graph)))))
+
+  (summarize-list
+    empty-summary
+    trapi-answers
+    merge-summaries
+    summarize-answer))
 
 (define (trapi-answers->summary trapi-answers primary-predicates static-node-rules
     variable-node-rules edge-rules)
@@ -389,7 +520,7 @@
 
   ; If the predicate is not in the correct direction the edge is skipped
   (define summary-skip-edge (read-json (open-input-file "test/trapi/summary-skip-edge.json")))
-  (check-equal? (add-summary summary-skip-edge)
+  (check-equal? (add-summary summary-skip-edge '())
                 (hash-set (hash-set summary-skip-edge 'summary 'null)
                           'static_node 'null))
 )

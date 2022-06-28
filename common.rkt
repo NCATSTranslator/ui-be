@@ -87,6 +87,8 @@
             (jsexpr-object-set o k
               (loop (cdr ks)
                     (jsexpr-object-ref o k (hash))))))))
+(define (jsexpr-map proc je)
+  (map proc je))
 
 (define (tag->xexpr-value xexpr tag)
   (se-path* `(,tag) xexpr))
