@@ -14,9 +14,9 @@
   "common.rkt"
   "config.rkt")
 
-(provide 
-  post-query 
-  pull-query-status 
+(provide
+  post-query
+  pull-query-status
   pull-query-result)
 
 (define ars-host (ars-config 'host))
