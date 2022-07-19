@@ -107,25 +107,26 @@
   (file->response index.html))
 
 ;TODO: ARS is down (no response from ARS)
-(define (make-query-endpoint req->trapi-query)
+(define (make-query-endpoint qgraph->trapi-query)
   (lambda (req)
-    (with-handlers ((exn:fail:contract?
-                    (lambda (e) (response/bad-request (failure-response "Query is not valid JSON")))))
-      (define trapi-query (req->trapi-query req))
-      (cond (trapi-query
-              (define post-resp (post-query trapi-query))
-              (pretty-print post-resp)
-              (match (car post-resp)
-                ('error (response/internal-error (failure-response "The ARS could not process the query")))
-                (_  (response/OK/jsexpr (make-response "success" (cdr post-resp))))))
-            (else
-              (response/bad-request (failure-response "Query could not be converted to TRAPI")))))))
+    (with-handlers ((exn:fail:read?
+                      (lambda (e) (response/bad-request (failure-response "Query is not valid JSON"))))
+                    (exn:fail?
+                      (lambda (e) (response/internal-error (failure-response "Internal server error")))))
+      (let ((post-data (request-post-data/raw req)))
+        (define trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data))))
+        (cond (trapi-query
+                (define post-resp (post-query trapi-query))
+                (pretty-print post-resp)
+                (match (car post-resp)
+                  ('error (response/internal-error (failure-response "The ARS could not process the query")))
+                  (_  (response/OK/jsexpr (make-response "success" (cdr post-resp))))))
+              ((not post-data)
+                (response/bad-request (failure-response "No query in POST data")))
+              (else
+                (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))))
 
- (define /query
-   (make-query-endpoint
-     (lambda (req)
-       (let ((post-data (request-post-data/raw req)))
-         (and post-data (qgraph->trapi-query (bytes->jsexpr post-data)))))))
+ (define /query (make-query-endpoint qgraph->trapi-query))
 
 (define /creative-query
   (lambda (req) (response/internal-error (failure-response "Not implemented"))))
