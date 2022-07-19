@@ -4,6 +4,7 @@
 
 (provide
   qgraph->trapi-query
+  disease->creative-query
   answers->summary)
 
 (require
@@ -137,6 +138,9 @@
           'object     (index->node-id (jsexpr-object-ref qedge 'target))
           'predicates `(,(biolink-tag (jsexpr-object-ref qedge 'type)))))
 
+(define (trapi-qgraph->trapi-message trapi-qgraph)
+  (hasheq 'message (hasheq 'query_graph trapi-qgraph)))
+
 (define (qgraph->trapi-qgraph qgraph curie-searcher)
   (with-handlers ((exn:fail:contract? (lambda (e) #f)))
     (define (objs->trapi-objs key id-generator obj-converter)
@@ -157,8 +161,26 @@
                                       (lambda (name)
                                         (curie-search nr-searcher name 0 10))))
   (define trapi-qgraph (qgraph->trapi-qgraph qgraph curie-searcher))
-  (and trapi-qgraph
-       (hasheq 'message (hasheq 'query_graph trapi-qgraph))))
+  (and trapi-qgraph (trapi-qgraph->trapi-message trapi-qgraph)))
+
+(define (disease->creative-query disease-obj (curie-searcher
+                                               (lambda (name)
+                                                 (curie-search nr-searcher name 0 10))))
+  (define (disease->trapi-qgraph disease)
+    (hasheq 'nodes
+            (hasheq 'drug
+                    (hasheq 'categories `(,(biolink-tag "ChemicalEntity")))
+                    'disease
+                    (hasheq 'ids        (curie-searcher disease)
+                            'categories `(,(biolink-tag "Disease"))))
+            'edges
+            (hasheq 'treats
+                    (hasheq 'subject        "drug"
+                            'object         "disease"
+                            'predicates     `(,(biolink-tag "treats"))
+                            'knowledge_type "inferred"))))
+
+  (hasheq 'message (hasheq 'query_graph (disease->trapi-qgraph (jsexpr-object-ref disease-obj 'disease)))))
 
 (define (trapi-binding->kobj knowledge-graph binding type)
   (jsexpr-object-ref (jsexpr-object-ref knowledge-graph type) binding))
