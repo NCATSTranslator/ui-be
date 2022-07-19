@@ -105,3 +105,6 @@
 (define (strip-id-tag id) (cadr (string-split id ":")))
 (define (host endpoint) (yaml-ref endpoint 'host))
 (define (uri endpoint)  (yaml-ref endpoint 'uri))
+(define (make-answer actor-data agent) (cons actor-data agent))
+(define (answer-data answer) (car answer))
+(define (answer-agent answer) (cdr answer))

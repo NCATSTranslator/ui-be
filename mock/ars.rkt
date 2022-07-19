@@ -6,8 +6,8 @@
   "../config.rkt")
 
 (provide
-  post-query 
-  pull-query-status 
+  post-query
+  pull-query-status
   pull-query-result)
 
 ; Format:
@@ -47,5 +47,5 @@
   (map (lambda (path)
          (call-with-input-file (string-add-prefix (config-document-root SERVER-CONFIG) path)
            (lambda (input-port)
-              (jsexpr-object-ref (read-json input-port) 'message))))
+              (make-answer (jsexpr-object-ref (read-json input-port) 'message) "mock"))))
        result))

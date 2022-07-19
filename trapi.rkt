@@ -4,7 +4,7 @@
 
 (provide
   qgraph->trapi-query
-  add-summary)
+  answers->summary)
 
 (require
   racket/bool
@@ -20,7 +20,6 @@
   "evidence.rkt"
 
   racket/pretty)
-
 
 (define (index->node-id i) (string-add-prefix "n" (number->string i)))
 (define (index->edge-id i) (string-add-prefix "e" (number->string i)))
@@ -316,7 +315,7 @@
                       res))))))
   (define (edge-valid? static-node kedge)
     (set-member? (cdr static-node) (jsexpr-object-ref kedge (car static-node))))
-  (define (answer-valid? answer)
+  (define (answer-data-valid? answer)
     (let ((qg (jsexpr-object-ref answer 'query_graph)))
       (and qg
            (find-valid-qedge (jsexpr-object-ref qg 'edges))
@@ -420,19 +419,19 @@
              (summary (cons (jsexpr-object) (jsexpr-object))))
     (if (null? answers)
       summary
-      (let ((a (car answers)))
+      (let ((ad (answer-data (car answers))))
         (loop (cdr answers)
-              (if (answer-valid? a)
-                (summarize-answer a summary)
+              (if (answer-data-valid? ad)
+                (summarize-answer ad summary)
                 summary))))))
 
-(define (add-summary result expanders)
+(define (answers->summary result expanders)
   (define fda-path '(fda_info highest_fda_approval_status))
   (define primary-predicates (config-primary-predicates SERVER-CONFIG))
 
   (define summary
     (trapi-answers->summary
-      (jsexpr-object-ref result 'data)
+      result
       primary-predicates
       (make-summarize-rules ; static node rules
         `(,(aggregate-property 'name '(names))
@@ -490,23 +489,19 @@
 
   (let ((sns (car summary))
         (vs  (cdr summary)))
-    (jsexpr-object-set
-      (jsexpr-object-set
-        result
-        'summary
-        (if (hash-empty? vs)
-            'null
-              (apply-post-processing
-                (expand-evidence
-                  (map (lambda (answer)
-                         (jsexpr-remove-duplicates answer '((edge evidence))))
-                       (jsexpr-object-values vs))
-                  expanders)
-                `(,add-last-publication-date))))
-      'static_node
-      (if (hash-empty? sns)
-          'null
-          (jsexpr-remove-duplicates sns '((names) (curies) (types)))))))
+    (hash
+      'summary (if (hash-empty? vs)
+                 'null
+                 (apply-post-processing
+                   (expand-evidence
+                     (map (lambda (answer)
+                             (jsexpr-remove-duplicates answer '((edge evidence))))
+                           (jsexpr-object-values vs))
+                     expanders)
+                   `(,add-last-publication-date)))
+      'static_node (if (hash-empty? sns)
+                     'null
+                     (jsexpr-remove-duplicates sns '((names) (curies) (types)))))))
 
 (module+ test
   (require rackunit)
@@ -519,8 +514,9 @@
   (check-false (qgraph->trapi-query test-invalid-qgraph))
 
   ; If the predicate is not in the correct direction the edge is skipped
-  (define summary-skip-edge (read-json (open-input-file "test/trapi/summary-skip-edge.json")))
-  (check-equal? (add-summary summary-skip-edge '())
-                (hash-set (hash-set summary-skip-edge 'summary 'null)
-                          'static_node 'null))
+  (define summary-skip-edge `(,(cons (read-json (open-input-file "test/trapi/summary-skip-edge.json"))
+                                     "test")))
+  (check-equal? (answers->summary summary-skip-edge '())
+                (hash 'summary 'null
+                      'static_node 'null))
 )
