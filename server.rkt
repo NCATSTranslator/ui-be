@@ -126,7 +126,7 @@
               (else
                 (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))))
 
- (define /query (make-query-endpoint qgraph->trapi-query))
+(define /query (make-query-endpoint qgraph->trapi-query))
 
 (define /creative-query
   (lambda (req) (response/internal-error (failure-response "Not implemented"))))
