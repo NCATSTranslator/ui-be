@@ -14,9 +14,9 @@
   "common.rkt"
   "config.rkt")
 
-(provide 
-  post-query 
-  pull-query-status 
+(provide
+  post-query
+  pull-query-status
   pull-query-result)
 
 (define ars-host (ars-config 'host))
@@ -57,6 +57,7 @@
 (define (get-data     jse) (jsexpr-object-ref jse 'data))
 (define (get-children jse) (jsexpr-object-ref jse 'children))
 (define (get-qid      jse) (jsexpr-object-ref jse 'pk))
+(define (get-agent    jse) (jsexpr-object-ref-recursive jse '(actor agent)))
 
 (define (query-done? qstatus)
   (equal? qstatus 'done))
@@ -80,13 +81,14 @@
 
   (let ((status (get-status resp)))
     (if (equal? status "Done")
-        (for/fold ((actors-data '()))
+        (for/fold ((answers '()))
                   ((actor (get-children resp)))
           (define actor-data (and (query-done? (parse-query-status actor))
                                   (pull-query-actor-result (get-message actor))))
           (if actor-data
-              (cons actor-data actors-data)
-              actors-data))
+            (cons (make-answer actor-data (get-agent actor))
+                  answers)
+              answers))
         #f)))
 
 (define (parse-query-actor-result resp)
