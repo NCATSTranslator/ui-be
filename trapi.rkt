@@ -5,7 +5,8 @@
 (provide
   qgraph->trapi-query
   disease->creative-query
-  answers->summary)
+  answers->summary
+  metadata-object)
 
 (require
   racket/bool
@@ -19,6 +20,10 @@
   "config.rkt"
   "curie-search.rkt"
   "evidence.rkt")
+
+(define (metadata-object qid agents)
+  (make-jsexpr-object `((qid  . ,qid)
+                        (aras . ,agents))))
 
 (define (index->node-id i) (string-add-prefix "n" (number->string i)))
 (define (index->edge-id i) (string-add-prefix "e" (number->string i)))

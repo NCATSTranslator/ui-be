@@ -107,3 +107,6 @@
 (define (make-answer actor-data agent) (cons actor-data agent))
 (define (answer-data answer) (car answer))
 (define (answer-agent answer) (cdr answer))
+(define (make-query-state status data) (cons status data))
+(define (query-state-status query-state) (car query-state))
+(define (query-state-data query-state) (cdr query-state))
