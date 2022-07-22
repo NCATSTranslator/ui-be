@@ -167,7 +167,7 @@
 (define /creative-result
   (make-result-endpoint
     pull-query-result
-    identity)) ; TODO: replace with creative->summary when finished
+    (lambda (answers) (map answer-data answers)))) ; TODO: replace with creative->summary when finished
 
 (define-values (dispatcher _)
     (dispatch-rules

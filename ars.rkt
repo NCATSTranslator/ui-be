@@ -77,7 +77,7 @@
 (define (parse-query-status resp)
   (match (cons (get-code resp) (get-status resp))
     ('(200 . "Done")    'done)
-    ('(200 . "Running") 'running)
+    ('(202 . "Running") 'running)
     (_                  'error)))
 
 (define (parse-query-metadata resp)
