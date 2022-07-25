@@ -8,8 +8,8 @@
   (filter filter-proc (hash-map hash map-proc)))
 ; E.g. usage: (my-hash-map-filter slots (lambda (k v) (cons k (hash-has-key? v "is_a"))) (lambda (x) (not (cdr x))))
 
-(define slot-graph (make-hasheq))
-(define inverses (make-hasheq))
+(define slot-graph (make-hash))
+(define inverses (make-hash))
 
 (define (traverse-hash hash slot-graph inverses)
   (hash-for-each
