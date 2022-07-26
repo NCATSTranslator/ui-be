@@ -5,19 +5,21 @@
 
 #lang racket/base
 
+(provide
+  post-query
+  pull-query-status
+  pull-query-result)
+
 (require
+  racket/string
   racket/match
   racket/pretty
   racket/file
   net/http-client
   json
   "common.rkt"
-  "config.rkt")
-
-(provide
-  post-query
-  pull-query-status
-  pull-query-result)
+  "config.rkt"
+  (prefix-in trapi: "trapi.rkt"))
 
 (define ars-host (ars-config 'host))
 (define ars-post-uri (ars-config 'post-uri))
@@ -37,18 +39,6 @@
                    #:data data))
   (read-json resp-out))
 
-(define (post-query query)
-  (parse-submit-query-resp
-    (ars-sendrecv ars-post-uri #"POST" (jsexpr->bytes query))))
-
-(define (pull-query-status qid)
-  (parse-query-status
-    (get-fields (ars-sendrecv (ars-pull-uri qid #f)))))
-
-(define (pull-query-result qid)
-  (parse-query-result
-    (ars-sendrecv (ars-pull-uri qid #t))))
-
 (define (get-results  jse) (jsexpr-object-ref jse 'results))
 (define (get-message  jse) (jsexpr-object-ref jse 'message))
 (define (get-fields   jse) (jsexpr-object-ref jse 'fields))
@@ -62,11 +52,45 @@
 (define (query-done? qstatus)
   (equal? qstatus 'done))
 
+(define (resp-okay? resp)
+  (let ((status (get-status resp)))
+    (or (equal? status "Done") (equal? status "Running"))))
+
+(define (qstatus->status qstatus)
+  (case qstatus
+    (("Done") "success")
+    (("Running") "running")
+    (else (raise exn:fail))))
+
+(define (post-query query)
+  (parse-submit-query-resp
+    (ars-sendrecv ars-post-uri #"POST" (jsexpr->bytes query))))
+
+(define (pull-query-status qid)
+  (parse-query-metadata
+    (ars-sendrecv (ars-pull-uri qid #t))))
+
+(define (pull-query-result qid)
+  (parse-query-result
+    (ars-sendrecv (ars-pull-uri qid #t))))
+
 (define (parse-query-status resp)
   (match (cons (get-code resp) (get-status resp))
     ('(200 . "Done")    'done)
-    ('(200 . "Running") 'running)
+    ('(202 . "Running") 'running)
     (_                  'error)))
+
+(define (parse-query-metadata resp)
+  (and (resp-okay? resp)
+       (make-query-state (qstatus->status (get-status resp))
+                         (trapi:metadata-object
+                           (get-message resp)
+                           (foldl (lambda (actor agents)
+                                   (if (query-done? (parse-query-status actor))
+                                     (cons (get-agent actor) agents)
+                                     agents))
+                                 '()
+                                 (get-children resp))))))
 
 (define (parse-submit-query-resp resp)
   (let* ((fields  (get-fields resp))
@@ -79,24 +103,24 @@
     (parse-query-actor-result
       (ars-sendrecv (ars-pull-uri qid #f))))
 
-  (let ((status (get-status resp)))
-    (if (equal? status "Done")
-        (for/fold ((answers '()))
-                  ((actor (get-children resp)))
-          (define actor-data (and (query-done? (parse-query-status actor))
-                                  (pull-query-actor-result (get-message actor))))
-          (if actor-data
-            (cons (make-answer actor-data (get-agent actor))
-                  answers)
-              answers))
-        #f)))
+  (and (resp-okay? resp)
+       (make-query-state (qstatus->status (get-status resp))
+                         (foldl (lambda (actor answers)
+                                   (let ((actor-data (and (query-done? (parse-query-status actor))
+                                                         (pull-query-actor-result (get-message actor)))))
+                                     (if actor-data
+                                       (cons (make-answer actor-data (get-agent actor)) answers)
+                                       answers)))
+                                 '()
+                                 (get-children resp)))))
 
 (define (parse-query-actor-result resp)
-  (let* ((fields (get-fields resp))
-         (qstatus (parse-query-status fields)))
-    (if (query-done? qstatus)
-      (let* ((message (get-message (get-data fields)))
-             (results (get-results message)))
-        (and (not (null? results))
-             message))
-      qstatus)))
+  (with-handlers ((exn:fail? (lambda (e) #f))) ; Some ARAs report done when not done
+    (let* ((fields (get-fields resp))
+           (qstatus (parse-query-status fields)))
+      (if (query-done? qstatus)
+        (let* ((message (get-message (get-data fields)))
+               (results (get-results message)))
+          (and (not (null? results))
+              message))
+        qstatus))))

@@ -1,8 +1,3 @@
-; TODO
-; * /query
-;   - What to do if ARS is down or times out?
-; * /result
-
 #lang racket/base
 
 (require
@@ -10,6 +5,7 @@
   racket/path
   racket/file
   racket/match
+  racket/function
   net/url-structs
   web-server/http
   web-server/templates
@@ -24,9 +20,7 @@
   (prefix-in mock:  "mock/ars.rkt")
   (prefix-in mock:  "mock/trapi.rkt")
   (prefix-in mock:  "mock/evidence.rkt")
-  "config.rkt"
-
-  racket/pretty)
+  "config.rkt")
 
 ; Expose mockable procedures based on config
 (define-values (post-query pull-query-status pull-query-result)
@@ -75,6 +69,12 @@
 (define (response/bad-request jse)
   (response/jsexpr 400 #"Bad request" jse))
 
+(define (response/bad-request/invalid-json)
+  (response/bad-request (failure-response "Invalid JSON")))
+
+(define (response/bad-request/invalid-post)
+  (response/bad-request (failure-response "Invalid POST data")))
+
 (define (response/not-found)
   (response/xexpr
     #:code    404
@@ -85,6 +85,12 @@
 
 (define (response/internal-error jse)
   (response/jsexpr 500 #"Internal server error" jse))
+
+(define (response/internal-error/generic)
+  (response/internal-error (failure-response "Internal server error")))
+
+(define (response/internal-error/ars)
+  (response/internal-error (failure-response "ARS could not process the request")))
 
 (define (make-response status (data '()))
   (hash 'status status
@@ -112,48 +118,66 @@
   (file->response index.html))
 
 ;TODO: ARS is down (no response from ARS)
-(define (/query req)
-  (with-handlers ((exn:fail:contract?
-                  (lambda (e) (response/bad-request (failure-response "Query is not valid JSON")))))
-    (define post-data (request-post-data/raw req))
-    (define trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data))))
-    (cond (trapi-query
-            (define post-resp (post-query trapi-query))
-            (pretty-print post-resp)
-            (match (car post-resp)
-              ('error (response/internal-error (failure-response "The ARS could not process the query")))
-              (_  (response/OK/jsexpr (make-response "success" (cdr post-resp))))))
-          ((not post-data)
-            (response/bad-request (failure-response "No query data")))
-          (else
-            (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))
+(define (make-query-endpoint qgraph->trapi-query)
+  (lambda (req)
+    (with-handlers ((exn:fail:read?
+                      (lambda (e) (response/bad-request/invalid-json)))
+                    (exn:fail?
+                      (lambda (e) (response/internal-error/generic))))
+      (let ((post-data (request-post-data/raw req)))
+        (define trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data))))
+        (cond (trapi-query
+                (define post-resp (post-query trapi-query))
+                (match (car post-resp)
+                  ('error (response/internal-error/ars))
+                  (_  (response/OK/jsexpr (make-response "success" (cdr post-resp))))))
+              ((not post-data) (response/bad-request/invalid-post))
+              (else
+                (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))))
 
-(define (/result req)
-  (with-handlers ((exn:fail:contract?
-                  (lambda (e) (raise e))));(response/bad-request
-                                ;(failure-response "Result poll does not contain a 'qid' attribute")))))
-    (define post-data (request-post-data/raw req))
-    (define qid (and post-data (get-qid (bytes->jsexpr post-data))))
-    (define qstatus (pull-query-status qid))
-    (pretty-print qid)
-    (pretty-print qstatus)
-    (match qstatus
-      ('done
-        (let ((result (pull-query-result qid)))
-          (response/OK/jsexpr (make-response "done"
-                                             (trapi:answers->summary result
-                                                                     evidence-expanders)))))
-      ('running
-        (response/OK/jsexpr (make-response "running")))
-      (_
-        (response/internal-error (failure-response "Something went wrong"))))))
+(define /query (make-query-endpoint qgraph->trapi-query))
+(define /creative-query (make-query-endpoint trapi:disease->creative-query))
+
+(define (make-result-endpoint pull-proc process-query-data)
+  (lambda (req)
+    (with-handlers ((exn:fail:read?
+                      (lambda (e) (response/bad-request/invalid-json)))
+                    (exn:fail?
+                      (lambda (e) (response/internal-error/generic))))
+      (define post-data (request-post-data/raw req))
+      (define qid (and post-data (get-qid (bytes->jsexpr post-data))))
+      (cond (qid (let ((query-state (pull-proc qid)))
+                   (if query-state
+                     (response/OK/jsexpr (make-response (query-state-status query-state)
+                                                        (process-query-data (query-state-data query-state))))
+                     (response/internal-error/generic))))
+            ((not post-data) (response/bad-request/invalid-post))
+            (else (response/internal-error/ars))))))
+
+(define /result
+  (make-result-endpoint
+    pull-query-result
+    (lambda (answers) (trapi:answers->summary answers evidence-expanders))))
+
+(define /creative-status
+  (make-result-endpoint
+    pull-query-status
+    identity))
+
+(define /creative-result
+  (make-result-endpoint
+    pull-query-result
+    (lambda (answers) (map answer-data answers)))) ; TODO: replace with creative->summary when finished
 
 (define-values (dispatcher _)
-  (dispatch-rules
-    (("")       #:method "get"  /index)
-    (("query")  #:method "post" /query)
-    (("result") #:method "post" /result)
-     (else                handle-static-file-request)))
+    (dispatch-rules
+      (("")                #:method "get"  /index)
+      (("query")           #:method "post" /query)
+      (("result")          #:method "post" /result)
+      (("creative_query")  #:method "post" /creative-query)
+      (("creative_status") #:method "post" /creative-status)
+      (("creative_result") #:method "post" /creative-result)
+      (else                handle-static-file-request)))
 
 (serve/servlet dispatcher
     #:servlet-path ""
