@@ -3,7 +3,7 @@
   port: 8386
   response-timeout: 300
   ars-endpoint:
-    host: "ars.transltr.io"
+    host: "ars-prod.transltr.io"
     post-uri: "/ars/api/submit"
     pull-uri: "/ars/api/messages"
   curie-search-endpoint:
