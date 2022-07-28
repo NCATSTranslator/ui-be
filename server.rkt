@@ -169,7 +169,6 @@
     pull-query-answers
     (lambda (qid answers)
       (define test (trapi:creative-answers->summary qid answers))
-      (pretty-display test)
       test)))
 
 (define-values (dispatcher _)

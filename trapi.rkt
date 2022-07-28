@@ -283,15 +283,14 @@
 (define (condensed-summary-paths cs)
   (summary-fragment-paths (condensed-summary-fragment cs)))
 (define (condensed-summary-nodes cs)
-  (summary-fragment-paths (condensed-summary-fragment cs)))
-(define (condensed-summary-edges cs)
   (summary-fragment-nodes (condensed-summary-fragment cs)))
+(define (condensed-summary-edges cs)
+  (summary-fragment-edges (condensed-summary-fragment cs)))
 
 (define (merge-summary-attrs r s)
   (map (lambda (r-attr s-attr) (append r-attr s-attr)) r s))
 
 (define (creative-answers->summary qid answers)
-  (pretty-display "Starting creative-answers->summary")
   (condensed-summaries->summary-core
     qid
     (creative-answers->condensed-summaries
@@ -311,7 +310,6 @@
 
 ; Node rules must be able to support several different types
 (define (creative-answers->condensed-summaries answers node-rules edge-rules)
-  (pretty-display "Starting creative-answers->condensed-summaries")
   (define (trapi-result->summary-fragment trapi-result kgraph)
     (define node-bindings (jsexpr-object-ref trapi-result 'node_bindings))
     (define rgraph (trapi-result->rgraph trapi-result))
@@ -382,7 +380,6 @@
        answers))
 
 (define (condensed-summaries->summary-core qid condensed-summaries)
-  (pretty-display "Starting condensed-summaries->summary-core")
   (define (fragment-paths->results-and-paths fragment-paths)
     (define (path->key path)
       (equal-hash-code path))
@@ -394,12 +391,26 @@
             (else
               (let* ((fp (car fps))
                      (path-key (path->key fp)))
-                (loop (cons `((car fp) . path-key) results)
-                      (cons `(path-key . fp)       paths)
+                (loop (cons `(,(car fp) . ,path-key) results)
+                      (cons `(,path-key . ,fp)       paths)
                       (cdr fps)))))))
 
-  (define (extend-summary-results results new-results agent)
-    results)
+  (define (extend-summary-results results new-results)
+    (let loop ((results results)
+               (new-results new-results))
+      (cond ((null? new-results)
+               results)
+            (else
+              (let* ((nr (car new-results))
+                     (nr-drug (car nr))
+                     (nr-path (cdr nr))
+                     (rs (jsexpr-object-ref results nr-drug (jsexpr-object)))
+                     (paths (jsexpr-object-ref rs 'paths (jsexpr-array))))
+                (loop (jsexpr-object-set
+                        results
+                        nr-drug
+                        (jsexpr-object-set rs 'paths (jsexpr-array-prepend paths nr-path)))
+                      (cdr new-results)))))))
 
   (define (extend-summary-paths paths new-paths agent)
     paths)
@@ -418,7 +429,12 @@
     (cond ((null? css)
             (make-jsexpr-object
               `((meta    . ,(metadata-object qid (map condensed-summary-agent condensed-summaries)))
-                (results . ,results)
+                (results . ,(map (lambda (result)
+                                   (jsexpr-object-set
+                                     result
+                                     'paths
+                                     (remove-duplicates (jsexpr-object-ref result 'paths '()))))
+                                 (jsexpr-object-values results)))
                 (paths   . ,paths)
                 (nodes   . ,nodes)
                 (edges   . ,edges))))
@@ -426,8 +442,8 @@
             (define cs (car css))
             (define agent (condensed-summary-agent cs))
             (define-values (new-results new-paths)
-              (fragment-paths->results-and-paths (condensed-summary-fragment cs)))
-            (loop (extend-summary-results results new-results agent)
+              (fragment-paths->results-and-paths (condensed-summary-paths cs)))
+            (loop (extend-summary-results results new-results)
                   (extend-summary-paths paths new-paths agent)
                   (extend-summary-nodes nodes (condensed-summary-nodes cs))
                   (extend-summary-edges edges (condensed-summary-edges cs) agent)
