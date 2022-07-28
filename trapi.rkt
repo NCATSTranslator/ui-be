@@ -6,6 +6,7 @@
   qgraph->trapi-query
   disease->creative-query
   answers->summary
+  creative-answers->summary
   metadata-object)
 
 (require
@@ -208,9 +209,15 @@
 (define (make-rgraph nodes edges) (cons nodes edges))
 (define (rgraph-nodes rgraph) (car rgraph))
 (define (rgraph-edges rgraph) (cdr rgraph))
-(define (result->rgraph result)
-  (make-rgraph (flatten-bindings (jsexpr-object-ref result 'node_bindings))
-               (flatten-bindings (jsexpr-object-ref result 'edge_bindings))))
+(define (trapi-result->rgraph trapi-result)
+  (make-rgraph (flatten-bindings (jsexpr-object-ref trapi-result 'node_bindings))
+               (flatten-bindings (jsexpr-object-ref trapi-result 'edge_bindings))))
+(define (rnode->key rnode kgraph) rnode)
+(define (redge->key redge kgraph)
+  (let ((kedge (trapi-edge-binding->trapi-kedge kgraph redge)))
+    (list (jsexpr-object-ref kedge 'subject)
+          (jsexpr-object-ref kedge 'predicate)
+          (jsexpr-object-ref kedge 'object))))
 
 (define (make-redge->edge-id rgraph kgraph)
   (define redge->edge-id
@@ -256,37 +263,58 @@
         (loop (append new-obj-left (cdr obj-left))
               (append new-res res))))))
 
+(define (make-summary-fragment paths nodes edges)
+  (list paths nodes edges))
+(define (summary-fragment-paths summary-fragment)
+  (car summary-fragment))
+(define (summary-fragment-nodes summary-fragment)
+  (cadr summary-fragment))
+(define (summary-fragment-edges summary-fragment)
+  (caddr summary-fragment))
+(define empty-summary-fragment (make-summary-fragment '() '() '()))
+
+(define (make-condensed-summary agent summary-fragment)
+  (cons agent summary-fragment))
+(define empty-condensed-summary '())
+(define (condensed-summary-agent cs)
+  (car cs))
+(define (condensed-summary-fragment cs)
+  (cdr cs))
+(define (condensed-summary-paths cs)
+  (summary-fragment-paths (condensed-summary-fragment cs)))
+(define (condensed-summary-nodes cs)
+  (summary-fragment-paths (condensed-summary-fragment cs)))
+(define (condensed-summary-edges cs)
+  (summary-fragment-nodes (condensed-summary-fragment cs)))
+
+(define (merge-summary-attrs r s)
+  (map (lambda (r-attr s-attr) (append r-attr s-attr)) r s))
+
+(define (creative-answers->summary qid answers)
+  (pretty-display "Starting creative-answers->summary")
+  (condensed-summaries->summary-core
+    qid
+    (creative-answers->condensed-summaries
+      answers
+      (make-summarize-rules
+        `(,(aggregate-property 'name '(names))))
+      (make-summarize-rules
+        `(,(aggregate-and-transform-attributes
+          `(,(biolink-tag "supporting_document")
+            ,(biolink-tag "Publication")
+            ,(biolink-tag "publications"))
+          'evidence
+          (lambda (evidence)
+            (if (list? evidence)
+                evidence
+                (string-split evidence #rx",|\\|")))))))))
+
 ; Node rules must be able to support several different types
-(define (trapi-creative-answers->summary trapi-answers node-rules edge-rules)
-  (define empty-summary (hash 'paths '()   ; Result trees
-                              'nodes '()   ; Node set
-                              'edges '())) ; Edge set
-  (define (merge-summaries s r)
-    (define (merge-attribute-by-key s r k)
-      (append (hash-ref s k) (hash-ref r k)))
-    (hash 'paths (merge-attribute-by-key s r 'paths)
-          'nodes (merge-attribute-by-key s r 'nodes)
-          'edges (merge-attribute-by-key s r 'edges)))
-
-  (define (summarize-list summary objs update summarize)
-    (foldl (lambda (obj s) (update s (summarize obj)))
-           summary
-           objs))
-
-  ; Return a pair (key, update) for an edge
-  (define (summarize-edge edge-binding-id kgraph)
-    (let* ((edge (trapi-edge-binding->trapi-kedge kgraph edge-binding-id))
-           (edge-key (cons (jsexpr-object-ref edge 'subject)
-                           (jsexpr-object-ref edge 'object))))
-      (cons edge-key (edge-rules edge))))
-
-  ; Return a pair (key, update) for a node
-  (define (summarize-node node-binding-id kgraph)
-    (cons node-binding-id (node-rules (trapi-node-binding->trapi-knode kgraph node-binding-id))))
-
-  (define (rgraph->summary result kgraph)
-    (define node-bindings (jsexpr-object-ref result 'node_bindings))
-    (define rgraph (result->rgraph result))
+(define (creative-answers->condensed-summaries answers node-rules edge-rules)
+  (pretty-display "Starting creative-answers->condensed-summaries")
+  (define (trapi-result->summary-fragment trapi-result kgraph)
+    (define node-bindings (jsexpr-object-ref trapi-result 'node_bindings))
+    (define rgraph (trapi-result->rgraph trapi-result))
     (define drug    (get-binding-id node-bindings 'drug))
     (define disease (get-binding-id node-bindings 'disease))
     (define rnode->out-edges (make-rnode->out-edges rgraph kgraph))
@@ -306,23 +334,104 @@
                                '()))))
                    `((,drug))
                    '()))
-    (hash 'paths rgraph-paths
-          'nodes (rgraph-nodes rgraph)
-          'edges (rgraph-edges rgraph)))
 
-  (define (summarize-answer answer)
-    (summarize-list
-      empty-summary
-      (jsexpr-object-ref answer 'results)
-      merge-summaries
-      (lambda (result)
-        (rgraph->summary result (jsexpr-object-ref answer 'knowledge_graph)))))
+    ; Return a pair (key, update) for a node
+    (define (summarize-rnode rnode kgraph)
+      (cons (rnode->key rnode kgraph) (node-rules (trapi-node-binding->trapi-knode kgraph rnode))))
 
-  (summarize-list
-    empty-summary
-    trapi-answers
-    merge-summaries
-    summarize-answer))
+    ; Return a pair (key, update) for an edge
+    (define (summarize-redge redge kgraph)
+      (let ((kedge (trapi-edge-binding->trapi-kedge kgraph redge)))
+        (cons (redge->key redge kgraph) (edge-rules kedge))))
+
+    ; Convert paths structure to normalized node and edge IDs
+    (define (normalize-paths rgraph-paths kgraph)
+      (map (lambda (path)
+             (let loop ((p path)
+                        (i 0)
+                        (np '()))
+               (cond ((null? p) np)
+                     (else (loop (cdr p)
+                                 (+ i 1)
+                                 (cons ((if (even? i) rnode->key redge->key) (car p) kgraph)
+                                       np))))))
+           rgraph-paths))
+
+    (make-summary-fragment
+      (normalize-paths rgraph-paths kgraph)
+      (map (lambda (rnode)
+             (summarize-rnode rnode kgraph))
+           (rgraph-nodes rgraph))
+      (map (lambda (redge)
+             (summarize-redge redge kgraph))
+           (rgraph-edges rgraph))))
+
+  (map (lambda (answer)
+         (let* ((reporting-agent (answer-agent   answer))
+                (trapi-message   (answer-message answer))
+                (trapi-results   (jsexpr-object-ref trapi-message 'results))
+                (kgraph          (jsexpr-object-ref trapi-message 'knowledge_graph)))
+           (make-condensed-summary
+             reporting-agent
+             (foldl (lambda (trapi-result summary-fragment)
+                     (merge-summary-attrs
+                       summary-fragment
+                       (trapi-result->summary-fragment trapi-result kgraph)))
+                   empty-summary-fragment
+                   trapi-results))))
+       answers))
+
+(define (condensed-summaries->summary-core qid condensed-summaries)
+  (pretty-display "Starting condensed-summaries->summary-core")
+  (define (fragment-paths->results-and-paths fragment-paths)
+    (define (path->key path)
+      (equal-hash-code path))
+    (let loop ((results '())
+               (paths   '())
+               (fps fragment-paths))
+      (cond ((null? fps)
+              (values results paths))
+            (else
+              (let* ((fp (car fps))
+                     (path-key (path->key fp)))
+                (loop (cons `((car fp) . path-key) results)
+                      (cons `(path-key . fp)       paths)
+                      (cdr fps)))))))
+
+  (define (extend-summary-results results new-results agent)
+    results)
+
+  (define (extend-summary-paths paths new-paths agent)
+    paths)
+
+  (define (extend-summary-nodes nodes new-nodes)
+    nodes)
+
+  (define (extend-summary-edges edges new-edges agent)
+    edges)
+
+  (let loop ((results (jsexpr-object))
+             (paths   (jsexpr-object))
+             (nodes   (jsexpr-object))
+             (edges   (jsexpr-object))
+             (css     condensed-summaries))
+    (cond ((null? css)
+            (make-jsexpr-object
+              `((meta    . ,(metadata-object qid (map condensed-summary-agent condensed-summaries)))
+                (results . ,results)
+                (paths   . ,paths)
+                (nodes   . ,nodes)
+                (edges   . ,edges))))
+          (else
+            (define cs (car css))
+            (define agent (condensed-summary-agent cs))
+            (define-values (new-results new-paths)
+              (fragment-paths->results-and-paths (condensed-summary-fragment cs)))
+            (loop (extend-summary-results results new-results agent)
+                  (extend-summary-paths paths new-paths agent)
+                  (extend-summary-nodes nodes (condensed-summary-nodes cs))
+                  (extend-summary-edges edges (condensed-summary-edges cs) agent)
+                  (cdr css))))))
 
 (define (trapi-answers->summary trapi-answers primary-predicates static-node-rules
     variable-node-rules edge-rules)
@@ -342,11 +451,11 @@
                       res))))))
   (define (edge-valid? static-node kedge)
     (set-member? (cdr static-node) (jsexpr-object-ref kedge (car static-node))))
-  (define (answer-data-valid? answer)
-    (let ((qg (jsexpr-object-ref answer 'query_graph)))
+  (define (trapi-message-valid? trapi-message)
+    (let ((qg (jsexpr-object-ref trapi-message 'query_graph)))
       (and qg
            (find-valid-qedge (jsexpr-object-ref qg 'edges))
-           (jsexpr-object-has-key? answer 'knowledge_graph)
+           (jsexpr-object-has-key? trapi-message 'knowledge_graph)
            (< (jsexpr-object-count (jsexpr-object-ref qg 'nodes))))))
   (define (update-result-summary summary edge-summary)
     (define result-id (car edge-summary))
@@ -446,10 +555,10 @@
              (summary (cons (jsexpr-object) (jsexpr-object))))
     (if (null? answers)
       summary
-      (let ((ad (answer-data (car answers))))
+      (let ((trapi-message (answer-message (car answers))))
         (loop (cdr answers)
-              (if (answer-data-valid? ad)
-                (summarize-answer ad summary)
+              (if (trapi-message-valid? trapi-message)
+                (summarize-answer trapi-message summary)
                 summary))))))
 
 (define (answers->summary result expanders)

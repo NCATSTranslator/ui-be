@@ -23,10 +23,10 @@
   "config.rkt")
 
 ; Expose mockable procedures based on config
-(define-values (post-query pull-query-status pull-query-result)
+(define-values (post-query pull-query-status pull-query-answers)
   (if (config-mock-ars? SERVER-CONFIG)
-      (values mock:post-query mock:pull-query-status mock:pull-query-result)
-      (values ars:post-query ars:pull-query-status ars:pull-query-result)))
+      (values mock:post-query mock:pull-query-status mock:pull-query-answers)
+      (values ars:post-query ars:pull-query-status ars:pull-query-answers)))
 (define qgraph->trapi-query
   (if (config-mock-query? SERVER-CONFIG)
       mock:qgraph->trapi-query
@@ -149,25 +149,28 @@
       (cond (qid (let ((query-state (pull-proc qid)))
                    (if query-state
                      (response/OK/jsexpr (make-response (query-state-status query-state)
-                                                        (process-query-data (query-state-data query-state))))
+                                                        (process-query-data qid (query-state-data query-state))))
                      (response/internal-error/generic))))
             ((not post-data) (response/bad-request/invalid-post))
             (else (response/internal-error/ars))))))
 
 (define /result
   (make-result-endpoint
-    pull-query-result
-    (lambda (answers) (trapi:answers->summary answers evidence-expanders))))
+    pull-query-answers
+    (lambda (qid answers) (trapi:answers->summary answers evidence-expanders))))
 
 (define /creative-status
   (make-result-endpoint
     pull-query-status
-    identity))
+    (lambda (qid answers) answers)))
 
 (define /creative-result
   (make-result-endpoint
-    pull-query-result
-    (lambda (answers) (map answer-data answers)))) ; TODO: replace with creative->summary when finished
+    pull-query-answers
+    (lambda (qid answers)
+      (define test (trapi:creative-answers->summary qid answers))
+      (pretty-display test)
+      test)))
 
 (define-values (dispatcher _)
     (dispatch-rules

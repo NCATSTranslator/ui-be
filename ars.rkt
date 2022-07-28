@@ -8,7 +8,7 @@
 (provide
   post-query
   pull-query-status
-  pull-query-result)
+  pull-query-answers)
 
 (require
   racket/string
@@ -39,7 +39,7 @@
                    #:data data))
   (read-json resp-out))
 
-(define (get-results  jse) (jsexpr-object-ref jse 'results))
+(define (get-answer  jse) (jsexpr-object-ref jse 'results))
 (define (get-message  jse) (jsexpr-object-ref jse 'message))
 (define (get-fields   jse) (jsexpr-object-ref jse 'fields))
 (define (get-status   jse) (jsexpr-object-ref jse 'status))
@@ -70,8 +70,8 @@
   (parse-query-metadata
     (ars-sendrecv (ars-pull-uri qid #t))))
 
-(define (pull-query-result qid)
-  (parse-query-result
+(define (pull-query-answers qid)
+  (parse-query-answers
     (ars-sendrecv (ars-pull-uri qid #t))))
 
 (define (parse-query-status resp)
@@ -98,29 +98,29 @@
          (qid     (get-qid resp)))
     (cons qstatus qid)))
 
-(define (parse-query-result resp)
-  (define (pull-query-actor-result qid)
-    (parse-query-actor-result
+(define (parse-query-answers resp)
+  (define (pull-query-actor-answer qid)
+    (parse-query-actor-answer
       (ars-sendrecv (ars-pull-uri qid #f))))
 
   (and (resp-okay? resp)
        (make-query-state (qstatus->status (get-status resp))
                          (foldl (lambda (actor answers)
                                    (let ((actor-data (and (query-done? (parse-query-status actor))
-                                                         (pull-query-actor-result (get-message actor)))))
+                                                         (pull-query-actor-answer (get-message actor)))))
                                      (if actor-data
                                        (cons (make-answer actor-data (get-agent actor)) answers)
                                        answers)))
                                  '()
                                  (get-children resp)))))
 
-(define (parse-query-actor-result resp)
+(define (parse-query-actor-answer resp)
   (with-handlers ((exn:fail? (lambda (e) #f))) ; Some ARAs report done when not done
     (let* ((fields (get-fields resp))
            (qstatus (parse-query-status fields)))
       (if (query-done? qstatus)
         (let* ((message (get-message (get-data fields)))
-               (results (get-results message)))
-          (and (not (null? results))
+               (answer (get-answer message)))
+          (and (not (null? answer))
               message))
         qstatus))))
