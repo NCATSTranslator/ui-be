@@ -67,6 +67,8 @@
               (jsexpr-object-ref v (car ks) default)))))
 (define (jsexpr-object-set je k v)
   (hash-set je k v))
+(define (jsexpr-object-transform je k proc)
+  (jsexpr-object-set je k (proc (jsexpr-object-ref je k))))
 (define (jsexpr-object->alist je)
   (hash->list je))
 (define (jsexpr-object-count je)

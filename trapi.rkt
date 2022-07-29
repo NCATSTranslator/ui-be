@@ -215,9 +215,9 @@
 (define (rnode->key rnode kgraph) rnode)
 (define (redge->key redge kgraph)
   (let ((kedge (trapi-edge-binding->trapi-kedge kgraph redge)))
-    (list (jsexpr-object-ref kedge 'subject)
-          (jsexpr-object-ref kedge 'predicate)
-          (jsexpr-object-ref kedge 'object))))
+    (path->key (list (jsexpr-object-ref kedge 'subject)
+                     (jsexpr-object-ref kedge 'predicate)
+                     (jsexpr-object-ref kedge 'object)))))
 
 (define (make-redge->edge-id rgraph kgraph)
   (define redge->edge-id
@@ -286,6 +286,8 @@
   (summary-fragment-nodes (condensed-summary-fragment cs)))
 (define (condensed-summary-edges cs)
   (summary-fragment-edges (condensed-summary-fragment cs)))
+(define (path->key path)
+  (string->symbol (number->string (equal-hash-code path))))
 
 (define (merge-summary-attrs r s)
   (map (lambda (r-attr s-attr) (append r-attr s-attr)) r s))
@@ -380,9 +382,7 @@
        answers))
 
 (define (condensed-summaries->summary-core qid condensed-summaries)
-  (define (fragment-paths->results-and-paths fragment-paths)
-    (define (path->key path)
-      (equal-hash-code path))
+  (define (fragment-paths->results/paths fragment-paths)
     (let loop ((results '())
                (paths   '())
                (fps fragment-paths))
@@ -409,11 +409,29 @@
                 (loop (jsexpr-object-set
                         results
                         nr-drug
-                        (jsexpr-object-set rs 'paths (jsexpr-array-prepend paths nr-path)))
+                        (jsexpr-object-set rs 'paths (jsexpr-array-prepend paths (symbol->string nr-path))))
                       (cdr new-results)))))))
 
   (define (extend-summary-paths paths new-paths agent)
-    paths)
+    (define (make-path-object path agent)
+      (make-jsexpr-object `((subgraph . ,(map symbol->string path))
+                            (aras     . ,(list agent)))))
+
+    (foldl
+      (lambda (new-path paths)
+        (if (null? new-path)
+          paths
+          (let* ((path-key (car new-path))
+                 (path (cdr new-path))
+                 (p (jsexpr-object-ref paths path-key)))
+            (jsexpr-object-set
+              paths
+              path-key
+              (if p
+                (jsexpr-object-transform p 'aras (lambda (aras) (jsexpr-array-prepend aras agent)))
+                (make-path-object path agent))))))
+           paths
+           new-paths))
 
   (define (extend-summary-nodes nodes new-nodes)
     nodes)
@@ -430,19 +448,26 @@
             (make-jsexpr-object
               `((meta    . ,(metadata-object qid (map condensed-summary-agent condensed-summaries)))
                 (results . ,(map (lambda (result)
-                                   (jsexpr-object-set
-                                     result
-                                     'paths
-                                     (remove-duplicates (jsexpr-object-ref result 'paths '()))))
+                                   (jsexpr-object-transform result 'paths remove-duplicates))
                                  (jsexpr-object-values results)))
-                (paths   . ,paths)
+                (paths   . ,(let loop ((path-keys (jsexpr-object-keys paths))
+                                       (paths paths))
+                              (cond ((null? path-keys)
+                                      paths)
+                                    (else
+                                      (loop (cdr path-keys)
+                                            (jsexpr-object-transform
+                                              paths
+                                              (car path-keys)
+                                              (lambda (path-obj)
+                                                (jsexpr-object-transform path-obj 'aras remove-duplicates))))))))
                 (nodes   . ,nodes)
                 (edges   . ,edges))))
           (else
             (define cs (car css))
             (define agent (condensed-summary-agent cs))
             (define-values (new-results new-paths)
-              (fragment-paths->results-and-paths (condensed-summary-paths cs)))
+              (fragment-paths->results/paths (condensed-summary-paths cs)))
             (loop (extend-summary-results results new-results)
                   (extend-summary-paths paths new-paths agent)
                   (extend-summary-nodes nodes (condensed-summary-nodes cs))

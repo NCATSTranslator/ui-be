@@ -86,11 +86,11 @@
                          (trapi:metadata-object
                            (get-message resp)
                            (foldl (lambda (actor agents)
-                                   (if (query-done? (parse-query-status actor))
-                                     (cons (get-agent actor) agents)
-                                     agents))
-                                 '()
-                                 (get-children resp))))))
+                                    (if (query-done? (parse-query-status actor))
+                                      (cons (get-agent actor) agents)
+                                      agents))
+                                  '()
+                                  (get-children resp))))))
 
 (define (parse-submit-query-resp resp)
   (let* ((fields  (get-fields resp))

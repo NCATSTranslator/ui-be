@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require
+  racket/pretty
   racket/string
   racket/path
   racket/file
