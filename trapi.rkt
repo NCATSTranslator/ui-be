@@ -298,9 +298,20 @@
     (creative-answers->condensed-summaries
       answers
       (make-summarize-rules
-        `(,(aggregate-property 'name '(names))))
+        `(,(aggregate-property 'name '(names))
+          ,(aggregate-property 'categories '(types))
+          ,(aggregate-attributes
+             `(,(biolink-tag "xref"))
+             'curies)
+          ,(rename-and-transform-attribute
+             (biolink-tag "highest_FDA_approval_status")
+             '(fda_info)
+             (lambda (fda-description)
+               (hash 'highest_fda_approval_status fda-description
+                     'max_level (fda-description->fda-level fda-description))))))
       (make-summarize-rules
-        `(,(aggregate-and-transform-attributes
+        `(,(aggregate-property 'predicate '(predicates))
+          ,(aggregate-and-transform-attributes
           `(,(biolink-tag "supporting_document")
             ,(biolink-tag "Publication")
             ,(biolink-tag "publications"))
@@ -433,11 +444,31 @@
            paths
            new-paths))
 
-  (define (extend-summary-nodes nodes new-nodes)
-    nodes)
+  (define (extend-summary-obj objs updates agent)
+    (let loop ((updates updates)
+               (objs objs))
+      (cond ((null? updates)
+              objs)
+            (else
+              (loop (cdr updates)
+                    (let* ((update (car updates))
+                           (up-key (car update))
+                           (ups (cdr update)))
+                      (jsexpr-object-transform
+                        objs
+                        up-key
+                        (lambda (obj)
+                          (foldl (lambda (up obj)
+                                   (up obj))
+                                 obj
+                                 ups))
+                        (jsexpr-object))))))))
 
-  (define (extend-summary-edges edges new-edges agent)
-    edges)
+  (define (extend-summary-nodes nodes node-updates agent)
+    (extend-summary-obj nodes node-updates agent))
+
+  (define (extend-summary-edges edges edge-updates agent)
+    (extend-summary-obj edges edge-updates agent))
 
   (let loop ((results (jsexpr-object))
              (paths   (jsexpr-object))
@@ -470,7 +501,7 @@
               (fragment-paths->results/paths (condensed-summary-paths cs)))
             (loop (extend-summary-results results new-results)
                   (extend-summary-paths paths new-paths agent)
-                  (extend-summary-nodes nodes (condensed-summary-nodes cs))
+                  (extend-summary-nodes nodes (condensed-summary-nodes cs) agent)
                   (extend-summary-edges edges (condensed-summary-edges cs) agent)
                   (cdr css))))))
 
