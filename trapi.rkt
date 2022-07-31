@@ -293,7 +293,7 @@
   (map (lambda (r-attr s-attr) (append r-attr s-attr)) r s))
 
 (define (creative-answers->summary qid answers)
-  (condensed-summaries->summary-core
+  (condensed-summaries->summary
     qid
     (creative-answers->condensed-summaries
       answers
@@ -301,14 +301,14 @@
         `(,(aggregate-property 'name '(names))
           ,(aggregate-property 'categories '(types))
           ,(aggregate-attributes
-             `(,(biolink-tag "xref"))
-             'curies)
+            `(,(biolink-tag "xref"))
+            'curies)
           ,(rename-and-transform-attribute
-             (biolink-tag "highest_FDA_approval_status")
-             '(fda_info)
-             (lambda (fda-description)
-               (hash 'highest_fda_approval_status fda-description
-                     'max_level (fda-description->fda-level fda-description))))))
+            (biolink-tag "highest_FDA_approval_status")
+            '(fda_info)
+            (lambda (fda-description)
+              (hash 'highest_fda_approval_status fda-description
+                    'max_level (fda-description->fda-level fda-description))))))
       (make-summarize-rules
         `(,(aggregate-property 'predicate '(predicates))
           ,(aggregate-and-transform-attributes
@@ -392,7 +392,7 @@
                    trapi-results))))
        answers))
 
-(define (condensed-summaries->summary-core qid condensed-summaries)
+(define (condensed-summaries->summary qid condensed-summaries)
   (define (fragment-paths->results/paths fragment-paths)
     (let loop ((results '())
                (paths   '())
@@ -459,7 +459,12 @@
                         up-key
                         (lambda (obj)
                           (foldl (lambda (up obj)
-                                   (up obj))
+                                   (jsexpr-object-transform
+                                     (up obj)
+                                     'aras
+                                     (lambda (obj)
+                                       (jsexpr-array-prepend obj agent))
+                                     (jsexpr-array)))
                                  obj
                                  ups))
                         (jsexpr-object))))))))
@@ -470,6 +475,36 @@
   (define (extend-summary-edges edges edge-updates agent)
     (extend-summary-obj edges edge-updates agent))
 
+  (define (expand-results results paths nodes)
+    (map (lambda (result)
+           (let* ((ps (jsexpr-object-ref result 'paths))
+                  (subgraph (jsexpr-object-ref-recursive
+                              paths
+                              `(,(string->symbol (car ps))
+                                 subgraph)))
+                  (drug (first subgraph))
+                  (drug-name (car (jsexpr-object-ref-recursive
+                                    nodes
+                                    `(,(string->symbol drug) names))))
+                  (disease (last subgraph)))
+             (jsexpr-object-multi-set result `((subject   . ,drug)
+                                               (drug_name . ,drug-name)
+                                               (object    . ,disease)))))
+         results))
+
+  (define (remove-duplicate-aras objs)
+    (let loop ((ks (jsexpr-object-keys objs))
+               (objs objs))
+      (cond ((null? ks)
+              objs)
+            (else
+              (loop (cdr ks)
+                    (jsexpr-object-transform
+                      objs
+                      (car ks)
+                      (lambda (path-obj)
+                        (jsexpr-object-transform path-obj 'aras remove-duplicates '()))))))))
+
   (let loop ((results (jsexpr-object))
              (paths   (jsexpr-object))
              (nodes   (jsexpr-object))
@@ -478,22 +513,15 @@
     (cond ((null? css)
             (make-jsexpr-object
               `((meta    . ,(metadata-object qid (map condensed-summary-agent condensed-summaries)))
-                (results . ,(map (lambda (result)
-                                   (jsexpr-object-transform result 'paths remove-duplicates))
-                                 (jsexpr-object-values results)))
-                (paths   . ,(let loop ((path-keys (jsexpr-object-keys paths))
-                                       (paths paths))
-                              (cond ((null? path-keys)
-                                      paths)
-                                    (else
-                                      (loop (cdr path-keys)
-                                            (jsexpr-object-transform
-                                              paths
-                                              (car path-keys)
-                                              (lambda (path-obj)
-                                                (jsexpr-object-transform path-obj 'aras remove-duplicates))))))))
-                (nodes   . ,nodes)
-                (edges   . ,edges))))
+                (results . ,(expand-results
+                              (map (lambda (result)
+                                     (jsexpr-object-transform result 'paths remove-duplicates))
+                                   (jsexpr-object-values results))
+                              paths
+                              nodes))
+                (paths   . ,(remove-duplicate-aras paths))
+                (nodes   . ,(remove-duplicate-aras nodes))
+                (edges   . ,(remove-duplicate-aras edges)))))
           (else
             (define cs (car css))
             (define agent (condensed-summary-agent cs))

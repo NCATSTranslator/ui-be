@@ -67,6 +67,13 @@
               (jsexpr-object-ref v (car ks) default)))))
 (define (jsexpr-object-set je k v)
   (hash-set je k v))
+(define (jsexpr-object-multi-set je kvps)
+  (foldl (lambda (kvp je)
+           (let ((key (car kvp))
+                 (val (cdr kvp)))
+             (jsexpr-object-set je key val)))
+         je
+         kvps))
 (define (jsexpr-object-transform je k proc (default #f))
   (jsexpr-object-set je k (proc (jsexpr-object-ref je k default))))
 (define (jsexpr-object->alist je)
