@@ -171,15 +171,13 @@
   (define trapi-qgraph (qgraph->trapi-qgraph qgraph curie-searcher))
   (and trapi-qgraph (trapi-qgraph->trapi-message trapi-qgraph)))
 
-(define (disease->creative-query disease-obj (curie-searcher
-                                               (lambda (name)
-                                                 (curie-search nr-searcher name 0 10))))
+(define (disease->creative-query disease-obj)
   (define (disease->trapi-qgraph disease)
     (hasheq 'nodes
             (hasheq 'drug
                     (hasheq 'categories `(,(biolink-tag "ChemicalEntity")))
                     'disease
-                    (hasheq 'ids        (curie-searcher disease)
+                    (hasheq 'ids        `(,disease)
                             'categories `(,(biolink-tag "Disease"))))
             'edges
             (hasheq 'treats
@@ -510,12 +508,14 @@
                               `(,(string->symbol (car ps))
                                  subgraph)))
                   (drug (first subgraph))
-                  (drug-name (car (jsexpr-object-ref-recursive
-                                    nodes
-                                    `(,(string->symbol drug) names))))
+                  (drug-name (jsexpr-object-ref-recursive
+                               nodes
+                               `(,(string->symbol drug) names)))
                   (disease (last subgraph)))
              (jsexpr-object-multi-set result `((subject   . ,drug)
-                                               (drug_name . ,drug-name)
+                                               (drug_name . ,(if (null? drug-name)
+                                                               'null
+                                                               (car drug-name)))
                                                (object    . ,disease)))))
          results))
 
