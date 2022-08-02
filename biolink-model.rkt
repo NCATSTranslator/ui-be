@@ -1,8 +1,9 @@
 #lang racket
 
-(require json)
-(require memo)
-(require "common.rkt")
+(require
+  json
+  memo
+  "common.rkt")
 
 ;(require yaml)
 ;(define y (file->yaml "b.yaml"))     ; 15 seconds! Forget yaml
