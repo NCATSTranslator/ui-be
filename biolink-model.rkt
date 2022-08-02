@@ -87,7 +87,26 @@
               ; else
               (loop (cdr keys) retval))))))
 
-; (define BIOLINK_MODEL (create-initial-preds slots))
-(define BIOLINK_MODEL (create-bl-predicates slots))
-                         
-         
+(define BIOLINK_PREDICATES (create-bl-predicates slots))
+
+(define (sanitize-predicate s)
+  (string-replace (string-replace s "_" " ") "biolink:" ""))
+
+(define (biolinkify-predicate s)
+  (let ((s (string-replace s " " "_")))
+    (if (string-prefix? s "biolink:")
+        s
+        (string-append "biolink:" s))))
+
+(define (biolink-predicate? s)
+  (hash-has-key? BIOLINK_PREDICATES (sanitize-predicate s)))
+
+(define (invert-biolink-predicate p (biolinkify #f))
+  (let* ((p (sanitize-predicate p))
+         (data (hash-ref BIOLINK_PREDICATES p #f)))
+    (if data
+        (if biolinkify
+            (biolinkify-predicate (biolink-data-inverse-pred data))
+            (biolink-data-inverse-pred data))
+        #f)))
+
