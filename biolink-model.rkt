@@ -118,3 +118,24 @@
 
 (define (get-biolink-predicate-data p)
   (hash-ref BIOLINK_PREDICATES (sanitize-predicate p) #f))
+
+;; $ racket
+;; Welcome to Racket v8.4 [cs].
+;; > (require "biolink-model.rkt")
+;; > (define b (get-biolink-predicate-data "biolink:is_frameshift_variant_of"))
+;; > (biolink-data-is-symmetric b)
+;; #f
+;; > (invert-biolink-predicate "biolink:is_frameshift_variant_of")
+;; "has frameshift variant"
+;; > (invert-biolink-predicate "biolink:is_frameshift_variant_of" #t)
+;; "biolink:has_frameshift_variant"
+;; > (biolink-predicate? "biolink:mysteries of the maya")
+;; #f
+;; > (biolink-predicate? "treats")
+;; #t
+;; > (biolink-predicate? "is treated by")
+;; #f
+;; > (biolink-predicate? "treated by")
+;; #t
+;; > (biolink-predicate? "biolink:treated_by")
+;; #t
