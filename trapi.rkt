@@ -329,6 +329,9 @@
   (define edge-rules
     (make-summarize-rules
       `(,(aggregate-property 'predicate '(predicates))
+         ,(aggregate-attributes
+            `(,(biolink-tag "IriType"))
+            'iri_type)
          ,(aggregate-and-transform-attributes
             `(,(biolink-tag "supporting_document")
                ,(biolink-tag "Publication")
