@@ -293,33 +293,60 @@
   (map (lambda (r-attr s-attr) (append r-attr s-attr)) r s))
 
 (define (creative-answers->summary qid answers)
-  (condensed-summaries->summary
-    qid
-    (creative-answers->condensed-summaries
-      answers
-      (make-summarize-rules
-        `(,(aggregate-property 'name '(names))
-          ,(aggregate-property 'categories '(types))
-          ,(aggregate-attributes
+  (define node-rules
+    (make-summarize-rules
+      `(,(aggregate-property 'name '(names))
+         ,(aggregate-property 'categories '(types))
+         ,(aggregate-attributes
             `(,(biolink-tag "xref"))
             'curies)
-          ,(rename-and-transform-attribute
+         ,(rename-and-transform-attribute
             (biolink-tag "highest_FDA_approval_status")
             '(fda_info)
             (lambda (fda-description)
               (hash 'highest_fda_approval_status fda-description
-                    'max_level (fda-description->fda-level fda-description))))))
-      (make-summarize-rules
-        `(,(aggregate-property 'predicate '(predicates))
-          ,(aggregate-and-transform-attributes
-          `(,(biolink-tag "supporting_document")
-            ,(biolink-tag "Publication")
-            ,(biolink-tag "publications"))
-          'evidence
-          (lambda (evidence)
-            (if (list? evidence)
+                    'max_level (fda-description->fda-level fda-description))))
+         ,(aggregate-attributes
+            `(,(biolink-tag "description"))
+            'description)
+         ,(aggregate-attributes
+            `(,(biolink-tag "synonym"))
+            'synonym)
+         ,(aggregate-attributes
+            `(,(biolink-tag "same_as"))
+            'same_as)
+         ,(aggregate-attributes
+            `(,(biolink-tag "IriType"))
+            'iri_type)
+         ,(aggregate-and-transform-attributes
+            `(,(biolink-tag "supporting_document")
+               ,(biolink-tag "Publication")
+               ,(biolink-tag "publications"))
+            'evidence
+            (lambda (evidence)
+              (if (list? evidence)
                 evidence
-                (string-split evidence #rx",|\\|")))))))))
+                (string-split evidence #rx",|\\|")))))))
+
+  (define edge-rules
+    (make-summarize-rules
+      `(,(aggregate-property 'predicate '(predicates))
+         ,(aggregate-and-transform-attributes
+            `(,(biolink-tag "supporting_document")
+               ,(biolink-tag "Publication")
+               ,(biolink-tag "publications"))
+            'evidence
+            (lambda (evidence)
+              (if (list? evidence)
+                evidence
+                (string-split evidence #rx",|\\|")))))))
+
+  (condensed-summaries->summary
+    qid
+    (creative-answers->condensed-summaries
+      answers
+      node-rules
+      edge-rules)))
 
 ; Node rules must be able to support several different types
 (define (creative-answers->condensed-summaries answers node-rules edge-rules)
@@ -493,17 +520,10 @@
          results))
 
   (define (remove-duplicate-aras objs)
-    (let loop ((ks (jsexpr-object-keys objs))
-               (objs objs))
-      (cond ((null? ks)
-              objs)
-            (else
-              (loop (cdr ks)
-                    (jsexpr-object-transform
-                      objs
-                      (car ks)
-                      (lambda (path-obj)
-                        (jsexpr-object-transform path-obj 'aras remove-duplicates '()))))))))
+    (jsexpr-object-map
+      objs
+      (lambda (obj)
+        (jsexpr-object-transform obj 'aras remove-duplicates '()))))
 
   (let loop ((results (jsexpr-object))
              (paths   (jsexpr-object))
@@ -519,9 +539,18 @@
                                    (jsexpr-object-values results))
                               paths
                               nodes))
-                (paths   . ,(remove-duplicate-aras paths))
-                (nodes   . ,(remove-duplicate-aras nodes))
-                (edges   . ,(remove-duplicate-aras edges)))))
+                (paths   . ,(jsexpr-object-map
+                              paths
+                              (lambda (obj)
+                                (jsexpr-object-key-map obj '(aras) remove-duplicates))))
+                (nodes   . ,(jsexpr-object-map
+                              nodes
+                              (lambda (obj)
+                                (jsexpr-object-key-map obj '(aras names types) remove-duplicates))))
+                (edges   . ,(jsexpr-object-map
+                              edges
+                              (lambda (obj)
+                                (jsexpr-object-key-map obj '(aras) remove-duplicates)))))))
           (else
             (define cs (car css))
             (define agent (condensed-summary-agent cs))

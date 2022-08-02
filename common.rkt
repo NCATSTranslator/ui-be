@@ -11,6 +11,8 @@
   (= (string-length str) 0))
 (define (string-add-prefix prefix str)
   (string-append prefix str))
+(define (string-starts-with? str prefix)
+  (equal? (substring str 0 (string-length prefix)) prefix))
 
 (define header:acc/json (string->bytes/utf-8 "accept: application/json"))
 
@@ -76,6 +78,22 @@
          kvps))
 (define (jsexpr-object-transform je k proc (default #f))
   (jsexpr-object-set je k (proc (jsexpr-object-ref je k default))))
+(define (jsexpr-object-key-map je keys proc (default #f))
+  (let loop ((keys keys)
+             (je je))
+    (cond ((null? keys)
+            je)
+          (else
+            (loop
+              (cdr keys)
+              (jsexpr-object-transform
+                je
+                (car keys)
+                proc
+                default))))))
+(define (jsexpr-object-map je proc (default #f))
+  (jsexpr-object-key-map je (jsexpr-object-keys je) proc default))
+
 (define (jsexpr-object->alist je)
   (hash->list je))
 (define (jsexpr-object-count je)

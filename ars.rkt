@@ -52,6 +52,9 @@
 (define (query-done? qstatus)
   (equal? qstatus 'done))
 
+(define (ara? agent)
+  (string-starts-with? agent "ara"))
+
 (define (resp-okay? resp)
   (let ((status (get-status resp)))
     (or (equal? status "Done") (equal? status "Running"))))
@@ -77,6 +80,7 @@
 (define (parse-query-status resp)
   (match (cons (get-code resp) (get-status resp))
     ('(200 . "Done")    'done)
+    ('(202 . "Done")    'done) ;TODO remove this when ARS is fixed
     ('(202 . "Running") 'running)
     (_                  'error)))
 
@@ -86,9 +90,11 @@
                          (trapi:metadata-object
                            (get-message resp)
                            (foldl (lambda (actor agents)
-                                    (if (query-done? (parse-query-status actor))
-                                      (cons (get-agent actor) agents)
-                                      agents))
+                                    (let ((agent (get-agent actor)))
+                                      (if (and (ara? agent)
+                                               (query-done? (parse-query-status actor)))
+                                        (cons agent agents)
+                                        agents)))
                                   '()
                                   (get-children resp))))))
 
@@ -106,13 +112,15 @@
   (and (resp-okay? resp)
        (make-query-state (qstatus->status (get-status resp))
                          (foldl (lambda (actor answers)
-                                   (let ((actor-data (and (query-done? (parse-query-status actor))
-                                                         (pull-query-actor-answer (get-message actor)))))
-                                     (if actor-data
-                                       (cons (make-answer actor-data (get-agent actor)) answers)
-                                       answers)))
-                                 '()
-                                 (get-children resp)))))
+                                  (let* ((agent (get-agent actor))
+                                         (actor-data (and (ara? agent)
+                                                          (query-done? (parse-query-status actor))
+                                                          (pull-query-actor-answer (get-message actor)))))
+                                         (if actor-data
+                                           (cons (make-answer actor-data agent) answers)
+                                           answers)))
+                                  '()
+                                  (get-children resp)))))
 
 (define (parse-query-actor-answer resp)
   (with-handlers ((exn:fail? (lambda (e) #f))) ; Some ARAs report done when not done
