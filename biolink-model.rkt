@@ -1,10 +1,5 @@
 #lang racket
 
-(require
-  json
-  memo
-  "common.rkt")
-
 (provide
  (struct-out biolink-data)
  BIOLINK_PREDICATES
@@ -14,6 +9,12 @@
  invert-biolink-predicate
  get-biolink-predicate-data
  )
+
+(require
+  json
+  memo
+  "common.rkt")
+
 
 (define j (with-input-from-file "assets/biolink-model.json" (lambda () (read-json)))) ; < 1 second to read json file directly converted via yq
 (define slots (hash-ref j 'slots))
