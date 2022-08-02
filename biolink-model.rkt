@@ -15,7 +15,7 @@
   (parent         ; value of is-a
    is-canonical   ; value/presence of annotations.canonical_predicate
    is-symmetric   ; value of property `symmetric`
-   is-deprecated  ; presence/value of `deprecated
+   is-deprecated  ; presence/value of `deprecated`
    is-inverse     ; actually has an inverse property
    inverse-pred   ; the inverse of the given predicate
    raw-data       ; the full record as read in via the json file
@@ -25,7 +25,7 @@
 (define (mk-parent pred record)
   (if (eq? pred 'related\ to)
       #f
-      (hash-ref record 'is-a #f)))
+      (hash-ref record 'is_a #f)))
 
 (define (mk-is-canonical pred record)
   (jsexpr-object-ref-recursive record '(annotations canonical_predicate) #f))
@@ -39,11 +39,10 @@
 (define (mk-is-inverse pred record)
   (hash-has-key? record 'inverse))
 
+(define (mk-inverse-pred pred record)
+  (hash-ref record 'inverse #f))
+
 (define (mk-raw-data pred record) record)
-  
-(define (my-hash-map-filter hash map-proc filter-proc)
-  (filter filter-proc (hash-map hash map-proc)))
-; E.g. usage: (my-hash-map-filter slots (lambda (k v) (cons k (hash-has-key? v "is_a"))) (lambda (x) (not (cdr x))))
 
 (define/memoize (is-a-related-to slots-hash predicate)
   (let ((cur (hash-ref slots-hash predicate #f)))        
@@ -53,9 +52,9 @@
       ((not (hash-has-key? cur 'is_a)) #f)
       (else (is-a-related-to slots-hash (string->symbol (hash-ref cur 'is_a)))))))
 
-   
-(define (create-bl-model slots-hash)
-  (apply hash
+(define (create-bl-predicates slots-hash)
+  (define initial-preds
+    (apply hash
          (flatten
           (hash-map slots-hash
                     (lambda (k v)
@@ -67,12 +66,27 @@
                                  (mk-is-symmetric k v)
                                  (mk-is-deprecated k v)
                                  (mk-is-inverse k v)
-                                 'foo ; worry about this later
+                                 (mk-inverse-pred k v)
                                  (mk-raw-data k v)))
                           ; else this is not a predicate
                           '()))))))
+  ; With that done, loop over the data structure setting all inverses for predicates in the
+  ; reverse direction wrt how they are specified in the raw data, to make the inverse-pred
+  ; property fully bi-directional
+  (let loop ((keys (hash-keys initial-preds))
+             (retval initial-preds))
+    (if (null? keys)
+        retval
+        (let* ((cur-key (car keys))
+               (cur-record (hash-ref retval cur-key)))
+          (if (biolink-data-is-inverse cur-record)
+              (let* ((target-record-key (biolink-data-inverse-pred cur-record))
+                     (target-record (hash-ref retval target-record-key)))
+                (loop (cdr keys) (hash-set retval target-record-key (struct-copy biolink-data target-record (inverse-pred cur-key)))))
+              ; else
+              (loop (cdr keys) retval))))))
 
-(define BIOLINK_MODEL (create-bl-model slots))
+; (define BIOLINK_MODEL (create-initial-preds slots))
+(define BIOLINK_MODEL (create-bl-predicates slots))
                          
-
          
