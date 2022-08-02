@@ -519,11 +519,13 @@
                                                (object    . ,disease)))))
          results))
 
-  (define (remove-duplicate-aras objs)
+  (define (jsexpr-object-remove-duplicates obj)
     (jsexpr-object-map
-      objs
-      (lambda (obj)
-        (jsexpr-object-transform obj 'aras remove-duplicates '()))))
+      obj
+      (lambda (attr)
+        (if (list? attr)
+          (remove-duplicates attr)
+          attr))))
 
   (let loop ((results (jsexpr-object))
              (paths   (jsexpr-object))
@@ -534,23 +536,13 @@
             (make-jsexpr-object
               `((meta    . ,(metadata-object qid (map condensed-summary-agent condensed-summaries)))
                 (results . ,(expand-results
-                              (map (lambda (result)
-                                     (jsexpr-object-transform result 'paths remove-duplicates))
+                              (map jsexpr-object-remove-duplicates
                                    (jsexpr-object-values results))
                               paths
                               nodes))
-                (paths   . ,(jsexpr-object-map
-                              paths
-                              (lambda (obj)
-                                (jsexpr-object-key-map obj '(aras) remove-duplicates))))
-                (nodes   . ,(jsexpr-object-map
-                              nodes
-                              (lambda (obj)
-                                (jsexpr-object-key-map obj '(aras names types) remove-duplicates))))
-                (edges   . ,(jsexpr-object-map
-                              edges
-                              (lambda (obj)
-                                (jsexpr-object-key-map obj '(aras) remove-duplicates)))))))
+                (paths   . ,(jsexpr-object-map paths jsexpr-object-remove-duplicates))
+                (nodes   . ,(jsexpr-object-map nodes jsexpr-object-remove-duplicates))
+                (edges   . ,(jsexpr-object-map edges jsexpr-object-remove-duplicates)))))
           (else
             (define cs (car css))
             (define agent (condensed-summary-agent cs))
