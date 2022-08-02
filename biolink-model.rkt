@@ -8,7 +8,7 @@
 ;(define y (file->yaml "b.yaml"))     ; 15 seconds! Forget yaml
 ;(define slots (hash-ref y "slots"))
 
-(define j (with-input-from-file "biolink-model.json" (lambda () (read-json)))) ; < 1 second to read json file directly converted via yq
+(define j (with-input-from-file "assets/biolink-model.json" (lambda () (read-json)))) ; < 1 second to read json file directly converted via yq
 (define slots (hash-ref j 'slots))
 
 (struct biolink-data
