@@ -5,9 +5,15 @@
   memo
   "common.rkt")
 
-;(require yaml)
-;(define y (file->yaml "b.yaml"))     ; 15 seconds! Forget yaml
-;(define slots (hash-ref y "slots"))
+(provide
+ (struct-out biolink-data)
+ BIOLINK_PREDICATES
+ sanitize-predicate
+ biolinkify-predicate
+ biolink-predicate?
+ invert-biolink-predicate
+ get-biolink-predicate-data
+ )
 
 (define j (with-input-from-file "assets/biolink-model.json" (lambda () (read-json)))) ; < 1 second to read json file directly converted via yq
 (define slots (hash-ref j 'slots))
@@ -110,3 +116,5 @@
             (biolink-data-inverse-pred data))
         #f)))
 
+(define (get-biolink-predicate-data p)
+  (hash-ref BIOLINK_PREDICATES (sanitize-predicate p) #f))
