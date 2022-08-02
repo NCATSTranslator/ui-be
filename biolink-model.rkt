@@ -47,7 +47,9 @@
   (hash-has-key? record 'inverse))
 
 (define (mk-inverse-pred pred record)
-  (hash-ref record 'inverse #f))
+  (if (hash-ref record 'symmetric #f)
+      (symbol->string pred)
+      (hash-ref record 'inverse #f)))
 
 (define (mk-raw-data pred record) record)
 
@@ -139,3 +141,7 @@
 ;; #t
 ;; > (biolink-predicate? "biolink:treated_by")
 ;; #t
+;; > (biolink-data-is-symmetric (get-biolink-predicate-data "exact match"))
+;; #t
+;; > (invert-biolink-predicate "exact match")
+;; "exact match"
