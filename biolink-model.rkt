@@ -31,7 +31,7 @@
 
 ;; For the following mk-<fieldname> set of functions, pred is a key in the 'slots hash and record is the value for that key
 (define (mk-parent pred record)
-  (if (eq? pred 'related\ to)
+  (if (eq? pred '|related to|)
       #f
       (jsexpr-object-ref record 'is_a #f)))
 
@@ -58,7 +58,7 @@
   (let ((cur (jsexpr-object-ref slots-hash predicate #f)))
     (cond ; mind the order of clauses
       ((not cur) #f)
-      ((eq? predicate 'related\ to) #t)
+      ((eq? predicate '|related to|) #t)
       ((not (hash-has-key? cur 'is_a)) #f)
       (else (is-a-related-to slots-hash (string->symbol (jsexpr-object-ref cur 'is_a)))))))
 
@@ -117,7 +117,7 @@
         (if biolinkify
             (biolinkify-predicate (biolink-data-inverse-pred data))
             (biolink-data-inverse-pred data))
-        (raise-argument-error 'invert-biolink-predicate "<a predicate in the BIOLINK_PREDICATES table>" p))))
+        (raise-argument-error 'invert-biolink-predicate "<a predicate in the BIOLINK-PREDICATES table>" p))))
 
 (define (get-biolink-predicate-data p)
   (hash-ref BIOLINK_PREDICATES (sanitize-predicate p) #f))
