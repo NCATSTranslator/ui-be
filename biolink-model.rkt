@@ -2,7 +2,7 @@
 
 (provide
  (struct-out biolink-data)
- BIOLINK_PREDICATES
+ BIOLINK-PREDICATES
  sanitize-predicate
  biolinkify-predicate
  biolink-predicate?
@@ -96,7 +96,7 @@
               ; else
               (loop (cdr keys) retval))))))
 
-(define BIOLINK_PREDICATES (create-bl-predicates slots))
+(define BIOLINK-PREDICATES (create-bl-predicates slots))
 
 (define (sanitize-predicate s)
   (string-replace (string-replace s "_" " ") "biolink:" ""))
@@ -108,11 +108,11 @@
         (string-append "biolink:" s))))
 
 (define (biolink-predicate? s)
-  (hash-has-key? BIOLINK_PREDICATES (sanitize-predicate s)))
+  (hash-has-key? BIOLINK-PREDICATES (sanitize-predicate s)))
 
 (define (invert-biolink-predicate p (biolinkify #f))
   (let* ((p (sanitize-predicate p))
-         (data (hash-ref BIOLINK_PREDICATES p #f)))
+         (data (hash-ref BIOLINK-PREDICATES p #f)))
     (if data
         (if biolinkify
             (biolinkify-predicate (biolink-data-inverse-pred data))
@@ -120,7 +120,7 @@
         (raise-argument-error 'invert-biolink-predicate "<a predicate in the BIOLINK-PREDICATES table>" p))))
 
 (define (get-biolink-predicate-data p)
-  (hash-ref BIOLINK_PREDICATES (sanitize-predicate p) #f))
+  (hash-ref BIOLINK-PREDICATES (sanitize-predicate p) #f))
 
 ;; $ racket
 ;; Welcome to Racket v8.4 [cs].
