@@ -117,7 +117,7 @@
         (if biolinkify
             (biolinkify-predicate (biolink-data-inverse-pred data))
             (biolink-data-inverse-pred data))
-        #f)))
+        (raise-argument-error 'invert-biolink-predicate "<a predicate in the BIOLINK_PREDICATES table>" p))))
 
 (define (get-biolink-predicate-data p)
   (hash-ref BIOLINK_PREDICATES (sanitize-predicate p) #f))
