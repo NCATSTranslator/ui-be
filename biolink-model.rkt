@@ -12,7 +12,6 @@
 
 (require
   json
-  memo
   "common.rkt")
 
 
@@ -54,7 +53,7 @@
 
 (define (mk-raw-data pred record) record)
 
-(define/memoize (is-a-related-to slots-hash predicate)
+(define (is-a-related-to slots-hash predicate)
   (let ((cur (jsexpr-object-ref slots-hash predicate #f)))
     (cond ; mind the order of clauses
       ((not cur) #f)
