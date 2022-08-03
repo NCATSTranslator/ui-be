@@ -13,10 +13,17 @@
   racket/pretty)
 
 (provide
+  id->url
   add-last-publication-date
   expand-evidence
   make-pmid-expander
   make-nct-expander)
+
+(define (id->url id)
+  (define split-id (string-split id ":"))
+  (case (car split-id)
+    (("PMID") (format "https://pubmed.ncbi.nlm.nih.gov/~a" (cadr split-id)))
+    (else "Unknown")))
 
 (define (make-expander id-pattern
                        ids->data

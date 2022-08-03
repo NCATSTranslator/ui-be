@@ -67,6 +67,8 @@
         v
         (loop (cdr ks)
               (jsexpr-object-ref v (car ks) default)))))
+(define (jsexpr-object-remove je k)
+  (hash-remove je k))
 (define (jsexpr-object-set je k v)
   (hash-set je k v))
 (define (jsexpr-object-multi-set je kvps)

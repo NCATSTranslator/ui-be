@@ -329,14 +329,23 @@
   (define edge-rules
     (make-summarize-rules
       `(,(aggregate-property 'predicate '(predicates))
+         ,(get-property 'subject)
+         ,(get-property 'object)
          ,(aggregate-attributes
             `(,(biolink-tag "IriType"))
             'iri_type)
          ,(aggregate-and-transform-attributes
+            '("bts:sentence")
+            'snippets
+            (lambda (snippets)
+              (if (list? snippets)
+                snippets
+                (jsexpr-object->alist snippets))))
+         ,(aggregate-and-transform-attributes
             `(,(biolink-tag "supporting_document")
                ,(biolink-tag "Publication")
                ,(biolink-tag "publications"))
-            'evidence
+            'publications
             (lambda (evidence)
               (if (list? evidence)
                 evidence
@@ -349,7 +358,6 @@
       node-rules
       edge-rules)))
 
-; Node rules must be able to support several different types
 (define (creative-answers->condensed-summaries answers node-rules edge-rules)
   (define (trapi-result->summary-fragment trapi-result kgraph)
     (define node-bindings (jsexpr-object-ref trapi-result 'node_bindings))
@@ -503,6 +511,39 @@
   (define (extend-summary-edges edges edge-updates agent)
     (extend-summary-obj edges edge-updates agent))
 
+  (define (extend-summary-publications publications edge)
+    (define snippets (jsexpr-object-ref edge 'snippets))
+    (let loop ((publication-ids (jsexpr-object-ref edge 'publications '()))
+                (publications publications))
+      (cond ((null? publication-ids)
+              publications)
+            (else
+              (loop (cdr publication-ids)
+                    (let ((kvp (assoc (string->symbol (car publication-ids)) snippets)))
+                      (if kvp
+                        (let* ((pub-id (car kvp))
+                               (publication-object (cdr kvp))
+                               (snippet (jsexpr-object-ref publication-object 'sentence))
+                               (pubdate (jsexpr-object-ref publication-object '|publication date|)))
+                        (jsexpr-object-set
+                          publications
+                          pub-id
+                          (hash 'url (id->url (symbol->string pub-id))
+                                'snippet snippet
+                                'pubdate pubdate)))
+                        publications)))))))
+
+  (define (edges->edges/publications edges)
+    (values
+      (jsexpr-object-map edges (lambda (edge) (jsexpr-object-remove edge 'snippets)))
+      (let loop ((edges (jsexpr-object-values edges))
+                 (publications (hash)))
+        (cond ((null? edges)
+                publications)
+              (else
+                (loop (cdr edges)
+                      (extend-summary-publications publications (car edges))))))))
+
   (define (expand-results results paths nodes)
     (map (lambda (result)
            (let* ((ps (jsexpr-object-ref result 'paths))
@@ -536,16 +577,20 @@
              (edges   (jsexpr-object))
              (css     condensed-summaries))
     (cond ((null? css)
-            (make-jsexpr-object
-              `((meta    . ,(metadata-object qid (map condensed-summary-agent condensed-summaries)))
-                (results . ,(expand-results
-                              (map jsexpr-object-remove-duplicates
-                                   (jsexpr-object-values results))
-                              paths
-                              nodes))
-                (paths   . ,(jsexpr-object-map paths jsexpr-object-remove-duplicates))
-                (nodes   . ,(jsexpr-object-map nodes jsexpr-object-remove-duplicates))
-                (edges   . ,(jsexpr-object-map edges jsexpr-object-remove-duplicates)))))
+            (let-values (((edges publications) (edges->edges/publications (jsexpr-object-map
+                                                                            edges
+                                                                            jsexpr-object-remove-duplicates))))
+              (make-jsexpr-object
+                `((meta         . ,(metadata-object qid (map condensed-summary-agent condensed-summaries)))
+                  (results      . ,(expand-results
+                                     (map jsexpr-object-remove-duplicates
+                                         (jsexpr-object-values results))
+                                     paths
+                                     nodes))
+                  (paths        . ,(jsexpr-object-map paths jsexpr-object-remove-duplicates))
+                  (nodes        . ,(jsexpr-object-map nodes jsexpr-object-remove-duplicates))
+                  (edges        . ,edges)
+                  (publications . ,publications)))))
           (else
             (define cs (car css))
             (define agent (condensed-summary-agent cs))
