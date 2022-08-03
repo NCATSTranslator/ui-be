@@ -17,7 +17,7 @@
 
 
 (define j (with-input-from-file "assets/biolink-model.json" (lambda () (read-json)))) ; < 1 second to read json file directly converted via yq
-(define slots (hash-ref j 'slots))
+(define slots (jsexpr-object-ref j 'slots))
 
 (struct biolink-data
   (parent         ; value of is-a
@@ -33,34 +33,34 @@
 (define (mk-parent pred record)
   (if (eq? pred 'related\ to)
       #f
-      (hash-ref record 'is_a #f)))
+      (jsexpr-object-ref record 'is_a #f)))
 
 (define (mk-is-canonical pred record)
   (jsexpr-object-ref-recursive record '(annotations canonical_predicate) #f))
 
 (define (mk-is-symmetric pred record)
-  (hash-ref record 'symmetric #f))
+  (jsexpr-object-ref record 'symmetric #f))
 
 (define (mk-is-deprecated pred record)
-  (hash-ref record 'deprecated #f))
+  (jsexpr-object-ref record 'deprecated #f))
 
 (define (mk-is-inverse pred record)
   (hash-has-key? record 'inverse))
 
 (define (mk-inverse-pred pred record)
-  (if (hash-ref record 'symmetric #f)
+  (if (jsexpr-object-ref record 'symmetric #f)
       (symbol->string pred)
-      (hash-ref record 'inverse #f)))
+      (jsexpr-object-ref record 'inverse #f)))
 
 (define (mk-raw-data pred record) record)
 
 (define/memoize (is-a-related-to slots-hash predicate)
-  (let ((cur (hash-ref slots-hash predicate #f)))        
+  (let ((cur (jsexpr-object-ref slots-hash predicate #f)))
     (cond ; mind the order of clauses
       ((not cur) #f)
       ((eq? predicate 'related\ to) #t)
       ((not (hash-has-key? cur 'is_a)) #f)
-      (else (is-a-related-to slots-hash (string->symbol (hash-ref cur 'is_a)))))))
+      (else (is-a-related-to slots-hash (string->symbol (jsexpr-object-ref cur 'is_a)))))))
 
 (define (create-bl-predicates slots-hash)
   (define initial-preds
