@@ -315,16 +315,7 @@
             'same_as)
          ,(aggregate-attributes
             `(,(biolink-tag "IriType"))
-            'iri_type)
-         ,(aggregate-and-transform-attributes
-            `(,(biolink-tag "supporting_document")
-               ,(biolink-tag "Publication")
-               ,(biolink-tag "publications"))
-            'evidence
-            (lambda (evidence)
-              (if (list? evidence)
-                evidence
-                (string-split evidence #rx",|\\|")))))))
+            'iri_type))))
 
   (define edge-rules
     (make-summarize-rules
