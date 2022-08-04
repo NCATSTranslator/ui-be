@@ -64,21 +64,21 @@
 (define (create-bl-predicates slots-hash)
   (define initial-preds
     (apply hash
-         (flatten
-          (hash-map slots-hash
-                    (lambda (k v)
-                      (if (is-a-related-to slots-hash k)
-                          (list (symbol->string k)
-                                (biolink-data
-                                 (mk-parent k v) 
-                                 (mk-is-canonical k v)
-                                 (mk-is-symmetric k v)
-                                 (mk-is-deprecated k v)
-                                 (mk-is-inverse k v)
-                                 (mk-inverse-pred k v)
-                                 (mk-raw-data k v)))
-                          ; else this is not a predicate
-                          '()))))))
+           (flatten
+            (hash-map slots-hash
+                      (lambda (k v)
+                        (if (is-a-related-to slots-hash k)
+                            (list (symbol->string k)
+                                  (biolink-data
+                                   (mk-parent k v) 
+                                   (mk-is-canonical k v)
+                                   (mk-is-symmetric k v)
+                                   (mk-is-deprecated k v)
+                                   (mk-is-inverse k v)
+                                   (mk-inverse-pred k v)
+                                   (mk-raw-data k v)))
+                            ; else this is not a predicate
+                            '()))))))
   ; With that done, loop over the data structure setting all inverses for predicates in the
   ; reverse direction wrt how they are specified in the raw data, to make the inverse-pred
   ; property fully bi-directional
@@ -91,8 +91,7 @@
           (if (biolink-data-is-inverse cur-record)
               (let* ((target-record-key (biolink-data-inverse-pred cur-record))
                      (target-record (hash-ref retval target-record-key)))
-                (loop (cdr keys) (hash-set retval target-record-key (struct-copy biolink-data target-record (inverse-pred cur-key)))))
-              ; else
+                (loop (cdr keys) (hash-set retval target-record-key (struct-copy biolink-data target-record (inverse-pred cur-key)))))=
               (loop (cdr keys) retval))))))
 
 (define BIOLINK-PREDICATES (create-bl-predicates slots))
