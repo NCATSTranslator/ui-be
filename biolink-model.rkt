@@ -55,11 +55,11 @@
 
 (define (is-a-related-to slots-hash predicate)
   (let ((cur (jsexpr-object-ref slots-hash predicate #f)))
-    (cond ; mind the order of clauses
-      ((not cur) #f)
-      ((eq? predicate '|related to|) #t)
-      ((not (hash-has-key? cur 'is_a)) #f)
-      (else (is-a-related-to slots-hash (string->symbol (jsexpr-object-ref cur 'is_a)))))))
+    (and
+     cur
+     (or (eq? predicate '|related to|)
+         (and (jsexpr-object-has-key? cur 'is_a)
+              (is-a-related-to slots-hash (string->symbol (jsexpr-object-ref cur 'is_a))))))))
 
 (define (create-bl-predicates slots-hash)
   (define initial-preds
