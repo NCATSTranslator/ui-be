@@ -20,38 +20,38 @@
 
 (struct biolink-data
   (parent         ; value of is-a
-   is-canonical   ; value/presence of annotations.canonical_predicate
-   is-symmetric   ; value of property `symmetric`
-   is-deprecated  ; presence/value of `deprecated`
-   is-inverse     ; actually has an inverse property
+   is-canonical?   ; value/presence of annotations.canonical_predicate
+   is-symmetric?   ; value of property `symmetric`
+   is-deprecated?  ; presence/value of `deprecated`
+   is-inverse?     ; actually has an inverse property
    inverse-pred   ; the inverse of the given predicate
    raw-data       ; the full record as read in via the json file
    ))
 
-;; For the following mk-<fieldname> set of functions, pred is a key in the 'slots hash and record is the value for that key
-(define (mk-parent pred record)
+;; For the following get-<fieldname> set of functions, pred is a key in the 'slots hash and record is the value for that key
+(define (get-parent pred record)
   (if (eq? pred '|related to|)
       #f
       (jsexpr-object-ref record 'is_a #f)))
 
-(define (mk-is-canonical pred record)
+(define (get-is-canonical? pred record)
   (jsexpr-object-ref-recursive record '(annotations canonical_predicate) #f))
 
-(define (mk-is-symmetric pred record)
+(define (get-is-symmetric? pred record)
   (jsexpr-object-ref record 'symmetric #f))
 
-(define (mk-is-deprecated pred record)
+(define (get-is-deprecated? pred record)
   (jsexpr-object-ref record 'deprecated #f))
 
-(define (mk-is-inverse pred record)
+(define (get-is-inverse? pred record)
   (hash-has-key? record 'inverse))
 
-(define (mk-inverse-pred pred record)
+(define (get-inverse-pred pred record)
   (if (jsexpr-object-ref record 'symmetric #f)
       (symbol->string pred)
       (jsexpr-object-ref record 'inverse #f)))
 
-(define (mk-raw-data pred record) record)
+(define (get-raw-data pred record) record)
 
 (define (is-a-related-to slots-hash predicate)
   (let ((cur (jsexpr-object-ref slots-hash predicate #f)))
@@ -70,13 +70,13 @@
                         (if (is-a-related-to slots-hash k)
                             (list (symbol->string k)
                                   (biolink-data
-                                   (mk-parent k v) 
-                                   (mk-is-canonical k v)
-                                   (mk-is-symmetric k v)
-                                   (mk-is-deprecated k v)
-                                   (mk-is-inverse k v)
-                                   (mk-inverse-pred k v)
-                                   (mk-raw-data k v)))
+                                   (get-parent k v) 
+                                   (get-is-canonical? k v)
+                                   (get-is-symmetric? k v)
+                                   (get-is-deprecated? k v)
+                                   (get-is-inverse? k v)
+                                   (get-inverse-pred k v)
+                                   (get-raw-data k v)))
                             ; else this is not a predicate
                             '()))))))
   ; With that done, loop over the data structure setting all inverses for predicates in the
@@ -88,10 +88,10 @@
         retval
         (let* ((cur-key (car keys))
                (cur-record (hash-ref retval cur-key)))
-          (if (biolink-data-is-inverse cur-record)
+          (if (biolink-data-is-inverse? cur-record)
               (let* ((target-record-key (biolink-data-inverse-pred cur-record))
                      (target-record (hash-ref retval target-record-key)))
-                (loop (cdr keys) (hash-set retval target-record-key (struct-copy biolink-data target-record (inverse-pred cur-key)))))=
+                (loop (cdr keys) (hash-set retval target-record-key (struct-copy biolink-data target-record (inverse-pred cur-key)))))
               (loop (cdr keys) retval))))))
 
 (define BIOLINK-PREDICATES (create-bl-predicates slots))
