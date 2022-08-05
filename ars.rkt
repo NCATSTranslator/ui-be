@@ -39,7 +39,7 @@
                    #:data data))
   (read-json resp-out))
 
-(define (get-answer  jse) (jsexpr-object-ref jse 'results))
+(define (get-answer   jse) (jsexpr-object-ref jse 'results))
 (define (get-message  jse) (jsexpr-object-ref jse 'message))
 (define (get-fields   jse) (jsexpr-object-ref jse 'fields))
 (define (get-status   jse) (jsexpr-object-ref jse 'status))
@@ -53,7 +53,7 @@
   (equal? qstatus 'done))
 
 (define (ara? agent)
-  (string-starts-with? agent "ara"))
+  (string-prefix? agent "ara"))
 
 (define (resp-okay? resp)
   (let ((status (get-status resp)))

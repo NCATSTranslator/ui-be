@@ -169,8 +169,7 @@
   (make-result-endpoint
     pull-query-answers
     (lambda (qid answers)
-      (define test (trapi:creative-answers->summary qid answers))
-      test)))
+      (trapi:creative-answers->summary qid answers))))
 
 (define-values (dispatcher _)
     (dispatch-rules

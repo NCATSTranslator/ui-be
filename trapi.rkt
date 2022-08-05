@@ -365,9 +365,8 @@
                                        (map (lambda (e)
                                               (let ((next-edge (car e))
                                                     (next-node (cdr e)))
-                                                (if (member next-node path)
-                                                  #f
-                                                  (cons next-node (cons next-edge path)))))
+                                                (and (not (member next-node path))
+                                                          (cons next-node (cons next-edge path)))))
                                        (rnode->out-edges current-rnode)))
                                '()))))
                    `((,drug))
@@ -384,6 +383,17 @@
 
     ; Convert paths structure to normalized node and edge IDs
     (define (normalize-paths rgraph-paths kgraph)
+      (define (N n) (rnode->key n kgraph))
+      (define (E e) (redge->key e kgraph))
+      (map (lambda (path)
+             (let loop ((p path)
+                        (np '()))
+               (match p
+                 ('()           np)
+                 (`(,n)         (cons (N n) np))
+                 (`(,n ,e . ,p) (loop p (cons (E e) (cons (N n) np)))))))
+           rgraph-paths))
+
       (map (lambda (path)
              (let loop ((p path)
                         (i 0)
@@ -507,7 +517,7 @@
     (let loop ((publication-ids (jsexpr-object-ref edge 'publications '()))
                 (publications publications))
       (cond ((null? publication-ids)
-              publications)
+             publications)
             (else
               (loop (cdr publication-ids)
                     (let ((kvp (assoc (string->symbol (car publication-ids)) snippets)))
@@ -516,12 +526,12 @@
                                (publication-object (cdr kvp))
                                (snippet (jsexpr-object-ref publication-object 'sentence))
                                (pubdate (jsexpr-object-ref publication-object '|publication date|)))
-                        (jsexpr-object-set
-                          publications
-                          pub-id
-                          (hash 'url (id->url (symbol->string pub-id))
-                                'snippet snippet
-                                'pubdate pubdate)))
+                          (jsexpr-object-set
+                            publications
+                            pub-id
+                            (hash 'url (id->url (symbol->string pub-id))
+                                  'snippet snippet
+                                  'pubdate pubdate)))
                         publications)))))))
 
   (define (edges->edges/publications edges)

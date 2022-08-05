@@ -11,8 +11,6 @@
   (= (string-length str) 0))
 (define (string-add-prefix prefix str)
   (string-append prefix str))
-(define (string-starts-with? str prefix)
-  (equal? (substring str 0 (string-length prefix)) prefix))
 
 (define header:acc/json (string->bytes/utf-8 "accept: application/json"))
 
