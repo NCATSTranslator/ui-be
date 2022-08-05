@@ -1,11 +1,11 @@
 #lang racket/base
 
+(provide (all-defined-out))
+
 (require
   racket/string
+  racket/match
   xml/path)
-
-
-(provide (all-defined-out))
 
 (define (empty-string? str)
   (= (string-length str) 0))
@@ -46,6 +46,8 @@
                  (map (lambda (p) (make-url-param p "&"))
                       (cdr params)))))
 
+(define (jsexpr-string? je)
+  (string? je))
 (define (jsexpr-object)
   (hash))
 (define (make-jsexpr-object kvps)
@@ -70,10 +72,9 @@
 (define (jsexpr-object-set je k v)
   (hash-set je k v))
 (define (jsexpr-object-multi-set je kvps)
-  (foldl (lambda (kvp je)
-           (let ((key (car kvp))
-                 (val (cdr kvp)))
-             (jsexpr-object-set je key val)))
+  (foldl (match-lambda**
+           ((`(,key . ,val) (? jsexpr-object? je))
+            (jsexpr-object-set je key val)))
          je
          kvps))
 (define (jsexpr-object-transform je k proc (default #f))
