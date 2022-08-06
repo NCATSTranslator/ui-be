@@ -62,24 +62,37 @@
          (and (jsexpr-object-has-key? cur 'is_a)
               (is-a-related-to slots-hash (string->symbol (jsexpr-object-ref cur 'is_a))))))))
 
+(define (distance-from-related-to slots-hash predicate)
+  (define (aux slots-hash predicate level)
+    (let ((cur (jsexpr-object-ref slots-hash predicate #f)))
+      (cond
+       ((eq? predicate '|related to|) level)
+       ((and cur (jsexpr-object-has-key? cur 'is_a))
+        (aux slots (string->symbol (jsexpr-object-ref cur 'is_a)) (add1 level)))
+       (else +nan.0))))
+  (aux slots-hash predicate 0))
+
+
+
 (define (create-bl-predicates slots-hash)
   (define initial-preds
     (apply hash
            (flatten
             (hash-map slots-hash
                       (lambda (k v)
-                        (if (is-a-related-to slots-hash k)
+                        (let ((rank (distance-from-related-to slots-hash k)))
+                          (if (nan? rank)
+                            '() ; this is not a predicate
                             (list (symbol->string k)
                                   (biolink-data
-                                   (get-parent k v) 
+                                   (get-parent k v)
                                    (get-is-canonical? k v)
                                    (get-is-symmetric? k v)
                                    (get-is-deprecated? k v)
                                    (get-is-inverse? k v)
                                    (get-inverse-pred k v)
-                                   (get-raw-data k v)))
-                            ; else this is not a predicate
-                            '()))))))
+                                   rank
+                                   (get-raw-data k v))))))))))
   ; With that done, loop over the data structure setting all inverses for predicates in the
   ; reverse direction wrt how they are specified in the raw data, to make the inverse-pred
   ; property fully bi-directional
@@ -116,10 +129,27 @@
         (if biolinkify
             (biolinkify-predicate (biolink-data-inverse-pred data))
             (biolink-data-inverse-pred data))
-        (raise-argument-error 'invert-biolink-predicate "<a predicate in the BIOLINK-PREDICATES table>" p))))
+        (raise-argument-error 'invert-biolink-predicate "<a valid biolink predicate>" p))))
 
 (define (get-biolink-predicate-data p)
   (hash-ref BIOLINK-PREDICATES (sanitize-predicate p) #f))
+
+(define (biolink-predicate-more-specific-than? p1 p2)
+  (let* ((p1 (sanitize-predicate p1))
+         (p2 (sanitize-predicate p2))
+         (p1-data (get-biolink-predicate-data p1))
+         (p2-data (get-biolink-predicate-data p2)))
+    (cond
+     ((not p1-data) (raise-argument-error 'biolink-predicate-more-specific-than? "<a valid biolink predicate>" p1))
+     ((not p2-data) (raise-argument-error 'biolink-predicate-more-specific-than? "<a valid biolink predicate>" p2))
+     (else (> (biolink-data-rank p1-data) (biolink-data-rank p2-data))))))
+
+;; "More specific" predicates sort before more general ones. Greater specificity
+;; is defined as distance from "related to". This is not a very scientific
+;; measure, but will do for MVP.
+(define (sort-biolink-predicates pred-list)
+  (sort pred-list biolink-predicate-more-specific-than?))
+
 
 (define (tests)
   (and
@@ -134,4 +164,14 @@
    (biolink-predicate? "biolink:treated_by")
    (biolink-data-is-symmetric? (get-biolink-predicate-data "exact match"))
    (string=? (invert-biolink-predicate "exact match") "exact match")
+   (= (distance-from-related-to slots '|related to|) 0)
+   (= (distance-from-related-to slots '|treated by|) 4)
+   (= (distance-from-related-to slots '|is sequence variant of|) 2)
+   (= (distance-from-related-to slots '|related to at concept level|) 1)
+   (nan? (distance-from-related-to slots '|hello hello|))
+   (let ((sortme '("related to" "treated by" "related to at concept level" "is sequence variant of"))
+         (sorted '("treated by" "is sequence variant of" "related to at concept level" "related to")))
+     (and (equal? sorted (sort-biolink-predicates sortme))
+          (equal? (map biolinkify-predicate sorted) (sort-biolink-predicates
+                                                     (map biolinkify-predicate sortme)))))
   ))
