@@ -19,13 +19,14 @@
 (define slots (jsexpr-object-ref j 'slots))
 
 (struct biolink-data
-  (parent         ; value of is-a
+  (parent          ; value of is-a
    is-canonical?   ; value/presence of annotations.canonical_predicate
    is-symmetric?   ; value of property `symmetric`
    is-deprecated?  ; presence/value of `deprecated`
    is-inverse?     ; actually has an inverse property
-   inverse-pred   ; the inverse of the given predicate
-   raw-data       ; the full record as read in via the json file
+   inverse-pred    ; the inverse of the given predicate
+   rank            ; distance from related-to, with related-to itself having rank 0
+   raw-data        ; the full record as read in via the json file
    ))
 
 ;; For the following get-<fieldname> set of functions, pred is a key in the 'slots hash and record is the value for that key
