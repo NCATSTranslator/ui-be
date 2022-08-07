@@ -19,14 +19,14 @@
 (define slots (jsexpr-object-ref j 'slots))
 
 (struct biolink-data
-  (parent          ; value of is-a
-   is-canonical?   ; value/presence of annotations.canonical_predicate
-   is-symmetric?   ; value of property `symmetric`
-   is-deprecated?  ; presence/value of `deprecated`
-   is-inverse?     ; actually has an inverse property
-   inverse-pred    ; the inverse of the given predicate
-   rank            ; distance from related-to, with related-to itself having rank 0
-   raw-data        ; the full record as read in via the json file
+  (parent        ; value of is-a
+   canonical?    ; value/presence of annotations.canonical_predicate
+   symmetric?    ; value of property `symmetric`
+   deprecated?   ; presence/value of `deprecated`
+   inverse?      ; actually has an inverse property
+   inverse-pred  ; the inverse of the given predicate
+   rank          ; distance from related-to, with related-to itself having rank 0
+   raw-data      ; the full record as read in via the json file
    ))
 
 ;; For the following get-<fieldname> set of functions, pred is a key in the 'slots hash and record is the value for that key
@@ -35,16 +35,16 @@
       #f
       (jsexpr-object-ref record 'is_a #f)))
 
-(define (get-is-canonical? pred record)
+(define (get-canonical? pred record)
   (jsexpr-object-ref-recursive record '(annotations canonical_predicate) #f))
 
-(define (get-is-symmetric? pred record)
+(define (get-symmetric? pred record)
   (jsexpr-object-ref record 'symmetric #f))
 
-(define (get-is-deprecated? pred record)
+(define (get-deprecated? pred record)
   (jsexpr-object-ref record 'deprecated #f))
 
-(define (get-is-inverse? pred record)
+(define (get-inverse? pred record)
   (hash-has-key? record 'inverse))
 
 (define (get-inverse-pred pred record)
@@ -53,14 +53,6 @@
       (jsexpr-object-ref record 'inverse #f)))
 
 (define (get-raw-data pred record) record)
-
-(define (is-a-related-to slots-hash predicate)
-  (let ((cur (jsexpr-object-ref slots-hash predicate #f)))
-    (and
-     cur
-     (or (eq? predicate '|related to|)
-         (and (jsexpr-object-has-key? cur 'is_a)
-              (is-a-related-to slots-hash (string->symbol (jsexpr-object-ref cur 'is_a))))))))
 
 (define (distance-from-related-to slots-hash predicate)
   (define (aux slots-hash predicate level)
@@ -71,8 +63,6 @@
         (aux slots (string->symbol (jsexpr-object-ref cur 'is_a)) (add1 level)))
        (else +nan.0))))
   (aux slots-hash predicate 0))
-
-
 
 (define (create-bl-predicates slots-hash)
   (define initial-preds
@@ -86,10 +76,10 @@
                             (list (symbol->string k)
                                   (biolink-data
                                    (get-parent k v)
-                                   (get-is-canonical? k v)
-                                   (get-is-symmetric? k v)
-                                   (get-is-deprecated? k v)
-                                   (get-is-inverse? k v)
+                                   (get-canonical? k v)
+                                   (get-symmetric? k v)
+                                   (get-deprecated? k v)
+                                   (get-inverse? k v)
                                    (get-inverse-pred k v)
                                    rank
                                    (get-raw-data k v))))))))))
@@ -102,7 +92,7 @@
         retval
         (let* ((cur-key (car keys))
                (cur-record (hash-ref retval cur-key)))
-          (if (biolink-data-is-inverse? cur-record)
+          (if (biolink-data-inverse? cur-record)
               (let* ((target-record-key (biolink-data-inverse-pred cur-record))
                      (target-record (hash-ref retval target-record-key)))
                 (loop (cdr keys) (hash-set retval target-record-key (struct-copy biolink-data target-record (inverse-pred cur-key)))))
@@ -154,7 +144,7 @@
 (define (tests)
   (and
    (let ((b (get-biolink-predicate-data "biolink:is_frameshift_variant_of")))
-     (not (biolink-data-is-symmetric? b)))
+     (not (biolink-data-symmetric? b)))
    (string=? (invert-biolink-predicate "biolink:is_frameshift_variant_of")  "has frameshift variant")
    (string=? (invert-biolink-predicate "biolink:is_frameshift_variant_of" #t)  "biolink:has_frameshift_variant")
    (not (biolink-predicate? "biolink:mysteries_of_the_maya"))
@@ -162,7 +152,7 @@
    (not (biolink-predicate? "is treated by"))
    (biolink-predicate? "treated by")
    (biolink-predicate? "biolink:treated_by")
-   (biolink-data-is-symmetric? (get-biolink-predicate-data "exact match"))
+   (biolink-data-symmetric? (get-biolink-predicate-data "exact match"))
    (string=? (invert-biolink-predicate "exact match") "exact match")
    (= (distance-from-related-to slots '|related to|) 0)
    (= (distance-from-related-to slots '|treated by|) 4)
