@@ -8,6 +8,8 @@
  biolink-predicate?
  invert-biolink-predicate
  get-biolink-predicate-data
+ biolink-predicate-more-specific-than?
+ sort-biolink-predicates
  )
 
 (require
