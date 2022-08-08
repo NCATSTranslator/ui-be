@@ -362,7 +362,7 @@
                          (cons (filter (lambda (p) p)
                                        (map (match-lambda
                                               ((cons next-edge next-node)
-                                               (and (member next-node path)
+                                               (and (not (member next-node path))
                                                     (cons next-node (cons next-edge path)))))
                                        (rnode->out-edges current-rnode)))
                                '()))))
@@ -423,7 +423,7 @@
       (cond ((null? fps)
               (values results paths))
             (else
-              (match-let* ((`(,fp . rest) fps)
+              (match-let* ((`(,fp . ,rest) fps)
                            ((? symbol? path-key) (path->key fp)))
                 (loop (cons `(,(car fp) . ,path-key) results)
                       (cons `(,path-key . ,fp)       paths)
