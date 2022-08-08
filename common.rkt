@@ -112,6 +112,8 @@
   '())
 (define (jsexpr-array? je)
   (list? je))
+(define (jsexpr-array-empty? je)
+  (null? je))
 (define (jsexpr-array-prepend je e)
   (cons e je))
 (define (jsexpr-null? je)

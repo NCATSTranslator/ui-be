@@ -82,8 +82,10 @@
     (lambda (attributes)
       (let loop ((as attributes)
                  (result #f))
-        (cond (result (transform result))
-              ((null? as) 'null)
+        (cond (result
+                (transform result))
+              ((or (jsexpr-null? as) (jsexpr-array-empty? as))
+                'null)
               (else
                 (define a (car as))
                 (loop (cdr as)
@@ -99,7 +101,8 @@
     (lambda (attributes)
       (let loop ((as attributes)
                  (result '()))
-        (cond ((null? as) result)
+        (cond ((or (jsexpr-null? as) (jsexpr-array-empty? as))
+                result)
               (else
                 (define a (car as))
                 (define aid (member (jsexpr-object-ref a 'attribute_type_id) attribute-ids))
