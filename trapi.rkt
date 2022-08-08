@@ -502,34 +502,43 @@
 
   (define (extend-summary-publications publications edge)
     (define snippets (jsexpr-object-ref edge 'snippets))
+    (define (make-publication-object url snippet pubdate)
+      (hash 'url url
+            'snippet snippet
+            'pubdate pubdate))
+
     (let loop ((publication-ids (jsexpr-object-ref edge 'publications '()))
                (publications publications))
       (cond ((null? publication-ids)
              publications)
             (else
-              (loop (cdr publication-ids)
-                    (let ((kvp (assoc (string->symbol (car publication-ids)) snippets)))
-                      (if kvp
-                        (match-let* ((`(,pub-id . ,publication-object) kvp)
-                                     ((? jsexpr-string? snippet)
-                                      (jsexpr-object-ref publication-object 'sentence))
-                                     ((? jsexpr-string? pubdate)
-                                      (jsexpr-object-ref publication-object '|publication date|)))
-                          (jsexpr-object-set
-                            publications
-                            pub-id
-                            (hash 'url (id->url (symbol->string pub-id))
-                                  'snippet snippet
-                                  'pubdate pubdate)))
-                        publications)))))))
+              (match-let* ((`(,pub-id-str . ,rest) publication-ids)
+                           ((? symbol? pub-id)
+                            (string->symbol pub-id-str))
+                           ((? string? url)
+                            (id->url pub-id-str)))
+                (loop rest
+                      (let ((kvp (assoc pub-id snippets)))
+                        (jsexpr-object-set
+                          publications
+                          pub-id
+                          (if kvp
+                            (match-let* ((`(,pub-id . ,publication-object) kvp)
+                                         ((? jsexpr-string? snippet)
+                                          (jsexpr-object-ref publication-object 'sentence))
+                                         ((? jsexpr-string? pubdate)
+                                          (jsexpr-object-ref publication-object '|publication date|)))
+                              (make-publication-object url snippet pubdate))
+                            (make-publication-object url 'null 'null))))))))))
 
     (define (edges->edges/publications edges)
       (values
-        (jsexpr-object-map edges (lambda (edge) (jsexpr-object-remove edge 'snippets)))
+        (jsexpr-object-map edges (lambda (edge)
+                                   (jsexpr-object-remove edge 'snippets)))
         (let loop ((edges (jsexpr-object-values edges))
                    (publications (hash)))
           (cond ((null? edges)
-                 publications)
+                  publications)
                 (else
                   (loop (cdr edges)
                         (extend-summary-publications publications (car edges))))))))
@@ -568,9 +577,15 @@
                (css     condensed-summaries))
       (cond ((null? css)
              (let-values (((edges publications)
-                           (edges->edges/publications (jsexpr-object-map
-                                                        edges
-                                                        jsexpr-object-remove-duplicates))))
+                           (edges->edges/publications
+                             (jsexpr-object-map
+                               edges
+                               (lambda (edge)
+                                 (jsexpr-object-key-map
+                                   (jsexpr-object-remove-duplicates edge)
+                                   '(publications)
+                                   (lambda (publications)
+                                     (filter valid-id? publications))))))))
                (make-jsexpr-object
                  `((meta         . ,(metadata-object
                                       qid

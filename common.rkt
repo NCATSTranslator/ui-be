@@ -69,17 +69,27 @@
               (jsexpr-object-ref v (car ks) default)))))
 (define (jsexpr-object-remove je k)
   (hash-remove je k))
-(define (jsexpr-object-set je k v)
-  (hash-set je k v))
 (define (jsexpr-object-multi-set je kvps)
   (foldl (match-lambda**
            ((`(,key . ,val) (? jsexpr-object? je))
             (jsexpr-object-set je key val)))
          je
          kvps))
+(define (jsexpr-object-set je k v)
+  (hash-set je k v))
+(define (jsexpr-object-multi-transform je k procs (default #f))
+  (jsexpr-object-set
+    je
+    k
+    (foldl (lambda (proc res)
+              (proc res))
+            (jsexpr-object-ref je k default)
+            procs)))
 (define (jsexpr-object-transform je k proc (default #f))
-  (jsexpr-object-set je k (proc (jsexpr-object-ref je k default))))
+  (jsexpr-object-multi-transform je k `(,proc) default))
 (define (jsexpr-object-key-map je keys proc (default #f))
+  (jsexpr-object-key-multi-map je keys `(,proc) default))
+(define (jsexpr-object-key-multi-map je keys procs (default #f))
   (let loop ((keys keys)
              (je je))
     (cond ((null? keys)
@@ -87,14 +97,11 @@
           (else
             (loop
               (cdr keys)
-              (jsexpr-object-transform
-                je
-                (car keys)
-                proc
-                default))))))
+              (jsexpr-object-multi-transform je (car keys) procs default))))))
+(define (jsexpr-object-multi-map je procs (default #f))
+  (jsexpr-object-key-multi-map je (jsexpr-object-keys je) procs default))
 (define (jsexpr-object-map je proc (default #f))
-  (jsexpr-object-key-map je (jsexpr-object-keys je) proc default))
-
+  (jsexpr-object-multi-map je `(,proc) default))
 (define (jsexpr-object->alist je)
   (hash->list je))
 (define (jsexpr-object-count je)
