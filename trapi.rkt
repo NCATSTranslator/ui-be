@@ -342,32 +342,40 @@
                 evidence
                 (string-split evidence #rx",|\\|")))))))
 
+  (define max-hops (config-max-hops SERVER-CONFIG))
+
   (condensed-summaries->summary
     qid
     (creative-answers->condensed-summaries
       answers
       node-rules
-      edge-rules)))
+      edge-rules
+      max-hops)))
 
-(define (creative-answers->condensed-summaries answers node-rules edge-rules)
+(define (creative-answers->condensed-summaries answers node-rules edge-rules max-hops)
   (define (trapi-result->summary-fragment trapi-result kgraph)
     (define node-bindings (jsexpr-object-ref trapi-result 'node_bindings))
     (define rgraph (trapi-result->rgraph trapi-result))
     (define drug    (get-binding-id node-bindings 'drug))
     (define disease (get-binding-id node-bindings 'disease))
     (define rnode->out-edges (make-rnode->out-edges rgraph kgraph))
+    (define max-path-length (+ (* 2 max-hops) 1))
     (define rgraph-paths
       (rgraph-fold (lambda (path)
                      (let ((current-rnode (car path)))
-                       (if (equal? current-rnode disease)
-                         (cons '() `(,path))
-                         (cons (filter (lambda (p) p)
-                                       (map (match-lambda
-                                              ((cons next-edge next-node)
-                                               (and (not (member next-node path))
-                                                    (cons next-node (cons next-edge path)))))
-                                       (rnode->out-edges current-rnode)))
-                               '()))))
+                       (cond
+                         ((< max-path-length (length path))
+                           (cons '() '())) ; Skip this path if its too long
+                         ((equal? current-rnode disease)
+                           (cons '() `(,path)))
+                         (else
+                           (cons (filter (lambda (p) p)
+                                         (map (match-lambda
+                                                ((cons next-edge next-node)
+                                                 (and (not (member next-node path))
+                                                      (cons next-node (cons next-edge path)))))
+                                              (rnode->out-edges current-rnode)))
+                                 '())))))
                    `((,drug))
                    '()))
 
