@@ -125,7 +125,6 @@
     (map (lambda (rule) (rule obj))
          rules)))
 
-
 (define (fda-description->fda-level description)
   1)
 
