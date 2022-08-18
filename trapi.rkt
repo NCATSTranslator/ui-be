@@ -21,6 +21,7 @@
   "config.rkt"
   "curie-search.rkt"
   "evidence.rkt"
+  (prefix-in bl: "biolink-model.rkt")
 
   racket/pretty)
 
@@ -206,12 +207,18 @@
           '() (jsexpr-object-values bindings)))
 
 ; An rgraph is a list of nodes and a list of directed edges
-(define (make-rgraph nodes edges) (cons nodes edges))
+(define (make-rgraph nodes edges kgraph)
+  (cons nodes
+        (filter (lambda (e)
+                  (define kedge (trapi-edge-binding->trapi-kedge kgraph e))
+                  (bl:biolink-predicate? (jsexpr-object-ref kedge 'predicate)))
+                edges)))
 (define (rgraph-nodes rgraph) (car rgraph))
 (define (rgraph-edges rgraph) (cdr rgraph))
-(define (trapi-result->rgraph trapi-result)
+(define (trapi-result->rgraph trapi-result kgraph)
   (make-rgraph (flatten-bindings (jsexpr-object-ref trapi-result 'node_bindings))
-               (flatten-bindings (jsexpr-object-ref trapi-result 'edge_bindings))))
+               (flatten-bindings (jsexpr-object-ref trapi-result 'edge_bindings))
+               kgraph))
 (define (rnode->key rnode kgraph) rnode)
 (define (redge->key redge kgraph)
   (let ((kedge (trapi-edge-binding->trapi-kedge kgraph redge)))
@@ -355,7 +362,7 @@
 (define (creative-answers->condensed-summaries answers node-rules edge-rules max-hops)
   (define (trapi-result->summary-fragment trapi-result kgraph)
     (define node-bindings (jsexpr-object-ref trapi-result 'node_bindings))
-    (define rgraph (trapi-result->rgraph trapi-result))
+    (define rgraph (trapi-result->rgraph trapi-result kgraph))
     (define drug    (get-binding-id node-bindings 'drug))
     (define disease (get-binding-id node-bindings 'disease))
     (define rnode->out-edges (make-rnode->out-edges rgraph kgraph))
