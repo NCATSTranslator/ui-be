@@ -69,6 +69,8 @@
               (jsexpr-object-ref v (car ks) default)))))
 (define (jsexpr-object-remove je k)
   (hash-remove je k))
+(define (jsexpr-object-multi-remove je ks)
+  (foldl (lambda (k je) (jsexpr-object-remove je k)) je ks))
 (define (jsexpr-object-multi-set je kvps)
   (foldl (match-lambda**
            ((`(,key . ,val) (? jsexpr-object? je))
@@ -116,6 +118,8 @@
   (null? je))
 (define (jsexpr-array-prepend je e)
   (cons e je))
+(define (jsexpr-array-map proc je)
+  (map proc je))
 (define (jsexpr-null? je)
   (equal? je 'null))
 (define (jsexpr-object-set-recursive jse ks v)
