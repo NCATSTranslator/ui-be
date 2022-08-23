@@ -28,10 +28,10 @@
   (if (config-mock-ars? SERVER-CONFIG)
       (values mock:post-query mock:pull-query-status mock:pull-query-answers)
       (values ars:post-query ars:pull-query-status ars:pull-query-answers)))
-(define qgraph->trapi-query
+(define-values (qgraph->trapi-query disease->creative-query)
   (if (config-mock-query? SERVER-CONFIG)
-      mock:qgraph->trapi-query
-      trapi:qgraph->trapi-query))
+      (values mock:qgraph->trapi-query  mock:disease->creative-query)
+      (values trapi:qgraph->trapi-query trapi:disease->creative-query)))
 (define evidence-expanders
   (list (if (config-mock-pmid? SERVER-CONFIG)
             (mock:make-pmid-expander)
@@ -137,7 +137,7 @@
                 (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))))
 
 (define /query (make-query-endpoint qgraph->trapi-query))
-(define /creative-query (make-query-endpoint trapi:disease->creative-query))
+(define /creative-query (make-query-endpoint disease->creative-query))
 
 (define (make-result-endpoint pull-proc process-query-data)
   (lambda (req)
