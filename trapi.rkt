@@ -623,12 +623,27 @@
                       (extend-summary-publications publications e)))))))
 
   (define (expand-results results paths nodes)
+    (define (pid->path paths pid)
+      (jsexpr-object-ref-recursive
+        paths
+        `(,(string->symbol pid) subgraph)))
+
+    ; Paths always have at least one node
+    (define (path<? pid-1 pid-2)
+      (let loop ((p1 (pid->path paths pid-1))
+                 (p2 (pid->path paths pid-2)))
+        (cond ((not (equal? (car p1) (car p2)))
+                (string<? (car p1) (car p2)))
+              ((null? (cdr p1))
+                (not (null? (cdr p2))))
+              ((null? (cdr p2))
+                #f)
+              (else
+                (loop (cddr p1) (cddr p2))))))
+
     (map (lambda (result)
            (let* ((ps (jsexpr-object-ref result 'paths))
-                  (subgraph (jsexpr-object-ref-recursive
-                              paths
-                              `(,(string->symbol (car ps))
-                                 subgraph)))
+                  (subgraph (pid->path paths (car ps)))
                   (drug (first subgraph))
                   (drug-name (jsexpr-object-ref-recursive
                                nodes
@@ -638,6 +653,7 @@
                                                (drug_name . ,(if (null? drug-name)
                                                                'null
                                                                (car drug-name)))
+                                               (ps        . ,(sort ps path<?))
                                                (object    . ,disease)))))
          results))
 
