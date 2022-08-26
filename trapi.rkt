@@ -633,7 +633,8 @@
       (let loop ((p1 (pid->path paths pid-1))
                  (p2 (pid->path paths pid-2)))
         (cond ((not (equal? (car p1) (car p2)))
-                (string<? (car p1) (car p2)))
+                (and (<= (length p1) (length p2))
+                         (string<? (car p1) (car p2))))
               ((null? (cdr p1))
                 (not (null? (cdr p2))))
               ((null? (cdr p2))
@@ -649,12 +650,12 @@
                                nodes
                                `(,(string->symbol drug) names)))
                   (disease (last subgraph)))
-             (jsexpr-object-multi-set result `((subject   . ,drug)
-                                               (drug_name . ,(if (null? drug-name)
-                                                               'null
-                                                               (car drug-name)))
-                                               (ps        . ,(sort ps path<?))
-                                               (object    . ,disease)))))
+             (make-immutable-hash `((subject   . ,drug)
+                                    (drug_name . ,(if (null? drug-name)
+                                                    'null
+                                                    (car drug-name)))
+                                    (paths     . ,(sort ps path<?))
+                                    (object    . ,disease)))))
          results))
 
   (define (jsexpr-object-remove-duplicates obj)
