@@ -21,13 +21,14 @@ fi
 
 echo "Starting UI build"
 
-echo "Downloading front end"
-git clone ${ui_repo}
-echo "Cloning front end"
+if [ ! -d "${ui_src}" ]; then
+   echo "Cloning front end"
+   git clone ${ui_repo}
+fi
 pushd ${ui_src} > /dev/null
 git checkout ${fe_branch}
 git pull
-if [ "${do_build}" != "nobuild" ]; then 
+if [ "${do_build}" != "nobuild" ]; then
     echo "Installing front end dependencies"
     npm install
     echo "Building front end source"
