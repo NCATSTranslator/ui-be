@@ -44,7 +44,7 @@
          (jsexpr-object-set-recursive
            obj
            kpath
-           (let ((v (if (list? v) v (list v))))
+           (let ((v (if (or (pair? v) (null? v)) v (list v))))
              (if cv
                (append v cv)
                v))))
