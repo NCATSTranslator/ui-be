@@ -21,6 +21,9 @@
   "config.rkt"
   (prefix-in trapi: "trapi.rkt"))
 
+(define empty-message (hasheq 'results         '()
+                              'knowledge_graph (hasheq)
+                              'query_graph     (hasheq)))
 (define ars-host (ars-config 'host))
 (define ars-post-uri (ars-config 'post-uri))
 (define (ars-pull-uri qid trace?)
@@ -129,5 +132,5 @@
       (if (query-done? qstatus)
         (let* ((message (get-message (get-data fields)))
                (answer (get-answer message)))
-          (and answer (not (null? answer)) message))
+          (if answer message empty-message))
         qstatus))))

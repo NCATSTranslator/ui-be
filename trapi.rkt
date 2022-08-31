@@ -460,7 +460,9 @@
              (foldl (lambda (trapi-result summary-fragment)
                      (merge-summary-attrs
                        summary-fragment
-                       (trapi-result->summary-fragment trapi-result kgraph)))
+                       (if (null? trapi-result)
+                         (empty-summary-fragment)
+                         (trapi-result->summary-fragment trapi-result kgraph))))
                    empty-summary-fragment
                    trapi-results))))
        answers))
