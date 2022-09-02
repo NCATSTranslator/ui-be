@@ -18,6 +18,7 @@
   "evidence.rkt"
   (prefix-in trapi: "trapi.rkt")
   (prefix-in ars:   "ars.rkt")
+  (prefix-in log:   "logging.rkt")
   (prefix-in mock:  "mock/ars.rkt")
   (prefix-in mock:  "mock/trapi.rkt")
   (prefix-in mock:  "mock/evidence.rkt")
@@ -141,6 +142,8 @@
 
 (define (make-result-endpoint pull-proc process-query-data)
   (lambda (req)
+    (parameterize ((log:current-log-port (config-log-port SERVER-CONFIG)))
+      (log:log-request req))
     (with-handlers ((exn:fail:read?
                       (lambda (e) (response/bad-request/invalid-json)))
                     (exn:fail?

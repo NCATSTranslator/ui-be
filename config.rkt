@@ -28,6 +28,9 @@
    mock-query?
    mock-pmid?
    mock-nct?
+   log-level
+   log-port
+   error-log-port
    yaml)
   #:prefab)
 (struct server-config-exception exn:fail:user ())
@@ -64,6 +67,11 @@
     (get 'mock-query?)
     (get 'mock-pmid?)
     (get 'mock-nct?)
+    (get 'log-level)
+    (open-output-file (get 'log-file)
+                      #:exists 'append)
+    (open-output-file (get 'error-log-file)
+                      #:exists 'append)
     config-data))
 
 (define SERVER-CONFIG
