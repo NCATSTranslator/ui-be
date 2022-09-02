@@ -8,10 +8,10 @@
 (provide
   post-query
   pull-query-status
-  pull-query-result)
+  pull-query-answers)
 
 ; Format:
-;   qid '(<path to result> ...)
+;   qid '(<path to answer> ...)
 (define mock-queries
   (hash "3" '("test/ars/3-1.json" "test/ars/3-2.json" "test/ars/3-3.json")
         "e01" '("test/ars/e01.out-response.ara-explanatory.1dcc4dae-6b65-419b-8a75-ad2ff70776af.nres-72")
@@ -42,10 +42,10 @@
   (if (hash-has-key? mock-queries qid)
       'done
       'error))
-(define (pull-query-result qid)
-  (define result (hash-ref mock-queries qid))
+(define (pull-query-answers qid)
+  (define answers (hash-ref mock-queries qid))
   (map (lambda (path)
          (call-with-input-file (string-add-prefix (config-document-root SERVER-CONFIG) path)
            (lambda (input-port)
               (make-answer (jsexpr-object-ref (read-json input-port) 'message) "mock"))))
-       result))
+       answers))

@@ -6,6 +6,7 @@
   qgraph->trapi-query
   disease->creative-query
   answers->summary
+  creative-answers->summary
   metadata-object)
 
 (require
@@ -19,7 +20,9 @@
   "common.rkt"
   "config.rkt"
   "curie-search.rkt"
-  "evidence.rkt")
+  "evidence.rkt"
+
+  racket/pretty)
 
 (define (metadata-object qid agents)
   (make-jsexpr-object `((qid  . ,qid)
@@ -79,8 +82,10 @@
     (lambda (attributes)
       (let loop ((as attributes)
                  (result #f))
-        (cond (result (transform result))
-              ((null? as) 'null)
+        (cond (result
+                (transform result))
+              ((or (jsexpr-null? as) (jsexpr-array-empty? as))
+                'null)
               (else
                 (define a (car as))
                 (loop (cdr as)
@@ -96,7 +101,8 @@
     (lambda (attributes)
       (let loop ((as attributes)
                  (result '()))
-        (cond ((null? as) result)
+        (cond ((or (jsexpr-null? as) (jsexpr-array-empty? as))
+                result)
               (else
                 (define a (car as))
                 (define aid (member (jsexpr-object-ref a 'attribute_type_id) attribute-ids))
@@ -168,15 +174,13 @@
   (define trapi-qgraph (qgraph->trapi-qgraph qgraph curie-searcher))
   (and trapi-qgraph (trapi-qgraph->trapi-message trapi-qgraph)))
 
-(define (disease->creative-query disease-obj (curie-searcher
-                                               (lambda (name)
-                                                 (curie-search nr-searcher name 0 10))))
+(define (disease->creative-query disease-obj)
   (define (disease->trapi-qgraph disease)
     (hasheq 'nodes
             (hasheq 'drug
                     (hasheq 'categories `(,(biolink-tag "ChemicalEntity")))
                     'disease
-                    (hasheq 'ids        (curie-searcher disease)
+                    (hasheq 'ids        `(,disease)
                             'categories `(,(biolink-tag "Disease"))))
             'edges
             (hasheq 'treats
@@ -193,6 +197,421 @@
   (trapi-binding->kobj knowledge-graph edge-binding 'edges))
 (define (trapi-node-binding->trapi-knode knowledge-graph node-binding)
   (trapi-binding->kobj knowledge-graph node-binding 'nodes))
+
+(define (get-binding-id bindings key)
+  (string->symbol (jsexpr-object-ref (car (jsexpr-object-ref bindings key)) 'id)))
+(define (flatten-bindings bindings)
+  (foldl (lambda (binding ids)
+            (append ids (jsexpr-map (lambda (obj) (string->symbol (jsexpr-object-ref obj 'id)))
+                                    binding)))
+          '() (jsexpr-object-values bindings)))
+
+; An rgraph is a list of nodes and a list of directed edges
+(define (make-rgraph nodes edges) (cons nodes edges))
+(define (rgraph-nodes rgraph) (car rgraph))
+(define (rgraph-edges rgraph) (cdr rgraph))
+(define (trapi-result->rgraph trapi-result)
+  (make-rgraph (flatten-bindings (jsexpr-object-ref trapi-result 'node_bindings))
+               (flatten-bindings (jsexpr-object-ref trapi-result 'edge_bindings))))
+(define (rnode->key rnode kgraph) rnode)
+(define (redge->key redge kgraph)
+  (let ((kedge (trapi-edge-binding->trapi-kedge kgraph redge)))
+    (path->key (list (jsexpr-object-ref kedge 'subject)
+                     (jsexpr-object-ref kedge 'predicate)
+                     (jsexpr-object-ref kedge 'object)))))
+
+(define (make-redge->edge-id rgraph kgraph)
+  (define redge->edge-id
+    (make-immutable-hash
+      (map (lambda (eid)
+             (let ((kedge (trapi-edge-binding->trapi-kedge kgraph eid)))
+               (cons eid (cons (string->symbol (jsexpr-object-ref kedge 'subject))
+                               (string->symbol (jsexpr-object-ref kedge 'object))))))
+           (rgraph-edges rgraph))))
+
+  (lambda (redge)
+    (hash-ref redge->edge-id redge)))
+
+(define (make-rnode->out-edges rgraph kgraph)
+  (define redge->edge-id (make-redge->edge-id rgraph kgraph))
+  (define rnode->out-edges
+    (let loop ((edges (rgraph-edges rgraph))
+               (res (hash)))
+      (if (null? edges)
+        res
+        (match-let* ((`(,redge . ,rest) edges)
+                     (`(,subject . ,object)
+                       (redge->edge-id redge)))
+        (loop rest
+              (hash-set res
+                        subject
+                        (cons (cons redge object) (hash-ref res subject '()))))))))
+  (lambda (rnode)
+    ; By defaulting to an empty list we are saying to ignore all paths that are not the
+    ; terminal node and where the node does not appear in any edge where the node is the
+    ; subject.
+    (hash-ref rnode->out-edges rnode '())))
+
+(define (rgraph-fold proc init acc)
+  (let loop ((objs-left init)
+             (res acc))
+    (if (null? objs-left)
+      res
+      (match-let* ((`(,new-obj-left . ,new-res)
+                     (proc (car objs-left))))
+        (loop (append new-obj-left (cdr objs-left))
+              (append new-res res))))))
+
+(define (make-summary-fragment paths nodes edges)
+  (list paths nodes edges))
+(define (summary-fragment-paths summary-fragment)
+  (car summary-fragment))
+(define (summary-fragment-nodes summary-fragment)
+  (cadr summary-fragment))
+(define (summary-fragment-edges summary-fragment)
+  (caddr summary-fragment))
+(define empty-summary-fragment (make-summary-fragment '() '() '()))
+
+(define (make-condensed-summary agent summary-fragment)
+  (cons agent summary-fragment))
+(define empty-condensed-summary '())
+(define (condensed-summary-agent cs)
+  (car cs))
+(define (condensed-summary-fragment cs)
+  (cdr cs))
+(define (condensed-summary-paths cs)
+  (summary-fragment-paths (condensed-summary-fragment cs)))
+(define (condensed-summary-nodes cs)
+  (summary-fragment-nodes (condensed-summary-fragment cs)))
+(define (condensed-summary-edges cs)
+  (summary-fragment-edges (condensed-summary-fragment cs)))
+(define (path->key path)
+  (string->symbol (number->string (equal-hash-code path))))
+
+(define (merge-summary-attrs r s)
+  (map (lambda (r-attr s-attr) (append r-attr s-attr)) r s))
+
+(define (creative-answers->summary qid answers)
+  (define node-rules
+    (make-summarize-rules
+      `(,(aggregate-property 'name '(names))
+         ,(aggregate-property 'categories '(types))
+         ,(aggregate-attributes
+            `(,(biolink-tag "xref"))
+            'curies)
+         ,(rename-and-transform-attribute
+            (biolink-tag "highest_FDA_approval_status")
+            '(fda_info)
+            (lambda (fda-description)
+              (hash 'highest_fda_approval_status fda-description
+                    'max_level (fda-description->fda-level fda-description))))
+         ,(aggregate-attributes
+            `(,(biolink-tag "description"))
+            'description)
+         ,(aggregate-attributes
+            `(,(biolink-tag "synonym"))
+            'synonym)
+         ,(aggregate-attributes
+            `(,(biolink-tag "same_as"))
+            'same_as)
+         ,(aggregate-attributes
+            `(,(biolink-tag "IriType"))
+            'iri_type))))
+
+  (define edge-rules
+    (make-summarize-rules
+      `(,(aggregate-property 'predicate '(predicates))
+         ,(get-property 'subject)
+         ,(get-property 'object)
+         ,(aggregate-attributes
+            `(,(biolink-tag "IriType"))
+            'iri_type)
+         ,(aggregate-and-transform-attributes
+            '("bts:sentence")
+            'snippets
+            (lambda (snippets)
+              (if (list? snippets)
+                snippets
+                (jsexpr-object->alist snippets))))
+         ,(aggregate-and-transform-attributes
+            `(,(biolink-tag "supporting_document")
+               ,(biolink-tag "Publication")
+               ,(biolink-tag "publications"))
+            'publications
+            (lambda (evidence)
+              (if (list? evidence)
+                evidence
+                (string-split evidence #rx",|\\|")))))))
+
+  (condensed-summaries->summary
+    qid
+    (creative-answers->condensed-summaries
+      answers
+      node-rules
+      edge-rules)))
+
+(define (creative-answers->condensed-summaries answers node-rules edge-rules)
+  (define (trapi-result->summary-fragment trapi-result kgraph)
+    (define node-bindings (jsexpr-object-ref trapi-result 'node_bindings))
+    (define rgraph (trapi-result->rgraph trapi-result))
+    (define drug    (get-binding-id node-bindings 'drug))
+    (define disease (get-binding-id node-bindings 'disease))
+    (define rnode->out-edges (make-rnode->out-edges rgraph kgraph))
+    (define rgraph-paths
+      (rgraph-fold (lambda (path)
+                     (let ((current-rnode (car path)))
+                       (if (equal? current-rnode disease)
+                         (cons '() `(,path))
+                         (cons (filter (lambda (p) p)
+                                       (map (match-lambda
+                                              ((cons next-edge next-node)
+                                               (and (not (member next-node path))
+                                                    (cons next-node (cons next-edge path)))))
+                                       (rnode->out-edges current-rnode)))
+                               '()))))
+                   `((,drug))
+                   '()))
+
+    ; Return a pair (key, update) for a node
+    (define (summarize-rnode rnode kgraph)
+      (cons (rnode->key rnode kgraph) (node-rules (trapi-node-binding->trapi-knode kgraph rnode))))
+
+    ; Return a pair (key, update) for an edge
+    (define (summarize-redge redge kgraph)
+      (let ((kedge (trapi-edge-binding->trapi-kedge kgraph redge)))
+        (cons (redge->key redge kgraph) (edge-rules kedge))))
+
+    ; Convert paths structure to normalized node and edge IDs
+    (define (normalize-paths rgraph-paths kgraph)
+      (define (N n) (rnode->key n kgraph))
+      (define (E e) (redge->key e kgraph))
+      (map (lambda (path)
+             (let loop ((p path)
+                        (np '()))
+               (match p
+                 ('()           np)
+                 (`(,n)         (cons (N n) np))
+                 (`(,n ,e . ,p) (loop p (cons (E e) (cons (N n) np)))))))
+           rgraph-paths))
+
+    (make-summary-fragment
+      (normalize-paths rgraph-paths kgraph)
+      (map (lambda (rnode)
+             (summarize-rnode rnode kgraph))
+           (rgraph-nodes rgraph))
+      (map (lambda (redge)
+             (summarize-redge redge kgraph))
+           (rgraph-edges rgraph))))
+
+  (map (lambda (answer)
+         (let* ((reporting-agent (answer-agent   answer))
+                (trapi-message   (answer-message answer))
+                (trapi-results   (jsexpr-object-ref trapi-message 'results))
+                (kgraph          (jsexpr-object-ref trapi-message 'knowledge_graph)))
+           (make-condensed-summary
+             reporting-agent
+             (foldl (lambda (trapi-result summary-fragment)
+                     (merge-summary-attrs
+                       summary-fragment
+                       (trapi-result->summary-fragment trapi-result kgraph)))
+                   empty-summary-fragment
+                   trapi-results))))
+       answers))
+
+(define (condensed-summaries->summary qid condensed-summaries)
+  (define (fragment-paths->results/paths fragment-paths)
+    (let loop ((results '())
+               (paths   '())
+               (fps fragment-paths))
+      (cond ((null? fps)
+              (values results paths))
+            (else
+              (match-let* ((`(,fp . ,rest) fps)
+                           ((? symbol? path-key) (path->key fp)))
+                (loop (cons `(,(car fp) . ,path-key) results)
+                      (cons `(,path-key . ,fp)       paths)
+                      rest))))))
+
+  (define (extend-summary-results results new-results)
+    (let loop ((results results)
+               (new-results new-results))
+      (cond ((null? new-results)
+               results)
+            (else
+              (match-let* ((`(,nr . ,rest)         new-results)
+                           (`(,nr-drug . ,nr-path) nr)
+                           ((? jsexpr-object? rs)
+                            (jsexpr-object-ref results nr-drug (jsexpr-object)))
+                           ((? jsexpr-array? paths)
+                            (jsexpr-object-ref rs 'paths (jsexpr-array))))
+                (loop (jsexpr-object-set
+                        results
+                        nr-drug
+                        (jsexpr-object-set
+                          rs
+                          'paths
+                          (jsexpr-array-prepend paths (symbol->string nr-path))))
+                      rest))))))
+
+  (define (extend-summary-paths paths new-paths agent)
+    (define (make-path-object path agent)
+      (make-jsexpr-object `((subgraph . ,(map symbol->string path))
+                            (aras     . ,(list agent)))))
+
+    (foldl
+      (lambda (new-path paths)
+        (if (null? new-path)
+          paths
+          (match-let* ((`(,path-key . ,path) new-path)
+                       ((and p) (jsexpr-object-ref paths path-key)))
+            (jsexpr-object-set
+              paths
+              path-key
+              (if p
+                (jsexpr-object-transform p 'aras (lambda (aras) (jsexpr-array-prepend aras agent)))
+                (make-path-object path agent))))))
+           paths
+           new-paths))
+
+  (define (extend-summary-obj objs updates agent)
+    (let loop ((updates updates)
+               (objs objs))
+      (cond ((null? updates)
+              objs)
+            (else
+              (loop (cdr updates)
+                    (match-let* ((`(,update . ,rest) updates)
+                                 (`(,up-key . ,ups)  update))
+                      (jsexpr-object-transform
+                        objs
+                        up-key
+                        (lambda (obj)
+                          (foldl (lambda (up obj)
+                                   (jsexpr-object-transform
+                                     (up obj)
+                                     'aras
+                                     (lambda (obj)
+                                       (jsexpr-array-prepend obj agent))
+                                     (jsexpr-array)))
+                                 obj
+                                 ups))
+                        (jsexpr-object))))))))
+
+  (define (extend-summary-nodes nodes node-updates agent)
+    (extend-summary-obj nodes node-updates agent))
+
+  (define (extend-summary-edges edges edge-updates agent)
+    (extend-summary-obj edges edge-updates agent))
+
+  (define (extend-summary-publications publications edge)
+    (define snippets (jsexpr-object-ref edge 'snippets))
+    (define (make-publication-object url snippet pubdate)
+      (hash 'url url
+            'snippet snippet
+            'pubdate pubdate))
+
+    (let loop ((publication-ids (jsexpr-object-ref edge 'publications '()))
+               (publications publications))
+      (cond ((null? publication-ids)
+             publications)
+            (else
+              (match-let* ((`(,pub-id-str . ,rest) publication-ids)
+                           ((? symbol? pub-id)
+                            (string->symbol pub-id-str))
+                           ((? string? url)
+                            (id->url pub-id-str)))
+                (loop rest
+                      (let ((kvp (assoc pub-id snippets)))
+                        (jsexpr-object-set
+                          publications
+                          pub-id
+                          (if kvp
+                            (match-let* ((`(,pub-id . ,publication-object) kvp)
+                                         ((? jsexpr-string? snippet)
+                                          (jsexpr-object-ref publication-object 'sentence))
+                                         ((? jsexpr-string? pubdate)
+                                          (jsexpr-object-ref publication-object '|publication date|)))
+                              (make-publication-object url snippet pubdate))
+                            (make-publication-object url 'null 'null))))))))))
+
+    (define (edges->edges/publications edges)
+      (values
+        (jsexpr-object-map edges (lambda (edge)
+                                   (jsexpr-object-remove edge 'snippets)))
+        (let loop ((edges (jsexpr-object-values edges))
+                   (publications (hash)))
+          (cond ((null? edges)
+                  publications)
+                (else
+                  (loop (cdr edges)
+                        (extend-summary-publications publications (car edges))))))))
+
+    (define (expand-results results paths nodes)
+      (map (lambda (result)
+             (let* ((ps (jsexpr-object-ref result 'paths))
+                    (subgraph (jsexpr-object-ref-recursive
+                                paths
+                                `(,(string->symbol (car ps))
+                                   subgraph)))
+                    (drug (first subgraph))
+                    (drug-name (jsexpr-object-ref-recursive
+                                 nodes
+                                 `(,(string->symbol drug) names)))
+                    (disease (last subgraph)))
+               (jsexpr-object-multi-set result `((subject   . ,drug)
+                                                 (drug_name . ,(if (null? drug-name)
+                                                                 'null
+                                                                 (car drug-name)))
+                                                 (object    . ,disease)))))
+           results))
+
+    (define (jsexpr-object-remove-duplicates obj)
+      (jsexpr-object-map
+        obj
+        (lambda (attr)
+          (if (list? attr)
+            (remove-duplicates attr)
+            attr))))
+
+    (let loop ((results (jsexpr-object))
+               (paths   (jsexpr-object))
+               (nodes   (jsexpr-object))
+               (edges   (jsexpr-object))
+               (css     condensed-summaries))
+      (cond ((null? css)
+             (let-values (((edges publications)
+                           (edges->edges/publications
+                             (jsexpr-object-map
+                               edges
+                               (lambda (edge)
+                                 (jsexpr-object-key-map
+                                   (jsexpr-object-remove-duplicates edge)
+                                   '(publications)
+                                   (lambda (publications)
+                                     (filter valid-id? publications))))))))
+               (make-jsexpr-object
+                 `((meta         . ,(metadata-object
+                                      qid
+                                      (map condensed-summary-agent condensed-summaries)))
+                   (results      . ,(expand-results
+                                      (map jsexpr-object-remove-duplicates
+                                           (jsexpr-object-values results))
+                                      paths
+                                      nodes))
+                   (paths        . ,(jsexpr-object-map paths jsexpr-object-remove-duplicates))
+                   (nodes        . ,(jsexpr-object-map nodes jsexpr-object-remove-duplicates))
+                   (edges        . ,edges)
+                   (publications . ,publications)))))
+            (else
+              (define cs (car css))
+              (define agent (condensed-summary-agent cs))
+              (define-values (new-results new-paths)
+                (fragment-paths->results/paths (condensed-summary-paths cs)))
+              (loop (extend-summary-results results new-results)
+                    (extend-summary-paths paths new-paths agent)
+                    (extend-summary-nodes nodes (condensed-summary-nodes cs) agent)
+                    (extend-summary-edges edges (condensed-summary-edges cs) agent)
+                    (cdr css))))))
 
 (define (trapi-answers->summary trapi-answers primary-predicates static-node-rules
     variable-node-rules edge-rules)
@@ -212,11 +631,11 @@
                       res))))))
   (define (edge-valid? static-node kedge)
     (set-member? (cdr static-node) (jsexpr-object-ref kedge (car static-node))))
-  (define (answer-data-valid? answer)
-    (let ((qg (jsexpr-object-ref answer 'query_graph)))
+  (define (trapi-message-valid? trapi-message)
+    (let ((qg (jsexpr-object-ref trapi-message 'query_graph)))
       (and qg
            (find-valid-qedge (jsexpr-object-ref qg 'edges))
-           (jsexpr-object-has-key? answer 'knowledge_graph)
+           (jsexpr-object-has-key? trapi-message 'knowledge_graph)
            (< (jsexpr-object-count (jsexpr-object-ref qg 'nodes))))))
   (define (update-result-summary summary edge-summary)
     (define result-id (car edge-summary))
@@ -316,10 +735,10 @@
              (summary (cons (jsexpr-object) (jsexpr-object))))
     (if (null? answers)
       summary
-      (let ((ad (answer-data (car answers))))
+      (let ((trapi-message (answer-message (car answers))))
         (loop (cdr answers)
-              (if (answer-data-valid? ad)
-                (summarize-answer ad summary)
+              (if (trapi-message-valid? trapi-message)
+                (summarize-answer trapi-message summary)
                 summary))))))
 
 (define (answers->summary result expanders)

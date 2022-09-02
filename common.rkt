@@ -1,11 +1,11 @@
 #lang racket/base
 
+(provide (all-defined-out))
+
 (require
   racket/string
+  racket/match
   xml/path)
-
-
-(provide (all-defined-out))
 
 (define (empty-string? str)
   (= (string-length str) 0))
@@ -46,6 +46,8 @@
                  (map (lambda (p) (make-url-param p "&"))
                       (cdr params)))))
 
+(define (jsexpr-string? je)
+  (string? je))
 (define (jsexpr-object)
   (hash))
 (define (make-jsexpr-object kvps)
@@ -65,16 +67,55 @@
         v
         (loop (cdr ks)
               (jsexpr-object-ref v (car ks) default)))))
+(define (jsexpr-object-remove je k)
+  (hash-remove je k))
+(define (jsexpr-object-multi-set je kvps)
+  (foldl (match-lambda**
+           ((`(,key . ,val) (? jsexpr-object? je))
+            (jsexpr-object-set je key val)))
+         je
+         kvps))
 (define (jsexpr-object-set je k v)
   (hash-set je k v))
+(define (jsexpr-object-multi-transform je k procs (default #f))
+  (jsexpr-object-set
+    je
+    k
+    (foldl (lambda (proc res)
+              (proc res))
+            (jsexpr-object-ref je k default)
+            procs)))
+(define (jsexpr-object-transform je k proc (default #f))
+  (jsexpr-object-multi-transform je k `(,proc) default))
+(define (jsexpr-object-key-map je keys proc (default #f))
+  (jsexpr-object-key-multi-map je keys `(,proc) default))
+(define (jsexpr-object-key-multi-map je keys procs (default #f))
+  (let loop ((keys keys)
+             (je je))
+    (cond ((null? keys)
+            je)
+          (else
+            (loop
+              (cdr keys)
+              (jsexpr-object-multi-transform je (car keys) procs default))))))
+(define (jsexpr-object-multi-map je procs (default #f))
+  (jsexpr-object-key-multi-map je (jsexpr-object-keys je) procs default))
+(define (jsexpr-object-map je proc (default #f))
+  (jsexpr-object-multi-map je `(,proc) default))
 (define (jsexpr-object->alist je)
   (hash->list je))
 (define (jsexpr-object-count je)
   (hash-count je))
 (define (jsexpr-object? je)
   (hash? je))
+(define (jsexpr-array)
+  '())
 (define (jsexpr-array? je)
   (list? je))
+(define (jsexpr-array-empty? je)
+  (null? je))
+(define (jsexpr-array-prepend je e)
+  (cons e je))
 (define (jsexpr-null? je)
   (equal? je 'null))
 (define (jsexpr-object-set-recursive jse ks v)
@@ -87,6 +128,8 @@
             (jsexpr-object-set o k
               (loop (cdr ks)
                     (jsexpr-object-ref o k (hash))))))))
+(define (jsexpr-map proc je)
+  (map proc je))
 
 (define (tag->xexpr-value xexpr tag)
   (se-path* `(,tag) xexpr))
@@ -103,9 +146,8 @@
 (define (strip-id-tag id) (cadr (string-split id ":")))
 (define (host endpoint) (yaml-ref endpoint 'host))
 (define (uri endpoint)  (yaml-ref endpoint 'uri))
-
 (define (make-answer actor-data agent) (cons actor-data agent))
-(define (answer-data answer) (car answer))
+(define (answer-message answer) (car answer))
 (define (answer-agent answer) (cdr answer))
 (define (make-query-state status data) (cons status data))
 (define (query-state-status query-state) (car query-state))
