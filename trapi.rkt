@@ -44,7 +44,10 @@
          (jsexpr-object-set-recursive
            obj
            kpath
-           (append (if cv cv '()) (if (list? v) v (list v)))))
+           (let ((v (if (or (pair? v) (null? v)) v (list v))))
+             (if cv
+               (append v cv)
+               v))))
         (cv obj)
         (else (jsexpr-object-set-recursive obj kpath '()))))
 (define (aggregate-property-update v obj kpath)
@@ -121,10 +124,10 @@
                 (define aid (member (jsexpr-object-ref a 'attribute_type_id) attribute-ids))
                 (define v (if aid (jsexpr-object-ref a 'value) '()))
                 (loop (cdr as)
-                      (append result (transform v)))))))
+                      (append (transform v) result))))))
     (lambda (v obj) (jsexpr-object-set obj
                                        tgt-key
-                                       (append (jsexpr-object-ref obj tgt-key '()) v)))
+                                       (append v (jsexpr-object-ref obj tgt-key '()))))
     '()))
 
 (define (aggregate-attributes attribute-ids tgt-key)
@@ -214,8 +217,9 @@
   (string->symbol (jsexpr-object-ref (car (jsexpr-object-ref bindings key)) 'id)))
 (define (flatten-bindings bindings)
   (foldl (lambda (binding ids)
-            (append ids (jsexpr-map (lambda (obj) (string->symbol (jsexpr-object-ref obj 'id)))
-                                    binding)))
+            (append (jsexpr-map (lambda (obj) (string->symbol (jsexpr-object-ref obj 'id)))
+                                binding)
+                    ids))
           '() (jsexpr-object-values bindings)))
 
 ; An rgraph is a list of nodes and a list of directed edges
@@ -458,8 +462,8 @@
              reporting-agent
              (foldl (lambda (trapi-result summary-fragment)
                      (merge-summary-attrs
-                       summary-fragment
-                       (trapi-result->summary-fragment trapi-result kgraph)))
+                       (trapi-result->summary-fragment trapi-result kgraph)
+                       summary-fragment))
                    empty-summary-fragment
                    trapi-results))))
        answers))
