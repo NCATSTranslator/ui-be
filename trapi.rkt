@@ -275,13 +275,10 @@
                      (`(,subject . ,object)
                        (redge->edge-id redge)))
         (loop rest
-              (hash-set
-                (hash-set
-                  res
-                  subject
-                  (cons (cons redge object) (hash-ref res subject '())))
-                object
-                (cons (cons redge subject) (hash-ref res object '()))))))))
+              (hash-set* res
+                         subject (cons (cons redge object)  (hash-ref res subject '()))
+                         object  (cons (cons redge subject) (hash-ref res object '()))))))))
+
   (lambda (rnode)
     ; By defaulting to an empty list we are saying to ignore all paths that are not the
     ; terminal node and where the node does not appear in any edge where the node is the
@@ -420,16 +417,15 @@
 
     ; Return a pair (key, update) for a node
     (define (summarize-rnode rnode kgraph)
-      (cons (rnode->key rnode kgraph) (node-rules (trapi-node-binding->trapi-knode kgraph rnode))))
+      (cons (rnode->key rnode kgraph)
+            (node-rules (trapi-node-binding->trapi-knode kgraph rnode))))
 
     ; Return a the list (key, inverted-key, update) for an edge
     ; We must generate the inverted-key now before edges are merged otherwise its possible
     ; Our edge keys won't match with the path key
     (define (summarize-redge redge kgraph)
-      (let ((kedge (trapi-edge-binding->trapi-kedge kgraph redge)))
-        (list (redge->key redge kgraph)
-              (redge->key redge kgraph #t)
-              (edge-rules kedge))))
+      (cons (redge->key redge kgraph)
+            (edge-rules (trapi-edge-binding->trapi-kedge kgraph redge))))
 
     ; Convert paths structure to normalized node and edge IDs
     (define (normalize-paths rgraph-paths kgraph)
@@ -523,47 +519,35 @@
            paths
            new-paths))
 
-  (define (extend-summary-objs objs key updates agent)
-    (jsexpr-object-transform
-      objs
-      key
-      (lambda (obj)
-        (foldl (lambda (up obj)
-                 (jsexpr-object-transform
-                   (up obj)
-                   'aras
-                   (lambda (obj)
-                     (jsexpr-array-prepend obj agent))
-                   (jsexpr-array)))
-               obj
-               updates))
-      (jsexpr-object)))
-
-  (define (extend-summary-nodes nodes node-updates agent)
-    (let loop ((updates node-updates)
-               (nodes nodes))
+  (define (extend-summary-obj objs updates agent)
+    (let loop ((updates updates)
+               (objs objs))
       (cond ((null? updates)
-             nodes)
-            (else
-              (loop (cdr updates)
-                    (match-let* ((`(,update . , rest) updates)
-                                 (`(,k . ,ups)        update))
-                      (extend-summary-objs nodes k ups agent)))))))
-
-  (define (extend-summary-edges edges edge-updates agent)
-    (let loop ((updates edge-updates)
-               (edges edges))
-      (cond ((null? updates)
-              edges)
+             objs)
             (else
               (loop (cdr updates)
                     (match-let* ((`(,update . ,rest) updates)
-                                 (`(,k ,ik ,ups)     update))
+                                 (`(,up-key . ,ups)  update))
                       (jsexpr-object-transform
-                        (extend-summary-objs edges k ups agent)
-                        k
-                        (lambda (edge)
-                          (jsexpr-object-set edge 'invert-key ik)))))))))
+                        objs
+                        up-key
+                        (lambda (obj)
+                          (foldl (lambda (up obj)
+                                   (jsexpr-object-transform
+                                     (up obj)
+                                     'aras
+                                     (lambda (obj)
+                                       (jsexpr-array-prepend obj agent))
+                                     (jsexpr-array)))
+                                 obj
+                                 ups))
+                        (jsexpr-object))))))))
+
+  (define (extend-summary-nodes nodes node-updates agent)
+    (extend-summary-obj nodes node-updates agent))
+
+  (define (extend-summary-edges edges edge-updates agent)
+    (extend-summary-obj edges edge-updates agent))
 
   (define (extend-summary-publications publications edge)
     (define snippets (jsexpr-object-ref edge 'snippets))
@@ -598,12 +582,16 @@
 
   (define (edges->edges/publications edges)
     (define (invert-edge edge)
-      (cons (jsexpr-object-ref edge 'invert-key)
-            (jsexpr-object-transform
-              edge
-              'predicates
-              (lambda (predicates)
-                (jsexpr-array-map bl:invert-biolink-predicate predicates)))))
+      (let ((inverted-predicate
+              (bl:invert-biolink-predicate (car (jsexpr-object-ref edge 'predicates))))
+            (subject (jsexpr-object-ref edge 'subject))
+            (object  (jsexpr-object-ref edge 'object)))
+
+        (cons (path->key (list object inverted-predicate subject))
+              (jsexpr-object-set
+                edge
+                'predicates
+                (list inverted-predicate)))))
 
     (let loop ((es (jsexpr-object-values edges))
                (final-edges edges)
@@ -612,17 +600,13 @@
              (values (jsexpr-object-map
                        final-edges
                        (lambda (e)
-                         (jsexpr-object-multi-remove e '(snippets invert-key))))
+                         (jsexpr-object-remove e 'snippets)))
                      publications))
             (else
               (match-let* ((`(,e . ,rest) es)
                            (`(,ik . ,ie) (invert-edge e)))
                 (loop rest
-                      (if (jsexpr-object-has-key? final-edges ik)
-                        (begin
-                          (pretty-display "NOOOO")
-                          final-edges)
-                        (jsexpr-object-set final-edges ik ie))
+                      (jsexpr-object-set final-edges ik ie)
                       (extend-summary-publications publications e)))))))
 
   (define (expand-results results paths nodes)
