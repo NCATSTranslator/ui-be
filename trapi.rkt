@@ -289,8 +289,7 @@
              (res acc))
     (if (null? objs-left)
       res
-      (match-let* ((`(,new-obj-left . ,new-res)
-                     (proc (car objs-left))))
+      (let-values (((new-obj-left new-res) (proc (car objs-left))))
         (loop (append new-obj-left (cdr objs-left))
               (append new-res res))))))
 
@@ -401,17 +400,17 @@
                      (let ((current-rnode (car path)))
                        (cond
                          ((< max-path-length (length path))
-                           (cons '() '())) ; Skip this path if its too long
+                           (values '() '())) ; Skip this path if its too long
                          ((equal? current-rnode disease)
-                           (cons '() `(,path)))
+                           (values '() `(,path)))
                          (else
-                           (cons (filter (lambda (p) p)
-                                         (map (match-lambda
-                                                ((cons next-edge next-node)
-                                                 (and (not (member next-node path)) ; No cycles
-                                                      (cons next-node (cons next-edge path)))))
-                                              (rnode->out-edges current-rnode)))
-                                 '())))))
+                           (values (filter (lambda (p) p)
+                                           (map (match-lambda
+                                                  ((cons next-edge next-node)
+                                                   (and (not (member next-node path)) ; No cycles
+                                                        (cons next-node (cons next-edge path)))))
+                                                (rnode->out-edges current-rnode)))
+                                   '())))))
                    `((,drug))
                    '()))
 
