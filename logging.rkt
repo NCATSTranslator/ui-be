@@ -5,21 +5,24 @@
   log-request)
 
 (require
-  racket/pretty
   net/url-structs
   web-server/http/request-structs)
 
-; access log - verbose mode logs params
-; IP of request
-; date/time
-; type of request (GET POST)
-; endpoint
-; HTTP version
-; return code
-; bytes transferred
-; time to serve request
-; uuids
-; exceptions go to error log
+; REQUEST
+; POSSIBLE access log - verbose mode logs params
+; OK       IP of request
+; OK       date/time
+; OK       type of request (GET POST)
+; OK       endpoint
+; MAYBE?   HTTP version
+
+; RESPONSE
+; OK   return code
+; OK   date/time
+; TODO bytes transferred
+; TODO time to serve request
+; TODO uuids
+; TODO exceptions go to error log
 
 (define (pretty-timestamp)
   (define seconds (current-seconds))
@@ -54,5 +57,5 @@
 (define current-log-port (make-parameter (current-error-port)))
 
 (define (log-request req)
-  (pretty-write (cons (pretty-timestamp) (request->log req)) (current-log-port))
+  (writeln (cons (pretty-timestamp) (request->log req)) (current-log-port))
   (flush-output (current-log-port)))

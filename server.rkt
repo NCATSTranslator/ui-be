@@ -94,6 +94,11 @@
 (define (response/internal-error/ars)
   (response/internal-error (failure-response "ARS could not process the request")))
 
+(define (log-request req)
+  (parameterize ((log:current-log-port (config-log-port SERVER-CONFIG)))
+    (log:log-request req)))
+
+
 (define (make-response status (data '()))
   (hash 'status status
         'data   data))
@@ -110,12 +115,14 @@
         (else (/index))))
 
 (define (handle-static-file-request req)
+  (log-request req)
   (define uri (request-uri req))
   (define resource (map path/param-path (url-path uri)))
   (define f (string-append document-root "build/" (string-join resource "/")))
   (file->response f))
 
 (define (/index (req #f))
+  (when req (log-request req))
   (define index.html (string-append document-root "build/index.html"))
   (file->response index.html))
 
@@ -126,6 +133,7 @@
                       (lambda (e) (response/bad-request/invalid-json)))
                     (exn:fail?
                       (lambda (e) (response/internal-error/generic))))
+      (log-request req)
       (let ((post-data (request-post-data/raw req)))
         (define trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data))))
         (cond (trapi-query
@@ -142,12 +150,11 @@
 
 (define (make-result-endpoint pull-proc process-query-data)
   (lambda (req)
-    (parameterize ((log:current-log-port (config-log-port SERVER-CONFIG)))
-      (log:log-request req))
     (with-handlers ((exn:fail:read?
                       (lambda (e) (response/bad-request/invalid-json)))
                     (exn:fail?
                       (lambda (e) (response/internal-error/generic))))
+      (log-request req)
       (define post-data (request-post-data/raw req))
       (define qid (and post-data (get-qid (bytes->jsexpr post-data))))
       (cond (qid (let ((query-state (pull-proc qid)))
