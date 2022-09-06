@@ -1,0 +1,574 @@
+{
+  "model": "tr_ars.message",
+  "pk": "92ba28fc-4c04-4f78-8b3a-9a73ba263adc",
+  "fields": {
+    "name": "kp-molecular",
+    "code": 200,
+    "status": "Done",
+    "actor": 11,
+    "timestamp": "2022-08-23T20:07:02.629Z",
+    "data": {
+      "message": {
+        "results": [
+          {
+            "edge_bindings": {
+              "treats": [
+                {
+                  "id": "e0-P1Px6B2dP7"
+                }
+              ]
+            },
+            "node_bindings": {
+              "drug": [
+                {
+                  "id": "PUBCHEM.COMPOUND:2577"
+                }
+              ],
+              "disease": [
+                {
+                  "id": "HP:0003003"
+                }
+              ]
+            }
+          },
+          {
+            "edge_bindings": {
+              "treats": [
+                {
+                  "id": "e1-P1Px6B2dP7"
+                }
+              ]
+            },
+            "node_bindings": {
+              "drug": [
+                {
+                  "id": "PUBCHEM.COMPOUND:3385"
+                }
+              ],
+              "disease": [
+                {
+                  "id": "HP:0003003"
+                }
+              ]
+            }
+          },
+          {
+            "edge_bindings": {
+              "treats": [
+                {
+                  "id": "e2-P1Px6B2dP7"
+                }
+              ]
+            },
+            "node_bindings": {
+              "drug": [
+                {
+                  "id": "PUBCHEM.COMPOUND:6323266"
+                }
+              ],
+              "disease": [
+                {
+                  "id": "HP:0003003"
+                }
+              ]
+            }
+          },
+          {
+            "edge_bindings": {
+              "treats": [
+                {
+                  "id": "e3-P1Px6B2dP7"
+                }
+              ]
+            },
+            "node_bindings": {
+              "drug": [
+                {
+                  "id": "PUBCHEM.COMPOUND:6256"
+                }
+              ],
+              "disease": [
+                {
+                  "id": "HP:0003003"
+                }
+              ]
+            }
+          }
+        ],
+        "query_graph": {
+          "edges": {
+            "treats": {
+              "object": "disease",
+              "subject": "drug",
+              "predicates": [
+                "biolink:treats"
+              ],
+              "constraints": []
+            }
+          },
+          "nodes": {
+            "drug": {
+              "is_set": false,
+              "categories": [
+                "biolink:ChemicalEntity"
+              ],
+              "constraints": []
+            },
+            "disease": {
+              "ids": [
+                "HP:0003003"
+              ],
+              "is_set": false,
+              "categories": [
+                "biolink:Disease"
+              ],
+              "constraints": []
+            }
+          }
+        },
+        "knowledge_graph": {
+          "edges": {
+            "e0-P1Px6B2dP7": {
+              "object": "HP:0003003",
+              "subject": "PUBCHEM.COMPOUND:2577",
+              "predicate": "biolink:treats",
+              "attributes": [
+                {
+                  "value": "infores:drugcentral",
+                  "attributes": [],
+                  "attribute_source": "infores:drugcentral",
+                  "attribute_type_id": "biolink:primary_knowledge_source",
+                  "original_attribute_name": "primary_knowledge_source"
+                },
+                {
+                  "value": "infores:molepro",
+                  "attributes": [],
+                  "description": "Molecular Data Provider",
+                  "value_type_id": "biolink:InformationResource",
+                  "attribute_source": "infores:drugcentral",
+                  "attribute_type_id": "biolink:aggregator_knowledge_source",
+                  "original_attribute_name": "biolink:aggregator_knowledge_source"
+                },
+                {
+                  "value": "infores:molepro",
+                  "description": "Molecular Data Provider",
+                  "value_type_id": "biolink:InformationResource",
+                  "attribute_source": "infores:molepro",
+                  "attribute_type_id": "biolink:aggregator_knowledge_source",
+                  "original_attribute_name": "biolink:aggregator_knowledge_source"
+                }
+              ]
+            },
+            "e1-P1Px6B2dP7": {
+              "object": "HP:0003003",
+              "subject": "PUBCHEM.COMPOUND:3385",
+              "predicate": "biolink:treats",
+              "attributes": [
+                {
+                  "value": "infores:drugcentral",
+                  "attributes": [],
+                  "attribute_source": "infores:drugcentral",
+                  "attribute_type_id": "biolink:primary_knowledge_source",
+                  "original_attribute_name": "primary_knowledge_source"
+                },
+                {
+                  "value": "infores:molepro",
+                  "attributes": [],
+                  "description": "Molecular Data Provider",
+                  "value_type_id": "biolink:InformationResource",
+                  "attribute_source": "infores:drugcentral",
+                  "attribute_type_id": "biolink:aggregator_knowledge_source",
+                  "original_attribute_name": "biolink:aggregator_knowledge_source"
+                },
+                {
+                  "value": "infores:molepro",
+                  "description": "Molecular Data Provider",
+                  "value_type_id": "biolink:InformationResource",
+                  "attribute_source": "infores:molepro",
+                  "attribute_type_id": "biolink:aggregator_knowledge_source",
+                  "original_attribute_name": "biolink:aggregator_knowledge_source"
+                }
+              ]
+            },
+            "e2-P1Px6B2dP7": {
+              "object": "HP:0003003",
+              "subject": "PUBCHEM.COMPOUND:6323266",
+              "predicate": "biolink:treats",
+              "attributes": [
+                {
+                  "value": "infores:drugcentral",
+                  "attributes": [],
+                  "attribute_source": "infores:drugcentral",
+                  "attribute_type_id": "biolink:primary_knowledge_source",
+                  "original_attribute_name": "primary_knowledge_source"
+                },
+                {
+                  "value": "infores:molepro",
+                  "attributes": [],
+                  "description": "Molecular Data Provider",
+                  "value_type_id": "biolink:InformationResource",
+                  "attribute_source": "infores:drugcentral",
+                  "attribute_type_id": "biolink:aggregator_knowledge_source",
+                  "original_attribute_name": "biolink:aggregator_knowledge_source"
+                },
+                {
+                  "value": "infores:molepro",
+                  "description": "Molecular Data Provider",
+                  "value_type_id": "biolink:InformationResource",
+                  "attribute_source": "infores:molepro",
+                  "attribute_type_id": "biolink:aggregator_knowledge_source",
+                  "original_attribute_name": "biolink:aggregator_knowledge_source"
+                }
+              ]
+            },
+            "e3-P1Px6B2dP7": {
+              "object": "HP:0003003",
+              "subject": "PUBCHEM.COMPOUND:6256",
+              "predicate": "biolink:treats",
+              "attributes": [
+                {
+                  "value": "infores:drugcentral",
+                  "attributes": [],
+                  "attribute_source": "infores:drugcentral",
+                  "attribute_type_id": "biolink:primary_knowledge_source",
+                  "original_attribute_name": "primary_knowledge_source"
+                },
+                {
+                  "value": "infores:molepro",
+                  "attributes": [],
+                  "description": "Molecular Data Provider",
+                  "value_type_id": "biolink:InformationResource",
+                  "attribute_source": "infores:drugcentral",
+                  "attribute_type_id": "biolink:aggregator_knowledge_source",
+                  "original_attribute_name": "biolink:aggregator_knowledge_source"
+                },
+                {
+                  "value": "infores:molepro",
+                  "description": "Molecular Data Provider",
+                  "value_type_id": "biolink:InformationResource",
+                  "attribute_source": "infores:molepro",
+                  "attribute_type_id": "biolink:aggregator_knowledge_source",
+                  "original_attribute_name": "biolink:aggregator_knowledge_source"
+                }
+              ]
+            }
+          },
+          "nodes": {
+            "HP:0003003": {
+              "categories": [
+                "biolink:Disease"
+              ]
+            },
+            "PUBCHEM.COMPOUND:2577": {
+              "name": "carmofur",
+              "attributes": [
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drug-repurposing-hub",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "clinical_phase"
+                },
+                {
+                  "value": "post-approval withdrawal",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "group"
+                }
+              ],
+              "categories": [
+                "biolink:SmallMolecule"
+              ]
+            },
+            "PUBCHEM.COMPOUND:3385": {
+              "name": "fluorouracil",
+              "attributes": [
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "string",
+                  "attribute_source": "infores:gtopdb",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "APPROVED"
+                },
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drug-repurposing-hub",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "clinical_phase"
+                },
+                {
+                  "value": "l01bc(pyrimidine analogues)",
+                  "attributes": [],
+                  "attribute_source": "infores:dgidb",
+                  "attribute_type_id": "ATC",
+                  "original_attribute_name": "ATC"
+                },
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "group"
+                },
+                {
+                  "value": "PMID:12724731",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:15032669",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:chembl",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "max_phase"
+                }
+              ],
+              "categories": [
+                "biolink:SmallMolecule"
+              ]
+            },
+            "PUBCHEM.COMPOUND:6256": {
+              "name": "trifluridine",
+              "attributes": [
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "string",
+                  "attribute_source": "infores:gtopdb",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "APPROVED"
+                },
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drug-repurposing-hub",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "clinical_phase"
+                },
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "group"
+                },
+                {
+                  "value": "FDA Clinical Research Phase",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "group"
+                },
+                {
+                  "value": "PMID:6284470",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:27568360",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:29568368",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:110152",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "//s3-us-west-2.amazonaws.com/drugbank/cite_this/attachments/files/000/000/649/original/WC500206246.pdf?1531845997",
+                  "value_url": "//s3-us-west-2.amazonaws.com/drugbank/cite_this/attachments/files/000/000/649/original/WC500206246.pdf?1531845997",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "attachment"
+                },
+                {
+                  "value": "//s3-us-west-2.amazonaws.com/drugbank/cite_this/attachments/files/000/000/658/original/20180323_f3a14d86-0ff2-4535-318c-ac8bc8ede42c.pdf?1531863617",
+                  "value_url": "//s3-us-west-2.amazonaws.com/drugbank/cite_this/attachments/files/000/000/658/original/20180323_f3a14d86-0ff2-4535-318c-ac8bc8ede42c.pdf?1531863617",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "attachment"
+                },
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:chembl",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "max_phase"
+                }
+              ],
+              "categories": [
+                "biolink:SmallMolecule"
+              ]
+            },
+            "PUBCHEM.COMPOUND:6323266": {
+              "name": "tipiracil",
+              "attributes": [
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "string",
+                  "attribute_source": "infores:gtopdb",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "APPROVED"
+                },
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drug-repurposing-hub",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "clinical_phase"
+                },
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "group"
+                },
+                {
+                  "value": "FDA Clinical Research Phase",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "group"
+                },
+                {
+                  "value": "PMID:27162472",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:26428513",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:29056855",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:12639965",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:23182191",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:28111727",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:26918279",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "PMID:26787503",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "article"
+                },
+                {
+                  "value": "http://www.ema.europa.eu/docs/en_GB/document_library/EPAR_-_Product_Information/human/003897/WC500206246.pdf",
+                  "value_url": "http://www.ema.europa.eu/docs/en_GB/document_library/EPAR_-_Product_Information/human/003897/WC500206246.pdf",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "link"
+                },
+                {
+                  "value": "http://www.ema.europa.eu/docs/en_GB/document_library/EPAR_-_Public_assessment_report/human/003897/WC500206248.pdf",
+                  "value_url": "http://www.ema.europa.eu/docs/en_GB/document_library/EPAR_-_Public_assessment_report/human/003897/WC500206248.pdf",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "link"
+                },
+                {
+                  "value": "https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwiLzPvsxO7sAhUkHDQIHRYjAeIQFjABegQIARAC&url=https://www.tga.gov.au/sites/default/files/auspar-trifluridine-tipiracil-180612-cer.docx&usg=AOvVaw2f87nqWrVsmBblLUeTqlyq",
+                  "value_url": "https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&ved=2ahUKEwiLzPvsxO7sAhUkHDQIHRYjAeIQFjABegQIARAC&url=https://www.tga.gov.au/sites/default/files/auspar-trifluridine-tipiracil-180612-cer.docx&usg=AOvVaw2f87nqWrVsmBblLUeTqlyq",
+                  "attributes": [],
+                  "attribute_source": "infores:drugbank",
+                  "attribute_type_id": "biolink:Publication",
+                  "original_attribute_name": "link"
+                },
+                {
+                  "value": "FDA Approval",
+                  "attributes": [],
+                  "value_type_id": "biolink:FDA_approval_status_enum",
+                  "attribute_source": "infores:chembl",
+                  "attribute_type_id": "biolink:highest_FDA_approval_status",
+                  "original_attribute_name": "max_phase"
+                }
+              ],
+              "categories": [
+                "biolink:SmallMolecule"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "url": "https://molepro-trapi.transltr.io/molepro/trapi/v1.2/query",
+    "ref": "b45cf848-0a7d-46b2-a1a4-2a0a9eaddc54"
+  }
+}

@@ -15,6 +15,7 @@
     - "disrupts"
     - "treated_by"
     - "entity_negatively_regulates_entity"
+  max-hops: 3
   mock-ars?: False
   mock-query?: False
   mock-pmid?: False

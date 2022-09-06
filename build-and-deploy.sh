@@ -22,7 +22,7 @@ git pull
 echo "Packaging front end and back end build together"
 mkdir -p ui-build
 rm -r ui-build/*
-cp -r *.sh *.rkt mock test build configurations ui-build
+cp -r *.sh *.rkt mock test build configurations assets ui-build
 echo "Transfering to \"\"\"production\"\"\" server"
 rsync -avzhe ssh ui-build "${user}@${host}:/home/${user}"
 echo "Installing on \"\"\"production\"\"\" server"

@@ -23,6 +23,7 @@
    ars-endpoint
    curie-search-endpoint
    primary-predicates
+   max-hops
    mock-ars?
    mock-query?
    mock-pmid?
@@ -58,6 +59,7 @@
     (get 'ars-endpoint)
     (get 'curie-search-endpoint)
     (make-biolink-tags (get 'primary-predicates))
+    (get 'max-hops)
     (get 'mock-ars?)
     (get 'mock-query?)
     (get 'mock-pmid?)
