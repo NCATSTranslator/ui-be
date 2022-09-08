@@ -129,5 +129,5 @@
       (if (query-done? qstatus)
         (let* ((message (get-message (get-data fields)))
                (answer (get-answer message)))
-          (and answer (not (null? answer)) message))
+          (and answer (not (or (null? answer) (jsexpr-null? answer))) message))
         qstatus))))
