@@ -680,7 +680,20 @@
                                     paths
                                     nodes))
                  (paths        . ,(jsexpr-object-map paths jsexpr-object-remove-duplicates))
-                 (nodes        . ,(jsexpr-object-map nodes jsexpr-object-remove-duplicates))
+                 (nodes        . ,(foldl (lambda (node-key nodes)
+                                           (let* ((node (jsexpr-object-ref nodes node-key))
+                                                  (node-names (jsexpr-object-ref node 'names)))
+                                           (if (null? node-names)
+                                             (jsexpr-object-set
+                                               nodes
+                                               node-key
+                                               (jsexpr-object-set
+                                                 node
+                                                 'names
+                                                 (cons (symbol->string node-key) node-names)))
+                                             nodes)))
+                                    (jsexpr-object-map nodes jsexpr-object-remove-duplicates)
+                                    (jsexpr-object-keys nodes)))
                  (edges        . ,edges)
                  (publications . ,publications)))))
           (else
