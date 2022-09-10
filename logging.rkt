@@ -8,22 +8,6 @@
   net/url-structs
   web-server/http/request-structs)
 
-; REQUEST
-; POSSIBLE access log - verbose mode logs params
-; OK       IP of request
-; OK       date/time
-; OK       type of request (GET POST)
-; OK       endpoint
-; MAYBE?   HTTP version
-
-; RESPONSE
-; OK   return code
-; OK   date/time
-; TODO bytes transferred
-; TODO time to serve request
-; TODO uuids
-; TODO exceptions go to error log
-
 (define current-log-port (make-parameter (current-error-port)))
 
 (define (pretty-timestamp)
