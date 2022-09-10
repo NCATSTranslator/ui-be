@@ -67,7 +67,7 @@
     (get 'mock-query?)
     (get 'mock-pmid?)
     (get 'mock-nct?)
-    (get 'log-level)
+    (string->symbol (get 'log-level))
     (open-output-file (get 'log-file)
                       #:exists 'append)
     (open-output-file (get 'error-log-file)
