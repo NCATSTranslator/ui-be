@@ -617,10 +617,12 @@
 
     ; Paths always have at least one node
     (define (path<? pid-1 pid-2)
-      (let loop ((p1 (pid->path paths pid-1))
-                 (p2 (pid->path paths pid-2)))
-        (let ((p1-len (length p1))
-              (p2-len (length p2)))
+      (define p1 (pid->path paths pid-1))
+      (define p2 (pid->path paths pid-2))
+      (define p1-len (length p1))
+      (define p2-len (length p2))
+      (let loop ((p1 p1)
+                 (p2 p2))
           (cond ((not (= p1-len p2-len))
                  (< p2-len p1-len))
                 ((not (equal? (car p1) (car p2)))
@@ -628,7 +630,7 @@
                 ((null? (cdr p1))
                  #t)
                 (else
-                  (loop (cddr p1) (cddr p2)))))))
+                  (loop (cddr p1) (cddr p2))))))
 
     (map (lambda (result)
            (let* ((ps (jsexpr-object-ref result 'paths))
