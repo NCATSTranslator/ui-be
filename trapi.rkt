@@ -231,9 +231,9 @@
                 edges)))
 (define (rgraph-nodes rgraph) (car rgraph))
 (define (rgraph-edges rgraph) (cdr rgraph))
-(define (redge-inverted? redge subject kgraph)
+(define (redge-inverted? redge object kgraph)
   (let ((kedge (trapi-edge-binding->trapi-kedge kgraph redge)))
-    (equal? subject (jsexpr-object-ref kedge 'object))))
+    (eq? object (string->symbol (jsexpr-object-ref kedge 'subject)))))
 
 (define (trapi-result->rgraph trapi-result kgraph)
   (make-rgraph (flatten-bindings (jsexpr-object-ref trapi-result 'node_bindings))
@@ -430,7 +430,7 @@
     ; Convert paths structure to normalized node and edge IDs
     (define (normalize-paths rgraph-paths kgraph)
       (define (N n) (rnode->key n kgraph))
-      (define (E e s) (redge->key e kgraph (redge-inverted? e s kgraph)))
+      (define (E e o) (redge->key e kgraph (redge-inverted? e o kgraph)))
       (map (lambda (path)
              (let loop ((p path)
                         (np '()))
@@ -588,10 +588,9 @@
             (object  (jsexpr-object-ref edge 'object)))
 
         (cons (path->key (list object inverted-predicate subject))
-              (jsexpr-object-set
-                edge
-                'predicates
-                (list inverted-predicate)))))
+              (jsexpr-object-multi-set edge `((subject    . ,object)
+                                              (object     . ,subject)
+                                              (predicates . ,(list inverted-predicate)))))))
 
     (let loop ((es (jsexpr-object-values edges))
                (final-edges edges)
@@ -617,17 +616,20 @@
 
     ; Paths always have at least one node
     (define (path<? pid-1 pid-2)
-      (let loop ((p1 (pid->path paths pid-1))
-                 (p2 (pid->path paths pid-2)))
-        (cond ((not (equal? (car p1) (car p2)))
-                (and (<= (length p1) (length p2))
-                         (string<? (car p1) (car p2))))
-              ((null? (cdr p1))
-                (not (null? (cdr p2))))
-              ((null? (cdr p2))
-                #f)
-              (else
-                (loop (cddr p1) (cddr p2))))))
+      (define p1 (pid->path paths pid-1))
+      (define p2 (pid->path paths pid-2))
+      (define p1-len (length p1))
+      (define p2-len (length p2))
+      (if (= p1-len p2-len)
+        (let loop ((p1 p1)
+                   (p2 p2))
+          (cond ((not (equal? (car p1) (car p2)))
+                 (string<? (car p1) (car p2)))
+                ((null? (cdr p1))
+                 #t)
+                (else
+                  (loop (cddr p1) (cddr p2)))))
+        (< p1-len p2-len)))
 
     (map (lambda (result)
            (let* ((ps (jsexpr-object-ref result 'paths))
