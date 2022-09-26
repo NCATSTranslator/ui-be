@@ -231,9 +231,9 @@
                 edges)))
 (define (rgraph-nodes rgraph) (car rgraph))
 (define (rgraph-edges rgraph) (cdr rgraph))
-(define (redge-inverted? redge subject kgraph)
+(define (redge-inverted? redge object kgraph)
   (let ((kedge (trapi-edge-binding->trapi-kedge kgraph redge)))
-    (equal? subject (jsexpr-object-ref kedge 'object))))
+    (eq? object (string->symbol (jsexpr-object-ref kedge 'subject)))))
 
 (define (trapi-result->rgraph trapi-result kgraph)
   (make-rgraph (flatten-bindings (jsexpr-object-ref trapi-result 'node_bindings))
@@ -430,7 +430,7 @@
     ; Convert paths structure to normalized node and edge IDs
     (define (normalize-paths rgraph-paths kgraph)
       (define (N n) (rnode->key n kgraph))
-      (define (E e s) (redge->key e kgraph (redge-inverted? e s kgraph)))
+      (define (E e o) (redge->key e kgraph (redge-inverted? e o kgraph)))
       (map (lambda (path)
              (let loop ((p path)
                         (np '()))
@@ -588,10 +588,9 @@
             (object  (jsexpr-object-ref edge 'object)))
 
         (cons (path->key (list object inverted-predicate subject))
-              (jsexpr-object-set
-                edge
-                'predicates
-                (list inverted-predicate)))))
+              (jsexpr-object-multi-set edge `((subject    . ,object)
+                                              (object     . ,subject)
+                                              (predicates . ,(list inverted-predicate)))))))
 
     (let loop ((es (jsexpr-object-values edges))
                (final-edges edges)
