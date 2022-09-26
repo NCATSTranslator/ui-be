@@ -629,7 +629,7 @@
                  #t)
                 (else
                   (loop (cddr p1) (cddr p2)))))
-        (< p2-len p1-len)))
+        (< p1-len p2-len)))
 
     (map (lambda (result)
            (let* ((ps (jsexpr-object-ref result 'paths))
