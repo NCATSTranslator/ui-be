@@ -68,10 +68,14 @@
     (get 'mock-pmid?)
     (get 'mock-nct?)
     (string->symbol (get 'log-level))
-    (open-output-file (get 'log-file)
-                      #:exists 'append)
-    (open-output-file (get 'error-log-file)
-                      #:exists 'append)
+    (let ((log-file (get 'log-file)))
+      (default-for (and log-file (open-output-file log-file
+                                                   #:exists 'append))
+                   (current-output-port)))
+    (let ((error-file (get 'error-file)))
+      (default-for (and error-file (open-output-file error-file
+                                                     #:exists 'append))
+                   (current-error-port)))
     config-data))
 
 (define SERVER-CONFIG

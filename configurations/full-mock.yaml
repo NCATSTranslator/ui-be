@@ -16,5 +16,5 @@
   mock-pmid?: True
   mock-nct?: True
   log-level: "info"
-  log-file:  "transltr.log"
-  error-log-file: "error-transltr.log"
+  log-file: False
+  error-log-file: False
