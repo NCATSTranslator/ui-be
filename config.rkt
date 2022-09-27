@@ -29,6 +29,7 @@
    mock-pmid?
    mock-nct?
    log-level
+   log-format
    log-port
    error-log-port
    yaml)
@@ -68,6 +69,7 @@
     (get 'mock-pmid?)
     (get 'mock-nct?)
     (string->symbol (get 'log-level))
+    (string->symbol (get 'log-format))
     (let ((log-file (get 'log-file)))
       (default-for (and log-file (open-output-file log-file
                                                    #:exists 'append))

@@ -2,7 +2,8 @@
 
 (provide
   current-log-port
-  pretty-log)
+  pretty-log
+  pretty-log/format)
 
 (require
   net/url-structs
@@ -19,3 +20,6 @@
 
 (define (pretty-log . args)
   (apply writeln (list (cons (pretty-timestamp) args) (current-log-port))))
+
+(define (pretty-log/format formatter . args)
+  (apply displayln (list (formatter (cons (pretty-timestamp) args)) (current-log-port))))

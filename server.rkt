@@ -17,12 +17,13 @@
   json
   "common.rkt"
   "evidence.rkt"
-  (prefix-in trapi: "trapi.rkt")
-  (prefix-in ars:   "ars.rkt")
-  (prefix-in log:   "logging.rkt")
-  (prefix-in mock:  "mock/ars.rkt")
-  (prefix-in mock:  "mock/trapi.rkt")
-  (prefix-in mock:  "mock/evidence.rkt")
+  (prefix-in trapi:      "trapi.rkt")
+  (prefix-in ars:        "ars.rkt")
+  (prefix-in log-format: "log-format.rkt")
+  (prefix-in log:        "logging.rkt")
+  (prefix-in mock:       "mock/ars.rkt")
+  (prefix-in mock:       "mock/trapi.rkt")
+  (prefix-in mock:       "mock/evidence.rkt")
   "config.rkt")
 
 ; Expose mockable procedures based on config
@@ -41,12 +42,22 @@
         (if (config-mock-nct? SERVER-CONFIG)
             (mock:make-nct-expander)
             (make-nct-expander))))
+(define log-formatter
+  (let ((log-format (config-log-format SERVER-CONFIG)))
+    (match log-format
+      ('common-log log-format:common-log-formatter)
+      ('scheme     identity)
+      (else
+        (raise (server-config-exception
+                 (format "Unsupported log format specificed: ~a" log-format)
+                 (current-continuation-marks)))))))
 
 (define log-req   (make-parameter #f))
 (define log-uuid  (make-parameter #f))
 (define log-time  (make-parameter #f))
 (define log-bytes (make-parameter #f))
-(define log-level-info? (eq? (config-log-level SERVER-CONFIG) 'info))
+(define log-error (make-parameter #f))
+(define log-level-all? (eq? (config-log-level SERVER-CONFIG) 'all))
 
 (define (get-req-qid req-data)
   (jsexpr-object-ref req-data 'qid))
@@ -78,6 +89,7 @@
   (response/jsexpr 200 #"OK" jse))
 
 (define (response/bad-request jse)
+  (log:current-log-port (config-error-log-port SERVER-CONFIG))
   (response/jsexpr 400 #"Bad request" jse))
 
 (define (response/bad-request/invalid-json)
@@ -104,25 +116,25 @@
 (define (response/internal-error/ars)
   (response/internal-error (failure-response "ARS could not process the request")))
 
-(define (log-access resp)
-  (let ((log-entry (append (log-req)
-                           (response->log resp)
-                           `((bytes-transferred . ,(log-bytes))
-                             (time-to-serve     . ,(log-time))
-                             (uuid              . ,(log-uuid))))))
-    (log:pretty-log log-entry)
+(define (log-access resp (formatter #f))
+  (let* ((time-to-serve (assoc 'real (log-time)))
+         (log-entry (append (log-req)
+                            (response->log resp)
+                            `((bytes-transferred . ,(log-bytes))
+                              (time-to-serve     . ,(and time-to-serve (cdr time-to-serve)))
+                              (uuid              . ,(log-uuid))
+                              (errors            . ,(log-error))))))
+    (log:pretty-log/format log-formatter log-entry)
     (flush-output)))
 
+
 (define (request->log req)
-  (define (uri->log uri)
-    `((scheme . ,(url-scheme uri))
-      (host   . ,(url-host   uri))
-      (port   . ,(url-port   uri))
-      (path   . ,(path/param-path (car (url-path uri))))))
+  (define (uri->path uri)
+    (path/param-path (car (url-path uri))))
 
   `((client-ip . ,(request-client-ip req))
     (method    . ,(request-method req))
-    (uri       . ,(uri->log (request-uri req)))))
+    (path      . ,(string-append "/" (uri->path (request-uri req))))))
 
 (define (response->log resp)
   `((code . ,(response-code resp))))
@@ -132,6 +144,7 @@
         'data   data))
 
 (define (failure-response reason)
+  (log-error (jsexpr-object-set (log-error) 'reason reason))
   (make-response "error" reason))
 
 (define (file->response f)
@@ -157,18 +170,25 @@
     (parameterize ((log:current-log-port (config-log-port SERVER-CONFIG))
                    (log-req (request->log req))
                    (log-uuid #f)
-                   (log-time #f))
+                   (log-time '())
+                   (log-error (jsexpr-object)))
       (let ((response
               (with-handlers ((exn:fail:read?
-                                (lambda (e) (response/bad-request/invalid-json)))
+                                (lambda (e)
+                                  (when log-level-all?
+                                    (log-error (jsexpr-object-set (log-error) 'trace (exn-message e))))
+                                  (response/bad-request/invalid-json)))
                               (exn:fail?
-                                (lambda (e) (response/internal-error/generic))))
+                                (lambda (e)
+                                  (when log-level-all?
+                                    (log-error (jsexpr-object-set (log-error) 'trace (exn-message e))))
+                                  (response/internal-error/generic))))
                 (let-values (((response time.cpu time.real time.gc) (time-apply endpoint `(,req))))
                   (log-time `((cpu  . ,time.cpu)
                               (real . ,time.real)
                               (gc   . ,time.gc)))
                   (car response)))))
-      (log-access response)
+      (log-access response (config-log-format SERVER-CONFIG))
       response))))
 
 ;TODO: ARS is down (no response from ARS)
