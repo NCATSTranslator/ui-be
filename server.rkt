@@ -42,23 +42,21 @@
             (mock:make-nct-expander)
             (make-nct-expander))))
 
+(define log-uuid (make-parameter #f))
+(define log-time (make-parameter #f))
+(define log-level-info? (eq? (config-log-level SERVER-CONFIG) 'info))
+
 (define (get-req-qid req-data)
   (jsexpr-object-ref req-data 'qid))
 
-(define (get-resp-qid resp-data)
-  (define data (jsexpr-object-ref resp-data 'data))
-  (cond ((string? data) data)
-        ((jsexpr-object? data)
-         (let ((qid (jsexpr-object-ref data 'qid)))
-           (if qid
-             qid
-             (jsexpr-object-ref-recursive data '(meta qid)))))
-        (else #f)))
-
 (define document-root (config-document-root SERVER-CONFIG))
 
+(define (response/log response)
+  (log-response response)
+  response)
+
 (define (response/jsexpr code message jse)
-  (cons
+  (response/log
     (response
       code
       message
@@ -66,19 +64,18 @@
       mime:json
       '()
       (lambda (op)
-        (write-bytes (jsexpr->bytes jse) op)))
-    (get-resp-qid jse)))
+        (write-bytes (jsexpr->bytes jse) op)))))
 
 (define (response/OK resp mime-type)
-  (cons
+  (response/log
     (response
       200 #"OK"
       (current-seconds)
       mime-type
       '()
       (lambda (op)
-        (write-bytes resp op)))
-    #f))
+        (write-bytes resp op)))))
+
 
 (define (response/OK/jsexpr jse)
   (response/jsexpr 200 #"OK" jse))
@@ -93,16 +90,16 @@
   (response/bad-request (failure-response "Invalid POST data")))
 
 (define (response/not-found)
-  (cons
+  (response/log
     (response/xexpr
       #:code    404
       #:message #"Not found"
       `(html
          (body
-           (p "Not found"))))
-    #f))
+           (p "Not found"))))))
 
 (define (response/internal-error jse)
+  (log:current-log-port (config-error-log-port SERVER-CONFIG))
   (response/jsexpr 500 #"Internal server error" jse))
 
 (define (response/internal-error/generic)
@@ -111,10 +108,12 @@
 (define (response/internal-error/ars)
   (response/internal-error (failure-response "ARS could not process the request")))
 
+(define (log-activity log-handler)
+    (log:pretty-log (log-handler (config-log-level SERVER-CONFIG)))
+    (flush-output))
+
 (define (log-request req)
-  (parameterize ((log:current-log-port (config-log-port SERVER-CONFIG)))
-    (log:pretty-log (request->log req (config-log-level SERVER-CONFIG)))
-    (flush-output (log:current-log-port))))
+  (log-activity (lambda (log-level) (request->log req log-level))))
 
 (define (request->log req log-level)
   (define (uri->log uri)
@@ -131,40 +130,24 @@
                             (client-ip . ,(request-client-ip req))
                             (method    . ,(request-method req))
                             (uri       . ,(uri->log (request-uri req))))))
-    (if (eq? log-level 'info)
+    (if log-level-info?
       (append base-log
               `((headers   . ,(map header->log (request-headers/raw req)))
                 (data      . ,(request-post-data/raw req))))
       base-log)))
 
-(define (response/log resp-proc)
-  (define-values (response resp-log)
-    (response->response/log resp-proc (config-log-level SERVER-CONFIG)))
-  (parameterize ((log:current-log-port (config-log-port SERVER-CONFIG)))
-    (log:pretty-log resp-log)
-    (flush-output (log:current-log-port)))
-  response)
+(define (log-response resp)
+  (log-activity (lambda (log-level) (response->log resp log-level))))
 
-(define (response->response/log resp-proc log-level)
-  (define is-info (eq? log-level 'info))
-  (let*-values (((resp/qid time.cpu time.real time.gc)
-                 (if is-info
-                   (time-apply resp-proc '())
-                   (values `(,(resp-proc)) #f #f #f)))
-                ((resp qid)
-                 (values (caar resp/qid) (cdar resp/qid))))
-    (let ((base-log `(response ,log-level
-                               (code . ,(response-code resp))
-                               (uuid . ,qid))))
-      (values
-        resp
-        (if is-info
-          (append base-log
-                  `((bytes-transferred. ,(bytes-length (call-with-output-bytes (response-output resp))))
-                    (time-to-serve (cpu  . ,time.cpu)
-                                   (real . ,time.real)
-                                   (gc   . ,time.gc))))
-          base-log)))))
+(define (response->log resp log-level)
+  (let ((base-log `(response ,log-level
+                             (code . ,(response-code resp))
+                             (uuid . ,(log-uuid)))))
+    (if log-level-info?
+      (append base-log
+              `((bytes-transferred . ,(bytes-length (call-with-output-bytes (response-output resp))))
+                (time-to-serve ,(log-time))))
+      base-log)))
 
 (define (make-response status (data '()))
   (hash 'status status
@@ -193,48 +176,58 @@
   (define index.html (string-append document-root "build/index.html"))
   (file->response index.html))
 
+(define (make-endpoint endpoint)
+  (lambda (req)
+    (parameterize ((log:current-log-port (config-log-port SERVER-CONFIG))
+                   (log-uuid #f)
+                   (log-time #f))
+      (with-handlers ((exn:fail:read?
+                        (lambda (e) (response/bad-request/invalid-json)))
+                      (exn:fail?
+                        (lambda (e) (response/internal-error/generic))))
+        (log-request req)
+        (if log-level-info?
+          (let-values (((response time.cpu time.real time.gc) (time-apply endpoint `(,req))))
+            (log-time `((cpu  . ,time.cpu)
+                        (real . ,time.real)
+                        (gc   . ,time.gc)))
+            (car response))
+          (endpoint req))))))
+
 ;TODO: ARS is down (no response from ARS)
 (define (make-query-endpoint qgraph->trapi-query)
-  (lambda (req)
-    (log-request req)
-    (response/log
-      (lambda ()
-        (with-handlers ((exn:fail:read?
-                          (lambda (e) (response/bad-request/invalid-json)))
-                        (exn:fail?
-                          (lambda (e) (response/internal-error/generic))))
-          (let ((post-data (request-post-data/raw req)))
-            (define trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data))))
-            (cond (trapi-query
-                    (define post-resp (post-query trapi-query))
-                    (match (car post-resp)
-                      ('error (response/internal-error/ars))
-                      (_  (response/OK/jsexpr (make-response "success" (cdr post-resp))))))
-                  ((not post-data) (response/bad-request/invalid-post))
-                  (else
-                    (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))))))
+  (make-endpoint
+    (lambda (req)
+      (let* ((post-data (request-post-data/raw req))
+             (trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data)))))
+        (cond (trapi-query
+                (define post-resp (post-query trapi-query))
+                (match (car post-resp)
+                  ('error (response/internal-error/ars))
+                  (_ (let ((qid (cdr post-resp)))
+                       (log-uuid qid)
+                       (response/OK/jsexpr (make-response "success" qid))))))
+              ((not post-data) (response/bad-request/invalid-post))
+              (else
+                (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))))
 
 (define /query (make-query-endpoint qgraph->trapi-query))
 (define /creative-query (make-query-endpoint disease->creative-query))
 
 (define (make-result-endpoint pull-proc process-query-data)
-  (lambda (req)
-    (log-request req)
-    (response/log
-      (lambda ()
-        (with-handlers ((exn:fail:read?
-                          (lambda (e) (response/bad-request/invalid-json)))
-                        (exn:fail?
-                          (lambda (e) (response/internal-error/generic))))
-          (let* ((post-data (request-post-data/raw req))
-                 (qid (and post-data (get-req-qid (bytes->jsexpr post-data)))))
-            (cond (qid (let ((query-state (pull-proc qid)))
-                         (if query-state
-                           (response/OK/jsexpr (make-response (query-state-status query-state)
-                                                              (process-query-data qid (query-state-data query-state))))
-                           (response/internal-error/generic))))
-                  ((not post-data) (response/bad-request/invalid-post))
-                  (else (response/internal-error/ars)))))))))
+  (make-endpoint
+    (lambda (req)
+      (let* ((post-data (request-post-data/raw req))
+             (qid (and post-data (get-req-qid (bytes->jsexpr post-data)))))
+        (cond (qid (let ((query-state (pull-proc qid)))
+                     (log-uuid qid)
+                     (if query-state
+                       (response/OK/jsexpr
+                         (make-response (query-state-status query-state)
+                                        (process-query-data qid (query-state-data query-state))))
+                       (response/internal-error/generic))))
+              ((not post-data) (response/bad-request/invalid-post))
+              (else (response/internal-error/ars)))))))
 
 (define /result
   (make-result-endpoint
