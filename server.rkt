@@ -42,8 +42,10 @@
             (mock:make-nct-expander)
             (make-nct-expander))))
 
-(define log-uuid (make-parameter #f))
-(define log-time (make-parameter #f))
+(define log-req   (make-parameter #f))
+(define log-uuid  (make-parameter #f))
+(define log-time  (make-parameter #f))
+(define log-bytes (make-parameter #f))
 (define log-level-info? (eq? (config-log-level SERVER-CONFIG) 'info))
 
 (define (get-req-qid req-data)
@@ -51,31 +53,26 @@
 
 (define document-root (config-document-root SERVER-CONFIG))
 
-(define (response/log response)
-  (log-response response)
-  response)
-
 (define (response/jsexpr code message jse)
-  (response/log
+  (let ((json (jsexpr->bytes jse)))
+    (log-bytes (bytes-length json))
     (response
       code
       message
       (current-seconds)
       mime:json
       '()
-      (lambda (op)
-        (write-bytes (jsexpr->bytes jse) op)))))
+      (lambda (op) (write-bytes json op)))))
 
 (define (response/OK resp mime-type)
-  (response/log
+  (log-bytes (bytes-length resp))
+  (response
     (response
       200 #"OK"
       (current-seconds)
       mime-type
       '()
-      (lambda (op)
-        (write-bytes resp op)))))
-
+      (lambda (op) write-bytes resp op))))
 
 (define (response/OK/jsexpr jse)
   (response/jsexpr 200 #"OK" jse))
@@ -90,13 +87,12 @@
   (response/bad-request (failure-response "Invalid POST data")))
 
 (define (response/not-found)
-  (response/log
-    (response/xexpr
-      #:code    404
-      #:message #"Not found"
-      `(html
-         (body
-           (p "Not found"))))))
+  (response/xexpr
+    #:code    404
+    #:message #"Not found"
+    `(html
+       (body
+         (p "Not found")))))
 
 (define (response/internal-error jse)
   (log:current-log-port (config-error-log-port SERVER-CONFIG))
@@ -108,46 +104,28 @@
 (define (response/internal-error/ars)
   (response/internal-error (failure-response "ARS could not process the request")))
 
-(define (log-activity log-handler)
-    (log:pretty-log (log-handler (config-log-level SERVER-CONFIG)))
-    (flush-output))
+(define (log-access resp)
+  (let ((log-entry (append (log-req)
+                           (response->log resp)
+                           `((bytes-transferred . ,(log-bytes))
+                             (time-to-serve     . ,(log-time))
+                             (uuid              . ,(log-uuid))))))
+    (log:pretty-log log-entry)
+    (flush-output)))
 
-(define (log-request req)
-  (log-activity (lambda (log-level) (request->log req log-level))))
-
-(define (request->log req log-level)
+(define (request->log req)
   (define (uri->log uri)
     `((scheme . ,(url-scheme uri))
       (host   . ,(url-host   uri))
       (port   . ,(url-port   uri))
       (path   . ,(path/param-path (car (url-path uri))))))
 
-  (define (header->log header)
-    `((field . ,(header-field header))
-      (value . ,(header-value header))))
+  `((client-ip . ,(request-client-ip req))
+    (method    . ,(request-method req))
+    (uri       . ,(uri->log (request-uri req)))))
 
-  (let ((base-log `(request ,log-level
-                            (client-ip . ,(request-client-ip req))
-                            (method    . ,(request-method req))
-                            (uri       . ,(uri->log (request-uri req))))))
-    (if log-level-info?
-      (append base-log
-              `((headers   . ,(map header->log (request-headers/raw req)))
-                (data      . ,(request-post-data/raw req))))
-      base-log)))
-
-(define (log-response resp)
-  (log-activity (lambda (log-level) (response->log resp log-level))))
-
-(define (response->log resp log-level)
-  (let ((base-log `(response ,log-level
-                             (code . ,(response-code resp))
-                             (uuid . ,(log-uuid)))))
-    (if log-level-info?
-      (append base-log
-              `((bytes-transferred . ,(bytes-length (call-with-output-bytes (response-output resp))))
-                (time-to-serve ,(log-time))))
-      base-log)))
+(define (response->log resp)
+  `((code . ,(response-code resp))))
 
 (define (make-response status (data '()))
   (hash 'status status
@@ -165,34 +143,33 @@
         (else (/index))))
 
 (define (handle-static-file-request req)
-  (log-request req)
   (define uri (request-uri req))
   (define resource (map path/param-path (url-path uri)))
   (define f (string-append document-root "build/" (string-join resource "/")))
   (file->response f))
 
 (define (/index (req #f))
-  (when req (log-request req))
   (define index.html (string-append document-root "build/index.html"))
   (file->response index.html))
 
 (define (make-endpoint endpoint)
   (lambda (req)
     (parameterize ((log:current-log-port (config-log-port SERVER-CONFIG))
+                   (log-req (request->log req))
                    (log-uuid #f)
                    (log-time #f))
-      (with-handlers ((exn:fail:read?
-                        (lambda (e) (response/bad-request/invalid-json)))
-                      (exn:fail?
-                        (lambda (e) (response/internal-error/generic))))
-        (log-request req)
-        (if log-level-info?
-          (let-values (((response time.cpu time.real time.gc) (time-apply endpoint `(,req))))
-            (log-time `((cpu  . ,time.cpu)
-                        (real . ,time.real)
-                        (gc   . ,time.gc)))
-            (car response))
-          (endpoint req))))))
+      (let ((response
+              (with-handlers ((exn:fail:read?
+                                (lambda (e) (response/bad-request/invalid-json)))
+                              (exn:fail?
+                                (lambda (e) (response/internal-error/generic))))
+                (let-values (((response time.cpu time.real time.gc) (time-apply endpoint `(,req))))
+                  (log-time `((cpu  . ,time.cpu)
+                              (real . ,time.real)
+                              (gc   . ,time.gc)))
+                  (car response)))))
+      (log-access response)
+      response))))
 
 ;TODO: ARS is down (no response from ARS)
 (define (make-query-endpoint qgraph->trapi-query)
