@@ -73,20 +73,25 @@
       (current-seconds)
       mime:json
       '()
-      (lambda (op) (write-bytes json op)))))
+      (lambda (op)
+        (write-bytes json op)))))
 
 (define (response/OK resp mime-type)
   (log-bytes (bytes-length resp))
   (response
-    (response
-      200 #"OK"
-      (current-seconds)
-      mime-type
-      '()
-      (lambda (op) write-bytes resp op))))
+    200 #"OK"
+    (current-seconds)
+    mime-type
+    '()
+    (lambda (op)
+      (write-bytes resp op))))
 
 (define (response/OK/jsexpr jse)
   (response/jsexpr 200 #"OK" jse))
+
+(define (response/index)
+  (define index.html (string-append document-root "build/index.html"))
+  (file->response index.html))
 
 (define (response/bad-request jse)
   (log:current-log-port (config-error-log-port SERVER-CONFIG))
@@ -130,7 +135,7 @@
 
 (define (request->log req)
   (define (uri->path uri)
-    (path/param-path (car (url-path uri))))
+    (string-join (map path/param-path (url-path uri)) "/"))
 
   `((client-ip . ,(request-client-ip req))
     (method    . ,(request-method req))
@@ -148,22 +153,26 @@
   (make-response "error" reason))
 
 (define (file->response f)
-  (cond ((file-exists? f)
-          (define ext (filename-extension f))
-          (define mime-type (ext->mime-type ext))
-          (define data (file->bytes f))
-          (response/OK data mime-type))
-        (else (/index))))
+  (and (file-exists? f)
+       (let* ((ext (filename-extension f))
+              (mime-type (ext->mime-type ext))
+              (data (file->bytes f)))
+          (response/OK data mime-type))))
 
-(define (handle-static-file-request req)
-  (define uri (request-uri req))
-  (define resource (map path/param-path (url-path uri)))
-  (define f (string-append document-root "build/" (string-join resource "/")))
-  (file->response f))
+(define (handle-api-exceptions endpoint)
+  (lambda (req)
+    (with-handlers ((exn:fail:read?
+                      (lambda (e)
+                        (when log-level-all?
+                          (log-error (jsexpr-object-set (log-error) 'trace (exn-message e))))
+                        (response/bad-request/invalid-json)))
+                    (exn:fail?
+                      (lambda (e)
+                        (when log-level-all?
+                          (log-error (jsexpr-object-set (log-error) 'trace (exn-message e))))
+                        (response/internal-error/generic))))
+      (endpoint req))))
 
-(define (/index (req #f))
-  (define index.html (string-append document-root "build/index.html"))
-  (file->response index.html))
 
 (define (make-endpoint endpoint)
   (lambda (req)
@@ -173,58 +182,64 @@
                    (log-time '())
                    (log-error (jsexpr-object)))
       (let ((response
-              (with-handlers ((exn:fail:read?
-                                (lambda (e)
-                                  (when log-level-all?
-                                    (log-error (jsexpr-object-set (log-error) 'trace (exn-message e))))
-                                  (response/bad-request/invalid-json)))
-                              (exn:fail?
-                                (lambda (e)
-                                  (when log-level-all?
-                                    (log-error (jsexpr-object-set (log-error) 'trace (exn-message e))))
-                                  (response/internal-error/generic))))
-                (let-values (((response time.cpu time.real time.gc) (time-apply endpoint `(,req))))
-                  (log-time `((cpu  . ,time.cpu)
-                              (real . ,time.real)
-                              (gc   . ,time.gc)))
-                  (car response)))))
+              (let-values (((response time.cpu time.real time.gc) (time-apply endpoint `(,req))))
+                (log-time `((cpu  . ,time.cpu)
+                            (real . ,time.real)
+                            (gc   . ,time.gc)))
+                (car response))))
       (log-access response (config-log-format SERVER-CONFIG))
       response))))
+
+(define handle-static-file-request
+  (make-endpoint
+    (lambda (req)
+      (define uri (request-uri req))
+      (define resource (map path/param-path (url-path uri)))
+      (define f (string-append document-root "build/" (string-join resource "/")))
+      (define response (file->response f))
+      (if response response (response/index)))))
+
+(define /index
+  (make-endpoint
+    (lambda (req)
+      (response/index))))
 
 ;TODO: ARS is down (no response from ARS)
 (define (make-query-endpoint qgraph->trapi-query)
   (make-endpoint
-    (lambda (req)
-      (let* ((post-data (request-post-data/raw req))
-             (trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data)))))
-        (cond (trapi-query
-                (define post-resp (post-query trapi-query))
-                (match (car post-resp)
-                  ('error (response/internal-error/ars))
-                  (_ (let ((qid (cdr post-resp)))
-                       (log-uuid qid)
-                       (response/OK/jsexpr (make-response "success" qid))))))
-              ((not post-data) (response/bad-request/invalid-post))
-              (else
-                (response/bad-request (failure-response "Query could not be converted to TRAPI"))))))))
+    (handle-api-exceptions
+      (lambda (req)
+        (let* ((post-data (request-post-data/raw req))
+               (trapi-query (and post-data (qgraph->trapi-query (bytes->jsexpr post-data)))))
+          (cond (trapi-query
+                  (define post-resp (post-query trapi-query))
+                  (match (car post-resp)
+                    ('error (response/internal-error/ars))
+                    (_ (let ((qid (cdr post-resp)))
+                         (log-uuid qid)
+                         (response/OK/jsexpr (make-response "success" qid))))))
+                ((not post-data) (response/bad-request/invalid-post))
+                (else
+                  (response/bad-request (failure-response "Query could not be converted to TRAPI")))))))))
 
 (define /query (make-query-endpoint qgraph->trapi-query))
 (define /creative-query (make-query-endpoint disease->creative-query))
 
 (define (make-result-endpoint pull-proc process-query-data)
   (make-endpoint
-    (lambda (req)
-      (let* ((post-data (request-post-data/raw req))
-             (qid (and post-data (get-req-qid (bytes->jsexpr post-data)))))
-        (cond (qid (let ((query-state (pull-proc qid)))
-                     (log-uuid qid)
-                     (if query-state
-                       (response/OK/jsexpr
-                         (make-response (query-state-status query-state)
-                                        (process-query-data qid (query-state-data query-state))))
-                       (response/internal-error/generic))))
-              ((not post-data) (response/bad-request/invalid-post))
-              (else (response/internal-error/ars)))))))
+    (handle-api-exceptions
+      (lambda (req)
+        (let* ((post-data (request-post-data/raw req))
+               (qid (and post-data (get-req-qid (bytes->jsexpr post-data)))))
+          (cond (qid (let ((query-state (pull-proc qid)))
+                       (log-uuid qid)
+                       (if query-state
+                         (response/OK/jsexpr
+                           (make-response (query-state-status query-state)
+                                          (process-query-data qid (query-state-data query-state))))
+                         (response/internal-error/generic))))
+                ((not post-data) (response/bad-request/invalid-post))
+                (else (response/internal-error/ars))))))))
 
 (define /result
   (make-result-endpoint
