@@ -144,8 +144,7 @@
     (with-handlers ((exn:fail:read?
                       (lambda (e) (response/bad-request/invalid-json)))
                     (exn:fail?
-                      (lambda (e) (raise e))))
-                      ;(lambda (e) (response/internal-error/generic))))
+                      (lambda (e) (response/internal-error/generic))))
       (define post-data (request-post-data/raw req))
       (define qid (and post-data (get-qid (bytes->jsexpr post-data))))
       (cond (qid (let ((query-state (pull-proc qid)))

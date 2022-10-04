@@ -388,6 +388,13 @@
     (hash-ref node->canonical-node node)))
 
 (define (creative-answers->summary qid answers)
+  (define node->canonical-node
+    (make-canonical-node-mapping (map (lambda (answer)
+                                        (jsexpr-object-ref-recursive
+                                          (answer-message answer)
+                                          '(knowledge_graph nodes)))
+                                      answers)))
+
   (define node-rules
     (make-summarize-rules
       `(,(aggregate-property 'name '(names))
@@ -420,8 +427,12 @@
            'predicate
            '(predicates)
            bl:sanitize-predicate)
-         ,(get-property 'subject)
-         ,(get-property 'object)
+         ,(transform-property
+            'subject
+            (lambda (subject) (node->canonical-node subject)))
+         ,(transform-property
+            'object
+            (lambda (object) (node->canonical-node object)))
          ,(aggregate-attributes
             `(,(biolink-tag "IriType"))
             'iri_type)
@@ -443,13 +454,6 @@
                 (string-split evidence #rx",|\\|")))))))
 
   (define max-hops (config-max-hops SERVER-CONFIG))
-  (define node->canonical-node
-    (make-canonical-node-mapping (map (lambda (answer)
-                                        (jsexpr-object-ref-recursive
-                                          (answer-message answer)
-                                          '(knowledge_graph nodes)))
-                                      answers)))
-
   (condensed-summaries->summary
     qid
     (creative-answers->condensed-summaries
@@ -755,17 +759,17 @@
                  (nodes        . ,(foldl (lambda (node-key nodes)
                                            (let* ((node (jsexpr-object-ref nodes node-key))
                                                   (node-names (jsexpr-object-ref node 'names)))
-                                           (if (null? node-names)
-                                             (jsexpr-object-set
-                                               nodes
-                                               node-key
+                                             (if (null? node-names)
                                                (jsexpr-object-set
-                                                 node
-                                                 'names
-                                                 (cons (symbol->string node-key) node-names)))
-                                             nodes)))
-                                    (jsexpr-object-map nodes jsexpr-object-remove-duplicates)
-                                    (jsexpr-object-keys nodes)))
+                                                 nodes
+                                                 node-key
+                                                 (jsexpr-object-set
+                                                   node
+                                                   'names
+                                                   (list (symbol->string node-key))))
+                                               nodes)))
+                                         (jsexpr-object-map nodes jsexpr-object-remove-duplicates)
+                                         (jsexpr-object-keys nodes)))
                  (edges        . ,edges)
                  (publications . ,publications)))))
           (else
