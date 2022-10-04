@@ -239,14 +239,17 @@
   (make-rgraph (flatten-bindings (jsexpr-object-ref trapi-result 'node_bindings))
                (flatten-bindings (jsexpr-object-ref trapi-result 'edge_bindings))
                kgraph))
-(define (rnode->key rnode kgraph) rnode)
+
+(define (rnode->key rnode kgraph node->canonical-node)
+  (string->symbol (node->canonical-node (symbol->string rnode))))
+
 ; We treat redges as bi-directional but the key is not. Generate the key for the
 ; invert of the original kedge using invert?
-(define (redge->key redge kgraph (invert? #f))
+(define (redge->key redge kgraph node->canonical-node (invert? #f))
   (let* ((kedge (trapi-edge-binding->trapi-kedge kgraph redge))
-         (ksubject   (jsexpr-object-ref kedge 'subject))
+         (ksubject   (node->canonical-node (jsexpr-object-ref kedge 'subject)))
          (kpredicate (jsexpr-object-ref kedge 'predicate))
-         (kobject    (jsexpr-object-ref kedge 'object)))
+         (kobject    (node->canonical-node (jsexpr-object-ref kedge 'object))))
     (path->key
       (if invert?
         (list kobject (bl:invert-biolink-predicate kpredicate) ksubject)
@@ -323,6 +326,67 @@
 (define (merge-summary-attrs r s)
   (map (lambda (r-attr s-attr) (append r-attr s-attr)) r s))
 
+(define (make-canonical-node-mapping all-nodes)
+  (define-values (node-sets curies)
+    (for/fold ((node-sets '())
+               (all-curies '()))
+              ((nodes all-nodes))
+      (let ((curies (jsexpr-object-keys nodes)))
+        (values
+          (foldl (lambda (curie node-sets)
+                   (let* ((node (jsexpr-object-ref nodes curie))
+                          (attributes (jsexpr-object-ref node 'attributes '())))
+                     (let loop ((as attributes)
+                                (aliases '()))
+                       (cond ((null? as)
+                               (cons (list->seteq (cons (symbol->string curie) aliases))
+                                     node-sets))
+                             (else
+                               (let ((attr-type (jsexpr-object-ref (car as) 'attribute_type_id)))
+                                 (loop (cdr as)
+                                       (if (or (equal? (biolink-tag "same_as") attr-type)
+                                               (equal? (biolink-tag "xref") attr-type))
+                                         (append aliases (jsexpr-object-ref (car as) 'value))
+                                         aliases))))))))
+                     node-sets
+                     curies)
+          (append all-curies (map symbol->string curies))))))
+
+  (define merged-nodes
+    (foldl (lambda (curie node-sets)
+             (let loop ((mergable-bags '())
+                        (unmerged-bags '())
+                        (node-sets node-sets))
+               (if (null? node-sets)
+                 (if (null? mergable-bags)
+                   unmerged-bags
+                   (cons (apply set-union mergable-bags) unmerged-bags))
+                 (match-let (((cons node-set rest) node-sets))
+                   (cond ((set-member? node-set curie)
+                           (loop (cons node-set mergable-bags)
+                                 unmerged-bags
+                                 rest))
+                         (else
+                           (loop mergable-bags
+                                 (cons node-set unmerged-bags)
+                                 rest)))))))
+           node-sets
+           curies))
+
+  (define node->canonical-node
+    (foldl (lambda (node-set node->canonical-node)
+             (let ((nodes (set->list node-set)))
+               (match-let (((cons canonical-node rest) nodes))
+                 (foldl (lambda (curie node->canonical-node)
+                          (hash-set node->canonical-node curie canonical-node))
+                        node->canonical-node
+                        nodes))))
+           (hash)
+           merged-nodes))
+
+  (lambda (node)
+    (hash-ref node->canonical-node node)))
+
 (define (creative-answers->summary qid answers)
   (define node-rules
     (make-summarize-rules
@@ -379,6 +443,12 @@
                 (string-split evidence #rx",|\\|")))))))
 
   (define max-hops (config-max-hops SERVER-CONFIG))
+  (define node->canonical-node
+    (make-canonical-node-mapping (map (lambda (answer)
+                                        (jsexpr-object-ref-recursive
+                                          (answer-message answer)
+                                          '(knowledge_graph nodes)))
+                                      answers)))
 
   (condensed-summaries->summary
     qid
@@ -386,9 +456,10 @@
       answers
       node-rules
       edge-rules
+      node->canonical-node
       max-hops)))
 
-(define (creative-answers->condensed-summaries answers node-rules edge-rules max-hops)
+(define (creative-answers->condensed-summaries answers node-rules edge-rules node->canonical-node max-hops)
   (define (trapi-result->summary-fragment trapi-result kgraph)
     (define node-bindings (jsexpr-object-ref trapi-result 'node_bindings))
     (define rgraph (trapi-result->rgraph trapi-result kgraph))
@@ -417,20 +488,20 @@
 
     ; Return a pair (key, update) for a node
     (define (summarize-rnode rnode kgraph)
-      (cons (rnode->key rnode kgraph)
+      (cons (rnode->key rnode kgraph node->canonical-node)
             (node-rules (trapi-node-binding->trapi-knode kgraph rnode))))
 
     ; Return a the list (key, inverted-key, update) for an edge
     ; We must generate the inverted-key now before edges are merged otherwise its possible
     ; Our edge keys won't match with the path key
     (define (summarize-redge redge kgraph)
-      (cons (redge->key redge kgraph)
+      (cons (redge->key redge kgraph node->canonical-node)
             (edge-rules (trapi-edge-binding->trapi-kedge kgraph redge))))
 
     ; Convert paths structure to normalized node and edge IDs
     (define (normalize-paths rgraph-paths kgraph)
-      (define (N n) (rnode->key n kgraph))
-      (define (E e o) (redge->key e kgraph (redge-inverted? e o kgraph)))
+      (define (N n) (rnode->key n kgraph node->canonical-node))
+      (define (E e o) (redge->key e kgraph node->canonical-node (redge-inverted? e o kgraph)))
       (map (lambda (path)
              (let loop ((p path)
                         (np '()))
