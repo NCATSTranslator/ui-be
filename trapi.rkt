@@ -371,7 +371,7 @@
                                  (cons node-set unmerged-bags)
                                  rest)))))))
            node-sets
-           curies))
+           (append (map string->symbol (set->list (apply set-union node-sets))) curies)))
 
   (define node->canonical-node
     (foldl (lambda (node-set node->canonical-node)
