@@ -1,0 +1,6 @@
+{
+  "document-root": false,
+  "port": 8386,
+  "response-timeout": 300,
+  "max-hops": 3
+}
