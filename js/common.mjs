@@ -1,7 +1,16 @@
 'use strict'
 
+const fs = import('fs');
+
+async function readJson(path)
+{
+  const content = await fs.readFile(path);
+  return JSON.parse(content);
+}
+
 function deepCopy(o)
 {
+  // TODO: Inefficient
   return JSON.parse(JSON.stringify(o));
 }
 
