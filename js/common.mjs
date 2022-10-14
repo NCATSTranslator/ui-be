@@ -1,5 +1,10 @@
 'use strict'
 
+function deepCopy(o)
+{
+  return JSON.parse(JSON.stringify(o));
+}
+
 function identity(x)
 {
   return x;
@@ -25,12 +30,17 @@ function isArrayEmpty(a)
   return a.length === 0;
 }
 
+function isObjEmpty(o)
+{
+  return Object.keys(o).length === 0;
+}
+
 function jsonHasKey(obj, key)
 {
   return obj[key] !== undefined
 }
 
-function jsonGet(obj, key, fallback = null)
+function jsonGet(obj, key, fallback = undefined)
 {
   const v = obj[key];
   if (v !== undefined)
@@ -38,7 +48,7 @@ function jsonGet(obj, key, fallback = null)
     return v
   }
 
-  if (fallback !== null)
+  if (fallback !== undefined)
   {
     return fallback
   }
@@ -50,6 +60,29 @@ function jsonSet(obj, key, v)
 {
   obj[key] = v;
   return obj;
+}
+
+function jsonMultiSet(obj, kvps)
+{
+  kvps.forEach((kvp) =>
+  {
+    [key, v] = kvp;
+    jsonSet(obj, key, v);
+  });
+
+  return obj;
+}
+
+function jsonSetDefaultAndGet(obj, key, fallback)
+{
+  let v = obj[key];
+  if (v !== undefined)
+  {
+    return v;
+  }
+
+  obj[key] = fallback;
+  return fallback;
 }
 
 function jsonGetFromKpath(obj, kpath, fallback = false)
@@ -94,6 +127,11 @@ function jsonSetFromKpath(obj, kpath, v)
 
   jsonSet(currentObj, finalKey, v);
   return obj;
+}
+
+function jsonUpdate(obj, key, update)
+{
+  jsonSet(obj, key, update(jsonGet(obj, key)));
 }
 
 function biolinkTag(str)

@@ -17,7 +17,7 @@ function makeMapping(key, transform, update, fallback)
 {
   return obj =>
   {
-    const val = cmn.jsonGet(obj, key) || false;
+    const val = cmn.jsonGet(obj, key, false);
     return acc => { return update((val ? transform(val) : fallback, acc); }
   }
 }
@@ -221,9 +221,7 @@ function diseaseToCreativeQuery(diseaseObj)
     'message': {
       'query_graph': diseaseToTrapiQgraph(cmn.jsonGet(diseaseObj, 'disease'));
     }
-  };
-}
-
+  }; }
 function trapiBindingToKobj(binding, type, kgraph)
 {
   return cmn.jsonGet(cmn.jsonGet(kgraph, type), binding);
@@ -388,10 +386,7 @@ function makeSummaryFragment(paths, nodes, edges)
 
 function makeCondensedSummary(agent, summaryFragment)
 {
-  let condensedSummary = {};
-  condensedSummary.agent = () => { return agent; };
-  condensedSummary.fragment = () => { return summaryFragment; };
-  return condensedSummary;
+  return makePair(agent, summaryFragment, 'agent', 'fragment');
 }
 
 function condensedSummaryPaths(condensedSummary)
@@ -428,7 +423,7 @@ function creativeAnswersToSummary (qid, answers)
     [
       aggregateProperty('name', ['names']),
       aggregateProperty('categories', ['types']),
-      aggregateAttributes(bl.tagBiolink('xref'), 'curies'),
+      aggregateAttributes([bl.tagBiolink('xref')], 'curies'),
       renameAndTransformAttribute(
         bl.tagBiolink('highest_FDA_approval_status'),
         ['fda_info'],
@@ -439,10 +434,10 @@ function creativeAnswersToSummary (qid, answers)
             'max_level': fdaDescriptionToFdaLevel(fdaDescription)
           };
         }),
-      aggregateAttributes(bl.tagBiolink('description'), 'description'),
-      aggregateAttributes(bl.tagBiolink('synonym'), 'synonym'),
-      aggregateAttributes(bl.tagBiolink('same_as'), 'same_as'),
-      aggregateAttributes(bl.tagBiolink('IriType'), 'iri_type')
+      aggregateAttributes([bl.tagBiolink('description')], 'description'),
+      aggregateAttributes([bl.tagBiolink('synonym')], 'synonym'),
+      aggregateAttributes([bl.tagBiolink('same_as')], 'same_as'),
+      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type')
     ]);
 
   const edgeRules = makeSummarizeRules(
@@ -453,19 +448,8 @@ function creativeAnswersToSummary (qid, answers)
         bl.sanitizePredicate),
       getProperty('subject'),
       getProperty('object'),
-      aggregateAttributes(bl.tagBiolink('IriType'), 'iri_type'),
-      aggregateAndTransformAttributes(
-        ['bts:sentence'],
-        'snippets',
-        (snippets) =>
-        {
-          if (cmn.isArray(snippets))
-          {
-            return snippets
-          }
-
-          return Object.values(snippets);
-        }),
+      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type'),
+      aggregateAttributes(['bts:sentence'], 'snippets'),
       aggregateAndTransformAttributes(
         [
           bl.tagBiolink('supporting_document'),
@@ -533,13 +517,17 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
     function summarizeRnode(rnode, kgraph)
     {
       return cmn.makePair(rnodeToKey(rnode, kgraph),
-                          nodeRules(rnodeToTrapiKnode(rnode, kgraph)));
+                          nodeRules(rnodeToTrapiKnode(rnode, kgraph)),
+                          'key',
+                          'transforms');
     }
 
     function summarizeRedge(redge, kgraph)
     {
       return cmn.makePair(redgeToKey(redge, kgraph),
-                          edgeRules(redgeToTrapiKedge(redge, kgraph)));
+                          edgeRules(redgeToTrapiKedge(redge, kgraph))
+                         'key',
+                         'transforms');
     }
 
     function normalizePaths(rgraphPaths, kgraph)
@@ -603,7 +591,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     fragmentPaths.forEach((path) =>
     {
       const pathKey = pathToKey(path);
-      results.push(cmn.makePair(path[0], pathKey, 'disease', 'key'))
+      results.push(cmn.makePair(path[0], pathKey, 'drug', 'pathKey'))
       paths.push(cmn.makePair(pathKey, path, 'key', 'path'))
     });
 
@@ -614,7 +602,211 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   {
     newResults.forEach((result) =>
     {
-      // TODO
+      let existingResult = cmn.jsonSetDefaultAndGet(results, result.drug(), {});
+      let paths = cmn.jsonSetDefaultAndGet(existingResult, 'paths', [])
+      paths.push(result.pathKey());
     }
   }
+
+  function extendSummaryPaths(paths, newPaths, agent)
+  {
+    newPaths.forEach((path) =>
+    {
+      let existingPath = cmn.jsonGet(paths, path.key(), false);
+      if (existingPath)
+      {
+        cmn.jsonGet(existingPath, 'aras').push(agent);
+        return;
+      }
+
+      cmn.jsonSet(paths, path.key(), {'subgraph': path.path(), 'aras': [agent]});
+    });
+  }
+
+  function extendSummaryObj(objs, updates, agent)
+  {
+    updates.forEach((update) =>
+    {
+      let obj = cmn.jsonSetDefaultOrGet(objs, update.key(), {'aras', []});
+      update.transforms().forEach((transform) =>
+      {
+        transform(obj);
+        cmn.jsonSet(obj, 'aras', agent);
+      });
+    });
+  }
+
+  function extendSummaryNodes(nodes, nodeUpdates, agent)
+  {
+    extendSummaryObj(nodes, nodeUpdates, agent);
+  }
+
+  function extendSummaryEdges(edges, edgeUpdates, agent)
+  {
+    extendSummaryObj(edges, edgeUpdates, agent);
+  }
+
+  function extendSummaryPublications(publications, edge)
+  {
+    function makePublicationObject(url, snippet, pubdate)
+    {
+      return {'url': url, 'snippet': snippet, 'pubdate': pubdate};
+    }
+
+    const snippets = cmn.jsonGet(edge, 'snippets');
+    const publicationIds = cmn.jsonGet(edge, 'publications', []);
+    publicationIds.forEach((id) =>
+    {
+      const url = evd.idToUrl(id);
+      const publicationObj = cmn.jsonGet(snippets, id, false);
+      if (snippet)
+      {
+        const snippet = cmn.jsonGet(publicationObj, 'sentence', null);
+        const pubdate = cmn.jsonGet(publicationObj, 'publication date', null);
+        cmn.jsonSet(publication, id, makePublicationObject(url, snippet, pubdate);
+        return;
+      }
+
+      cmn.jsonSet(publications, id, makePublicationObject(url, null, null));
+    });
+  }
+
+  function edgesToEdgesAndPublications(edges)
+  {
+    function addInvertEdge(edges, edge)
+    {
+      const edgePredicate = cmn.jsonGet(edge, 'predicate')[0];
+      const invertedPredicate = bl.invertBiolinkPredicate(edgePredicate);
+      const subject = cmn.jsonGet(edge, 'subject');
+      const object = cmn.jsonGet(edge, 'object'):
+
+      const invertedEdgeKey = pathToKey([object, invertedPredicate, subject]);
+      let invertedEdge = cmn.deepCopy(edge);
+      cmn.jsonMultiSet(invertedEdge, [['subject', subject],
+                                      ['object', object],
+                                      ['predicates', [invertedPredicate]]]);
+
+      edges[invertedEdgeKey] = invertedEdge;
+    }
+
+    let publications = {};
+    Object.values(edges).forEach((edge) =>
+    {
+      extendSummaryPublications(publications, edge);
+      delete edge['snippets'];
+      addInvertEdge(edges, edge);
+    });
+
+    return [edges, publications];
+  }
+
+  function expandResults(results, paths, nodes)
+  {
+    function getPathFromPid(paths, pid)
+    {
+      return cmn.jsonGetFromKpath(paths, [pid, 'subgraph']);
+    }
+
+    function isPathLessThan(pid1, pid2)
+    {
+      const path1 = getPathFromPid(paths, pid1);
+      const path2 = getPathFromPid(paths, pid2);
+      const p1Len = path1.length;
+      const p2Len = path2.length;
+      if (p1Len === p2Len)
+      {
+        for (let i = 0; i < path1.length; i+=2)
+        {
+          if (path1[i] < path2[i])
+          {
+            return -1;
+          }
+          else if (path1[i] > path2[i])
+          {
+            return 1;
+          }
+        }
+
+        return 0;
+      }
+
+      if (p1Len < p2Len)
+      {
+        return -1;
+      }
+
+      return 1;
+    }
+
+    return results.map((result) =>
+    {
+      const ps = cmn.jsonGet(result, 'paths');
+      const subgraph = getPathFromPid(paths, ps[0]);
+      const drug = subgraph[0];
+      const drugName = cmn.jsonGetFromKpath(nodes, [drug, 'names']);
+      const disease = subgraph[subgraph.length-1];
+      return {
+        'subject': drug,
+        'drug_name': (cmn.isArrayEmpty(drugName)) ? null : drugName[0],
+        'paths': ps.sort(isPathLessThan),
+        'object': disease
+      }
+    });
+  }
+
+  function objRemoveDuplicates(obj)
+  {
+    Object.keys(obj).forEach((k) =>
+    {
+      let v = cmn.jsonGet(obj, k);
+      if (cmn.isArray(v))
+      {
+        obj[k] = [...new Set(v)];
+      }
+    }
+  }
+
+  let results = {};
+  let paths = {};
+  let nodes = {};
+  let edges = {};
+  condensedSummaries.forEach((cs) =>
+  {
+    const agent = cs.agent();
+    [newResults, newPaths] = fragmentPathsToResultsAndPaths(condensedSummaryPaths(cs));
+    extendSummaryResults(results, newResults);
+    extendSummaryPaths(paths, newPaths, agent);
+    extendSummaryNodes(nodes, condensedSummaryNodes(cs), agent);
+    extendSummaryEdges(edges, condensedSummaryEdges(cs), agent);
+  });
+
+  Object.values(edges).forEach((edge) =>
+  {
+    objRemoveDuplicates(edges);
+    cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(isValidId) });
+  });
+  [edges, publications] = edgesToEdgesAndPublications(edges);
+
+  const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => cs.agent()));
+  results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes);
+  Object.values(paths).forEach(objRemoveDuplicates);
+  Object.keys(nodes).forEach((k) =>
+  {
+    let node = nodes[k];
+    objRemoveDuplicates(node);
+    let nodeNames = jsonGet(node, 'names');
+    if (cmn.isEmptyArray(nodeNames))
+    {
+      nodeNames.push(k);
+    }
+  });
+
+  return {
+    'meta': metadataObject,
+    'results': results,
+    'paths': paths,
+    'nodes': nodes,
+    'edges': edges,
+    'publications': publications
+  };
 }
