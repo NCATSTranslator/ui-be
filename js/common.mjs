@@ -1,25 +1,25 @@
 'use strict'
 
-const fs = import('fs');
+import * as fs from 'fs';
 
-async function readJson(path)
+export async function readJson(path)
 {
-  const content = await fs.readFile(path);
+  const content = await fs.promises.readFile(path);
   return JSON.parse(content);
 }
 
-function deepCopy(o)
+export function deepCopy(o)
 {
   // TODO: Inefficient
   return JSON.parse(JSON.stringify(o));
 }
 
-function identity(x)
+export function identity(x)
 {
   return x;
 }
 
-function makePair(x, y, xLabel = false, yLabel = false)
+export function makePair(x, y, xLabel = false, yLabel = false)
 {
   const firstId = xLabel || 'first';
   const secondLabel = yLabel || 'second';
@@ -29,27 +29,27 @@ function makePair(x, y, xLabel = false, yLabel = false)
   return pair;
 }
 
-function isArray(v)
+export function isArray(v)
 {
   return Array.isArray(v);
 }
 
-function isArrayEmpty(a)
+export function isArrayEmpty(a)
 {
   return a.length === 0;
 }
 
-function isObjEmpty(o)
+export function isObjEmpty(o)
 {
   return Object.keys(o).length === 0;
 }
 
-function jsonHasKey(obj, key)
+export function jsonHasKey(obj, key)
 {
   return obj[key] !== undefined
 }
 
-function jsonGet(obj, key, fallback = undefined)
+export function jsonGet(obj, key, fallback = undefined)
 {
   const v = obj[key];
   if (v !== undefined)
@@ -65,13 +65,13 @@ function jsonGet(obj, key, fallback = undefined)
   throw ReferenceError(`Key: ${key} not found and no default provided`, 'common.mjs');
 }
 
-function jsonSet(obj, key, v)
+export function jsonSet(obj, key, v)
 {
   obj[key] = v;
   return obj;
 }
 
-function jsonMultiSet(obj, kvps)
+export function jsonMultiSet(obj, kvps)
 {
   kvps.forEach((kvp) =>
   {
@@ -82,7 +82,7 @@ function jsonMultiSet(obj, kvps)
   return obj;
 }
 
-function jsonSetDefaultAndGet(obj, key, fallback)
+export function jsonSetDefaultAndGet(obj, key, fallback)
 {
   let v = obj[key];
   if (v !== undefined)
@@ -94,14 +94,14 @@ function jsonSetDefaultAndGet(obj, key, fallback)
   return fallback;
 }
 
-function jsonGetFromKpath(obj, kpath, fallback = false)
+export function jsonGetFromKpath(obj, kpath, fallback = undefined)
 {
   let currentObj = obj;
   kpath.forEach(k =>
   {
     if (currentObj)
     {
-      currentObj = jsonGet(currentObj, k);
+      currentObj = jsonGet(currentObj, k, fallback);
     }
     else
     {
@@ -112,7 +112,7 @@ function jsonGetFromKpath(obj, kpath, fallback = false)
   return currentObj;
 }
 
-function jsonSetFromKpath(obj, kpath, v)
+export function jsonSetFromKpath(obj, kpath, v)
 {
   if (isArrayEmpty(kpath))
   {
@@ -138,12 +138,12 @@ function jsonSetFromKpath(obj, kpath, v)
   return obj;
 }
 
-function jsonUpdate(obj, key, update)
+export function jsonUpdate(obj, key, update)
 {
   jsonSet(obj, key, update(jsonGet(obj, key)));
 }
 
-function biolinkTag(str)
+export function biolinkTag(str)
 {
   return `biolink:${str}`;
 }
