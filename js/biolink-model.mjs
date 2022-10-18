@@ -2,6 +2,22 @@
 
 import * as cmn from './common.mjs';
 
+export function tagBiolink(str)
+{
+  return biolinkifyPredicate(str);
+}
+
+export function isBiolinkPredicate(s)
+{
+  return BIOLINK_PREDICATES[s] !== undefined;
+}
+
+function InvalidPredicateError(predicate)
+{
+  const error = new Error(`Expected a valid biolink predicate. Got: ${predicate}`, 'biolink-model.mjs');
+}
+InvalidPredicateError.prototype = Object.create(Error.prototype);
+
 function getParent(pred, record)
 {
   if (pred === 'related to')
@@ -22,7 +38,7 @@ function getSymmetric(pred, record)
   return cmn.jsonGet(record, 'symmetric', false);
 }
 
-function isSymmetic(pred, record)
+function isSymmetric(pred, record)
 {
   return !!getSymmetric(pred, record);
 }
@@ -65,16 +81,16 @@ function distanceFromRelatedTo(slots, predicate)
   }
 }
 
-function makeBlPredicate(predicate, record)
+function makeBlPredicate(predicate, record, rank)
 {
   return {
-    'parent': getParent(k, record),
-    'isCanonical': isCanonical(k, record),
-    'isSymmetric': isSymmetric(k, record),
-    'isDeprecated': isDeprecated(k, record),
-    'inverse': getInversePred(k, record),
+    'parent': getParent(predicate, record),
+    'isCanonical': isCanonical(predicate, record),
+    'isSymmetric': isSymmetric(predicate, record),
+    'isDeprecated': isDeprecated(predicate, record),
+    'inverse': getInverse(predicate, record),
     'rank': rank,
-    'rawData': getRawData(k, record)
+    'rawData': getRawData(predicate, record)
   };
 }
 
@@ -87,7 +103,7 @@ function makeBlPredicates(slots)
     if (rank >= 0)
     {
       const record = slots[pred];
-      blPreds[k] = makeBlPredicate(pred, record);
+      blPreds[pred] = makeBlPredicate(pred, record, rank);
     }
   });
 
@@ -97,7 +113,7 @@ function makeBlPredicates(slots)
     const inversePred = record.inverse;
     if (inversePred)
     {
-      let inverseRecord = cmn.jsonGet(blPreds[inversePred]);
+      let inverseRecord = cmn.jsonGet(blPreds, inversePred);
       inverseRecord.inverse = pred;
       blPreds[inversePred] = inverseRecord;
     }
@@ -140,7 +156,7 @@ function invertBiolinkPredicate(pred, biolinkify = false)
     return biolinkPredicate.inverse;
   }
 
-  throw Error(`Expected a valid biolink predicate, got: ${p}`, 'biolink-model.mjs');
+  throw InvalidPredicateError(p);
 }
 
 function getBiolinkPredicateData(pred)
@@ -157,6 +173,19 @@ function isBiolinkPredicateMoreSpecific(pred1, pred2)
 
   if (!biolinkPredicate1)
   {
-    //TODO: Finish this
+    throw InvalidPredicateError(p1);
   }
+  else if (!biolinkPredicate2)
+  {
+    throw InvalidPredicateError(p2);
+  }
+  else
+  {
+    return pred1.rank > pred2.rank;
+  }
+}
+
+function sortBiolinkPredicates(preds)
+{
+  return sort(pres, isBiolinkPredicateMoreSpecific);
 }
