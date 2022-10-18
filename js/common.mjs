@@ -142,8 +142,3 @@ export function jsonUpdate(obj, key, update)
 {
   jsonSet(obj, key, update(jsonGet(obj, key)));
 }
-
-export function biolinkTag(str)
-{
-  return `biolink:${str}`;
-}
