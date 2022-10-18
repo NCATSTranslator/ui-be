@@ -9,7 +9,7 @@ export function tagBiolink(str)
 
 export function isBiolinkPredicate(s)
 {
-  return BIOLINK_PREDICATES[s] !== undefined;
+  return BIOLINK_PREDICATES[sanitizePredicate(s)] !== undefined;
 }
 
 function InvalidPredicateError(predicate)
@@ -58,26 +58,22 @@ function getInverse(pred, record)
   return cmn.jsonGet(record, 'inverse', false);
 }
 
-function getRawData(pred, record)
-{
-  return record;
-}
-
 function distanceFromRelatedTo(slots, predicate)
 {
-  let cur = cmn.jsonGet(slots, predicate, false);
   for (let level = 0; ;level += 1)
   {
-    if (cur === 'related to')
+    if (predicate === 'related to')
     {
       return level;
     }
 
-    cur = cmn.jsonGet(cur, 'is_a', false);
-    if (!cur)
+    let predicateObj = cmn.jsonGet(slots, predicate, false);
+    if (!predicateObj)
     {
       return -1;
     }
+
+    predicate = cmn.jsonGet(predicateObj, 'is_a', false);
   }
 }
 
@@ -90,7 +86,6 @@ function makeBlPredicate(predicate, record, rank)
     'isDeprecated': isDeprecated(predicate, record),
     'inverse': getInverse(predicate, record),
     'rank': rank,
-    'rawData': getRawData(predicate, record)
   };
 }
 
