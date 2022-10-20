@@ -28,6 +28,10 @@
    mock-query?
    mock-pmid?
    mock-nct?
+   log-level
+   log-format
+   log-port
+   error-log-port
    yaml)
   #:prefab)
 (struct server-config-exception exn:fail:user ())
@@ -64,6 +68,16 @@
     (get 'mock-query?)
     (get 'mock-pmid?)
     (get 'mock-nct?)
+    (string->symbol (get 'log-level))
+    (string->symbol (get 'log-format))
+    (let ((log-file (get 'log-file)))
+      (default-for (and log-file (open-output-file log-file
+                                                   #:exists 'append))
+                   (current-output-port)))
+    (let ((error-file (get 'error-file)))
+      (default-for (and error-file (open-output-file error-file
+                                                     #:exists 'append))
+                   (current-error-port)))
     config-data))
 
 (define SERVER-CONFIG
