@@ -50,6 +50,8 @@
   (string? je))
 (define (jsexpr-object)
   (hash))
+(define (jsexpr-object-empty? je)
+  (hash-empty? je))
 (define (make-jsexpr-object kvps)
   (make-immutable-hash kvps))
 (define (jsexpr-object-keys je)

@@ -3,3 +3,4 @@ test-local
 ui-build
 ui-prototype-one
 **.swp
+*.log
