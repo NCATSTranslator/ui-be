@@ -39,7 +39,7 @@ Example: `racket server.rkt /my/awesome/config/file`
 
 ## Running Locally with Docker
 
-- Install the docker enginer for your environment
+- Install the docker engine for your environment
 - `./build-docker-container.sh -b main -f main`
 - `docker run --rm -d -p8386:8386 translator-app`
 - Point your browser to `http://localhost:8386/`
