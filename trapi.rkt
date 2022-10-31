@@ -92,6 +92,9 @@
 (define (aggregate-property src-key kpath)
   (aggregate-property-when src-key kpath (lambda (_) #t)))
 
+(define (attributes-null? attrs)
+  (or (jsexpr-null? attrs) (jsexpr-array-empty? attrs)))
+
 (define (rename-and-transform-attribute attribute-id kpath transform)
   (make-mapping
     'attributes
@@ -100,7 +103,7 @@
                  (result #f))
         (cond (result
                 (transform result))
-              ((or (jsexpr-null? as) (jsexpr-array-empty? as))
+              ((attributes-null? as)
                 'null)
               (else
                 (define a (car as))
@@ -117,7 +120,7 @@
     (lambda (attributes)
       (let loop ((as attributes)
                  (result '()))
-        (cond ((or (jsexpr-null? as) (jsexpr-array-empty? as))
+        (cond ((attributes-null? as)
                 result)
               (else
                 (define a (car as))
@@ -338,7 +341,7 @@
                           (attributes (jsexpr-object-ref node 'attributes '())))
                      (let loop ((as attributes)
                                 (aliases '()))
-                       (cond ((null? as)
+                       (cond ((attributes-null? as)
                                (cons (list->seteq (cons (symbol->string curie) aliases))
                                      node-sets))
                              (else
@@ -371,7 +374,11 @@
                                  (cons node-set unmerged-bags)
                                  rest)))))))
            node-sets
-           (append (map string->symbol (set->list (apply set-union node-sets))) curies)))
+           (append (map string->symbol
+                        (set->list (if (null? node-sets)
+                                     '()
+                                     (apply set-union node-sets))))
+                   curies)))
 
   (define node=>canonical-node
     (foldl (lambda (node-set node=>canonical-node)
@@ -623,8 +630,9 @@
 
   (define (extend-summary-publications publications edge)
     (define snippets (jsexpr-object-ref edge 'snippets))
-    (define (make-publication-object url snippet pubdate)
-      (hash 'url url
+    (define (make-publication-object type url snippet pubdate)
+      (hash 'type type
+            'url url
             'snippet snippet
             'pubdate pubdate))
 
@@ -633,24 +641,22 @@
       (cond ((null? publication-ids)
              publications)
             (else
-              (match-let* ((`(,pub-id-str . ,rest) publication-ids)
-                           ((? symbol? pub-id)
-                            (string->symbol pub-id-str))
-                           ((? string? url)
-                            (id->url pub-id-str)))
-                (loop rest
-                      (let ((kvp (assoc pub-id snippets)))
-                        (jsexpr-object-set
-                          publications
-                          pub-id
-                          (if kvp
-                            (match-let* ((`(,pub-id . ,publication-object) kvp)
-                                         ((? jsexpr-string? snippet)
-                                          (jsexpr-object-ref publication-object 'sentence))
-                                         ((? jsexpr-string? pubdate)
-                                          (jsexpr-object-ref publication-object '|publication date|)))
-                              (make-publication-object url snippet pubdate))
-                            (make-publication-object url 'null 'null))))))))))
+              (match-let* ((`(,pub-id-str . ,rest) publication-ids))
+                (let-values (((pub-id) (string->symbol pub-id-str))
+                             ((type url) (id->type/url pub-id-str)))
+                  (loop rest
+                        (let ((kvp (assoc pub-id snippets)))
+                          (jsexpr-object-set
+                            publications
+                            pub-id
+                            (if kvp
+                              (match-let* ((`(,pub-id . ,publication-object) kvp)
+                                           ((? jsexpr-string? snippet)
+                                            (jsexpr-object-ref publication-object 'sentence))
+                                           ((? jsexpr-string? pubdate)
+                                            (jsexpr-object-ref publication-object '|publication date|)))
+                                (make-publication-object type url snippet pubdate))
+                              (make-publication-object type url 'null 'null)))))))))))
 
   (define (edges->edges/publications edges)
     (define (invert-edge edge)

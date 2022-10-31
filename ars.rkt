@@ -45,7 +45,7 @@
 (define (get-status   jse) (jsexpr-object-ref jse 'status))
 (define (get-code     jse) (jsexpr-object-ref jse 'code))
 (define (get-data     jse) (jsexpr-object-ref jse 'data))
-(define (get-children jse) (jsexpr-object-ref jse 'children '()))
+(define (get-children jse) (jsexpr-object-ref jse 'children))
 (define (get-qid      jse) (jsexpr-object-ref jse 'pk))
 (define (get-agent    jse) (jsexpr-object-ref-recursive jse '(actor agent)))
 
