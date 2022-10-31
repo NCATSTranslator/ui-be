@@ -1,4 +1,4 @@
-FROM noderacket
+FROM josefkaye/noderacket:latest
 WORKDIR /app
 
 # Assumes parent script has cloned ui-fe repo and checked out right branch
