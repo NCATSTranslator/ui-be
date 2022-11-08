@@ -70,6 +70,8 @@
                       "test/ars/res3-mondo0008170.json")
     "MONDO:0010200" '("test/ars/res11-mondo0010200.json"
                       "test/ars/res4-mondo0010200.json")
+    "empty" '()
+    "null-attrs" '("test/ars/null-attrs.json")
 ))
 
 (define (post-query query)
