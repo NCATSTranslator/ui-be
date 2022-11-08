@@ -14,21 +14,48 @@
 
 (provide
   valid-id?
-  id->url
+  id->type/url
   add-last-publication-date
   expand-evidence
   make-pmid-expander
   make-nct-expander)
 
 (define (valid-id? id)
-  (regexp-match #rx"^PMID:[0-9]+$" id))
+  (or (string-prefix? id "PMID")
+      (string-prefix? id "NCT")
+      (string-prefix? id "clinicaltrialsNCT")
+      (string-prefix? id "DOI")))
 
-(define (id->url id)
-  (define split-id (string-split id ":"))
-  (and (not (null? (cdr split-id)))
-       (case (car split-id)
-         (("PMID") (format "https://pubmed.ncbi.nlm.nih.gov/~a" (cadr split-id)))
-         (else "Unknown"))))
+(define (id->type/url id)
+  (define (strip-id-tag id)
+    (define stripped-id (string-split id ":"))
+    (and (not (null? (cdr stripped-id)))
+         (cadr stripped-id)))
+
+  (define (tagged-id->url id format-url)
+    (define stripped-id (strip-id-tag id))
+    (if stripped-id
+        (format format-url stripped-id)
+        "Unknown"))
+
+  (define (pmid->url id)
+    (tagged-id->url id "https://pubmed.ncbi.nlm.nih.gov/~a"))
+
+  (define (nctid->url id)
+    (format "https://clinicaltrials.gov/ct2/show/~a" id))
+
+  (define (doiid->url id)
+    (tagged-id->url id "https://www.doi.org/~a"))
+
+  (define (sp? tag) (lambda (id) (string-prefix? id tag)))
+
+  (match id
+    ((? (sp? "PMID") pmid) (values "PMID" (pmid->url pmid)))
+    ((? (sp? "NCT") nctid) (values "NCT" (nctid->url nctid)))
+    ((? (sp? "clinicaltrialsNCT") nctid)
+      (values "NCT" (nctid->url (car (string-split nctid "clinicaltrials")))))
+    ((? (sp? "DOI") doiid) (values "DOI" (doiid->url doiid)))
+    (_ (values "Unknown" "Unknown"))))
 
 (define (make-expander id-pattern
                        ids->data

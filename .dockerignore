@@ -1,0 +1,7 @@
+**/.git*
+test/
+build/
+**/node_modules/
+**/*~
+ui-build/
+.gitignore

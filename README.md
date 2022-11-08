@@ -36,3 +36,10 @@ Run `racket server.rkt` to run the server.
 You can configure the the server by creating a YAML configuration file, or by using one of the existing templates in the `configuration` directory. Once you have a configuration you can provide it as a command line argument while running the server.
 
 Example: `racket server.rkt /my/awesome/config/file`
+
+## Running Locally with Docker
+
+- Install the docker engine for your environment
+- `./build-docker-container.sh -b main -f main`
+- `docker run --rm -d -p8386:8386 translator-app`
+- Point your browser to `http://localhost:8386/`

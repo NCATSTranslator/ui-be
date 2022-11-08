@@ -15,3 +15,7 @@
   mock-query?: True
   mock-pmid?: True
   mock-nct?: True
+  log-level: "all"
+  log-format: "common-log"
+  log-file: False
+  error-log-file: False

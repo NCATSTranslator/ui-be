@@ -2,4 +2,8 @@ build
 test-local
 ui-build
 ui-prototype-one
+ui-fe
 **.swp
+*.log
+junk
+*~

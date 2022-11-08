@@ -20,3 +20,7 @@
   mock-query?: False
   mock-pmid?: False
   mock-nct?: False
+  log-level: "info"
+  log-format: "common-log"
+  log-file: False
+  error-log-file: False
