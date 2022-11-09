@@ -1,6 +1,7 @@
 'use strict';
 
 import * as cmn from './common.mjs';
+import { idToTypeAndUrl, isValidId } from './evidence.mjs';
 import { tagBiolink, isBiolinkPredicate } from './biolink-model.mjs';
 
 let config = {};
@@ -221,7 +222,9 @@ function diseaseToCreativeQuery(diseaseObj)
     'message': {
       'query_graph': diseaseToTrapiQgraph(cmn.jsonGet(diseaseObj, 'disease'))
     }
-  }; }
+  };
+}
+
 function trapiBindingToKobj(binding, type, kgraph)
 {
   return cmn.jsonGet(cmn.jsonGet(kgraph, type), binding);
@@ -245,10 +248,10 @@ function getBindingId(bindings, key)
 function flattenBindings(bindings)
 {
   return bindings.reduce((binding, ids) =>
-  {
-    return ids.concat(binding.map(obj => { return cmn.jsonGet(obj, 'id'); }));
-  },
-  []);
+    {
+      return ids.concat(binding.map(obj => { return cmn.jsonGet(obj, 'id'); }));
+    },
+    []);
 }
 
 function kedgeSubject(kedge)
@@ -295,17 +298,17 @@ function trapiResultToRgraph(trapiResult, kgraph)
                     kgraph);
 }
 
-function rnodeToKey(rnode, kgraph)
+function rnodeToKey(rnode, kgraph, nodeToCanonicalNode)
 {
-  return rnode;
+  return nodeToCanonicalNode(rnode);
 }
 
-function redgeToKey(redge, kgraph, doInvert = false)
+function redgeToKey(redge, kgraph, nodeToCanonicalNode, doInvert = false)
 {
   const kedge = redgeToTrapiKedge(redge, kgraph);
-  const ksubject = kedgeSubject(kedge);
+  const ksubject = nodeToCanonicalNode(kedgeSubject(kedge));
   const kpredicate = kedgePredicate(kedge);
-  const kobject = kedgeObject(kedge);
+  const kobject = nodeToCanonicalNode(kedgeObject(kedge));
   if (doInvert)
   {
     return pathToKey([kobject, invertBiolinkPredicate(kpredicate), ksubject]);
@@ -417,8 +420,89 @@ function mergeSummaryFragments(f1, f2)
   });
 }
 
+function makeCanonicalNodeMapping(allNodes)
+{
+  function isAttributeAlias(attr)
+  {
+    const attrType = attrId(attr);
+    return attrType === 'same_as' || attrType === 'xref';
+  }
+
+  const nodeSets = [];
+  const resultCuries = [];
+  allNodes.forEach((nodes) =>
+    {
+      let curies = Object.keys(nodes);
+      resultCuries.concat(curies);
+      curies.forEach((curie) =>
+        {
+          let node = cmn.jsonGet(nodes, curie);
+          let attributes = cmn.jsonGet(node, 'attributes', []);
+          let aliases = [curie];
+          attributes.forEach((attr) =>
+            {
+              if (isAttributeAlias(attr))
+              {
+                aliases.append(attrValue(attr));
+              }
+            });
+
+          nodeSets.push(new Set(aliases));
+        });
+    });
+
+  const allCuries = resultCuries.append(cmn.setUnion(nodeSets).keys());
+  const mergedNodes = allCuries.reduce((nodeSets, curie) =>
+    {
+      let mergeableBags = [];
+      let unmergedBags = [];
+      nodeSets.forEach((nodeSet) =>
+        {
+          if (nodeSet.has(curie))
+          {
+            mergeableBags.push(nodeSet);
+          }
+          else
+          {
+            unmergedBags.push(nodeSet);
+          }
+        });
+
+      if (cmn.isArrayEmpty(mergeableBags))
+      {
+        return unmergedBags;
+      }
+      else
+      {
+        return unmergedBags.push(cmn.setUnion(mergeableBags));
+      }
+    },
+    nodeSets);
+
+  const nodeToCanonicalNode = new Object();
+  mergedNodes.forEach((nodeSet) =>
+    {
+      let nodes = nodeSet.keys();
+      let canonicalNode = nodes[0];
+      nodes.forEach((curie) =>
+        {
+          nodeToCanonicalNode[curie] = canonicalNode;
+        });
+    });
+
+  return function(node)
+  {
+    nodeToCanonicalNode[node] || false;
+  }
+}
+
 function creativeAnswersToSummary (qid, answers)
 {
+  const resultNodes = answers.map((answer) =>
+    {
+      return cmn.jsonGetFromKpath(answer.message(), ['knowledge_graph', 'nodes']);
+    });
+  const nodeToCanonicalNode = makeCanonicalNodeMapping(resultNodes);
   const nodeRules = makeSummarizeRules(
     [
       aggregateProperty('name', ['names']),
@@ -446,8 +530,8 @@ function creativeAnswersToSummary (qid, answers)
         'predicate',
         ['predicates'],
         bl.sanitizePredicate),
-      getProperty('subject'),
-      getProperty('object'),
+      transformProperty('subject', nodeToCanonicalNode),
+      transformProperty('object', nodeToCanonicalNode),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
       aggregateAndTransformAttributes(
@@ -472,10 +556,15 @@ function creativeAnswersToSummary (qid, answers)
   const maxHops = config.maxHops;
   return condensedSummariesToSummary(
            qid,
-           creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxHops));
+           creativeAnswersToCondensedSummaries(
+             answers,
+             nodeRules,
+             edgeRules,
+             nodeToCanonicalNode,
+             maxHops));
 }
 
-function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxHops)
+function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, nodeToCanonicalNode, maxHops)
 {
   function trapiResultToSummaryFragment(trapiResult, kgraph)
   {
@@ -502,7 +591,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
           rnodeToOutEdges.forEach(edge =>
           {
             const target = edge.target
-            if (!path.includes(target))
+            if (!path.includes(target) && !!nodeToCanonicalNode(target))
             {
               validPaths.push(path.push(edge.id, edge.target));
             }
@@ -516,7 +605,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
 
     function summarizeRnode(rnode, kgraph)
     {
-      return cmn.makePair(rnodeToKey(rnode, kgraph),
+      return cmn.makePair(rnodeToKey(rnode, kgraph, nodeToCanonicalNode),
                           nodeRules(rnodeToTrapiKnode(rnode, kgraph)),
                           'key',
                           'transforms');
@@ -524,7 +613,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
 
     function summarizeRedge(redge, kgraph)
     {
-      return cmn.makePair(redgeToKey(redge, kgraph),
+      return cmn.makePair(redgeToKey(redge, kgraph, nodeToCanonicalNode),
                           edgeRules(redgeToTrapiKedge(redge, kgraph)),
                          'key',
                          'transforms');
@@ -532,8 +621,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
 
     function normalizePaths(rgraphPaths, kgraph)
     {
-      function N(n) { return rnodeToKey(n, kgraph); }
-      function E(e, o) { return redgeToKey(e, kgraph, isRedgeInverted(e, o, kgraph)); }
+      function N(n) { return rnodeToKey(n, kgraph, nodeToCanonicalNode); }
+      function E(e, o) { return redgeToKey(e, kgraph, nodeToCanonicalNode, isRedgeInverted(e, o, kgraph)); }
       return rgraphPaths.map(path =>
         {
           let normalizedPath = [];
@@ -648,26 +737,26 @@ function condensedSummariesToSummary(qid, condensedSummaries)
 
   function extendSummaryPublications(publications, edge)
   {
-    function makePublicationObject(url, snippet, pubdate)
+    function makePublicationObject(type, url, snippet, pubdate)
     {
-      return {'url': url, 'snippet': snippet, 'pubdate': pubdate};
+      return {'type': type, 'url': url, 'snippet': snippet, 'pubdate': pubdate};
     }
 
     const snippets = cmn.jsonGet(edge, 'snippets');
     const publicationIds = cmn.jsonGet(edge, 'publications', []);
     publicationIds.forEach((id) =>
     {
-      const url = evd.idToUrl(id);
+      const [type, url] = idToTypeAndUrl(id);
       const publicationObj = cmn.jsonGet(snippets, id, false);
       if (snippet)
       {
         const snippet = cmn.jsonGet(publicationObj, 'sentence', null);
         const pubdate = cmn.jsonGet(publicationObj, 'publication date', null);
-        cmn.jsonSet(publication, id, makePublicationObject(url, snippet, pubdate));
+        cmn.jsonSet(publication, id, makePublicationObject(type, url, snippet, pubdate));
         return;
       }
 
-      cmn.jsonSet(publications, id, makePublicationObject(url, null, null));
+      cmn.jsonSet(publications, id, makePublicationObject(type, url, null, null));
     });
   }
 

@@ -39,6 +39,18 @@ export function isArrayEmpty(a)
   return a.length === 0;
 }
 
+export function setUnion(sets)
+{
+  return sets.reduce((set, unionedSet) =>
+    {
+      set.keys().forEach((key) =>
+        {
+          unionedSet.add(key);
+        });
+    },
+    new Set());
+}
+
 export function isObjEmpty(o)
 {
   return Object.keys(o).length === 0;

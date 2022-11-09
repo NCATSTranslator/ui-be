@@ -21,7 +21,7 @@ describe('tagBiolink', () =>
 
 describe('isBiolinkPredicate', () =>
 {
-  it('Should succeed when the input is a valid biolink predicate', () =>
+  it('Should report True when the input is a valid biolink predicate', () =>
   {
     assert.ok(bl.isBiolinkPredicate('biolink:treats'));
     assert.ok(bl.isBiolinkPredicate('biolink:treated_by'));
@@ -31,7 +31,7 @@ describe('isBiolinkPredicate', () =>
     assert.ok(bl.isBiolinkPredicate('treated by'));
   });
 
-  it('Should fail when the input is not a valid biolink predicate', () =>
+  it('Should report False when the input is not a valid biolink predicate', () =>
   {
       assert.strictEqual(bl.isBiolinkPredicate(''),
                          false);
