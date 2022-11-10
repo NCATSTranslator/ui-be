@@ -36,24 +36,43 @@ export function isArray(v)
 
 export function isArrayEmpty(a)
 {
-  return a.length === 0;
+  if (isArray(a))
+  {
+    return a.length === 0;
+  }
+
+  throw new TypeError(`Expected array got ${a}`);
 }
 
 export function setUnion(sets)
 {
-  return sets.reduce((set, unionedSet) =>
+  return sets.reduce((unionedSet, set) =>
     {
-      set.keys().forEach((key) =>
+      [...set.keys()].forEach((key) =>
         {
           unionedSet.add(key);
         });
+
+      return unionedSet;
     },
     new Set());
 }
 
+export function isObj(o)
+{
+  return typeof o === 'object' &&
+         o !== null &&
+         !isArray(o);
+}
+
 export function isObjEmpty(o)
 {
-  return Object.keys(o).length === 0;
+  if (isObj(o))
+  {
+    return Object.keys(o).length === 0;
+  }
+
+  throw new TypeError(`Expected object got ${o}`);
 }
 
 export function jsonHasKey(obj, key)
@@ -74,7 +93,7 @@ export function jsonGet(obj, key, fallback = undefined)
     return fallback
   }
 
-  throw ReferenceError(`Key: ${key} not found and no default provided`, 'common.mjs');
+  throw new ReferenceError(`Key: ${key} not found and no default provided`, 'common.mjs');
 }
 
 export function jsonSet(obj, key, v)
