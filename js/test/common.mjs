@@ -201,3 +201,156 @@ describe('isObjEmpty', () =>
         assert.throws(() => { return cmn.isObjEmpty(NaN) });
       });
   });
+
+describe('jsonHasKey', () =>
+  {
+    const testObj = {'a': {'b': 2}};
+    it('Should return True if the key is in the top level object', () =>
+      {
+        assert.ok(cmn.jsonHasKey(testObj, 'a'));
+      });
+
+    it('Should return False if the top level object does not contain the key', () =>
+      {
+        assert.strictEqual(cmn.jsonHasKey(testObj, 'b'), false);
+      });
+  });
+
+describe('jsonGet', () =>
+  {
+    const testObj = {'a': {'b': 1}};
+    it('Should return the value in the top level object given a key', () =>
+      {
+        assert.strictEqual(cmn.jsonGet(testObj, 'a'), testObj['a']);
+      });
+
+    it('Should return a default value if provided and the key is not found in the top level object', () =>
+      {
+        const fallback = [1, 2, 3];
+        assert.strictEqual(cmn.jsonGet(testObj, 'b', fallback), fallback);
+      });
+
+    it('Should throw an error if the key is not found in the top level object and no default is provided', () =>
+      {
+        assert.throws(() => { return cmn.jsonGet(testObj, 'b'); });
+      });
+  });
+
+describe('jsonSet', () =>
+  {
+    it('Should be able to create a new key-value pair in the top level object', () =>
+      {
+        const testObj = {'c': 3};
+        const val = {'b': 1};
+        const actual = cmn.jsonSet(testObj, 'a', val);
+        assert.strictEqual(actual, testObj);
+        assert.strictEqual(cmn.jsonGet(testObj, 'a'), val);
+      });
+
+    it('Should be able to update an existing key-value pair in the top level object', () =>
+      {
+        const testObj = {'c': 3};
+        const val = {'b': 1};
+        const actual = cmn.jsonSet(testObj, 'c', val);
+        assert.strictEqual(actual, testObj);
+        assert.strictEqual(cmn.jsonGet(testObj, 'c'), val);
+      });
+  });
+
+describe('jsonMultiSet', () =>
+  {
+    it('Should be able to update and create multiple new key-value pairs in the top level object', () =>
+      {
+        const previousValue = 3;
+        const testObj = {'c': previousValue};
+        const vals = [['v', 1], ['c', 2], ['b', {'a': 2}]];
+        const actual = cmn.jsonMultiSet(testObj, vals);
+        assert.strictEqual(actual, testObj);
+        vals.forEach((val) => {
+          assert.strictEqual(cmn.jsonGet(testObj, val[0]), val[1]);
+        });
+        assert.notEqual(cmn.jsonGet(testObj, 'c'), previousValue);
+      });
+  });
+
+describe('jsonSetDefaultAndGet', () =>
+  {
+    const fallback = [1, 2, 3];
+    it('Should return the value in the top level object given a key', () =>
+      {
+        const testObj = {'a': {'b': 1}};
+        assert.strictEqual(cmn.jsonSetDefaultAndGet(testObj, 'a', fallback), testObj['a']);
+      });
+
+    it('Should set the key in the top level object to the fallback value if the key is not set', () =>
+      {
+        const testObj = {'a': {'b': 1}};
+        assert.strictEqual(cmn.jsonSetDefaultAndGet(testObj, 'b', fallback), fallback);
+      });
+
+    it('Should throw if no fallback is provided or it is undefined', () =>
+      {
+        const testObj = {'a': {'b': 1}};
+        assert.throws(() => { return cmn.jsonSetDefaultAndGet(testObj, 'a'); });
+        assert.throws(() => { return cmn.jsonSetDefaultAndGet(testObj, 'a', undefined); });
+      });
+  });
+
+describe('jsonGetFromKpath', () =>
+  {
+    const testObj = {'a': {'b': {'c': 1}}};
+    const fallback = [1, 2];
+    it('Should return the value in the object given a key path', () =>
+      {
+        assert.strictEqual(cmn.jsonGetFromKpath(testObj, []), testObj);
+        assert.strictEqual(cmn.jsonGetFromKpath(testObj, ['a']), testObj['a']);
+        assert.strictEqual(cmn.jsonGetFromKpath(testObj, ['a', 'b']), testObj['a']['b']);
+        assert.strictEqual(cmn.jsonGetFromKpath(testObj, ['a', 'b', 'c']), testObj['a']['b']['c']);
+      });
+
+    it('Should return a fallback if provided and the key path is not valid', () =>
+      {
+        assert.strictEqual(cmn.jsonGetFromKpath(testObj, ['a', 'c'], fallback), fallback);
+        assert.strictEqual(cmn.jsonGetFromKpath(testObj, ['a', 'b', 'c', 'd'], fallback), fallback);
+      });
+
+    it('Should throw if no fallback is provided and the key path is not valid', () =>
+      {
+        assert.throws(() => { return cmn.jsonGetFromKpath(testObj, ['a', 'c']); });
+        assert.throws(() => { return cmn.jsonGetFromKpath(testObj, ['a', 'b', 'c', 'd']); });
+      });
+  });
+
+describe('jsonSetFromKpath', () =>
+  {
+    const newValue = {'d': 10};
+    const kpath = ['a', 'b', 'c'];
+    it('Should update a key given a key path', () =>
+      {
+        const testObj = {'a': {'b': {'c': 1}}};
+        const actual = cmn.jsonSetFromKpath(testObj, kpath, newValue);
+        assert.strictEqual(testObj, actual);
+        assert.strictEqual(cmn.jsonGetFromKpath(testObj, kpath), newValue);
+      });
+
+    it('Should create the keypath if it does not exist in the object', () =>
+      {
+        const testObj = new Object();
+        const actual = cmn.jsonSetFromKpath(testObj, kpath, newValue);
+        console.log(testObj);
+        console.log(actual);
+        assert.strictEqual(testObj, actual);
+        assert.strictEqual(cmn.jsonGetFromKpath(testObj, kpath), newValue);
+      });
+  });
+
+describe('jsonUpdate', () =>
+  {
+    it('Should perform a transformation on a key', () =>
+      {
+        const testObj = {'a': {'b': 1}};
+        const actual = cmn.jsonUpdate(testObj, 'a', (obj) => { return cmn.jsonSet(obj, 'c', 5) });
+        assert.strictEqual(testObj, actual);
+        assert.strictEqual(cmn.jsonGetFromKpath(testObj, ['a', 'c']), 5);
+      });
+  });

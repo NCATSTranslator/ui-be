@@ -93,7 +93,7 @@ export function jsonGet(obj, key, fallback = undefined)
     return fallback
   }
 
-  throw new ReferenceError(`Key: ${key} not found and no default provided`, 'common.mjs');
+  throw new ReferenceError(`Key: '${key}' not found and no default provided`, 'common.mjs');
 }
 
 export function jsonSet(obj, key, v)
@@ -106,7 +106,7 @@ export function jsonMultiSet(obj, kvps)
 {
   kvps.forEach((kvp) =>
   {
-    [key, v] = kvp;
+    const [key, v] = kvp;
     jsonSet(obj, key, v);
   });
 
@@ -115,6 +115,11 @@ export function jsonMultiSet(obj, kvps)
 
 export function jsonSetDefaultAndGet(obj, key, fallback)
 {
+  if (fallback === undefined)
+  {
+    throw new TypeError('fallback must be provided and not undefined');
+  }
+
   let v = obj[key];
   if (v !== undefined)
   {
@@ -155,7 +160,7 @@ export function jsonSetFromKpath(obj, kpath, v)
   let currentObj = obj;
   partialKpath.forEach(k =>
   {
-    let nextObj = jsonGet(currentObj, k);
+    let nextObj = jsonGet(currentObj, k, false);
     if (!nextObj)
     {
       nextObj = {};
@@ -171,5 +176,5 @@ export function jsonSetFromKpath(obj, kpath, v)
 
 export function jsonUpdate(obj, key, update)
 {
-  jsonSet(obj, key, update(jsonGet(obj, key)));
+  return jsonSet(obj, key, update(jsonGet(obj, key)));
 }
