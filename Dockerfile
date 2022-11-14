@@ -17,6 +17,6 @@ RUN cd ui-fe \
 
 EXPOSE 8386
 
-ENTRYPOINT ["racket", "server.rkt"]
-CMD ["configurations/production.yaml"]
+ENTRYPOINT ["entrypoint.sh"]
+
 
