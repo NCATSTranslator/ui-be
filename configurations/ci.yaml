@@ -3,7 +3,7 @@
   port: 8386
   response-timeout: 300
   ars-endpoint:
-    host: "https://ars.ci.transltr.io"
+    host: "ars.ci.transltr.io"
     post-uri: "/ars/api/submit"
     pull-uri: "/ars/api/messages"
   curie-search-endpoint:
@@ -20,7 +20,7 @@
   mock-query?: False
   mock-pmid?: False
   mock-nct?: False
-  log-level: "info"
+  log-level: "all"
   log-format: "common-log"
   log-file: False
   error-log-file: False
