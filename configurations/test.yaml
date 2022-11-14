@@ -1,0 +1,26 @@
+---
+  document-root: False
+  port: 8386
+  response-timeout: 300
+  ars-endpoint:
+    host: "https://ars.test.transltr.io"
+    post-uri: "/ars/api/submit"
+    pull-uri: "/ars/api/messages"
+  curie-search-endpoint:
+    host: "name-resolution-sri.renci.org"
+    uri: "/lookup"
+  primary-predicates:
+    - "treats"
+    - "affects"
+    - "disrupts"
+    - "treated_by"
+    - "entity_negatively_regulates_entity"
+  max-hops: 3
+  mock-ars?: False
+  mock-query?: False
+  mock-pmid?: False
+  mock-nct?: False
+  log-level: "info"
+  log-format: "common-log"
+  log-file: False
+  error-log-file: False

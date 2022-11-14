@@ -7,7 +7,7 @@ if [ $# -ne 2 ]; then
     exit 1
 fi
 
-fe_repo="git@github.com:NCATSTranslator/ui-fe.git"
+fe_repo="https://github.com/NCATSTranslator/ui-fe.git"
 fe_src="ui-fe"
 fe_branch="${1}"
 do_build="${2}"
