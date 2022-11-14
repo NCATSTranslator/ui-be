@@ -17,6 +17,6 @@ RUN cd ui-fe \
 
 EXPOSE 8386
 
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 
