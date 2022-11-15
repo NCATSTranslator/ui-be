@@ -3,8 +3,7 @@
 import * as cmn from './common.mjs';
 import { idToTypeAndUrl, isValidId } from './evidence.mjs';
 import { tagBiolink, isBiolinkPredicate } from './biolink-model.mjs';
-
-let config = {};
+import { SERVER_CONFIG } from './config.mjs';
 
 function makeMetadataObject(qid, agents)
 {
@@ -553,7 +552,7 @@ function creativeAnswersToSummary (qid, answers)
         })
     ]);
 
-  const maxHops = config.maxHops;
+  const maxHops = SERVER_CONFIG.maxHops;
   return condensedSummariesToSummary(
            qid,
            creativeAnswersToCondensedSummaries(

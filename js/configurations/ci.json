@@ -2,7 +2,11 @@
   "document-root": false,
   "port": 8386,
   "response-timeout": 300,
-  "ars-endpoint": false,
+  "ars-endpoint": {
+    "host": "ars.ci.transltr.io",
+    "post-uri": "/ars/api/submit",
+    "pull-uri": "/ars/api/messages"
+  },
   "max-hops": 3,
   "log-level": "all",
   "log-format": "common"
