@@ -35,6 +35,12 @@
    yaml)
   #:prefab)
 (struct server-config-exception exn:fail:user ())
+(pretty-display "\nChecking env vars...")
+(pretty-display
+ (let ((v (getenv "APP_ENVIRONMENT")))
+   (if v
+       (format "APP_ENVIRONMENT: ~a" v)
+       "APP_ENVIRONMENT not set")))
 
 (define (make-server-config config-file)
 (define config-data (file->yaml config-file))
