@@ -2,15 +2,135 @@
 
 import * as cmn from './common.mjs';
 import { idToTypeAndUrl, isValidId } from './evidence.mjs';
-import { tagBiolink, isBiolinkPredicate } from './biolink-model.mjs';
+import * as bl from './biolink-model.mjs';
 import { SERVER_CONFIG } from './config.mjs';
 
-function makeMetadataObject(qid, agents)
+export function makeMetadataObject(qid, agents)
 {
+  if (qid === undefined || !cmn.isString(qid))
+  {
+    throw new TypeError(`Expected argument qid to be of type string, got: ${qid}`);
+  }
+
+  if (agents === undefined || !cmn.isArray(agents))
+  {
+    throw new TypeError(`Expected argument agents to be type array, got: ${agents}`);
+  }
+
   return {
     'qid': qid,
     'aras': agents
   };
+}
+
+export function diseaseToCreativeQuery(diseaseObj)
+{
+  function diseaseToTrapiQgraph(disease)
+  {
+    return {
+      'nodes': {
+        'drug': {
+          'categories': [bl.tagBiolink('ChemicalEntity')]
+        },
+        'disease': {
+          'ids': [disease],
+          'categories': [bl.tagBiolink('Disease')]
+        }
+      },
+      'edges': {
+        'treats': {
+          'subject': 'drug',
+          'object': 'disease',
+          'predicates': [bl.tagBiolink('treats')],
+          'knowledge_type': 'inferred'
+        }
+      }
+    }
+  }
+
+  if (!cmn.isObj(diseaseObj))
+  {
+    throw new TypeError(`Expected diseaseObj to be type object, got: ${diseaseObj}`);
+  }
+
+  if (!cmn.jsonHasKey(diseaseObj, 'disease'))
+  {
+    throw new ReferenceError(`Expected diseaseObj to have key disease, got: ${diseaseObj}`);
+  }
+
+  return {
+    'message': {
+      'query_graph': diseaseToTrapiQgraph(cmn.jsonGet(diseaseObj, 'disease'))
+    }
+  };
+}
+
+export function creativeAnswersToSummary (qid, answers)
+{
+  const resultNodes = answers.map((answer) =>
+    {
+      return cmn.jsonGetFromKpath(answer.message(), ['knowledge_graph', 'nodes']);
+    });
+  const nodeToCanonicalNode = makeCanonicalNodeMapping(resultNodes);
+  const nodeRules = makeSummarizeRules(
+    [
+      aggregateProperty('name', ['names']),
+      aggregateProperty('categories', ['types']),
+      aggregateAttributes([bl.tagBiolink('xref')], 'curies'),
+      renameAndTransformAttribute(
+        bl.tagBiolink('highest_FDA_approval_status'),
+        ['fda_info'],
+        (fdaDescription) =>
+        {
+          return {
+            'highest_fda_approval_status': fdaDescription,
+            'max_level': fdaDescriptionToFdaLevel(fdaDescription)
+          };
+        }),
+      aggregateAttributes([bl.tagBiolink('description')], 'description'),
+      aggregateAttributes([bl.tagBiolink('synonym')], 'synonym'),
+      aggregateAttributes([bl.tagBiolink('same_as')], 'same_as'),
+      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type')
+    ]);
+
+  const edgeRules = makeSummarizeRules(
+    [
+      aggregateAndTransformProperty(
+        'predicate',
+        ['predicates'],
+        bl.sanitizePredicate),
+      transformProperty('subject', nodeToCanonicalNode),
+      transformProperty('object', nodeToCanonicalNode),
+      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type'),
+      aggregateAttributes(['bts:sentence'], 'snippets'),
+      aggregateAndTransformAttributes(
+        [
+          bl.tagBiolink('supporting_document'),
+          bl.tagBiolink('Publication'),
+          bl.tagBiolink('publications')
+        ],
+        'publications',
+        (evidence) =>
+        {
+          if (cmn.isArray(evidence))
+          {
+            return evidence;
+          }
+
+          // Split on ',' OR (|) '|'
+          return evidence.split(/,|\|/);
+        })
+    ]);
+
+  const maxHops = SERVER_CONFIG.maxHops;
+  return condensedSummariesToSummary(
+           qid,
+           creativeAnswersToCondensedSummaries(
+             answers,
+             nodeRules,
+             edgeRules,
+             nodeToCanonicalNode,
+             maxHops));
 }
 
 function makeMapping(key, transform, update, fallback)
@@ -91,10 +211,19 @@ function getProperty(key)
   return renameProperty(key, [key]);
 }
 
+function aggregatePropertyWhen(key, kpath, doUpdate)
+{
+  return makeMapping(
+           key,
+           cmn.identity,
+           (v, obj) => { return aggregatePropertyUpdateWhen(v, obj, kpath, doUpdate); },
+           []);
+}
+
 function aggregateAndTransformProperty(key, kpath, transform)
 {
   return makeMapping(
-           src-key,
+           key,
            transform,
            (v, obj) => { return aggregatePropertyUpdate(v, obj, kpath); },
            []);
@@ -192,37 +321,6 @@ function makeSummarizeRules(rules)
   };
 }
 
-function diseaseToCreativeQuery(diseaseObj)
-{
-  function diseaseToTrapiQgraph(disease)
-  {
-    return {
-      'nodes': {
-        'drug': {
-          'categories': [bl.tagBiolink('ChemicalEntity')]
-        },
-        'disease': {
-          'ids': [disease],
-          'categories': [bl.tagBiolink('Disease')]
-        }
-      },
-      'edges': {
-        'treats': {
-          'subject': 'drug',
-          'object': 'disease',
-          'predicates': [bl.tagBiolink('treats')],
-          'knowledge_type': 'inferred'
-        }
-      }
-    }
-  }
-
-  return {
-    'message': {
-      'query_graph': diseaseToTrapiQgraph(cmn.jsonGet(diseaseObj, 'disease'))
-    }
-  };
-}
 
 function trapiBindingToKobj(binding, type, kgraph)
 {
@@ -450,7 +548,7 @@ function makeCanonicalNodeMapping(allNodes)
         });
     });
 
-  const allCuries = resultCuries.append(cmn.setUnion(nodeSets).keys());
+  const allCuries = resultCuries.concat(cmn.setUnion(nodeSets).keys());
   const mergedNodes = allCuries.reduce((nodeSets, curie) =>
     {
       let mergeableBags = [];
@@ -493,74 +591,6 @@ function makeCanonicalNodeMapping(allNodes)
   {
     nodeToCanonicalNode[node] || false;
   }
-}
-
-function creativeAnswersToSummary (qid, answers)
-{
-  const resultNodes = answers.map((answer) =>
-    {
-      return cmn.jsonGetFromKpath(answer.message(), ['knowledge_graph', 'nodes']);
-    });
-  const nodeToCanonicalNode = makeCanonicalNodeMapping(resultNodes);
-  const nodeRules = makeSummarizeRules(
-    [
-      aggregateProperty('name', ['names']),
-      aggregateProperty('categories', ['types']),
-      aggregateAttributes([bl.tagBiolink('xref')], 'curies'),
-      renameAndTransformAttribute(
-        bl.tagBiolink('highest_FDA_approval_status'),
-        ['fda_info'],
-        (fdaDescription) =>
-        {
-          return {
-            'highest_fda_approval_status': fdaDescription,
-            'max_level': fdaDescriptionToFdaLevel(fdaDescription)
-          };
-        }),
-      aggregateAttributes([bl.tagBiolink('description')], 'description'),
-      aggregateAttributes([bl.tagBiolink('synonym')], 'synonym'),
-      aggregateAttributes([bl.tagBiolink('same_as')], 'same_as'),
-      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type')
-    ]);
-
-  const edgeRules = makeSummarizeRules(
-    [
-      aggregateAndTransformProperty(
-        'predicate',
-        ['predicates'],
-        bl.sanitizePredicate),
-      transformProperty('subject', nodeToCanonicalNode),
-      transformProperty('object', nodeToCanonicalNode),
-      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type'),
-      aggregateAttributes(['bts:sentence'], 'snippets'),
-      aggregateAndTransformAttributes(
-        [
-          bl.tagBiolink('supporting_document'),
-          bl.tagBiolink('Publication'),
-          bl.tagBiolink('publications')
-        ],
-        'publications',
-        (evidence) =>
-        {
-          if (cmn.isArray(evidence))
-          {
-            return evidence;
-          }
-
-          // Split on ',' OR (|) '|'
-          return evidence.split(/,|\|/);
-        })
-    ]);
-
-  const maxHops = SERVER_CONFIG.maxHops;
-  return condensedSummariesToSummary(
-           qid,
-           creativeAnswersToCondensedSummaries(
-             answers,
-             nodeRules,
-             edgeRules,
-             nodeToCanonicalNode,
-             maxHops));
 }
 
 function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, nodeToCanonicalNode, maxHops)
@@ -650,23 +680,23 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
     );
   }
 
-  answers.map((answer) =>
-  {
-    const reportingAgent = answer.agent();
-    const trapiMessage = answer.message();
-    const trapiResults = cmn.jsonGet(trapiMessage, 'results');
-    const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
-    return makeCondensedSummary(
-             reportingAgent,
-             trapiResults.reduce(
-               (result, summaryFragment) =>
-                 {
-                   return mergeSummaryFragments(
-                     trapiResultToSummaryFragment(result, kgraph),
-                     summaryFragment);
-                 },
-               emptySummaryFragment()));
-  });
+  return answers.map((answer) =>
+          {
+            const reportingAgent = answer.agent();
+            const trapiMessage = answer.message();
+            const trapiResults = cmn.jsonGet(trapiMessage, 'results');
+            const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
+            return makeCondensedSummary(
+                    reportingAgent,
+                    trapiResults.reduce(
+                      (result, summaryFragment) =>
+                        {
+                          return mergeSummaryFragments(
+                            trapiResultToSummaryFragment(result, kgraph),
+                            summaryFragment);
+                        },
+                      emptySummaryFragment()));
+          });
 }
 
 function condensedSummariesToSummary(qid, condensedSummaries)
@@ -858,6 +888,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   let paths = {};
   let nodes = {};
   let edges = {};
+  let publications = {};
   condensedSummaries.forEach((cs) =>
   {
     const agent = cs.agent();

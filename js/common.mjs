@@ -29,6 +29,11 @@ export function makePair(x, y, xLabel = false, yLabel = false)
   return pair;
 }
 
+export function isString(v)
+{
+  return typeof v === 'string' || v instanceof String;
+}
+
 export function isArray(v)
 {
   return Array.isArray(v);

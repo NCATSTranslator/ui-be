@@ -6,7 +6,7 @@ import * as cmn from '../common.mjs';
 
 function getTestFile(filename)
 {
-  return `test/test-data/readJson/${filename}`;
+  return `test/data/readJson/${filename}`;
 }
 
 describe('readJson', () =>
@@ -90,6 +90,27 @@ describe('makePair', () =>
         const testPair = cmn.makePair(1, {'x': {'y': 2}}, 'x', 'y');
         assert.strictEqual(testPair.x(), 1);
         assert.deepStrictEqual(testPair.y(), {'x': {'y': 2}});
+      });
+  });
+
+describe('isString', () =>
+  {
+    it('Should return True if its argument is a string', () =>
+      {
+        assert.ok(cmn.isString(''));
+        assert.ok(cmn.isString('123'));
+        assert.ok(cmn.isString(new String('')));
+        assert.ok(cmn.isString(new String('123')));
+      });
+
+    it('Should return False if its argument is not a string', () =>
+      {
+        assert.strictEqual(cmn.isString(1), false);
+        assert.strictEqual(cmn.isString([]), false);
+        assert.strictEqual(cmn.isString({'a': 1}), false);
+        assert.strictEqual(cmn.isString(null), false);
+        assert.strictEqual(cmn.isString(undefined), false);
+        assert.strictEqual(cmn.isString(NaN), false);
       });
   });
 
