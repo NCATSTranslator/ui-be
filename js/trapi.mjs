@@ -69,7 +69,7 @@ export function creativeAnswersToSummary (qid, answers)
 {
   const resultNodes = answers.map((answer) =>
     {
-      return cmn.jsonGetFromKpath(answer.message(), ['knowledge_graph', 'nodes']);
+      return cmn.jsonGetFromKpath(answer.message, ['knowledge_graph', 'nodes']);
     });
   const nodeToCanonicalNode = makeCanonicalNodeMapping(resultNodes);
   const nodeRules = makeSummarizeRules(
@@ -84,7 +84,6 @@ export function creativeAnswersToSummary (qid, answers)
         {
           return {
             'highest_fda_approval_status': fdaDescription,
-            'max_level': fdaDescriptionToFdaLevel(fdaDescription)
           };
         }),
       aggregateAttributes([bl.tagBiolink('description')], 'description'),
@@ -122,7 +121,7 @@ export function creativeAnswersToSummary (qid, answers)
         })
     ]);
 
-  const maxHops = SERVER_CONFIG.maxHops;
+  const maxHops = SERVER_CONFIG['max-hops'];
   return condensedSummariesToSummary(
            qid,
            creativeAnswersToCondensedSummaries(
@@ -135,20 +134,20 @@ export function creativeAnswersToSummary (qid, answers)
 
 function makeMapping(key, transform, update, fallback)
 {
-  return obj =>
+  return (obj) =>
   {
     const val = cmn.jsonGet(obj, key, false);
-    return acc => { return update((val ? transform(val) : fallback, acc)); }
+    return (acc) => { return update((val ? transform(val) : fallback), acc); }
   }
 }
 
 function aggregatePropertyUpdateWhen(v, obj, kpath, doUpdate)
 {
-  const cv = cmn.jsonGetFromKpath(obj, kpath);
+  const cv = cmn.jsonGetFromKpath(obj, kpath, false);
   if (doUpdate(v))
   {
     const uv = cmn.isArray(v) ? v : [v];
-    return cmn.jsonSetFromKpath(obj, kpath, cv ? v.concat(cv) : v);
+    return cmn.jsonSetFromKpath(obj, kpath, cv ? v.concat(cv) : uv);
   }
   else if (cv)
   {
@@ -162,7 +161,7 @@ function aggregatePropertyUpdateWhen(v, obj, kpath, doUpdate)
 
 function aggregatePropertyUpdate(v, obj, kpath)
 {
-  return aggregatePropertyUpdateWhen(v, obj, kpath, v => { return true; });
+  return aggregatePropertyUpdateWhen(v, obj, kpath, (v) => { return true; });
 }
 
 function renameAndTransformProperty(key, kpath, transform)
@@ -191,7 +190,7 @@ function getPropertyWhen(key, kpath, doUpdate)
            cmn.identity,
            (v, obj) =>
            {
-             const cv = cmn.jsonGet(obj, key);
+             const cv = cmn.jsonGet(obj, key, false);
              if (update(v))
              {
                return cmn.jsonSet(obj, key, v);
@@ -246,7 +245,7 @@ function attrValue(attribute)
 
 function areNoAttributes(attributes)
 {
-  return attributes === null || cmn.isArrayEmpty(attributes);
+  return attributes === undefined || attributes === null || cmn.isArrayEmpty(attributes);
 }
 
 function renameAndTransformAttribute(attributeId, kpath, transform)
@@ -276,7 +275,7 @@ function renameAndTransformAttribute(attributeId, kpath, transform)
 
 function renameAttribute(attributeId, kpath)
 {
-  renameAndTransformAttribute(attributeId, kpath, cmn.identity);
+  return renameAndTransformAttribute(attributeId, kpath, cmn.identity);
 }
 
 function aggregateAndTransformAttributes(attributeIds, tgtKey, transform)
@@ -285,7 +284,7 @@ function aggregateAndTransformAttributes(attributeIds, tgtKey, transform)
            'attributes',
            (attributes) =>
            {
-             let result = [];
+             const result = [];
              if (areNoAttributes)
              {
                return result;
@@ -294,23 +293,21 @@ function aggregateAndTransformAttributes(attributeIds, tgtKey, transform)
              attributes.forEach(attribute =>
              {
                const v = (attributeIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
-               result.concat(transform(v));
+               result.push(...transform(v));
              });
 
              return result;
            },
-           (v, obj) =>
-           {
-             return cmn.jsonSet(obj, tgtKey, v);
-           });
+           (v, obj) => { return cmn.jsonSet(obj, tgtKey, v); },
+           []);
 }
 
 function aggregateAttributes(attributeIds, tgtKey)
 {
-  aggregateAndTransformAttributes(
-    attributeIds,
-    tgtKey,
-    (v) => (cmn.isArray(v)) ? v : [v]);
+  return aggregateAndTransformAttributes(
+           attributeIds,
+           tgtKey,
+           (v) => { return cmn.isArray(v) ? v : [v] });
 }
 
 function makeSummarizeRules(rules)
@@ -339,12 +336,12 @@ function rnodeToTrapiKnode(nodeBinding, kgraph)
 
 function getBindingId(bindings, key)
 {
-  return cmn.jsonGet(cmn.jsonGet(bindings, key), 'id');
+  return cmn.jsonGet(cmn.jsonGet(bindings, key)[0], 'id');
 }
 
 function flattenBindings(bindings)
 {
-  return bindings.reduce((binding, ids) =>
+  return Object.values(bindings).reduce((ids, binding) =>
     {
       return ids.concat(binding.map(obj => { return cmn.jsonGet(obj, 'id'); }));
     },
@@ -368,23 +365,20 @@ function kedgePredicate(kedge)
 
 function makeRgraph(rnodes, redges, kgraph)
 {
-  let rgraph = {};
-  rgraph.nodes = () => { return rnodes; };
-  rgraph.edges = () =>
-  {
-    return redges.filter(redge =>
+  const rgraph = {};
+  rgraph.nodes = rnodes;
+  rgraph.edges = redges.filter(redge =>
            {
              const kedge = redgeToTrapiKedge(redge, kgraph);
-             return isBiolinkPredicate(kedgePredicate(kedge));
+             return bl.isBiolinkPredicate(kedgePredicate(kedge));
            });
-  };
 
   return rgraph;
 }
 
 function isRedgeInverted(redge, object, kgraph)
 {
-  const kgedge = redgeToTrapiKedge(redge, kgraph);
+  const kedge = redgeToTrapiKedge(redge, kgraph);
   return object === kedgeSubject(kedge);
 }
 
@@ -408,7 +402,7 @@ function redgeToKey(redge, kgraph, nodeToCanonicalNode, doInvert = false)
   const kobject = nodeToCanonicalNode(kedgeObject(kedge));
   if (doInvert)
   {
-    return pathToKey([kobject, invertBiolinkPredicate(kpredicate), ksubject]);
+    return pathToKey([kobject, bl.invertBiolinkPredicate(kpredicate), ksubject]);
   }
 
   return pathToKey([ksubject, kpredicate, kobject]);
@@ -424,7 +418,7 @@ function makeRedgeToEdgeId(rgraph, kgraph)
   let redgeToEdgeId = {};
   rgraph.edges.forEach(redge =>
   {
-    const kedge = redgeToTrapiKedge(redge, kedge);
+    const kedge = redgeToTrapiKedge(redge, kgraph);
     cmn.jsonSet(redgeToEdgeId, redge, makeEdgeId(kedgeSubject(kedge), kedgeObject(kedge)));
   });
 
@@ -436,14 +430,14 @@ function makeRnodeToOutEdges(rgraph, kgraph)
 
   function makeOutEdge(redge, node)
   {
-    return cmn.makePair(redge, node, 'edge', 'node');
+    return cmn.makePair(redge, node, 'redge', 'target');
   }
 
   const redgeToEdgeId = makeRedgeToEdgeId(rgraph, kgraph);
-  let rnodeToOutEdges = {};
+  const rnodeToOutEdges = {};
   rnodeToOutEdges.update = (rnode, val) =>
   {
-    let outEdges = cmn.jsonGet(rnodeToOutEdges, rnode, []);
+    const outEdges = cmn.jsonGet(rnodeToOutEdges, rnode, []);
     outEdges.push(val);
     cmn.jsonSet(rnodeToOutEdges, rnode, outEdges);
   };
@@ -451,14 +445,14 @@ function makeRnodeToOutEdges(rgraph, kgraph)
   rgraph.edges.forEach(redge =>
   {
     const edgeId = redgeToEdgeId(redge);
-    const subject = edgeId.subject();
-    const object = edgeId.object();
+    const subject = edgeId.subject;
+    const object = edgeId.object;
 
     rnodeToOutEdges.update(subject, makeOutEdge(redge, object));
     rnodeToOutEdges.update(object, makeOutEdge(redge, subject));
   });
 
-  return (rnode) => { return cmn.jsonGet(rnodeToOutEdges, redge, []); };
+  return (rnode) => { return cmn.jsonGet(rnodeToOutEdges, rnode, []); };
 }
 
 function rgraphFold(proc, init, acc)
@@ -477,31 +471,36 @@ function rgraphFold(proc, init, acc)
 
 function makeSummaryFragment(paths, nodes, edges)
 {
-  let summaryFragment = {};
-  summaryFragment.paths = () => { return paths; };
-  summaryFragment.nodes = () => { return nodes; };
-  summaryFragment.edges = () => { return edges; };
+  const summaryFragment = {};
+  summaryFragment.paths = paths;
+  summaryFragment.nodes = nodes;
+  summaryFragment.edges = edges;
   return summaryFragment;
+}
+
+function emptySummaryFragment()
+{
+  return makeSummaryFragment([], [], []);
 }
 
 function makeCondensedSummary(agent, summaryFragment)
 {
-  return makePair(agent, summaryFragment, 'agent', 'fragment');
+  return cmn.makePair(agent, summaryFragment, 'agent', 'fragment');
 }
 
 function condensedSummaryPaths(condensedSummary)
 {
-  return condensedSummary.fragment().paths();
+  return condensedSummary.fragment.paths;
 }
 
 function condensedSummaryNodes(condensedSummary)
 {
-  return condensedSummary.fragment().nodes();
+  return condensedSummary.fragment.nodes;
 }
 
 function condensedSummaryEdges(condensedSummary)
 {
-  return condensedSummary.fragment().edges();
+  return condensedSummary.fragment.edges;
 }
 
 function pathToKey(path)
@@ -512,9 +511,11 @@ function pathToKey(path)
 function mergeSummaryFragments(f1, f2)
 {
   Object.keys(f1).forEach((k) =>
-  {
-    f1[k]().push(...f2[k]());
-  });
+    {
+      f1[k].push(...f2[k]);
+    });
+
+  return f1;
 }
 
 function makeCanonicalNodeMapping(allNodes)
@@ -579,8 +580,8 @@ function makeCanonicalNodeMapping(allNodes)
   const nodeToCanonicalNode = new Object();
   mergedNodes.forEach((nodeSet) =>
     {
-      let nodes = nodeSet.keys();
-      let canonicalNode = nodes[0];
+      const nodes = Array.from(nodeSet.keys());
+      const canonicalNode = nodes[0];
       nodes.forEach((curie) =>
         {
           nodeToCanonicalNode[curie] = canonicalNode;
@@ -589,7 +590,7 @@ function makeCanonicalNodeMapping(allNodes)
 
   return function(node)
   {
-    nodeToCanonicalNode[node] || false;
+    return nodeToCanonicalNode[node] || false;
   }
 }
 
@@ -603,9 +604,9 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
     const disease = getBindingId(nodeBindings, 'disease');
     const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
     const maxPathLength = (2 * maxHops) + 1;
-    const rgraphPaths = rgraphFold(path =>
+    const rgraphPaths = rgraphFold((path) =>
       {
-        const currentRnode = path[0];
+        const currentRnode = path[path.length-1];
         if (maxPathLength < path.length)
         {
           return cmn.makePair([], []);
@@ -617,12 +618,13 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
         else
         {
           let validPaths = [];
-          rnodeToOutEdges.forEach(edge =>
+          rnodeToOutEdges(currentRnode).forEach((edge) =>
           {
             const target = edge.target
             if (!path.includes(target) && !!nodeToCanonicalNode(target))
             {
-              validPaths.push(path.push(edge.id, edge.target));
+              path.push(edge.redge, edge.target);
+              validPaths.push(path);
             }
           });
 
@@ -675,21 +677,21 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
 
     return makeSummaryFragment(
       normalizePaths(rgraphPaths, kgraph),
-      rgraph.nodes().map(node => { return summarizeRnode(rnode, kgraph); }),
-      rgraph.edges().map(edge => { return summarizeRedge(redge, kgraph); })
+      rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph); }),
+      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph); })
     );
   }
 
   return answers.map((answer) =>
           {
-            const reportingAgent = answer.agent();
-            const trapiMessage = answer.message();
+            const reportingAgent = answer.agent;
+            const trapiMessage = answer.message;
             const trapiResults = cmn.jsonGet(trapiMessage, 'results');
             const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
             return makeCondensedSummary(
                     reportingAgent,
                     trapiResults.reduce(
-                      (result, summaryFragment) =>
+                      (summaryFragment, result) =>
                         {
                           return mergeSummaryFragments(
                             trapiResultToSummaryFragment(result, kgraph),
@@ -713,16 +715,16 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       paths.push(cmn.makePair(pathKey, path, 'key', 'path'))
     });
 
-    return cmn.makePair(results, paths, 'results', 'paths');
+    return [results, paths];
   }
 
   function extendSummaryResults(results, newResults)
   {
     newResults.forEach((result) =>
     {
-      let existingResult = cmn.jsonSetDefaultAndGet(results, result.drug(), {});
+      let existingResult = cmn.jsonSetDefaultAndGet(results, result.drug, {});
       let paths = cmn.jsonSetDefaultAndGet(existingResult, 'paths', [])
-      paths.push(result.pathKey());
+      paths.push(result.pathKey);
     });
   }
 
@@ -730,14 +732,14 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   {
     newPaths.forEach((path) =>
     {
-      let existingPath = cmn.jsonGet(paths, path.key(), false);
+      let existingPath = cmn.jsonGet(paths, path.key, false);
       if (existingPath)
       {
         cmn.jsonGet(existingPath, 'aras').push(agent);
         return;
       }
 
-      cmn.jsonSet(paths, path.key(), {'subgraph': path.path(), 'aras': [agent]});
+      cmn.jsonSet(paths, path.key, {'subgraph': path.path, 'aras': [agent]});
     });
   }
 
@@ -745,8 +747,8 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   {
     updates.forEach((update) =>
     {
-      let obj = cmn.jsonSetDefaultOrGet(objs, update.key(), {'aras': []});
-      update.transforms().forEach((transform) =>
+      let obj = cmn.jsonSetDefaultAndGet(objs, update.key, {'aras': []});
+      update.transforms.forEach((transform) =>
       {
         transform(obj);
         cmn.jsonSet(obj, 'aras', agent);
@@ -793,7 +795,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   {
     function addInvertEdge(edges, edge)
     {
-      const edgePredicate = cmn.jsonGet(edge, 'predicate')[0];
+      const edgePredicate = cmn.jsonGet(edge, 'predicates')[0];
       const invertedPredicate = bl.invertBiolinkPredicate(edgePredicate);
       const subject = cmn.jsonGet(edge, 'subject');
       const object = cmn.jsonGet(edge, 'object');
@@ -807,7 +809,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       edges[invertedEdgeKey] = invertedEdge;
     }
 
-    let publications = {};
+    const publications = {};
     Object.values(edges).forEach((edge) =>
     {
       extendSummaryPublications(publications, edge);
@@ -882,6 +884,8 @@ function condensedSummariesToSummary(qid, condensedSummaries)
         obj[k] = [...new Set(v)];
       }
     });
+
+    return obj;
   }
 
   let results = {};
@@ -891,8 +895,8 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   let publications = {};
   condensedSummaries.forEach((cs) =>
   {
-    const agent = cs.agent();
-    [newResults, newPaths] = fragmentPathsToResultsAndPaths(condensedSummaryPaths(cs));
+    const agent = cs.agent;
+    const [newResults, newPaths] = fragmentPathsToResultsAndPaths(condensedSummaryPaths(cs));
     extendSummaryResults(results, newResults);
     extendSummaryPaths(paths, newPaths, agent);
     extendSummaryNodes(nodes, condensedSummaryNodes(cs), agent);
@@ -906,15 +910,15 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   });
   [edges, publications] = edgesToEdgesAndPublications(edges);
 
-  const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => cs.agent()));
+  const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agent; }));
   results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes);
   Object.values(paths).forEach(objRemoveDuplicates);
   Object.keys(nodes).forEach((k) =>
   {
     let node = nodes[k];
     objRemoveDuplicates(node);
-    let nodeNames = jsonGet(node, 'names');
-    if (cmn.isEmptyArray(nodeNames))
+    let nodeNames = cmn.jsonGet(node, 'names');
+    if (cmn.isArrayEmpty(nodeNames))
     {
       nodeNames.push(k);
     }

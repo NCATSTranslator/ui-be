@@ -81,15 +81,15 @@ describe('makePair', () =>
     it('Should return a pair', () =>
       {
         const testPair = cmn.makePair(1, {'x': {'y': 2}});
-        assert.strictEqual(testPair.first(), 1);
-        assert.deepStrictEqual(testPair.second(), {'x': {'y': 2}});
+        assert.strictEqual(testPair.first, 1);
+        assert.deepStrictEqual(testPair.second, {'x': {'y': 2}});
       });
 
     it('Should return a named pair', () =>
       {
         const testPair = cmn.makePair(1, {'x': {'y': 2}}, 'x', 'y');
-        assert.strictEqual(testPair.x(), 1);
-        assert.deepStrictEqual(testPair.y(), {'x': {'y': 2}});
+        assert.strictEqual(testPair.x, 1);
+        assert.deepStrictEqual(testPair.y, {'x': {'y': 2}});
       });
   });
 

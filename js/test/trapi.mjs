@@ -85,4 +85,23 @@ describe('creativeAnswersToSummary', () =>
         const emptySummary = await readJson('test/data/trapi/empty-summary.json');
         assert.deepEqual(trapi.creativeAnswersToSummary('AWESOME:123', []), emptySummary);
       });
+
+    it('Should process a single result', async () =>
+      {
+        const singleResult = await readJson('test/data/trapi/single-result.json');
+        const summary = trapi.creativeAnswersToSummary('AWESOME:123', singleResult);
+
+        // One ARA?
+        assert.equal(summary.meta.aras.length, 1);
+
+        // One result?
+        assert.equal(summary.results.length, 1);
+
+        const result = summary.results[0];
+        // One path?
+        assert.equal(result.paths.length, 1);
+
+        // Correct drug name?
+        assert.equal(result.drug_name, 'simvastatin');
+      });
   });

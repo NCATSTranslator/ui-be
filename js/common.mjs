@@ -23,9 +23,9 @@ export function makePair(x, y, xLabel = false, yLabel = false)
 {
   const firstId = xLabel || 'first';
   const secondLabel = yLabel || 'second';
-  let pair = {};
-  pair[firstId] = () => { return x };
-  pair[secondLabel] = () => { return y; };
+  const pair = {};
+  pair[firstId] = x;
+  pair[secondLabel] = y;
   return pair;
 }
 

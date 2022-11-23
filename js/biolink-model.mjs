@@ -12,6 +12,28 @@ export function isBiolinkPredicate(s)
   return BIOLINK_PREDICATES[sanitizePredicate(s)] !== undefined;
 }
 
+export function sanitizePredicate(pred)
+{
+  return pred.replace('_', ' ').replace('biolink:', '');
+}
+
+export function invertBiolinkPredicate(pred, biolinkify = false)
+{
+  const p = sanitizePredicate(pred);
+  const biolinkPredicate = cmn.jsonGet(BIOLINK_PREDICATES, p, false);
+  if (biolinkPredicate)
+  {
+    if (biolinkify)
+    {
+      return biolinkifyPredicate(biolinkPredicate.inverse);
+    }
+
+    return biolinkPredicate.inverse;
+  }
+
+  throw InvalidPredicateError(p);
+}
+
 function InvalidPredicateError(predicate)
 {
   const error = new Error(`Expected a valid biolink predicate. Got: ${predicate}`, 'biolink-model.mjs');
@@ -121,11 +143,6 @@ const j = await cmn.readJson('../assets/biolink-model.json');
 const slots = cmn.jsonGet(j, 'slots');
 const BIOLINK_PREDICATES = makeBlPredicates(slots);
 
-function sanitizePredicate(pred)
-{
-  return pred.replace('_', ' ').replace('biolink:', '');
-}
-
 function biolinkifyPredicate(pred)
 {
   let s = pred.replace(' ', '_');
@@ -135,23 +152,6 @@ function biolinkifyPredicate(pred)
   }
 
   return `biolink:${s}`;
-}
-
-function invertBiolinkPredicate(pred, biolinkify = false)
-{
-  const p = sanitizePredicate(pred);
-  const biolinkPredicate = cmn.jsonGet(BIOLINK_PREDICATES, p, false);
-  if (data)
-  {
-    if (biolinkify)
-    {
-      return biolinkifyPredicate(biolinkPredicate.inverse);
-    }
-
-    return biolinkPredicate.inverse;
-  }
-
-  throw InvalidPredicateError(p);
 }
 
 function getBiolinkPredicateData(pred)
