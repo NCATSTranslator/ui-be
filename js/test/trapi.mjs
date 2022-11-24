@@ -16,6 +16,15 @@ function assertInterface(obj, keys)
     });
 }
 
+function assertArrayStructure(arr, vals)
+{
+  assert.equal(arr.length, vals.length);
+  vals.forEach((val, i) =>
+    {
+      assert.equal(arr[i], val);
+    });
+}
+
 describe('makeMetadataObject', () =>
   {
     it('Should return a metadata object when given a qid and agents', () =>
@@ -102,11 +111,13 @@ describe('creativeAnswersToSummary', () =>
         let singleResult;
         let qid;
         let summary;
+        let expectedDrugName;
         before(async () =>
           {
             qid = 'AWESOME:123';
             singleResult = await cmn.readJson('test/data/trapi/single-result.json');;
             summary = trapi.creativeAnswersToSummary(qid, singleResult);
+            expectedDrugName = 'simvastatin';
           });
 
         it('Should return a summary object that adheres to the summary interface' , () =>
@@ -141,9 +152,9 @@ describe('creativeAnswersToSummary', () =>
                 assert.equal(Object.keys(summary.edges).length, 2);
               });
 
-            it('Should have 6 publications', () =>
+            it('Should have 7 publications', () =>
               {
-                assert.equal(Object.keys(summary.publications).length, 6);
+                assert.equal(Object.keys(summary.publications).length, 7);
               });
 
             describe('The metadata object', () =>
@@ -158,8 +169,7 @@ describe('creativeAnswersToSummary', () =>
 
                 it('Should have a single agent reporting named "test"', () =>
                   {
-                    assert.equal(metadata.aras.length, 1);
-                    assert.equal(metadata.aras[0], 'test');
+                    assertArrayStructure(metadata.aras, ['test']);
                   });
               });
 
@@ -186,7 +196,7 @@ describe('creativeAnswersToSummary', () =>
 
                 it('Should have the drug named simvastatin', () =>
                   {
-                    assert.equal(result.drug_name, 'simvastatin');
+                    assert.equal(result.drug_name, expectedDrugName);
                   });
               });
 
@@ -204,8 +214,7 @@ describe('creativeAnswersToSummary', () =>
 
                 it('Should be reported by a single ARA named "test"', () =>
                   {
-                    assert.equal(aras.length, 1);
-                    assert.equal(aras[0], 'test');
+                    assertArrayStructure(aras, ['test']);
                   });
 
                 it('Should have 2 nodes and 1 edge that are in the summary nodes and edges', () =>
@@ -263,7 +272,135 @@ describe('creativeAnswersToSummary', () =>
 
             describe('The nodes object', () =>
               {
-                it.todo();
+                let nodes;
+                before(() => {
+                  nodes = Object.values(summary.nodes);
+                });
+
+                it('Should have all nodes adhere to the node interface', () =>
+                  {
+                    nodes.forEach((node) =>
+                      {
+                        assertInterface(node, ['names', 'aras', 'types', 'curies', 'fda_info',
+                                               'descriptions', 'synonyms', 'same_as', 'iri_type']);
+                      });
+                  });
+
+                describe('The drug object', () =>
+                  {
+                    let drugCurie;
+                    let drug;
+                    let expectedType;
+                    before(() => {
+                      drugCurie = 'PUBCHEM.COMPOUND:54454';
+                      drug = summary.nodes[drugCurie];
+                      console.log(drug);
+                      expectedType = bl.tagBiolink('SmallMolecule');
+                    });
+
+                    it('Should have a 1 ARA', () =>
+                      {
+                        assertArrayStructure(drug.aras, ['test']);
+                      });
+
+                    it('Should have 1 name', () =>
+                      {
+                        assertArrayStructure(drug.names, [expectedDrugName]);
+                      });
+
+                    it('Should have 1 type', () =>
+                      {
+                        assertArrayStructure(drug.types, [bl.tagBiolink('SmallMolecule')]);
+                      });
+
+                    it('Should have 1 curie', () =>
+                      {
+                        assertArrayStructure(drug.curies, [drugCurie]);
+                      });
+
+                    it('Should have the expected FDA info object', () =>
+                      {
+                        assertInterface(drug.fda_info, ['highest_fda_approval_status']);
+                        assert.equal(drug.fda_info.highest_fda_approval_status, 'FDA Approval');
+                      });
+
+                    it('Should have no descriptions', () =>
+                      {
+                        assert.equal(drug.descriptions.length, 0);
+                      });
+
+                    it('Should have no synonyms', () =>
+                      {
+                        assert.equal(drug.synonyms.length, 0);
+                      });
+
+                    it('Should have no like nodes', () =>
+                      {
+                        assert.equal(drug.same_as.length, 0);
+                      });
+
+                    it('Should have no IRI types', () =>
+                      {
+                        assert.equal(drug.iri_type.length, 0);
+                      });
+                  });
+
+                describe('The disease object', () =>
+                  {
+                    let diseaseCurie;
+                    let disease;
+                    let expectedType;
+                    before(() => {
+                      diseaseCurie = 'HP:0003124';
+                      disease = summary.nodes[diseaseCurie];
+                      expectedType = bl.tagBiolink('Disease');
+                    });
+
+                    it('Should have 1 ARA', () =>
+                      {
+                        assertArrayStructure(disease.aras, ['test']);
+                      });
+
+                    it('Should have 1 name', () =>
+                      {
+                        assertArrayStructure(disease.names, [diseaseCurie]);
+                      });
+
+                    it('Should have 1 type', () =>
+                      {
+                        assertArrayStructure(disease.types, [expectedType]);
+                      });
+
+                    it('Should have 1 curie', () =>
+                      {
+                        assertArrayStructure(disease.curies, [diseaseCurie]);
+                      });
+
+                    it('Should have a null FDA info', () =>
+                      {
+                        assert.equal(disease.fda_info, null);
+                      });
+
+                    it('Should have no descriptions', () =>
+                      {
+                        assert.equal(disease.descriptions.length, 0);
+                      });
+
+                    it('Should have no synonyms', () =>
+                      {
+                        assert.equal(disease.synonyms.length, 0);
+                      });
+
+                    it('Should have no like nodes', () =>
+                      {
+                        assert.equal(disease.same_as.length, 0);
+                      });
+
+                    it('Should have no IRI types', () =>
+                      {
+                        assert.equal(disease.iri_type.length, 0);
+                      });
+                  });
               });
 
             describe('The edges object', () =>
@@ -318,9 +455,9 @@ describe('creativeAnswersToSummary', () =>
                     assert.ok(cmn.jsonHasKey(summary.nodes, e1.object));
                   });
 
-                it('Should have the first edge contain 6 valid publications', () =>
+                it('Should have the first edge contain 7 valid publications', () =>
                   {
-                    assert.equal(e1.publications.length, 6);
+                    assert.equal(e1.publications.length, 7);
                     e1.publications.forEach((p) =>
                       {
                         assert.ok(evd.isValidId(p));
@@ -331,6 +468,8 @@ describe('creativeAnswersToSummary', () =>
 
             describe('The publications structure', () =>
               {
+                let publications;
+                before(() => { publications = summary.publications; });
                 it.todo();
               });
           });

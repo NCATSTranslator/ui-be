@@ -138,7 +138,7 @@ export function jsonSetDefaultAndGet(obj, key, fallback)
 export function jsonGetFromKpath(obj, kpath, fallback = undefined)
 {
   let currentObj = obj;
-  kpath.forEach(k =>
+  for (const k of kpath)
   {
     if (currentObj)
     {
@@ -148,7 +148,7 @@ export function jsonGetFromKpath(obj, kpath, fallback = undefined)
     {
       return fallback;
     }
-  });
+  }
 
   return currentObj;
 }

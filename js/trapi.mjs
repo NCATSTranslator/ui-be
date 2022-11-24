@@ -83,11 +83,11 @@ export function creativeAnswersToSummary (qid, answers)
         (fdaDescription) =>
         {
           return {
-            'highest_fda_approval_status': fdaDescription,
+            'highest_fda_approval_status': fdaDescription
           };
         }),
-      aggregateAttributes([bl.tagBiolink('description')], 'description'),
-      aggregateAttributes([bl.tagBiolink('synonym')], 'synonym'),
+      aggregateAttributes([bl.tagBiolink('description')], 'descriptions'),
+      aggregateAttributes([bl.tagBiolink('synonym')], 'synonyms'),
       aggregateAttributes([bl.tagBiolink('same_as')], 'same_as'),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type')
     ]);
@@ -259,15 +259,15 @@ function renameAndTransformAttribute(attributeId, kpath, transform)
                return null;
              }
 
-             attributes.forEach(attribute =>
+             for (const attribute of attributes)
+             {
+               if (attributeId === attrId(attribute))
                {
-                 if (attributeId === attrId(attribute))
-                 {
-                   return transform(attrValue(attribute));
-                 }
-               });
+                 return transform(attrValue(attribute));
+               }
+             }
 
-               return null;
+             return null;
            },
            (v, obj) => { return cmn.jsonSetFromKpath(obj, kpath, v); },
            null);
@@ -908,20 +908,29 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     objRemoveDuplicates(edge);
     cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(isValidId) });
   });
-  [edges, publications] = edgesToEdgesAndPublications(edges);
 
+  [edges, publications] = edgesToEdgesAndPublications(edges);
   const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agent; }));
   results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes);
   Object.values(paths).forEach(objRemoveDuplicates);
+
+  function pushIfEmpty(arr, val)
+  {
+    if (cmn.isArrayEmpty(arr))
+    {
+      arr.push(val);
+    }
+  };
+
   Object.keys(nodes).forEach((k) =>
   {
     let node = nodes[k];
     objRemoveDuplicates(node);
     let nodeNames = cmn.jsonGet(node, 'names');
-    if (cmn.isArrayEmpty(nodeNames))
-    {
-      nodeNames.push(k);
-    }
+    pushIfEmpty(nodeNames, k);
+
+    let nodeCuries = cmn.jsonGet(node, 'curies');
+    pushIfEmpty(nodeCuries, k);
   });
 
   return {

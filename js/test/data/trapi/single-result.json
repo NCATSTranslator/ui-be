@@ -72,13 +72,85 @@
                 "original_attribute_name": "max phase for indication"
               },
               {
-                "value": "NCT00080275,NCT00082251,NCT00090298,NCT00092157,NCT00092651,NCT00092664,NCT00092690,NCT00129402,NCT00132717,NCT00249899,NCT00256178,NCT00271817,NCT00286481,NCT00413972,NCT00462748,NCT00479713,NCT00496730,NCT00532311,NCT00535405,NCT00650819,NCT00652431,NCT00653523,NCT00654173,NCT00654407,NCT00654537,NCT00664469,NCT00782184,NCT00935259,NCT01004705,NCT01362218,NCT01859455,NCT02587390,NCT02715726,NCT03510715,NCT03885921",
-                "value_url": "https://clinicaltrials.gov/search?id=%22NCT00080275%22OR%22NCT00082251%22OR%22NCT00090298%22OR%22NCT00092157%22OR%22NCT00092651%22OR%22NCT00092664%22OR%22NCT00092690%22OR%22NCT00129402%22OR%22NCT00132717%22OR%22NCT00249899%22OR%22NCT00256178%22OR%22NCT00271817%22OR%22NCT00286481%22OR%22NCT00413972%22OR%22NCT00462748%22OR%22NCT00479713%22OR%22NCT00496730%22OR%22NCT00532311%22OR%22NCT00535405%22OR%22NCT00650819%22OR%22NCT00652431%22OR%22NCT00653523%22OR%22NCT00654173%22OR%22NCT00654407%22OR%22NCT00654537%22OR%22NCT00664469%22OR%22NCT00782184%22OR%22NCT00935259%22OR%22NCT01004705%22OR%22NCT01362218%22OR%22NCT01859455%22OR%22NCT02587390%22OR%22NCT02715726%22OR%22NCT03510715%22OR%22NCT03885921%22",
+                "value": "NCT00080275,NCT00082251",
+                "value_url": "https://clinicaltrials.gov/search?id=%22NCT00080275%22OR%22NCT00082251%22",
                 "attributes": [],
                 "value_type_id": "string",
                 "attribute_source": "infores:chembl",
                 "attribute_type_id": "biolink:Publication",
                 "original_attribute_name": "ClinicalTrials"
+              },
+              {
+                "value": {
+                  "PMID:11691537": {
+                    "sentence": "Low-dose administration of amlodipine with subdeppressive effects did not control either hypertrophy or fibrosis; however, it prevented myocardial stiffening and, hence, the elevation of LV end-diastolic pressure.",
+                    "object score": 1000,
+                    "subject score": 1000,
+                    "publication date": "2001 Nov 01"
+                  }
+                },
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": null,
+                "attribute_source": "infores:semmeddb",
+                "attribute_type_id": "bts:sentence",
+                "original_attribute_name": null
+              },
+              {
+                "value": "PMID:11691537|PMID:17266690",
+                "value_type_id": "biolink:Publication",
+                "attribute_source": "infores:pubmed",
+                "attribute_type_id": "biolink:supporting_document"
+              },
+              {
+                "value": [
+                  "DOI:10.1046/j.1523-1747.1999.00581.x",
+                  "DOI:10.1101/gr.2596504"
+                ],
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": "biolink:Uriorcurie",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:publications",
+                "original_attribute_name": null
+              },
+              {
+                "value": {
+                  "PMID:11152376": {
+                    "sentence": "After MI started treatment with mibefradil and amlodipine reduced IS and cardiac fibrosis, and increased ST.",
+                    "object score": 888,
+                    "subject score": 833,
+                    "publication date": "2001 Jan"
+                  },
+                  "PMID:11691537": {
+                    "sentence": "Low-dose administration of amlodipine with subdeppressive effects did not control either hypertrophy or fibrosis; however, it prevented myocardial stiffening and, hence, the elevation of LV end-diastolic pressure.",
+                    "object score": 1000,
+                    "subject score": 1000,
+                    "publication date": "2001 Nov 01"
+                  }
+                },
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": null,
+                "attribute_source": "infores:semmeddb",
+                "attribute_type_id": "bts:sentence",
+                "original_attribute_name": null
+              },
+              {
+                "value": [
+                  "PMID:11152376",
+                  "PMID:11691537"
+                ],
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": "biolink:Uriorcurie",
+                "attribute_source": "infores:semmeddb",
+                "attribute_type_id": "biolink:publications",
+                "original_attribute_name": null
               },
               {
                 "value": "infores:chembl",
