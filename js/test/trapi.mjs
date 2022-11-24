@@ -1,9 +1,20 @@
 'use strict'
 
-import { describe, it } from 'node:test';
+import { describe, it, before } from 'node:test';
 import * as assert from 'assert';
-import { readJson } from '../common.mjs';
+import * as cmn from '../common.mjs';
+import * as bl from '../biolink-model.mjs';
+import * as evd from '../evidence.mjs';
 import * as trapi from '../trapi.mjs';
+
+function assertInterface(obj, keys)
+{
+  assert.equal(Object.keys(obj).length, keys.length);
+  keys.forEach((key) =>
+    {
+      assert.ok(cmn.jsonHasKey(obj, key));
+    });
+}
 
 describe('makeMetadataObject', () =>
   {
@@ -82,26 +93,246 @@ describe('creativeAnswersToSummary', () =>
   {
     it('Should return an empty summary for an empty answers array', async () =>
       {
-        const emptySummary = await readJson('test/data/trapi/empty-summary.json');
+        const emptySummary = await cmn.readJson('test/data/trapi/empty-summary.json');
         assert.deepEqual(trapi.creativeAnswersToSummary('AWESOME:123', []), emptySummary);
       });
 
-    it('Should process a single result', async () =>
+    describe('Processing a single one hop result', () =>
       {
-        const singleResult = await readJson('test/data/trapi/single-result.json');
-        const summary = trapi.creativeAnswersToSummary('AWESOME:123', singleResult);
+        let singleResult;
+        let qid;
+        let summary;
+        before(async () =>
+          {
+            qid = 'AWESOME:123';
+            singleResult = await cmn.readJson('test/data/trapi/single-result.json');;
+            summary = trapi.creativeAnswersToSummary(qid, singleResult);
+          });
 
-        // One ARA?
-        assert.equal(summary.meta.aras.length, 1);
+        it('Should return a summary object that adheres to the summary interface' , () =>
+          {
+            assertInterface(summary, ['meta', 'results', 'paths', 'nodes', 'edges', 'publications']);
+          });
 
-        // One result?
-        assert.equal(summary.results.length, 1);
+        describe('The summary object', () =>
+          {
+            it('Should have a metadata object that adheres to the metadata interface', () =>
+              {
+                assertInterface(summary.meta, ['qid', 'aras']);
+              });
 
-        const result = summary.results[0];
-        // One path?
-        assert.equal(result.paths.length, 1);
+            it('Should have 1 result', () =>
+              {
+                assert.equal(summary.results.length, 1);
+              });
 
-        // Correct drug name?
-        assert.equal(result.drug_name, 'simvastatin');
+            it('Should have 1 path', () =>
+              {
+                assert.equal(Object.keys(summary.paths).length, 1);
+              });
+
+            it('Should have 2 nodes', () =>
+              {
+                assert.equal(Object.keys(summary.nodes).length, 2);
+              });
+
+            it('Should have 2 edges', () =>
+              {
+                assert.equal(Object.keys(summary.edges).length, 2);
+              });
+
+            it('Should have 6 publications', () =>
+              {
+                assert.equal(Object.keys(summary.publications).length, 6);
+              });
+
+            describe('The metadata object', () =>
+              {
+                let metadata;
+                before(() => { metadata = summary.meta; });
+
+                it('Should have the supplied QID', () =>
+                  {
+                    assert.equal(metadata.qid, qid);
+                  });
+
+                it('Should have a single agent reporting named "test"', () =>
+                  {
+                    assert.equal(metadata.aras.length, 1);
+                    assert.equal(metadata.aras[0], 'test');
+                  });
+              });
+
+            describe('The result', () =>
+              {
+                let result;
+                before(() => { result = summary.results[0]; });
+
+                it('Should have a single path that matches the summary path key', () =>
+                  {
+                    assert.equal(result.paths.length, 1);
+                    assert.ok(cmn.jsonHasKey(summary.paths, result.paths[0]));
+                  });
+
+                it('Should have a subject that is in the summary nodes', () =>
+                  {
+                    assert.ok(cmn.jsonHasKey(summary.nodes, result.subject));
+                  });
+
+                it('Should have an object that is in the summary nodes', () =>
+                  {
+                    assert.ok(cmn.jsonHasKey(summary.nodes, result.object));
+                  });
+
+                it('Should have the drug named simvastatin', () =>
+                  {
+                    assert.equal(result.drug_name, 'simvastatin');
+                  });
+              });
+
+            describe('The path', () =>
+              {
+                let aras;
+                let path;
+                before(() =>
+                  {
+                    const paths = summary.paths;
+                    const pathObj = paths[Object.keys(paths)[0]];
+                    aras = pathObj.aras;
+                    path = pathObj.subgraph;
+                  });
+
+                it('Should be reported by a single ARA named "test"', () =>
+                  {
+                    assert.equal(aras.length, 1);
+                    assert.equal(aras[0], 'test');
+                  });
+
+                it('Should have 2 nodes and 1 edge that are in the summary nodes and edges', () =>
+                  {
+                    assert.equal(path.length, 3);
+                    let nodeCount = 0;
+                    let edgeCount = 0;
+                    path.forEach((obj) => {
+                      if (cmn.jsonHasKey(summary.nodes, obj))
+                      {
+                        nodeCount += 1;
+                      }
+                      else if (cmn.jsonHasKey(summary.edges, obj))
+                      {
+                        edgeCount += 1;
+                      }
+                      else
+                      {
+                        assert.fail(`An object in a path was not part of the summary: ${obj}`);
+                      }
+                    });
+
+                    assert.equal(nodeCount, 2);
+                    assert.equal(edgeCount, 1);
+                  });
+
+                it('Should alternate nodes and edges starting and ending with a node', () =>
+                  {
+                    let even = true;
+                    path.forEach((obj) => {
+                      if (even && !cmn.jsonHasKey(summary.nodes, obj))
+                      {
+                        assert.fail(`The object should be a node. Got: ${obj}`);
+                      }
+                      else if (!even && !cmn.jsonHasKey(summary.edges, obj))
+                      {
+                        assert.fail(`The object should be an edge. Got: ${obj}`);
+                      }
+                      even = !even;
+                    });
+
+                    assert.equal(path.length % 2, 1);
+                  });
+
+                it('Should have the first node be the subject of the result', () =>
+                  {
+                    assert.equal(path[0], summary.results[0].subject);
+                  });
+
+                it('Should have the last node be the object of the the result', () =>
+                  {
+                    assert.equal(path[path.length-1], summary.results[0].object);
+                  });
+              });
+
+            describe('The nodes object', () =>
+              {
+                it.todo();
+              });
+
+            describe('The edges object', () =>
+              {
+                let edges;
+                let e1;
+                let e2;
+                before(() => {
+                  edges = Object.values(summary.edges);
+                  e1 = edges[0];
+                  e2 = edges[1];
+                });
+
+                it('Should have all edges adhere to the edge interface', () =>
+                  {
+                    edges.forEach((edge) =>
+                      {
+                        assertInterface(edge, ['predicates', 'iri_type', 'aras', 'subject', 'object', 'publications']);
+                      });
+                  });
+
+                it('Should have the 2 edges be inverses', () =>
+                  {
+                    assert.equal(e1.predicates[0], bl.invertBiolinkPredicate(e2.predicates[0]));
+                    assert.deepEqual(e1.iri_type, e2.iri_type);
+                    assert.deepEqual(e1.aras, e2.aras);
+                    assert.equal(e1.subject, e2.object);
+                    assert.equal(e1.object, e2.subject);
+                    assert.deepEqual(e1.publications, e2.publications);
+                  });
+
+                it('Should only have edges with biolink compliant predicates', () =>
+                  {
+                    edges.forEach((edge) =>
+                      {
+                        edge.predicates.forEach((predicate) =>
+                          {
+                            assert.ok(bl.isBiolinkPredicate(predicate));
+                          });
+                      });
+                  });
+
+                it('Should have the first edge contain a single ara of "test"', () =>
+                  {
+                    assert.equal(e1.aras.length, 1);
+                    assert.equal(e1.aras[0], 'test');
+                  });
+
+                it('Should have the first edge have subjects and objects in the summary nodes object', () =>
+                  {
+                    assert.ok(cmn.jsonHasKey(summary.nodes, e1.subject));
+                    assert.ok(cmn.jsonHasKey(summary.nodes, e1.object));
+                  });
+
+                it('Should have the first edge contain 6 valid publications', () =>
+                  {
+                    assert.equal(e1.publications.length, 6);
+                    e1.publications.forEach((p) =>
+                      {
+                        assert.ok(evd.isValidId(p));
+                      });
+                  });
+
+              });
+
+            describe('The publications structure', () =>
+              {
+                it.todo();
+              });
+          });
       });
   });

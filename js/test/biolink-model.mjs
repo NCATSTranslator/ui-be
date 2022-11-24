@@ -41,3 +41,6 @@ describe('isBiolinkPredicate', () =>
           false);
       });
   });
+
+describe.todo('sanitaizePredicate');
+describe.todo('invertBiolinkPredicate');

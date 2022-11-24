@@ -285,7 +285,7 @@ function aggregateAndTransformAttributes(attributeIds, tgtKey, transform)
            (attributes) =>
            {
              const result = [];
-             if (areNoAttributes)
+             if (areNoAttributes(attributes))
              {
                return result;
              }
@@ -751,7 +751,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       update.transforms.forEach((transform) =>
       {
         transform(obj);
-        cmn.jsonSet(obj, 'aras', agent);
+        obj.aras.push(agent);
       });
     });
   }
@@ -779,7 +779,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     {
       const [type, url] = idToTypeAndUrl(id);
       const publicationObj = cmn.jsonGet(snippets, id, false);
-      if (snippet)
+      if (publicationObj)
       {
         const snippet = cmn.jsonGet(publicationObj, 'sentence', null);
         const pubdate = cmn.jsonGet(publicationObj, 'publication date', null);
@@ -802,8 +802,8 @@ function condensedSummariesToSummary(qid, condensedSummaries)
 
       const invertedEdgeKey = pathToKey([object, invertedPredicate, subject]);
       let invertedEdge = cmn.deepCopy(edge);
-      cmn.jsonMultiSet(invertedEdge, [['subject', subject],
-                                      ['object', object],
+      cmn.jsonMultiSet(invertedEdge, [['subject', object],
+                                      ['object', subject],
                                       ['predicates', [invertedPredicate]]]);
 
       edges[invertedEdgeKey] = invertedEdge;
@@ -905,7 +905,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
 
   Object.values(edges).forEach((edge) =>
   {
-    objRemoveDuplicates(edges);
+    objRemoveDuplicates(edge);
     cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(isValidId) });
   });
   [edges, publications] = edgesToEdgesAndPublications(edges);
