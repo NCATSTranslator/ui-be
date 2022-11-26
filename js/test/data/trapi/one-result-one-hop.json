@@ -83,7 +83,7 @@
               {
                 "value": {
                   "PMID:11691537": {
-                    "sentence": "Low-dose administration of amlodipine with subdeppressive effects did not control either hypertrophy or fibrosis; however, it prevented myocardial stiffening and, hence, the elevation of LV end-diastolic pressure.",
+                    "sentence": "B",
                     "object score": 1000,
                     "subject score": 1000,
                     "publication date": "2001 Nov 01"
@@ -119,13 +119,13 @@
               {
                 "value": {
                   "PMID:11152376": {
-                    "sentence": "After MI started treatment with mibefradil and amlodipine reduced IS and cardiac fibrosis, and increased ST.",
+                    "sentence": "A",
                     "object score": 888,
                     "subject score": 833,
                     "publication date": "2001 Jan"
                   },
                   "PMID:11691537": {
-                    "sentence": "Low-dose administration of amlodipine with subdeppressive effects did not control either hypertrophy or fibrosis; however, it prevented myocardial stiffening and, hence, the elevation of LV end-diastolic pressure.",
+                    "sentence": "B",
                     "object score": 1000,
                     "subject score": 1000,
                     "publication date": "2001 Nov 01"
@@ -205,6 +205,46 @@
                 "attribute_source": "infores:drug-repurposing-hub",
                 "attribute_type_id": "biolink:highest_FDA_approval_status",
                 "original_attribute_name": "clinical_phase"
+              },
+              {
+                "value": ["A"],
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": "metatype:uriorcurie",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:same_as",
+                "original_attribute_name": "equivalent_identifiers"
+              },
+              {
+                "value": "Example",
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": "metatype:String",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:description",
+                "original_attribute_name": null
+              },
+              {
+                "value": "A",
+                "value_url": "https://identifiers.org/uniprot:P37288",
+                "attributes": null,
+                "description": null,
+                "value_type_id": "metatype:Uri",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:IriType",
+                "original_attribute_name": null
+              },
+              {
+                "value": ["A", "B", "C"],
+                "value_url": null,
+                "attributes": null,
+                "description": "Names of all nodes in this synonym set in RTX-KG2.",
+                "value_type_id": "metatype:String",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:synonym",
+                "original_attribute_name": null
               },
               {
                 "value": "c10aa(hmg coa reductase inhibitors)",

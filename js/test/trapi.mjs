@@ -108,15 +108,15 @@ describe('creativeAnswersToSummary', () =>
 
     describe('Processing a single one hop result', () =>
       {
-        let singleResult;
+        let oneHopResult;
         let qid;
         let summary;
         let expectedDrugName;
         before(async () =>
           {
             qid = 'AWESOME:123';
-            singleResult = await cmn.readJson('test/data/trapi/single-result.json');;
-            summary = trapi.creativeAnswersToSummary(qid, singleResult);
+            oneHopResult = await cmn.readJson('test/data/trapi/one-result-one-hop.json');;
+            summary = trapi.creativeAnswersToSummary(qid, oneHopResult);
             expectedDrugName = 'simvastatin';
           });
 
@@ -282,7 +282,7 @@ describe('creativeAnswersToSummary', () =>
                     nodes.forEach((node) =>
                       {
                         assertInterface(node, ['names', 'aras', 'types', 'curies', 'fda_info',
-                                               'descriptions', 'synonyms', 'same_as', 'iri_type']);
+                                               'descriptions', 'synonyms', 'same_as', 'iri_types']);
                       });
                   });
 
@@ -298,7 +298,7 @@ describe('creativeAnswersToSummary', () =>
                       expectedType = bl.tagBiolink('SmallMolecule');
                     });
 
-                    it('Should have a 1 ARA', () =>
+                    it('Should have 1 ARA', () =>
                       {
                         assertArrayStructure(drug.aras, ['test']);
                       });
@@ -324,24 +324,24 @@ describe('creativeAnswersToSummary', () =>
                         assert.equal(drug.fda_info.highest_fda_approval_status, 'FDA Approval');
                       });
 
-                    it('Should have no descriptions', () =>
+                    it('Should have 1 description', () =>
                       {
-                        assert.equal(drug.descriptions.length, 0);
+                        assertArrayStructure(drug.descriptions, ['Example']);
                       });
 
-                    it('Should have no synonyms', () =>
+                    it('Should have 3 synonyms', () =>
                       {
-                        assert.equal(drug.synonyms.length, 0);
+                        assertArrayStructure(drug.synonyms, ['A', 'B', 'C']);
                       });
 
-                    it('Should have no like nodes', () =>
+                    it('Should have 1 like nodes', () =>
                       {
-                        assert.equal(drug.same_as.length, 0);
+                        assertArrayStructure(drug.same_as, ['A']);
                       });
 
-                    it('Should have no IRI types', () =>
+                    it('Should have 1 IRI types', () =>
                       {
-                        assert.equal(drug.iri_type.length, 0);
+                        assertArrayStructure(drug.iri_types, ['A']);
                       });
                   });
 
@@ -398,7 +398,7 @@ describe('creativeAnswersToSummary', () =>
 
                     it('Should have no IRI types', () =>
                       {
-                        assert.equal(disease.iri_type.length, 0);
+                        assert.equal(disease.iri_types.length, 0);
                       });
                   });
               });
@@ -469,8 +469,68 @@ describe('creativeAnswersToSummary', () =>
             describe('The publications structure', () =>
               {
                 let publications;
-                before(() => { publications = summary.publications; });
-                it.todo();
+                before(() => { publications = Object.values(summary.publications); });
+
+                it('Should have all publications adhere to the publications interface', () =>
+                  {
+                    publications.forEach((p) =>
+                      {
+                        assertInterface(p, ['type', 'url', 'snippet', 'pubdate']);
+                      });
+                  });
+
+                it('Should have 3 PMIDs, 2 NCTs, and 2 DOIs', () =>
+                  {
+                    const pubTypes = {
+                      'PMID': 0,
+                      'NCT':  0,
+                      'DOI':  0
+                    };
+                    publications.forEach((p) =>
+                      {
+                        pubTypes[p.type] += 1;
+                      });
+
+                    assert.equal(pubTypes.PMID, 3);
+                    assert.equal(pubTypes.NCT, 2);
+                    assert.equal(pubTypes.DOI, 2);
+                  });
+
+                it('Should have 2 publications with a sentence and publication date', () =>
+                  {
+                    const expectedPmids = {
+                      'PMID:11152376': {
+                        'sentence': 'A',
+                        'pubdate': '2001 Jan'
+                      },
+                      'PMID:11691537': {
+                        'sentence': 'B',
+                        'pubdate': '2001 Nov 01'
+                      }
+                    };
+
+                    const ps = summary.publications;
+                    let expectedSentence;
+                    let expectedPubdate;
+
+                    Object.keys(ps).forEach((k) =>
+                      {
+                        if (cmn.jsonHasKey(expectedPmids, k))
+                        {
+                          expectedSentence = ps[k].sentence;
+                          expectedPubdate = ps[k].pubdate;
+                        }
+                        else
+                        {
+                          expectedSentence = null;
+                          expectedPubdate = null;
+                        }
+
+                        assert.ok(ps[k].url !== null);
+                        assert.equal(expectedSentence, ps[k].sentence);
+                        assert.equal(expectedPubdate, ps[k].pubdate);
+                      });
+                  });
               });
           });
       });

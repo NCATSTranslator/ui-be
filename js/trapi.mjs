@@ -89,7 +89,7 @@ export function creativeAnswersToSummary (qid, answers)
       aggregateAttributes([bl.tagBiolink('description')], 'descriptions'),
       aggregateAttributes([bl.tagBiolink('synonym')], 'synonyms'),
       aggregateAttributes([bl.tagBiolink('same_as')], 'same_as'),
-      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type')
+      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types')
     ]);
 
   const edgeRules = makeSummarizeRules(
