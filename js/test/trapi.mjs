@@ -108,15 +108,15 @@ describe('creativeAnswersToSummary', () =>
 
     describe('Processing a single one hop result', () =>
       {
-        let oneHopResult;
+        let onePathResult;
         let qid;
         let summary;
         let expectedDrugName;
         before(async () =>
           {
             qid = 'AWESOME:123';
-            oneHopResult = await cmn.readJson('test/data/trapi/one-result-one-hop.json');;
-            summary = trapi.creativeAnswersToSummary(qid, oneHopResult);
+            onePathResult = await cmn.readJson('test/data/trapi/one-result-one-path.json');;
+            summary = trapi.creativeAnswersToSummary(qid, onePathResult);
             expectedDrugName = 'simvastatin';
           });
 
