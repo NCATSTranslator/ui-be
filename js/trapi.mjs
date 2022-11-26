@@ -376,10 +376,10 @@ function makeRgraph(rnodes, redges, kgraph)
   return rgraph;
 }
 
-function isRedgeInverted(redge, object, kgraph)
+function isRedgeInverted(redge, subject, kgraph)
 {
   const kedge = redgeToTrapiKedge(redge, kgraph);
-  return object === kedgeSubject(kedge);
+  return subject === kedgeObject(kedge);
 }
 
 function trapiResultToRgraph(trapiResult, kgraph)
@@ -623,8 +623,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
             const target = edge.target
             if (!path.includes(target) && !!nodeToCanonicalNode(target))
             {
-              path.push(edge.redge, edge.target);
-              validPaths.push(path);
+              let newPath = [...path, edge.redge, edge.target];
+              validPaths.push(newPath);
             }
           });
 

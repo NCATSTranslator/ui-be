@@ -25,6 +25,42 @@ function assertArrayStructure(arr, vals)
     });
 }
 
+function assertPathStructure(path, nodes, edges)
+{
+  assert.equal(path.length % 2, 1);
+
+  let nodeCount = 0;
+  let edgeCount = 0;
+  let edge;
+  let even = true;
+  path.forEach((objKey, i) => {
+    if (even && cmn.jsonHasKey(nodes, objKey))
+    {
+      nodeCount += 1;
+    }
+    else if (!even && cmn.jsonHasKey(edges, objKey))
+    {
+      edge = cmn.jsonGet(edges, objKey);
+      assert.equal(edge.subject, path[i-1]);
+      assert.equal(edge.object, path[i+1]);
+      edgeCount += 1;
+    }
+    else {
+      assert.fail(`The object is not in the correct position\n\tposition: ${i}\n\tobject: ${obj}`);
+    }
+
+    even = !even;
+  });
+
+  assert.equal(nodeCount - 1, edgeCount);
+}
+
+function assertPathEndpoints(path, result)
+{
+  assert.equal(path[0], result.subject);
+  assert.equal(path[path.length-1], result.object);
+}
+
 describe('makeMetadataObject', () =>
   {
     it('Should return a metadata object when given a qid and agents', () =>
@@ -106,7 +142,14 @@ describe('creativeAnswersToSummary', () =>
         assert.deepEqual(trapi.creativeAnswersToSummary('AWESOME:123', []), emptySummary);
       });
 
-    describe('Processing a single one hop result', () =>
+    // Under test
+    // * The summary has the correct structure
+    // * The result has 1 path with the correct structure
+    // * The node rules and edge rules populate the nodes and edges objects
+    // * That the inverse edge is generated
+    // * Publications are aggregated and populated
+    // * All objects are marked with the correct ARA
+    describe('Processing one result with one path', () =>
       {
         let onePathResult;
         let qid;
@@ -217,56 +260,19 @@ describe('creativeAnswersToSummary', () =>
                     assertArrayStructure(aras, ['test']);
                   });
 
-                it('Should have 2 nodes and 1 edge that are in the summary nodes and edges', () =>
+                it('Should have a length of 3', () =>
                   {
                     assert.equal(path.length, 3);
-                    let nodeCount = 0;
-                    let edgeCount = 0;
-                    path.forEach((obj) => {
-                      if (cmn.jsonHasKey(summary.nodes, obj))
-                      {
-                        nodeCount += 1;
-                      }
-                      else if (cmn.jsonHasKey(summary.edges, obj))
-                      {
-                        edgeCount += 1;
-                      }
-                      else
-                      {
-                        assert.fail(`An object in a path was not part of the summary: ${obj}`);
-                      }
-                    });
-
-                    assert.equal(nodeCount, 2);
-                    assert.equal(edgeCount, 1);
                   });
 
                 it('Should alternate nodes and edges starting and ending with a node', () =>
                   {
-                    let even = true;
-                    path.forEach((obj) => {
-                      if (even && !cmn.jsonHasKey(summary.nodes, obj))
-                      {
-                        assert.fail(`The object should be a node. Got: ${obj}`);
-                      }
-                      else if (!even && !cmn.jsonHasKey(summary.edges, obj))
-                      {
-                        assert.fail(`The object should be an edge. Got: ${obj}`);
-                      }
-                      even = !even;
-                    });
-
-                    assert.equal(path.length % 2, 1);
+                    assertPathStructure(path, summary.nodes, summary.edges);
                   });
 
-                it('Should have the first node be the subject of the result', () =>
+                it('Should be have the first and last nodes be the subject and object of the result', () =>
                   {
-                    assert.equal(path[0], summary.results[0].subject);
-                  });
-
-                it('Should have the last node be the object of the the result', () =>
-                  {
-                    assert.equal(path[path.length-1], summary.results[0].object);
+                    assertPathEndpoints(path, summary.results[0]);
                   });
               });
 
@@ -294,7 +300,6 @@ describe('creativeAnswersToSummary', () =>
                     before(() => {
                       drugCurie = 'PUBCHEM.COMPOUND:54454';
                       drug = summary.nodes[drugCurie];
-                      console.log(drug);
                       expectedType = bl.tagBiolink('SmallMolecule');
                     });
 
@@ -529,6 +534,95 @@ describe('creativeAnswersToSummary', () =>
                         assert.ok(ps[k].url !== null);
                         assert.equal(expectedSentence, ps[k].sentence);
                         assert.equal(expectedPubdate, ps[k].pubdate);
+                      });
+                  });
+              });
+          });
+      });
+
+    // Under test
+    // * Multiple paths are generated from one result
+    // * Paths are not generated for path lengths greater than the max
+    // * Nodes are always generated
+    // * Edges are generated for missing non-critical information
+    // * Edges are not generated for missing critical information
+    describe('Processing one result with multiple paths', () =>
+      {
+        let multiPathResult;
+        let summary;
+        before(async () =>
+          {
+            const qid = 'AWESOME:123';
+            multiPathResult = await cmn.readJson('test/data/trapi/one-result-multi-path.json');;
+            summary = trapi.creativeAnswersToSummary(qid, multiPathResult);
+          });
+
+        describe('The summary object', () =>
+          {
+            it('Should have 1 result', () =>
+              {
+                assert.equal(summary.results.length, 1);
+              });
+
+            it('Should have 3 paths', () =>
+              {
+                assert.equal(Object.keys(summary.paths).length, 3);
+              });
+
+            it('Should have 6 nodes', () =>
+              {
+                assert.equal(Object.keys(summary.nodes).length, 6);
+              });
+
+            it('Should have 16 edges', () =>
+              {
+                assert.equal(Object.keys(summary.edges).length, 16);
+              });
+
+            describe('The result', () =>
+              {
+                let result;
+                before(() => { result = summary.results[0]; });
+
+                it('Should have 3 paths that match the summary path keys', () =>
+                  {
+                    assert.equal(result.paths.length, 3);
+                    result.paths.forEach((pathKey) =>
+                      {
+                        assert.ok(cmn.jsonHasKey(summary.paths, pathKey));
+                      });
+                  });
+              });
+
+            describe('The paths object', () =>
+              {
+                let paths;
+                before(() =>
+                  {
+                    const pathObjs = Object.values(summary.paths);
+                    paths = pathObjs.map((obj) => { return obj.subgraph; });
+                  });
+
+                it('Should have all paths be the proper length', () =>
+                  {
+                    const pathLengths = paths.map((p) => { return p.length; });
+                    pathLengths.sort((a, b) => { return a - b; });
+                    assert.deepStrictEqual(pathLengths, [3, 5, 7]);
+                  });
+
+                it('Should have all paths have the proper structure', () =>
+                  {
+                    paths.forEach((p) =>
+                      {
+                        assertPathStructure(p, summary.nodes, summary.edges);
+                      });
+                  });
+
+                it('Should have all paths link to the result', () =>
+                  {
+                    paths.forEach((p) =>
+                      {
+                        assertPathEndpoints(p, summary.results[0]);
                       });
                   });
               });
