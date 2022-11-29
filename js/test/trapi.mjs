@@ -25,6 +25,14 @@ function assertArrayStructure(arr, vals)
     });
 }
 
+function assertArrayValues(actual, expected)
+{
+  const ac = [...actual].sort();
+  const ec = [...expected].sort();
+
+  assert.deepStrictEqual(ac, ec);
+}
+
 function assertPathStructure(path, nodes, edges)
 {
   assert.equal(path.length % 2, 1);
@@ -59,6 +67,11 @@ function assertPathEndpoints(path, result)
 {
   assert.equal(path[0], result.subject);
   assert.equal(path[path.length-1], result.object);
+}
+
+function assertAraCounts(objs, expectedCounts)
+{
+  assertArrayValues(objs.map((o) => { return o.aras.length; }), expectedCounts);
 }
 
 describe('makeMetadataObject', () =>
@@ -423,14 +436,14 @@ describe('creativeAnswersToSummary', () =>
                   {
                     edges.forEach((edge) =>
                       {
-                        assertInterface(edge, ['predicates', 'iri_type', 'aras', 'subject', 'object', 'publications']);
+                        assertInterface(edge, ['predicates', 'iri_types', 'aras', 'subject', 'object', 'publications']);
                       });
                   });
 
                 it('Should have the 2 edges be inverses', () =>
                   {
                     assert.equal(e1.predicates[0], bl.invertBiolinkPredicate(e2.predicates[0]));
-                    assert.deepEqual(e1.iri_type, e2.iri_type);
+                    assert.deepEqual(e1.iri_types, e2.iri_types);
                     assert.deepEqual(e1.aras, e2.aras);
                     assert.equal(e1.subject, e2.object);
                     assert.equal(e1.object, e2.subject);
@@ -505,11 +518,11 @@ describe('creativeAnswersToSummary', () =>
                   {
                     const expectedPmids = {
                       'PMID:11152376': {
-                        'sentence': 'A',
+                        'snippet': 'A',
                         'pubdate': '2001 Jan'
                       },
                       'PMID:11691537': {
-                        'sentence': 'B',
+                        'snippet': 'B',
                         'pubdate': '2001 Nov 01'
                       }
                     };
@@ -522,8 +535,8 @@ describe('creativeAnswersToSummary', () =>
                       {
                         if (cmn.jsonHasKey(expectedPmids, k))
                         {
-                          expectedSentence = ps[k].sentence;
-                          expectedPubdate = ps[k].pubdate;
+                          expectedSentence = expectedPmids[k].snippet;
+                          expectedPubdate = expectedPmids[k].pubdate;
                         }
                         else
                         {
@@ -532,7 +545,7 @@ describe('creativeAnswersToSummary', () =>
                         }
 
                         assert.ok(ps[k].url !== null);
-                        assert.equal(expectedSentence, ps[k].sentence);
+                        assert.equal(expectedSentence, ps[k].snippet);
                         assert.equal(expectedPubdate, ps[k].pubdate);
                       });
                   });
@@ -624,6 +637,251 @@ describe('creativeAnswersToSummary', () =>
                       {
                         assertPathEndpoints(p, summary.results[0]);
                       });
+                  });
+              });
+          });
+      });
+
+    // Under test
+    // Multiple answer results are included in the summary
+    // Repeats of the same information across multiple answers is not included
+    // Extra information for the same result, node, etc. previously processed is added to the summary
+    describe('Processing multiple answers', () =>
+      {
+        let multiAnswers;
+        let summary;
+        before(async () =>
+          {
+            const qid = 'AWESOME:123';
+            multiAnswers = await cmn.readJson('test/data/trapi/multi-answers.json');
+            summary = trapi.creativeAnswersToSummary(qid, multiAnswers);
+          });
+
+        describe('The summary object', () =>
+          {
+            it('Should have 3 results', () =>
+              {
+                assert.equal(summary.results.length, 3);
+              });
+
+            it('Should have 3 paths', () =>
+              {
+                assert.equal(Object.keys(summary.paths).length, 3);
+              });
+
+            it('Should have 6 nodes', () =>
+              {
+                assert.equal(Object.keys(summary.nodes).length, 6);
+              });
+
+            it('Should have 6 edges', () =>
+              {
+                assert.equal(Object.keys(summary.edges).length, 6);
+              });
+
+            it('Should have 2 publications', () =>
+              {
+                assert.equal(Object.keys(summary.publications).length, 2);
+              });
+
+            describe('The metadata object', () =>
+              {
+                let metadata;
+                before(() => { metadata = summary.meta; });
+
+                it('Should have 2 responding ARAs', () =>
+                  {
+                    assert.equal(metadata.aras.length, 2);
+                    assert.ok(metadata.aras.includes('test1'));
+                    assert.ok(metadata.aras.includes('test2'));
+                  });
+              });
+
+            describe('The results object', () =>
+              {
+                let results;
+                before(() => { results = summary.results; });
+
+                it('Should contain the 3 expected results', () =>
+                  {
+                    const actualDrugNames = results.map((res) => { return res.drug_name; });
+                    const expectedDrugNames = ['panacea', 'DrugA', 'drug1'];
+                    assertArrayValues(actualDrugNames, expectedDrugNames);
+
+                    const actualSubjects = results.map((res) => { return res.subject; });
+                    const expectedSubjects = ['panacea', 'nc1', 'drug1'];
+                    assertArrayValues(actualSubjects, expectedSubjects);
+
+                    const actualObjects = results.map((res) => { return res.object; });
+                    const expectedObjects = ['everything', 'nc2', 'disease1'];
+                    assertArrayValues(actualObjects, expectedObjects);
+
+                    results.forEach((res) =>
+                      {
+                        assert.equal(res.paths.length, 1);
+                      });
+
+                    results.map((res) => { return res.paths; }).forEach((p) =>
+                      {
+                        assert.ok(cmn.jsonHasKey(summary.paths, p));
+                      });
+                  });
+              });
+
+            describe('The paths object', () =>
+              {
+                let paths;
+                before(() => { paths = Object.values(summary.paths); });
+
+                it('Should have 1 path with 2 contributing ARAs', () =>
+                  {
+                    assertAraCounts(paths, [1, 1, 2]);
+                  });
+              });
+
+            describe('The nodes object', () =>
+              {
+                let nodes;
+                before(() => { nodes = Object.values(summary.nodes); });
+
+                it('Should have 2 nodes with 2 contributing ARAs', () =>
+                  {
+                    assertAraCounts(nodes, [1, 1, 1, 1, 2, 2]);
+                  });
+
+                describe('The merged node', () =>
+                  {
+                    let node;
+                    before(() => { node = cmn.jsonGet(summary.nodes, 'nc1'); });
+
+                    it('Should have 2 contributing ARAs', () =>
+                      {
+                        assert.equal(node.aras.length, 2);
+                        assertArrayValues(node.aras, ['test1', 'test2']);
+                      });
+
+                    it('Should have 1 name', () =>
+                      {
+                        assert.equal(node.names.length, 1);
+                        assert.equal(node.names[0], 'DrugA');
+                      });
+
+                    it('Should have 2 types', () =>
+                      {
+                        assert.equal(node.types.length, 2);
+                        assertArrayValues(node.types, ['biolink:SmallMolecule', 'biolink:NamedEntity']);
+                      });
+
+                    it('Should have 3 curies', () =>
+                      {
+                        assert.equal(node.curies.length, 3);
+                        assertArrayValues(node.curies, ['TEST:001', 'TEST:002', 'TEST:003']);
+                      });
+
+                    it('Should have no FDA info', () =>
+                      {
+                        assert.equal(node.fda_info, null);
+                      });
+
+                    it('Should have 1 description', () =>
+                      {
+                        assert.equal(node.descriptions.length, 1);
+                        assert.equal(node.descriptions[0], 'A made up drug');
+                      });
+
+                    it('Should have 1 synonyms', () =>
+                      {
+                        assert.equal(node.synonyms.length, 1);
+                        assert.equal(node.synonyms[0], 'DrugX');
+                      });
+
+                    it('Should have 2 same_as values', () =>
+                      {
+                        assert.equal(node.same_as.length, 2);
+                        assertArrayValues(node.same_as, ['DrugZ', 'DrugY']);
+                      });
+
+                    it('Should have 1 iri_type', () =>
+                      {
+                        assert.equal(node.iri_types.length, 1);
+                        assert.equal(node.iri_types[0], 'TEST:007');
+                      });
+                  });
+              });
+
+            describe('The edges object', () =>
+              {
+                let edges;
+                before(() => { edges = Object.values(summary.edges); });
+
+                it('Should have 2 edges with 2 contributing ARAs', () =>
+                  {
+                    assertAraCounts(edges, [1, 1, 1, 1, 2, 2]);
+                  });
+
+                describe('The merged edge', () =>
+                  {
+                    let edge;
+                    before(() =>
+                      {
+                        edge = edges.filter((e) =>
+                          {
+                            return e.aras.length === 2 && e.predicates[0] === 'treats';
+                          })[0];
+                      });
+
+                    it('Should have the appropriate ARAs', () =>
+                      {
+                        assertArrayValues(edge.aras, ['test1', 'test2']);
+                      });
+
+                    it('Should have the correct subject', () =>
+                      {
+                        assert.equal(edge.subject, 'nc1');
+                      });
+
+                    it('Should have the correct object', () =>
+                      {
+                        assert.equal(edge.object, 'nc2');
+                      });
+
+                    it('Should have 2 publications', () =>
+                      {
+                        assert.equal(edge.publications.length, 2);
+                        assertArrayValues(edge.publications, ['PMID:123', 'PMID:124']);
+                      });
+
+                    it('Should have 2 iri_types', () =>
+                      {
+                        assert.equal(edge.iri_types.length, 2);
+                        assertArrayValues(edge.iri_types, ['ETEST:001', 'ETEST:002']);
+                      });
+                  });
+              });
+
+            describe('The publications object', () =>
+              {
+                let publications;
+                before(() => { publications = summary.publications; });
+
+                it('Should have the expected publication data', () =>
+                  {
+                    const expectedPubs = {
+                      'PMID:123': {
+                        'snippet': '123',
+                        'pubdate': 'ABC',
+                        'type': 'PMID',
+                        'url': 'https://pubmed.ncbi.nlm.nih.gov/123'
+                      },
+                      'PMID:124': {
+                        'snippet': '124',
+                        'pubdate': 'ABD',
+                        'type': 'PMID',
+                        'url': 'https://pubmed.ncbi.nlm.nih.gov/124'
+                      }
+                    };
+
+                    assert.deepStrictEqual(summary.publications, expectedPubs);
                   });
               });
           });

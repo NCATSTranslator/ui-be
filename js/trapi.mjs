@@ -100,7 +100,7 @@ export function creativeAnswersToSummary (qid, answers)
         bl.sanitizePredicate),
       transformProperty('subject', nodeToCanonicalNode),
       transformProperty('object', nodeToCanonicalNode),
-      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_type'),
+      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
       aggregateAndTransformAttributes(
         [
@@ -147,7 +147,7 @@ function aggregatePropertyUpdateWhen(v, obj, kpath, doUpdate)
   if (doUpdate(v))
   {
     const uv = cmn.isArray(v) ? v : [v];
-    return cmn.jsonSetFromKpath(obj, kpath, cv ? v.concat(cv) : uv);
+    return cmn.jsonSetFromKpath(obj, kpath, cv ? cv.concat(uv) : uv);
   }
   else if (cv)
   {
@@ -298,7 +298,10 @@ function aggregateAndTransformAttributes(attributeIds, tgtKey, transform)
 
              return result;
            },
-           (v, obj) => { return cmn.jsonSet(obj, tgtKey, v); },
+           (v, obj) => {
+             const cv = cmn.jsonGet(obj, tgtKey, false);
+             cmn.jsonSet(obj, tgtKey, cv ? cv.concat(v) : v);
+           },
            []);
 }
 
@@ -505,7 +508,7 @@ function condensedSummaryEdges(condensedSummary)
 
 function pathToKey(path)
 {
-  return path; // TODO: find a good array hashing method
+  return String(path); // TODO: find a good array hashing method
 }
 
 function mergeSummaryFragments(f1, f2)
@@ -694,8 +697,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
                       (summaryFragment, result) =>
                         {
                           return mergeSummaryFragments(
-                            trapiResultToSummaryFragment(result, kgraph),
-                            summaryFragment);
+                            summaryFragment,
+                            trapiResultToSummaryFragment(result, kgraph));
                         },
                       emptySummaryFragment()));
           });
@@ -778,12 +781,21 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     publicationIds.forEach((id) =>
     {
       const [type, url] = idToTypeAndUrl(id);
-      const publicationObj = cmn.jsonGet(snippets, id, false);
+      let publicationObj = false;
+      for (const snippet of snippets)
+      {
+        publicationObj = cmn.jsonGet(snippet, id, false);
+        if (!!publicationObj)
+        {
+          break;
+        }
+      }
+
       if (publicationObj)
       {
         const snippet = cmn.jsonGet(publicationObj, 'sentence', null);
         const pubdate = cmn.jsonGet(publicationObj, 'publication date', null);
-        cmn.jsonSet(publication, id, makePublicationObject(type, url, snippet, pubdate));
+        cmn.jsonSet(publications, id, makePublicationObject(type, url, snippet, pubdate));
         return;
       }
 
@@ -867,7 +879,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       const disease = subgraph[subgraph.length-1];
       return {
         'subject': drug,
-        'drug_name': (cmn.isArrayEmpty(drugName)) ? null : drugName[0],
+        'drug_name': (cmn.isArrayEmpty(drugName)) ? drug : drugName[0],
         'paths': ps.sort(isPathLessThan),
         'object': disease
       }
@@ -910,10 +922,8 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
-  const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agent; }));
-  results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes);
-  Object.values(paths).forEach(objRemoveDuplicates);
 
+  const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agent; }));
   function pushIfEmpty(arr, val)
   {
     if (cmn.isArrayEmpty(arr))
@@ -932,6 +942,9 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     let nodeCuries = cmn.jsonGet(node, 'curies');
     pushIfEmpty(nodeCuries, k);
   });
+
+  results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes);
+  Object.values(paths).forEach(objRemoveDuplicates);
 
   return {
     'meta': metadataObject,
