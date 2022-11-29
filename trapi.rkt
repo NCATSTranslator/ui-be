@@ -217,7 +217,9 @@
   (trapi-binding->kobj knowledge-graph node-binding 'nodes))
 
 (define (get-binding-id bindings key)
-  (string->symbol (jsexpr-object-ref (car (jsexpr-object-ref bindings key)) 'id)))
+  (let ((binding (jsexpr-object-ref bindings key)))
+    (and binding (string->symbol (jsexpr-object-ref (car binding) 'id)))))
+
 (define (flatten-bindings bindings)
   (foldl (lambda (binding ids)
             (append (jsexpr-map (lambda (obj) (string->symbol (jsexpr-object-ref obj 'id)))
@@ -491,7 +493,9 @@
                                                         (cons next-node (cons next-edge path)))))
                                                 (rnode->out-edges current-rnode)))
                                    '())))))
-                   `((,drug))
+                   (if (and drug disease)
+                     `((,drug))
+                     '())
                    '()))
 
     ; Return a pair (key, update) for a node
