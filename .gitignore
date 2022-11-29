@@ -3,6 +3,7 @@ test-local
 ui-build
 ui-prototype-one
 ui-fe
+**/node_modules
 **.swp
 *.log
 junk

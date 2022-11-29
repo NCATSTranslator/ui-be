@@ -1,5 +1,6 @@
 'use strict';
 
+import { default as hash } from 'hash-sum';
 import * as cmn from './common.mjs';
 import { idToTypeAndUrl, isValidId } from './evidence.mjs';
 import * as bl from './biolink-model.mjs';
@@ -508,7 +509,7 @@ function condensedSummaryEdges(condensedSummary)
 
 function pathToKey(path)
 {
-  return String(path); // TODO: find a good array hashing method
+  return hash(path);
 }
 
 function mergeSummaryFragments(f1, f2)
