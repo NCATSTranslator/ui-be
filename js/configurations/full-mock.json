@@ -1,9 +1,9 @@
 {
-  "document-root": false,
+  "document_root": false,
   "port": 8386,
-  "response-timeout": 300,
-  "ars-endpoint": false,
-  "max-hops": 3,
-  "log-level": "all",
-  "log-format": "common"
+  "response_timeout": 300,
+  "ars_endpoint": false,
+  "max_hops": 3,
+  "log_level": "all",
+  "log_format": "common"
 }

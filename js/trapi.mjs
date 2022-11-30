@@ -122,7 +122,7 @@ export function creativeAnswersToSummary (qid, answers)
         })
     ]);
 
-  const maxHops = SERVER_CONFIG['max-hops'];
+  const maxHops = SERVER_CONFIG.max_hops;
   return condensedSummariesToSummary(
            qid,
            creativeAnswersToCondensedSummaries(
