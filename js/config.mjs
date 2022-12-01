@@ -10,6 +10,3 @@ if (!SERVER_CONFIG['document-root'])
 {
   SERVER_CONFIG['document-root'] = process.cwd();
 }
-
-console.log('\nSERVER CONFIGURATION');
-console.log(SERVER_CONFIG);

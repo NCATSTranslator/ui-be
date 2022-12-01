@@ -24,7 +24,7 @@ const arsBase = `https://${SERVER_CONFIG.ars_endpoint.host}`;
 const arsPostUrl = new URL(SERVER_CONFIG.ars_endpoint.post_uri, arsBase);
 function arsPullUrl(qid, doTrace)
 {
-  const pullUrl = new URL(SERVER_CONFIG.ars_endpoint.pull_uri, arsBase);
+  const pullUrl = new URL(`${SERVER_CONFIG.ars_endpoint.pull_uri}/${qid}`, arsBase);
   if (!!doTrace)
   {
     pullUrl.searchParams.append('trace', 'y');
@@ -112,7 +112,7 @@ function getAgent(json)
 
 function isQueryDone(qStatus)
 {
-  return qstatus === 'done';
+  return qStatus === 'done';
 }
 
 function isAra(agent)
@@ -144,6 +144,14 @@ function makeQueryState(status, data)
   return {
     'status': status,
     'data': data
+  };
+}
+
+function makeAnswer(message, agent)
+{
+  return {
+    'message': message,
+    'agent': agent
   };
 }
 
@@ -190,7 +198,7 @@ function parseQueryMetadata(resp)
   const araStatus = rStatusToStatus(getStatus(resp));
   const qid = getMessage(resp);
 
-  return makeQueryStatus(araStatus, makeMetadataObject(qid, finishedActors));
+  return makeQueryState(araStatus, makeMetadataObject(qid, finishedActors));
 }
 
 function parseSubmitQueryResp(resp)
@@ -212,26 +220,26 @@ async function parseQueryAnswers(resp)
     return parseQueryActorAnswer(await arsGet(arsPullUrl(qid, false)));
   }
 
-  if (!isRespOkay(resp))
+  if (!isRespOk(resp))
   {
     return false;
   }
 
   const actors = getChildren(resp);
   let actorsData = [];
-  actors.forEach(async (actor) =>
+  for (const actor of actors)
+  {
+    let agent = getAgent(actor);
+    let actorStatus = parseQueryStatus(actor);
+    if (isAra(agent) && isQueryDone(actorStatus))
     {
-      let agent = getAgent(actor);
-      let actorStatus = parseQueryStatus(actor);
-      if (isAra(agent) && isQueryDone(actorStatus))
+      let actorMessage = await pullQueryActorAnswer(getMessage(actor));
+      if (actorMessage)
       {
-        let actorData = await pullQueryActorAnswer(getMessage(actor));
-        if (actorData)
-        {
-          actorsData.push(makeAnswer(actorData, agent));
-        }
+        actorsData.push(makeAnswer(actorMessage, agent));
       }
-    });
+    }
+  }
 
   const araStatus = rStatusToStatus(getStatus(resp));
   return makeQueryState(araStatus, actorsData);
