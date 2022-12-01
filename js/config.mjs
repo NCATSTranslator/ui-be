@@ -1,3 +1,5 @@
+'use strict'
+
 import * as cmn from './common.mjs';
 
 const argvs = process.argv;
