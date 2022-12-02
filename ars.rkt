@@ -116,18 +116,17 @@
                                          (actor-data (and (ara? agent)
                                                           (query-done? (parse-query-status actor))
                                                           (pull-query-actor-answer (get-message actor)))))
-                                         (if actor-data
-                                           (cons (make-answer actor-data agent) answers)
-                                           answers)))
-                                  '()
-                                  (get-children resp)))))
+                                    (if actor-data
+                                      (cons (make-answer actor-data agent) answers)
+                                      answers)))
+                                '()
+                                (get-children resp)))))
 
 (define (parse-query-actor-answer resp)
   (with-handlers ((exn:fail? (lambda (e) #f))) ; Some ARAs report done when not done
     (let* ((fields (get-fields resp))
            (qstatus (parse-query-status fields)))
-      (if (query-done? qstatus)
-        (let* ((message (get-message (get-data fields)))
-               (answer (get-answer message)))
-          (and answer (not (or (null? answer) (jsexpr-null? answer))) message))
-        qstatus))))
+      (and (query-done? qstatus)
+           (let* ((message (get-message (get-data fields)))
+                  (answer (get-answer message)))
+             (and answer (not (or (null? answer) (jsexpr-null? answer))) message))))))
