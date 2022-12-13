@@ -1,4 +1,5 @@
 FROM josefkaye/noderacket:latest
+ARG APP_ENVIRONMENT=prod
 WORKDIR /app
 
 # Assumes parent script has cloned ui-fe repo and checked out right branch
@@ -6,7 +7,7 @@ WORKDIR /app
 COPY . ./
 RUN cd ui-fe \
   && npm install \
-  && npm run build \
+  && npm run build:${APP_ENVIRONMENT} \
   && npm prune \
   && npm cache clean --force \
   && npm uninstall npm -g \

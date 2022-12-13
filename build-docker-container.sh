@@ -43,6 +43,6 @@ fe_tag=$(git rev-parse --short HEAD)
 cd ..
 timestamp=$(date -u "+%Y.%m.%dt%H.%M.%Sz")
 version_tag="FE.${fe_tag}_BE.${be_tag}_$timestamp"
-docker build --no-cache -t "$image_name:latest" -t "$image_name:$version_tag" .
+docker build --no-cache -t "$image_name:latest" -t "$image_name:$version_tag" --build-arg APP_ENVIRONMENT="$app_env" .
 echo "restoring branch $save_branch"
 git checkout $save_branch
