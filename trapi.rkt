@@ -349,7 +349,7 @@
                      (let loop ((as attributes)
                                 (aliases '()))
                        (cond ((attributes-null? as)
-                               (cons (list->seteq (cons (symbol->string curie) aliases))
+                               (cons (list->set (cons (symbol->string curie) aliases))
                                      node-sets))
                              (else
                                (let ((attr-type (jsexpr-object-ref (car as) 'attribute_type_id)))
