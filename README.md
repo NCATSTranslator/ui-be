@@ -40,8 +40,8 @@ Example: `racket server.rkt /my/awesome/config/file`
 ## Running Locally with Docker
 
 - Install the docker engine for your environment
-- `./build-docker-container.sh -b main -f main`
-- `docker run --rm -d -p8386:8386 --env APP_ENVIRONMENT=[production|test|ci] translator-app`
+- `./build-docker-container.sh -b main -f main -i [local|dev|test|ci|production]`
+- `docker run --rm -d -p8386:8386 --env APP_ENVIRONMENT=[production|test|ci|dev] translator-app`
 - Alternatively, provide an explicit configuration file to override the environment variable: `docker run --rm -d -p8386:8386 translator-app <path-to-configuration-file>`
 - Point your browser to `http://localhost:8386/`
 
