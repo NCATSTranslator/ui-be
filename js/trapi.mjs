@@ -369,6 +369,15 @@ function kedgePredicate(kedge)
 
 function makeRgraph(rnodes, redges, kgraph)
 {
+  const knodes = cmn.jsonGet(kgraph, 'nodes');
+  for (const rnode of rnodes)
+  {
+    if (!cmn.jsonHasKey(knodes, rnode))
+    {
+      return false;
+    }
+  }
+
   const rgraph = {};
   rgraph.nodes = rnodes;
   rgraph.edges = redges.filter(redge =>
@@ -466,8 +475,8 @@ function rgraphFold(proc, init, acc)
   while (!cmn.isArrayEmpty(objLeft))
   {
     const paths = proc(objLeft.pop());
-    objLeft = objLeft.concat(paths.first);
-    res = res.concat(paths.second);
+    objLeft.push(...paths.first);
+    res.push(...paths.second);
   }
 
   return res;
@@ -602,8 +611,14 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
 {
   function trapiResultToSummaryFragment(trapiResult, kgraph)
   {
-    const nodeBindings = trapiResult['node_bindings'];
     const rgraph = trapiResultToRgraph(trapiResult, kgraph);
+
+    if (!rgraph)
+    {
+      return emptySummaryFragment();
+    }
+
+    const nodeBindings = trapiResult['node_bindings'];
     const drug = getBindingId(nodeBindings, 'drug');
     const disease = getBindingId(nodeBindings, 'disease');
     const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);

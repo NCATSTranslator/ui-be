@@ -14,7 +14,7 @@ export function isBiolinkPredicate(s)
 
 export function sanitizePredicate(pred)
 {
-  return pred.replace('_', ' ').replace('biolink:', '');
+  return pred.replaceAll('_', ' ').replaceAll('biolink:', '');
 }
 
 export function invertBiolinkPredicate(pred, biolinkify = false)
@@ -145,7 +145,7 @@ const BIOLINK_PREDICATES = makeBlPredicates(slots);
 
 function biolinkifyPredicate(pred)
 {
-  let s = pred.replace(' ', '_');
+  let s = pred.replaceAll(' ', '_');
   if (s.startsWith('biolink:'))
   {
     return s;
