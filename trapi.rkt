@@ -229,11 +229,16 @@
 
 ; An rgraph is a list of nodes and a list of directed edges
 (define (make-rgraph nodes edges kgraph)
-  (cons nodes
-        (filter (lambda (e)
-                  (define kedge (trapi-edge-binding->trapi-kedge kgraph e))
-                  (bl:biolink-predicate? (jsexpr-object-ref kedge 'predicate)))
-                edges)))
+  (let ((knodes (jsexpr-object-ref kgraph 'nodes)))
+    (and knodes
+         (andmap (lambda (node) (jsexpr-object-has-key? knodes node))
+                 nodes)
+         (cons nodes
+               (filter (lambda (e)
+                         (define kedge (trapi-edge-binding->trapi-kedge kgraph e))
+                         (bl:biolink-predicate? (jsexpr-object-ref kedge 'predicate)))
+                       edges)))))
+
 (define (rgraph-nodes rgraph) (car rgraph))
 (define (rgraph-edges rgraph) (cdr rgraph))
 (define (redge-inverted? redge object kgraph)
@@ -470,67 +475,69 @@
 
 (define (creative-answers->condensed-summaries answers node-rules edge-rules node->canonical-node max-hops)
   (define (trapi-result->summary-fragment trapi-result kgraph)
-    (define node-bindings (jsexpr-object-ref trapi-result 'node_bindings))
     (define rgraph (trapi-result->rgraph trapi-result kgraph))
-    (define drug    (get-binding-id node-bindings 'drug))
-    (define disease (get-binding-id node-bindings 'disease))
-    (define rnode->out-edges (make-rnode->out-edges rgraph kgraph))
-    (define max-path-length (+ (* 2 max-hops) 1))
-    (define rgraph-paths
-      (rgraph-fold (lambda (path)
-                     (let ((current-rnode (car path)))
-                       (cond
-                         ((< max-path-length (length path))
-                           (values '() '())) ; Skip this path if its too long
-                         ((equal? current-rnode disease)
-                           (values '() `(,path)))
-                         (else
-                           (values (filter (lambda (p) p)
-                                           (map (match-lambda
-                                                  ((cons next-edge next-node)
-                                                   (and (not (member next-node path)) ; No cycles
-                                                        (node->canonical-node (symbol->string next-node)) ; The node must exist in the knowledge graph
-                                                        (cons next-node (cons next-edge path)))))
-                                                (rnode->out-edges current-rnode)))
-                                   '())))))
-                   (if (and drug disease)
-                     `((,drug))
-                     '())
-                   '()))
+    (cond ((not rgraph) empty-summary-fragment)
+          (else
+            (define node-bindings (jsexpr-object-ref trapi-result 'node_bindings))
+            (define drug    (get-binding-id node-bindings 'drug))
+            (define disease (get-binding-id node-bindings 'disease))
+            (define rnode->out-edges (make-rnode->out-edges rgraph kgraph))
+            (define max-path-length (+ (* 2 max-hops) 1))
+            (define rgraph-paths
+              (rgraph-fold (lambda (path)
+                             (let ((current-rnode (car path)))
+                               (cond
+                                 ((< max-path-length (length path))
+                                  (values '() '())) ; Skip this path if its too long
+                                 ((equal? current-rnode disease)
+                                  (values '() `(,path)))
+                                 (else
+                                   (values (filter (lambda (p) p)
+                                                   (map (match-lambda
+                                                          ((cons next-edge next-node)
+                                                           (and (not (member next-node path)) ; No cycles
+                                                                (node->canonical-node (symbol->string next-node)) ; The node must exist in the knowledge graph
+                                                                (cons next-node (cons next-edge path)))))
+                                                        (rnode->out-edges current-rnode)))
+                                           '())))))
+                           (if (and drug disease)
+                             `((,drug))
+                             '())
+                           '()))
 
-    ; Return a pair (key, update) for a node
-    (define (summarize-rnode rnode kgraph)
-      (cons (rnode->key rnode kgraph node->canonical-node)
-            (node-rules (trapi-node-binding->trapi-knode kgraph rnode))))
+            ; Return a pair (key, update) for a node
+            (define (summarize-rnode rnode kgraph)
+              (cons (rnode->key rnode kgraph node->canonical-node)
+                    (node-rules (trapi-node-binding->trapi-knode kgraph rnode))))
 
-    ; Return a the list (key, inverted-key, update) for an edge
-    ; We must generate the inverted-key now before edges are merged otherwise its possible
-    ; Our edge keys won't match with the path key
-    (define (summarize-redge redge kgraph)
-      (cons (redge->key redge kgraph node->canonical-node)
-            (edge-rules (trapi-edge-binding->trapi-kedge kgraph redge))))
+            ; Return a the list (key, inverted-key, update) for an edge
+            ; We must generate the inverted-key now before edges are merged otherwise its possible
+            ; Our edge keys won't match with the path key
+            (define (summarize-redge redge kgraph)
+              (cons (redge->key redge kgraph node->canonical-node)
+                    (edge-rules (trapi-edge-binding->trapi-kedge kgraph redge))))
 
-    ; Convert paths structure to normalized node and edge IDs
-    (define (normalize-paths rgraph-paths kgraph)
-      (define (N n) (rnode->key n kgraph node->canonical-node))
-      (define (E e o) (redge->key e kgraph node->canonical-node (redge-inverted? e o kgraph)))
-      (map (lambda (path)
-             (let loop ((p path)
-                        (np '()))
-               (match p
-                 ('()           np)
-                 (`(,n)         (cons (N n) np))
-                 (`(,n ,e . ,p) (loop p (cons (E e n) (cons (N n) np)))))))
-           rgraph-paths))
+            ; Convert paths structure to normalized node and edge IDs
+            (define (normalize-paths rgraph-paths kgraph)
+              (define (N n) (rnode->key n kgraph node->canonical-node))
+              (define (E e o) (redge->key e kgraph node->canonical-node (redge-inverted? e o kgraph)))
+              (map (lambda (path)
+                     (let loop ((p path)
+                                (np '()))
+                       (match p
+                         ('()           np)
+                         (`(,n)         (cons (N n) np))
+                         (`(,n ,e . ,p) (loop p (cons (E e n) (cons (N n) np)))))))
+                   rgraph-paths))
 
-    (make-summary-fragment
-      (normalize-paths rgraph-paths kgraph)
-      (map (lambda (rnode)
-             (summarize-rnode rnode kgraph))
-           (rgraph-nodes rgraph))
-      (map (lambda (redge)
-             (summarize-redge redge kgraph))
-           (rgraph-edges rgraph))))
+            (make-summary-fragment
+              (normalize-paths rgraph-paths kgraph)
+              (map (lambda (rnode)
+                     (summarize-rnode rnode kgraph))
+                   (rgraph-nodes rgraph))
+              (map (lambda (redge)
+                     (summarize-redge redge kgraph))
+                   (rgraph-edges rgraph))))))
 
   (map (lambda (answer)
          (let* ((reporting-agent (answer-agent   answer))
