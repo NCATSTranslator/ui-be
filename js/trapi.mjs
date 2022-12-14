@@ -524,10 +524,11 @@ function mergeSummaryFragments(f1, f2)
 
 function makeCanonicalNodeMapping(allNodes)
 {
-  function isAttributeAlias(attr)
+  function isCurieAlias(attr)
   {
     const attrType = attrId(attr);
-    return attrType === 'same_as' || attrType === 'xref';
+    return attrType === bl.tagBiolink('same_as') ||
+           attrType === bl.tagBiolink('xref');
   }
 
   const nodeSets = [];
@@ -535,7 +536,6 @@ function makeCanonicalNodeMapping(allNodes)
   allNodes.forEach((nodes) =>
     {
       let curies = Object.keys(nodes);
-      resultCuries.concat(curies);
       curies.forEach((curie) =>
         {
           let node = cmn.jsonGet(nodes, curie);
@@ -543,14 +543,16 @@ function makeCanonicalNodeMapping(allNodes)
           let aliases = [curie];
           attributes.forEach((attr) =>
             {
-              if (isAttributeAlias(attr))
+              if (isCurieAlias(attr))
               {
-                aliases.append(attrValue(attr));
+                aliases.push(...attrValue(attr));
               }
             });
 
           nodeSets.push(new Set(aliases));
         });
+
+      resultCuries.push(...curies);
     });
 
   const allCuries = resultCuries.concat(cmn.setUnion(nodeSets).keys());
@@ -570,14 +572,12 @@ function makeCanonicalNodeMapping(allNodes)
           }
         });
 
-      if (cmn.isArrayEmpty(mergeableBags))
+      if (!cmn.isArrayEmpty(mergeableBags))
       {
-        return unmergedBags;
+        unmergedBags.push(cmn.setUnion(mergeableBags));
       }
-      else
-      {
-        return unmergedBags.push(cmn.setUnion(mergeableBags));
-      }
+
+      return unmergedBags;
     },
     nodeSets);
 
