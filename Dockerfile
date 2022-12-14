@@ -1,5 +1,5 @@
 FROM josefkaye/noderacket:latest
-ARG APP_ENVIRONMENT=prod
+ARG APP_ENVIRONMENT=production
 WORKDIR /app
 
 # Assumes parent script has cloned ui-fe repo and checked out right branch

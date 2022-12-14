@@ -4,7 +4,7 @@ set -e
 
 usage()
 {
-    echo "$0 -b <be-branch-name> -f <fe-branch-name> -e <local|dev|test|ci|prod> [-i <image_name>]"
+    echo "$0 -b <be-branch-name> -f <fe-branch-name> -e <local|dev|test|ci|production> [-i <image_name>]"
     exit 1
 }
 

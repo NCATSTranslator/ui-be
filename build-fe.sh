@@ -3,7 +3,7 @@
 set -e
 
 if [ $# -ne 3 ]; then
-    echo "Usage: $0 <fe-branch-name> <local|dev|ci|test|prod> <yes|no>"
+    echo "Usage: $0 <fe-branch-name> <local|dev|ci|test|production> <yes|no>"
     exit 1
 fi
 
