@@ -2,6 +2,8 @@
 
 import * as fs from 'fs';
 
+export const mimeJson = 'application/json';
+
 export async function readJson(path)
 {
   const content = await fs.promises.readFile(path);
