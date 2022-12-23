@@ -15,32 +15,18 @@ app.use(pino());
 app.use(express.json());
 app.use(express.static('../build'));
 
-app.post('/creative_query', async (req, res, next) =>
-  {
-    const query = req.body;
-    try
-    {
-      if (!isValidQuery(query))
-      {
-        throw new ClientError('Query is malformed');
-      }
-
-      const arsResp = await ars.postQuery(trapi.diseaseToCreativeQuery(query));
-      if (!arsResp.qStatus)
-      {
-        throw new ServerError('ARS was unable to process query');
-      }
-
-      res.json(makeResponse('success', arsResp.qid));
-    }
-    catch (err)
-    {
-      next(err);
-    }
-  });
-
-app.post('/creative_status', makeResultEndpoint(ars.pullQueryStatus, (qid, answers) => { return answers; }));
-app.post('/creative_result', makeResultEndpoint(ars.pullQueryAnswers, trapi.creativeAnswersToSummary));
+app.post('/creative_query',  makeEndpoint(isValidQuery,
+                                          trapi.diseaseToCreativeQuery,
+                                          ars.postQuery,
+                                          (diseaseCurie, qid) => { return qid; }));
+app.post('/creative_status', makeEndpoint(isValidQidObj,
+                                          (queryReq) => { return queryReq.qid; },
+                                          ars.pullQueryStatus,
+                                          (qid, answers) => { return answers; }));
+app.post('/creative_result', makeEndpoint(isValidQidObj,
+                                          (queryReq) => { return queryReq.qid; },
+                                          ars.pullQueryAnswers,
+                                          trapi.creativeAnswersToSummary));
 
 app.get('*', (req, res) =>
   {
@@ -50,64 +36,37 @@ app.get('*', (req, res) =>
 app.use(handleErrors);
 app.listen(8386);
 
-class ApplicationError extends Error {
-  constructor(message, httpCode) {
-    super(message);
-    this.name = this.constructor.name;
-    this.httpCode = httpCode;
-  }
-}
 
-class ClientError extends ApplicationError {
-  constructor(message) {
-    super(message, 400);
-  }
-}
-
-class ServerError extends ApplicationError {
-  constructor(message) {
-    super(message, 500);
-  }
-}
-
-function isValidQuery(query)
+export function isValidQuery(query)
 {
   return cmn.isObj && cmn.jsonHasKey(query, 'disease');
 }
 
-function isValidQidObj(qidObj)
+export function isValidQidObj(qidObj)
 {
   return cmn.isObj && cmn.jsonHasKey(qidObj, 'qid');
 }
 
-function makeResponse(resStatus, resData)
-{
-  return {
-    'status': resStatus,
-    'data': resData
-  };
-}
-
-function makeResultEndpoint(pullProc, processQueryData)
+export function makeEndpoint(isQueryReqValid, processQueryReq, pullProc, processQueryData)
 {
   return async function(req, res, next)
   {
-    const qidObj = req.body;
     try
     {
-      if (!isValidQidObj(qidObj))
+      const queryReq = req.body;
+      if (!isQueryReqValid(queryReq))
       {
-        throw new ClientError('Query is malformed');
+        throw new cmn.ClientError('Query is malformed');
       }
 
-      const qid = qidObj.qid;
-      const queryState = await pullProc(qid);
+      const processedQueryReq = processQueryReq(queryReq);
+      const queryState = await pullProc(processedQueryReq);
       if (!queryState)
       {
-        throw new ServerError('ARS was unable to process query');
+        throw new cmn.ServerError('ARS was unable to process the query');
       }
 
-      res.json(makeResponse(queryState.status, processQueryData(qid, queryState.data)));
+      res.json(makeResponse(queryState.status, processQueryData(processedQueryReq, queryState.data)));
     }
     catch (err)
     {
@@ -116,7 +75,7 @@ function makeResultEndpoint(pullProc, processQueryData)
   }
 }
 
-function handleErrors(err, req, res, next)
+export function handleErrors(err, req, res, next)
 {
   res.setHeader('Content-Type', 'application/json');
   if (err.httpCode !== undefined)
@@ -128,4 +87,12 @@ function handleErrors(err, req, res, next)
     res.status(500);
   }
   res.send(err.message);
+}
+
+function makeResponse(resStatus, resData)
+{
+  return {
+    'status': resStatus,
+    'data': resData
+  };
 }

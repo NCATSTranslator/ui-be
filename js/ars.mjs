@@ -7,12 +7,12 @@ import { makeMetadataObject } from './trapi.mjs';
 
 export async function postQuery(query)
 {
-  return parseSubmitQueryResp(await arsPost(arsPostUrl, JSON.stringify(query)));
+  return await parseSubmitQueryResp(await arsPost(arsPostUrl, JSON.stringify(query)));
 }
 
 export async function pullQueryStatus(qid)
 {
-  return parseQueryMetadata(await arsGet(arsPullUrl(qid, true)));
+  return await parseQueryMetadata(await arsGet(arsPullUrl(qid, true)));
 }
 
 export async function pullQueryAnswers(qid)
@@ -42,7 +42,7 @@ async function arsSendRecv(url, options)
   }
   else
   {
-    throw new Error(`The ARS failed to respond to our request. Got code ${resp.status}`);
+    throw new cmn.ServerError(`The ARS failed to respond to our request. ${resp.status}`);
   }
 }
 
@@ -136,7 +136,7 @@ function rStatusToStatus(rStatus)
       return 'running'
   }
 
-  throw new Error(`Query status not recognized. Got ${rStatus}`);
+  throw new cmn.ServerError(`Query status not recognized. Got ${rStatus}`);
 }
 
 function makeQueryState(status, data)
@@ -207,10 +207,12 @@ function parseSubmitQueryResp(resp)
   const qStatus = parseQueryStatus(fields);
   const qid = getQid(resp);
 
-  return {
-    'qStatus': qStatus,
-    'qid': qid
-  };
+  if (!qStatus)
+  {
+    return false;
+  }
+
+  return makeQueryState('success', qid);
 }
 
 async function parseQueryAnswers(resp)

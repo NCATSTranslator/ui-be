@@ -185,3 +185,23 @@ export function jsonUpdate(obj, key, update)
 {
   return jsonSet(obj, key, update(jsonGet(obj, key)));
 }
+
+export class ApplicationError extends Error {
+  constructor(message, httpCode) {
+    super(message);
+    this.name = this.constructor.name;
+    this.httpCode = httpCode;
+  }
+}
+
+export class ClientError extends ApplicationError {
+  constructor(message) {
+    super(message, 400);
+  }
+}
+
+export class ServerError extends ApplicationError {
+  constructor(message) {
+    super(message, 500);
+  }
+}
