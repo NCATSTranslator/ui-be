@@ -1,53 +1,52 @@
+'use strict'
+
 import { default as path } from 'node:path';
 import { default as url } from 'node:url';
 import { default as express } from 'express';
 import { default as pino } from 'pino-http';
-import { SERVER_CONFIG } from './config.mjs';
 import * as cmn from './common.mjs';
-import * as ars from './ars.mjs';
-import * as trapi from './trapi.mjs';
 
-const __root = path.dirname(url.fileURLToPath(import.meta.url));
-const app = express();
+export function start(ars, trapi, config)
+{
+  console.log(config);
+  const __root = path.dirname(url.fileURLToPath(import.meta.url));
+  const app = express();
+  app.use(pino());
+  app.use(express.json());
+  app.use(express.static('../build'));
+  app.post('/creative_query',  makeEndpoint(isValidQuery,
+                                            trapi.diseaseToCreativeQuery,
+                                            ars.postQuery,
+                                            (diseaseCurie, qid) => { return qid; }));
+  app.post('/creative_status', makeEndpoint(isValidQidObj,
+                                            (queryReq) => { return queryReq.qid; },
+                                            ars.pullQueryStatus,
+                                            (qid, answers) => { return answers; }));
+  app.post('/creative_result', makeEndpoint(isValidQidObj,
+                                            (queryReq) => { return queryReq.qid; },
+                                            ars.pullQueryAnswers,
+                                            trapi.creativeAnswersToSummary));
+  app.get('*', (req, res) =>
+    {
+      res.sendFile(path.join(__root, '../build/index.html'));
+    });
 
-console.log(SERVER_CONFIG);
-app.use(pino());
-app.use(express.json());
-app.use(express.static('../build'));
-
-app.post('/creative_query',  makeEndpoint(isValidQuery,
-                                          trapi.diseaseToCreativeQuery,
-                                          ars.postQuery,
-                                          (diseaseCurie, qid) => { return qid; }));
-app.post('/creative_status', makeEndpoint(isValidQidObj,
-                                          (queryReq) => { return queryReq.qid; },
-                                          ars.pullQueryStatus,
-                                          (qid, answers) => { return answers; }));
-app.post('/creative_result', makeEndpoint(isValidQidObj,
-                                          (queryReq) => { return queryReq.qid; },
-                                          ars.pullQueryAnswers,
-                                          trapi.creativeAnswersToSummary));
-
-app.get('*', (req, res) =>
-  {
-    res.sendFile(path.join(__root, '../build/index.html'));
-  });
-
-app.use(handleErrors);
-app.listen(8386);
+  app.use(handleErrors);
+  app.listen(8386);
+}
 
 
-export function isValidQuery(query)
+function isValidQuery(query)
 {
   return cmn.isObj && cmn.jsonHasKey(query, 'disease');
 }
 
-export function isValidQidObj(qidObj)
+function isValidQidObj(qidObj)
 {
   return cmn.isObj && cmn.jsonHasKey(qidObj, 'qid');
 }
 
-export function makeEndpoint(isQueryReqValid, processQueryReq, pullProc, processQueryData)
+function makeEndpoint(isQueryReqValid, processQueryReq, pullProc, processQueryData)
 {
   return async function(req, res, next)
   {
@@ -75,7 +74,7 @@ export function makeEndpoint(isQueryReqValid, processQueryReq, pullProc, process
   }
 }
 
-export function handleErrors(err, req, res, next)
+function handleErrors(err, req, res, next)
 {
   res.setHeader('Content-Type', 'application/json');
   if (err.httpCode !== undefined)
