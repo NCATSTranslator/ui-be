@@ -4,7 +4,11 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "test": "node --test"
+    "prod": "node main.mjs configurations/production.json",
+    "test": "node main.mjs configurations/test.json",
+    "ci":   "node main.mjs configurations/ci.json",
+    "mock": "node --prof mock/main.mjs",
+    "unit": "node --test"
   },
   "author": "Guthrie Price",
   "license": "ISC",

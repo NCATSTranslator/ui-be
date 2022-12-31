@@ -5,14 +5,20 @@ import { makeMetadataObject } from '../trapi.mjs';
 
 export async function postQuery(query)
 {
-  return makeQueryState('success', query);
+  return makeQueryState('success',
+                        cmn.jsonGetFromKpath(query,
+                                             ['message',
+                                              'query_graph',
+                                              'nodes',
+                                              'disease',
+                                              'ids'])[0]);
 }
 
 export async function pullQueryStatus(qid)
 {
   if (cmn.jsonHasKey(curiesToPaths, qid))
   {
-    return makeQueryState('success', trapi.makeMetadataObject(qid, ['mock']));
+    return makeQueryState('success', makeMetadataObject(qid, ['mock']));
   }
 
   return makeQueryState('error', `No key ${qid}`);
