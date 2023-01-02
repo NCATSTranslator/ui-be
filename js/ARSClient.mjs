@@ -64,6 +64,8 @@ class ARSClient {
         }
 
         function applyFilters(masterList, filters) {
+            if (!filters) return masterList;
+
             let retval = [...masterList];
             let hasWhiteList = false;
             if (filters.hasOwnProperty('whitelist')) {
