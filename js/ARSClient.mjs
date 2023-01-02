@@ -17,6 +17,7 @@ class ARSClient {
         if (doTrace) {
             url += '?trace=y';
         }
+        console.log(`fetching ${url}`);
         return this.sendRecv(url, 'GET');
     }
 
@@ -24,24 +25,24 @@ class ARSClient {
         return this.sendRecv(this.postURL, 'POST', {}, query)
     }
 
-    /* 
+    /*
      * pkey: must be the UUID received upon submitting a query
      * fetchCompleted: if true, will fetch data for ARAs that have completed
-     * filters: { 
+     * filters: {
      *   whitelist: [ara1, ara2, ...],
      *   whitelistRx: <regexp>,
      *   blacklist: [ara1, ara2, ...],
      *   blacklistRx: <regexp>,
      * }
-     * 
-     * Filters are relevant only when fetchCompleted = true (specifying filters 
+     *
+     * Filters are relevant only when fetchCompleted = true (specifying filters
      * when fetchCompleted=false has no effect). Filters are applied on the list
      * of completed (status = 200) agents in the following way:
      * - All agents exactly matching an element in the whitelist array are included
      * - All agents matching the whitelistRx are included
-     * Note both filters are applied against the master list of agents. I.e, the 
-     * result is the union of agents matching whitelist array elements and matching 
-     * whitelistRx, not the intersection. 
+     * Note both filters are applied against the master list of agents. I.e, the
+     * result is the union of agents matching whitelist array elements and matching
+     * whitelistRx, not the intersection.
      * If only whitelist filters are specified, the results returned are as above.
      * If only blacklist filters are specified, all agents are returned except:
      * - Those exactly matching an element in the blacklist array
@@ -49,7 +50,7 @@ class ARSClient {
      * If BOTH whitelist and blacklist filters are specified
      * - The whitelists are first applied as described above, then
      * - The blacklists are applied to the list of agents matching the whitelists
-     * 
+     *
      */
     async collectAllResults(pkey, fetchCompleted=false, filters=null) {
 
@@ -77,10 +78,10 @@ class ARSClient {
                     retval = whiteRxRes;
                 }
             }
-            /* Uniqify the result so far. If no white filters were present, 
+            /* Uniqify the result so far. If no white filters were present,
              * retval is the same as masterList at this point. If white
-             * filters were present, retval is the result of applying them, 
-             * and black filters should be applied to those
+             * filters were present, retval is the result of applying them,
+             * and black filters should be applied to that result.
              */
             retval = [...new Set(retval)];
 
@@ -97,31 +98,38 @@ class ARSClient {
          * to ones that match the specified filters (if any), and return full message
          * data for only those (and only if requested)
          */
+        let retval = {};
         let baseResult = await this.fetchResultByKey(pkey, true);
-        let completed = {}; // use a hash to make fetching data easier
+        let completed = {}; // use a hash as a placeholder to make fetching data easier
         let running = [];
         let errored = [];
         // Divide results up by status
         for (const c of baseResult.children) {
             switch (c.code) {
-                case 200: 
+                case 200:
                     completed[c.actor.agent] = extractFields(c);
                     break;
-                case 202: 
+                case 202:
                     running.push(extractFields(c));
                     break;
                 default:
                     errored.push(extractFields(c));
             }
         }
-        if (fetchCompleted) {
+        if (!fetchCompleted) {
+            retval = {
+                "completed": Object.values(completed),
+                "running": running,
+                "errored": errored
+            };
+        } else {
             let agents = applyFilters(Object.keys(completed), filters);
             // Get uuids corresp. to these agents, fetch their results in parallel
-            let toFetch = agents.map(e => [e, completed[e].uuid]); 
-            const promises = toFetch.map(async (e) => this.fetchResultByKey(e[1], true));
+            let toFetch = agents.map(e => completed[e].uuid);
+            const promises = toFetch.map(async (e) => this.fetchResultByKey(e));
             let finalCompleted = [];
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled#parameters
-            Promise.allSettled(promises).then(results => {
+            await Promise.allSettled(promises).then(results => {
                 results.forEach(item => {
                     if (item.status === 'fulfilled') {
                         let agent = item.value.fields.name;
@@ -133,15 +141,17 @@ class ARSClient {
                         errored.push(item.value); // No idea what might be in this object
                     }
                 });
+                console.log('done settling promises');
+                retval = {
+                    "completed": finalCompleted,
+                    "running": running,
+                    "errored": errored
+                };
             });
         }
-
-        return {
-            "completed": finalCompleted,
-            "running": running,
-            "errored": errored
-        };
+        return retval;
     }
+
     async sendRecv(url, method='GET', headers={}, body=null) {
         let options = {
             method: method,
@@ -156,7 +166,7 @@ class ARSClient {
             return resp.json();
         } else {
             let errmsg = `ERROR: status: ${resp.status}; msg: '${resp.statusText}'`;
-            throw new Error(errmsg);        
+            throw new Error(errmsg);
         }
     }
 }
