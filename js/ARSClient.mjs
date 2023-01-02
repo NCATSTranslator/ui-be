@@ -17,7 +17,7 @@ class ARSClient {
         if (doTrace) {
             url += '?trace=y';
         }
-        console.log(`fetching ${url}`);
+        //console.log(`fetching ${url}`);
         return this.sendRecv(url, 'GET');
     }
 
@@ -141,7 +141,7 @@ class ARSClient {
                         errored.push(item.value); // No idea what might be in this object
                     }
                 });
-                console.log('done settling promises');
+                //console.log('done settling promises');
                 retval = {
                     "completed": finalCompleted,
                     "running": running,
@@ -171,6 +171,8 @@ class ARSClient {
     }
 }
 
+/*
+testing stuff
 var aa = new ARSClient('https://ars-prod.transltr.io', '/ars/api/messages', '/ars/api/submit');
 var m0 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0002251"],"categories":["biolink:Disease"]}}}}}';
 var m1 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0004952"],"categories":["biolink:Disease"]}}}}}';
@@ -184,3 +186,4 @@ var m8 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferr
 var m9 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0007947"],"categories":["biolink:Disease"]}}}}}';
 var m10 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0008170"],"categories":["biolink:Disease"]}}}}}';
 var m11 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0010200"],"categories":["biolink:Disease"]}}}}}';
+*/
