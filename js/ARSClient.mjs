@@ -52,7 +52,7 @@ class ARSClient {
      * - The blacklists are applied to the list of agents matching the whitelists
      *
      */
-    async collectAllResults(pkey, fetchCompleted=false, filters=null) {
+    async collectAllResults(pkey, fetchCompleted=false, filters={}) {
 
         function extractFields(child) {
             return {
@@ -64,8 +64,6 @@ class ARSClient {
         }
 
         function applyFilters(masterList, filters) {
-            if (!filters) return masterList;
-
             let retval = [...masterList];
             let hasWhiteList = false;
             if (filters.hasOwnProperty('whitelist')) {
