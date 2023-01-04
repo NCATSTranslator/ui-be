@@ -117,19 +117,24 @@ class ARSClient {
         }
         if (!fetchCompleted) {
             retval = {
-                "completed": Object.values(completed),
-                "running": running,
-                "errored": errored
+                pk: pkey,
+                completed: Object.values(completed),
+                running: running,
+                errored: errored
             };
         } else {
             let agents = applyFilters(Object.keys(completed), filters);
             // Get uuids corresp. to these agents, fetch their results in parallel
             let toFetch = agents.map(e => completed[e].uuid);
-            const promises = toFetch.map(async (e) => this.fetchMessage(e));
+            const promises = toFetch.map(async (e) => {
+                console.log(`kicking off fetch for ${e}`);
+                return this.fetchMessage(e)
+            });
             let finalCompleted = [];
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled#parameters
             await Promise.allSettled(promises).then(results => {
                 results.forEach(item => {
+
                     if (item.status === 'fulfilled') {
                         let agent = item.value.fields.name;
                         let elem = completed[agent];
@@ -140,11 +145,12 @@ class ARSClient {
                         errored.push(item.value); // No idea what might be in this object
                     }
                 });
-                //console.log('done settling promises');
+                console.log('done settling promises');
                 retval = {
-                    "completed": finalCompleted,
-                    "running": running,
-                    "errored": errored
+                    pk: pkey,
+                    completed: finalCompleted,
+                    running: running,
+                    errored: errored
                 };
             });
         }
