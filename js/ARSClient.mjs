@@ -109,10 +109,10 @@ class ARSClient {
             switch (c.code) {
                 case 200: completed[c.actor.agent] = extractFields(c);
                     break;
-                case 202: running.push(c);
+                case 202: running.push(extractFields(c));
                     break;
                 default:
-                    errored.push(c);
+                    errored.push(extractFields(c));
             }
         }
         if (!fetchCompleted) {
