@@ -1,8 +1,8 @@
 'use strict';
 
-export {isRunningQuery, pk} ;
+export {isAcceptedQuery, pk} ;
 
-function isRunningQuery(msg) {
+function isAcceptedQuery(msg) {
     return msg.fields.code === 200 || msg.fields.code === 202;
 }
 

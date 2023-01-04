@@ -1,6 +1,6 @@
 'use strict';
 
-import { query } from "express";
+
 import { ARSClient } from "./ARSClient.mjs";
 import * as arsmsg from './ARSMessages.mjs';
 import * as trapi from './trapi.mjs';
@@ -27,7 +27,7 @@ class TranslatorService {
     async submitQuery(query) {
         try {
             let res = await this.client.postQuery(query);
-            if (arsmsg.isRunningQuery(res)) {
+            if (arsmsg.isAcceptedQuery(res)) {
                 return res;
             } else {
                 throw new Error(`ARS rejected query with response: ${JSON.stringify(res)}`);
