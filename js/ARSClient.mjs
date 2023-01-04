@@ -13,7 +13,7 @@ class ARSClient {
         this.postURL = `${origin}${postPath}`;
     }
 
-    async fetchResultByKey(uuid, doTrace=false) {
+    async fetchMessage(uuid, doTrace=false) {
         let url = `${this.getURL}/${uuid}`;
         if (doTrace) {
             url += '?trace=y';
@@ -55,24 +55,24 @@ class ARSClient {
      */
     async collectAllResults(pkey, fetchCompleted=false, filters={}) {
 
-        function extractFields(child) {
+        function extractFields(childMsg) {
             return {
-                agent: child.actor.agent,
-                uuid: child.message,
-                status: child.status,
-                code: child.code
+                agent: childMsg.actor.agent,
+                uuid: childMsg.message,
+                status: childMsg.status,
+                code: childMsg.code
             }
         }
 
-        function applyFilters(masterList, filters) {
-            let retval = [...masterList];
+        function applyFilters(completedAgents, filters) {
+            let retval = [...completedAgents];
             let hasWhiteList = false;
             if (filters.hasOwnProperty('whitelist')) {
                 retval = retval.filter(e => filters.whitelist.includes(e));
                 hasWhiteList = true;
             }
             if (filters.hasOwnProperty('whitelistRx')) {
-                let whiteRxRes = masterList.filter(e => filters.whitelistRx.test(e));
+                let whiteRxRes = completedAgents.filter(e => filters.whitelistRx.test(e));
                 if (hasWhiteList) {
                     retval = retval.concat(whiteRxRes)
                 } else {
@@ -100,21 +100,19 @@ class ARSClient {
          * data for only those (and only if requested)
          */
         let retval = {};
-        let baseResult = await this.fetchResultByKey(pkey, true);
+        let baseResult = await this.fetchMessage(pkey, true);
         let completed = {}; // use a hash as a placeholder to make fetching data easier
         let running = [];
         let errored = [];
         // Divide results up by status
         for (const c of baseResult.children) {
             switch (c.code) {
-                case 200:
-                    completed[c.actor.agent] = extractFields(c);
+                case 200: completed[c.actor.agent] = extractFields(c);
                     break;
-                case 202:
-                    running.push(extractFields(c));
+                case 202: running.push(c);
                     break;
                 default:
-                    errored.push(extractFields(c));
+                    errored.push(c);
             }
         }
         if (!fetchCompleted) {
@@ -127,7 +125,7 @@ class ARSClient {
             let agents = applyFilters(Object.keys(completed), filters);
             // Get uuids corresp. to these agents, fetch their results in parallel
             let toFetch = agents.map(e => completed[e].uuid);
-            const promises = toFetch.map(async (e) => this.fetchResultByKey(e));
+            const promises = toFetch.map(async (e) => this.fetchMessage(e));
             let finalCompleted = [];
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled#parameters
             await Promise.allSettled(promises).then(results => {
