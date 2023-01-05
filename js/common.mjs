@@ -112,10 +112,10 @@ export function jsonSet(obj, key, v)
 export function jsonMultiSet(obj, kvps)
 {
   kvps.forEach((kvp) =>
-  {
-    const [key, v] = kvp;
-    jsonSet(obj, key, v);
-  });
+    {
+      const [key, v] = kvp;
+      jsonSet(obj, key, v);
+    });
 
   return obj;
 }
@@ -166,16 +166,16 @@ export function jsonSetFromKpath(obj, kpath, v)
   let partialKpath = kpath.slice(0, -1);
   let currentObj = obj;
   partialKpath.forEach(k =>
-  {
-    let nextObj = jsonGet(currentObj, k, false);
-    if (!nextObj)
     {
-      nextObj = {};
-      jsonSet(currentObj, k, nextObj);
-    }
+      let nextObj = jsonGet(currentObj, k, false);
+      if (!nextObj)
+      {
+        nextObj = {};
+        jsonSet(currentObj, k, nextObj);
+      }
 
-    currentObj = nextObj;
-  });
+      currentObj = nextObj;
+    });
 
   jsonSet(currentObj, finalKey, v);
   return obj;
@@ -186,7 +186,8 @@ export function jsonUpdate(obj, key, update)
   return jsonSet(obj, key, update(jsonGet(obj, key)));
 }
 
-export class ApplicationError extends Error {
+export class ApplicationError extends Error
+{
   constructor(message, httpCode) {
     super(message);
     this.name = this.constructor.name;
@@ -194,13 +195,15 @@ export class ApplicationError extends Error {
   }
 }
 
-export class ClientError extends ApplicationError {
+export class ClientError extends ApplicationError
+{
   constructor(message) {
     super(message, 400);
   }
 }
 
-export class ServerError extends ApplicationError {
+export class ServerError extends ApplicationError
+{
   constructor(message) {
     super(message, 500);
   }

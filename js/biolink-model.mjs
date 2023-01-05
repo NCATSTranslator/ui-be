@@ -115,26 +115,26 @@ function makeBlPredicates(slots)
 {
   let blPreds = {};
   Object.keys(slots).forEach((pred) =>
-  {
-    const rank = distanceFromRelatedTo(slots, pred);
-    if (rank >= 0)
     {
-      const record = slots[pred];
-      blPreds[pred] = makeBlPredicate(pred, record, rank);
-    }
-  });
+      const rank = distanceFromRelatedTo(slots, pred);
+      if (rank >= 0)
+      {
+        const record = slots[pred];
+        blPreds[pred] = makeBlPredicate(pred, record, rank);
+      }
+    });
 
   Object.keys(blPreds).forEach((pred) =>
-  {
-    const record = blPreds[pred];
-    const inversePred = record.inverse;
-    if (inversePred)
     {
-      let inverseRecord = cmn.jsonGet(blPreds, inversePred);
-      inverseRecord.inverse = pred;
-      blPreds[inversePred] = inverseRecord;
-    }
-  });
+      const record = blPreds[pred];
+      const inversePred = record.inverse;
+      if (inversePred)
+      {
+        let inverseRecord = cmn.jsonGet(blPreds, inversePred);
+        inverseRecord.inverse = pred;
+        blPreds[inversePred] = inverseRecord;
+      }
+    });
 
   return blPreds;
 }
