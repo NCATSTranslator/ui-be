@@ -1,0 +1,592 @@
+[
+  {
+    "agent": "test",
+    "message": {
+      "results": [
+        {
+          "edge_bindings": {
+            "treats": [
+              {
+                "id": "e0-nUAkUaDdam"
+              }
+            ],
+            "e1": [
+              {
+                "id": "e1"
+              }
+            ],
+            "e2": [
+              {
+                "id": "e2"
+              }
+            ],
+            "e3": [
+              {
+                "id": "e3"
+              }
+            ],
+            "e4": [
+              {
+                "id": "e4"
+              }
+            ],
+            "e5": [
+              {
+                "id": "e5"
+              }
+            ],
+            "e6": [
+              {
+                "id": "e6"
+              }
+            ],
+            "e7": [
+              {
+                "id": "e7"
+              }
+            ],
+            "e-invalid": [
+              {
+                "id": "e-invalid"
+              }
+            ]
+          },
+          "node_bindings": {
+            "drug": [
+              {
+                "id": "PUBCHEM.COMPOUND:54454"
+              }
+            ],
+            "n1": [
+              {
+                "id": "n1"
+              }
+            ],
+            "n2": [
+              {
+                "id": "n2"
+              }
+            ],
+            "n3": [
+              {
+                "id": "n3"
+              }
+            ],
+            "n4": [
+              {
+                "id": "n4"
+              }
+            ],
+            "disease": [
+              {
+                "id": "HP:0003124"
+              }
+            ]
+          }
+        }
+      ],
+      "query_graph": {
+        "edges": {
+          "treats": {
+            "object": "disease",
+            "subject": "drug",
+            "predicates": [
+              "biolink:treats"
+            ],
+            "constraints": []
+          }
+        },
+        "nodes": {
+          "drug": {
+            "is_set": false,
+            "categories": [
+              "biolink:ChemicalEntity"
+            ],
+            "constraints": []
+          },
+          "disease": {
+            "ids": [
+              "HP:0003124"
+            ],
+            "is_set": false,
+            "categories": [
+              "biolink:Disease"
+            ],
+            "constraints": []
+          }
+        }
+      },
+      "knowledge_graph": {
+        "edges": {
+          "e0-nUAkUaDdam": {
+            "object": "HP:0003124",
+            "subject": "PUBCHEM.COMPOUND:54454",
+            "predicate": "biolink:treats",
+            "attributes": [
+              {
+                "value": "FDA Approval",
+                "attributes": [],
+                "value_type_id": "biolink:FDA_approval_status_enum",
+                "attribute_source": "infores:chembl",
+                "attribute_type_id": "biolink:FDA_approval_status",
+                "original_attribute_name": "max phase for indication"
+              },
+              {
+                "value": "NCT00080275,NCT00082251",
+                "value_url": "https://clinicaltrials.gov/search?id=%22NCT00080275%22OR%22NCT00082251%22",
+                "attributes": [],
+                "value_type_id": "string",
+                "attribute_source": "infores:chembl",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "ClinicalTrials"
+              },
+              {
+                "value": {
+                  "PMID:11691537": {
+                    "sentence": "B",
+                    "object score": 1000,
+                    "subject score": 1000,
+                    "publication date": "2001 Nov 01"
+                  }
+                },
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": null,
+                "attribute_source": "infores:semmeddb",
+                "attribute_type_id": "bts:sentence",
+                "original_attribute_name": null
+              },
+              {
+                "value": "PMID:11691537|PMID:17266690",
+                "value_type_id": "biolink:Publication",
+                "attribute_source": "infores:pubmed",
+                "attribute_type_id": "biolink:supporting_document"
+              },
+              {
+                "value": [
+                  "DOI:10.1046/j.1523-1747.1999.00581.x",
+                  "DOI:10.1101/gr.2596504"
+                ],
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": "biolink:Uriorcurie",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:publications",
+                "original_attribute_name": null
+              },
+              {
+                "value": {
+                  "PMID:11152376": {
+                    "sentence": "A",
+                    "object score": 888,
+                    "subject score": 833,
+                    "publication date": "2001 Jan"
+                  },
+                  "PMID:11691537": {
+                    "sentence": "B",
+                    "object score": 1000,
+                    "subject score": 1000,
+                    "publication date": "2001 Nov 01"
+                  }
+                },
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": null,
+                "attribute_source": "infores:semmeddb",
+                "attribute_type_id": "bts:sentence",
+                "original_attribute_name": null
+              },
+              {
+                "value": [
+                  "PMID:11152376",
+                  "PMID:11691537"
+                ],
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": "biolink:Uriorcurie",
+                "attribute_source": "infores:semmeddb",
+                "attribute_type_id": "biolink:publications",
+                "original_attribute_name": null
+              },
+              {
+                "value": "infores:chembl",
+                "attributes": [],
+                "description": "MolePro's ChEMBL indication transformer",
+                "value_type_id": "biolink:InformationResource",
+                "attribute_source": "infores:chembl",
+                "attribute_type_id": "biolink:primary_knowledge_source",
+                "original_attribute_name": "biolink:primary_knowledge_source"
+              },
+              {
+                "value": "infores:molepro",
+                "attributes": [],
+                "description": "Molecular Data Provider",
+                "value_type_id": "biolink:InformationResource",
+                "attribute_source": "infores:chembl",
+                "attribute_type_id": "biolink:aggregator_knowledge_source",
+                "original_attribute_name": "biolink:aggregator_knowledge_source"
+              },
+              {
+                "value": "infores:molepro",
+                "description": "Molecular Data Provider",
+                "value_type_id": "biolink:InformationResource",
+                "attribute_source": "infores:molepro",
+                "attribute_type_id": "biolink:aggregator_knowledge_source",
+                "original_attribute_name": "biolink:aggregator_knowledge_source"
+              }
+            ]
+          },
+          "e1": {
+            "object": "n1",
+            "subject": "PUBCHEM.COMPOUND:54454",
+            "predicate": "biolink:treats"
+          },
+          "e2": {
+            "object": "HP:0003124",
+            "subject": "n1",
+            "predicate": "biolink:treats",
+            "attributes": null
+          },
+          "e3": {
+            "object": "n2",
+            "subject": "n1",
+            "predicate": "biolink:treats"
+          },
+          "e4": {
+            "object": "HP:0003124",
+            "subject": "n2",
+            "predicate": "biolink:treats"
+          },
+          "e5": {
+            "object": "n3",
+            "subject": "n2",
+            "predicate": "biolink:treats"
+          },
+          "e6": {
+            "object": "HP:0003124",
+            "subject": "n3",
+            "predicate": "biolink:treats"
+          },
+          "e7": {
+            "object": "n4",
+            "subject": "PUBCHEM.COMPOUND:54454",
+            "predicate": "biolink:treats"
+          },
+          "e-invalid": {
+            "object": "HP:0003124",
+            "subject": "n4",
+            "predicate": "biolink:treatzz"
+          }
+        },
+        "nodes": {
+          "HP:0003124": {
+            "categories": [
+              "biolink:Disease"
+            ]
+          },
+          "PUBCHEM.COMPOUND:54454": {
+            "name": "simvastatin",
+            "attributes": [
+              {
+                "value": "FDA Approval",
+                "attributes": [],
+                "value_type_id": "string",
+                "attribute_source": "infores:gtopdb",
+                "attribute_type_id": "biolink:highest_FDA_approval_status",
+                "original_attribute_name": "APPROVED"
+              },
+              {
+                "value": "FDA Approval",
+                "attributes": [],
+                "value_type_id": "biolink:FDA_approval_status_enum",
+                "attribute_source": "infores:drug-repurposing-hub",
+                "attribute_type_id": "biolink:highest_FDA_approval_status",
+                "original_attribute_name": "clinical_phase"
+              },
+              {
+                "value": ["A"],
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": "metatype:uriorcurie",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:same_as",
+                "original_attribute_name": "equivalent_identifiers"
+              },
+              {
+                "value": "Example",
+                "value_url": null,
+                "attributes": null,
+                "description": null,
+                "value_type_id": "metatype:String",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:description",
+                "original_attribute_name": null
+              },
+              {
+                "value": "A",
+                "value_url": "https://identifiers.org/uniprot:P37288",
+                "attributes": null,
+                "description": null,
+                "value_type_id": "metatype:Uri",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:IriType",
+                "original_attribute_name": null
+              },
+              {
+                "value": ["A", "B", "C"],
+                "value_url": null,
+                "attributes": null,
+                "description": "Names of all nodes in this synonym set in RTX-KG2.",
+                "value_type_id": "metatype:String",
+                "attribute_source": null,
+                "attribute_type_id": "biolink:synonym",
+                "original_attribute_name": null
+              },
+              {
+                "value": "c10aa(hmg coa reductase inhibitors)",
+                "attributes": [],
+                "attribute_source": "infores:dgidb",
+                "attribute_type_id": "ATC",
+                "original_attribute_name": "ATC"
+              },
+              {
+                "value": "FDA Approval",
+                "attributes": [],
+                "value_type_id": "biolink:FDA_approval_status_enum",
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:highest_FDA_approval_status",
+                "original_attribute_name": "group"
+              },
+              {
+                "value": "PMID:17640385",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:10503952",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:27712954",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:30969322",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:20847985",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:9841303",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:15007110",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:18997196",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:22085316",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:12114036",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:22607822",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:23440795",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:16287954",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:7968073",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:15822172",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:5539274",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:11385505",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:12860216",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:23469684",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:23047648",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:19474787",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:17108811",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:18650507",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:17192506",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:18213452",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "PMID:27757045",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "article"
+              },
+              {
+                "value": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2019/019766s100lbl.pdf",
+                "value_url": "https://www.accessdata.fda.gov/drugsatfda_docs/label/2019/019766s100lbl.pdf",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "link"
+              },
+              {
+                "value": "//s3-us-west-2.amazonaws.com/drugbank/cite_this/attachments/files/000/004/655/original/FDA_Label_-_simvastatin.pdf?1564075804",
+                "value_url": "//s3-us-west-2.amazonaws.com/drugbank/cite_this/attachments/files/000/004/655/original/FDA_Label_-_simvastatin.pdf?1564075804",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "attachment"
+              },
+              {
+                "value": "//s3-us-west-2.amazonaws.com/drugbank/cite_this/attachments/files/000/004/658/original/Health_Canada_Monograph_-_Simvastatin.PDF?1564075821",
+                "value_url": "//s3-us-west-2.amazonaws.com/drugbank/cite_this/attachments/files/000/004/658/original/Health_Canada_Monograph_-_Simvastatin.PDF?1564075821",
+                "attributes": [],
+                "attribute_source": "infores:drugbank",
+                "attribute_type_id": "biolink:Publication",
+                "original_attribute_name": "attachment"
+              },
+              {
+                "value": "FDA Approval",
+                "attributes": [],
+                "value_type_id": "biolink:FDA_approval_status_enum",
+                "attribute_source": "infores:chembl",
+                "attribute_type_id": "biolink:highest_FDA_approval_status",
+                "original_attribute_name": "max_phase"
+              }
+            ],
+            "categories": [
+              "biolink:SmallMolecule"
+            ]
+          },
+          "n1": {},
+          "n2": {},
+          "n3": {},
+          "n4": {}
+        }
+      }
+    }
+  }
+]
