@@ -17,7 +17,7 @@
   "common.rkt")
 
 
-(define j (with-input-from-file "assets/biolink-model.json" (lambda () (read-json)))) ; < 1 second to read json file directly converted via yq
+(define j (with-input-from-file "assets/biolink-model/3.0.0/biolink-model.json" (lambda () (read-json)))) ; < 1 second to read json file directly converted via yq
 (define slots (jsexpr-object-ref j 'slots))
 
 (struct biolink-data
