@@ -1,5 +1,6 @@
 'use strict'
 
+import { SERVER_CONFIG } from './config.mjs';
 import * as cmn from './common.mjs';
 
 export function tagBiolink(str)
@@ -33,6 +34,11 @@ export function invertBiolinkPredicate(pred, biolinkify = false)
 
   throw InvalidPredicateError(p);
 }
+
+const biolinkVersion = SERVER_CONFIG.biolink_version;
+const biolinkModel = await cmn.readJson(`../assets/biolink-model/${biolinkVersion}/biolink-model.json`);
+const slots = cmn.jsonGet(biolinkModel, 'slots');
+const BIOLINK_PREDICATES = makeBlPredicates(slots);
 
 function InvalidPredicateError(predicate)
 {
@@ -138,10 +144,6 @@ function makeBlPredicates(slots)
 
   return blPreds;
 }
-
-const j = await cmn.readJson('../assets/biolink-model.json');
-const slots = cmn.jsonGet(j, 'slots');
-const BIOLINK_PREDICATES = makeBlPredicates(slots);
 
 function biolinkifyPredicate(pred)
 {
