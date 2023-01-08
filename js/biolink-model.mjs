@@ -10,17 +10,17 @@ export function tagBiolink(str)
 
 export function isBiolinkPredicate(s)
 {
-  return BIOLINK_PREDICATES[sanitizePredicate(s)] !== undefined;
+  return BIOLINK_PREDICATES[sanitizeBiolinkElement(s)] !== undefined;
 }
 
-export function sanitizePredicate(pred)
+export function sanitizeBiolinkElement(pred)
 {
   return pred.replaceAll('_', ' ').replaceAll('biolink:', '');
 }
 
 export function invertBiolinkPredicate(pred, biolinkify = false)
 {
-  const p = sanitizePredicate(pred);
+  const p = sanitizeBiolinkElement(pred);
   const biolinkPredicate = cmn.jsonGet(BIOLINK_PREDICATES, p, false);
   if (biolinkPredicate)
   {
@@ -158,13 +158,13 @@ function biolinkifyPredicate(pred)
 
 function getBiolinkPredicateData(pred)
 {
-  return cmn.jsonGet(BIOLINK_PREDICATES, sanitizePredicate(pred), false);
+  return cmn.jsonGet(BIOLINK_PREDICATES, sanitizeBiolinkElement(pred), false);
 }
 
 function isBiolinkPredicateMoreSpecific(pred1, pred2)
 {
-  const p1 = sanitizePredicate(pred1);
-  const p2 = sanitizePredicate(pred2);
+  const p1 = sanitizeBiolinkElement(pred1);
+  const p2 = sanitizeBiolinkElement(pred2);
   const biolinkPredicate1 = getBiolinkPredicateData(p1);
   const biolinkPredicate2 = getBiolinkPredicateData(p2);
 

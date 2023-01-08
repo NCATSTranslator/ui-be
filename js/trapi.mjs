@@ -95,10 +95,8 @@ export function creativeAnswersToSummary (qid, answers)
 
   const edgeRules = makeSummarizeRules(
     [
-      aggregateAndTransformProperty(
-        'predicate',
-        ['predicates'],
-        bl.sanitizePredicate),
+      transformProperty('predicate', bl.sanitizeBiolinkElement),
+      getProperty('qualifiers'),
       transformProperty('subject', nodeToCanonicalNode),
       transformProperty('object', nodeToCanonicalNode),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
@@ -368,6 +366,117 @@ function kedgePredicate(kedge)
   return cmn.jsonGet(kedge, 'predicate');
 }
 
+function kedgeToQualifiers(kedge)
+{
+  const kedgeQualifiers = cmn.jsonGet(kedge, 'qualifiers', false);
+  if (!kedgeQualifiers)
+  {
+    return false;
+  }
+
+  const qualifiers = {};
+  kedgeQualifiers.forEach((q) =>
+    {
+      const qualifierKey = bl.sanitizeBiolinkElement(q['qualifier_type_id']);
+      const qualifierValue = bl.sanitizeBiolinkElement(q['qualifier_value']);
+      qualifiers[qualifierKey] = qualifierValue;
+    });
+
+  return qualifiers;
+}
+
+function edgeToQualifiedPredicate(kedge, invert = false)
+{
+  function qualifiersToString(type, qualifiers)
+  {
+    // TODO: How do part and derivative qualifiers interact? Correct ordering?
+    // TODO: How to handle the context qualifier?
+    // TODO: Make more robust to biolink qualifier changes.
+    // This ordering is important for building the correct statement
+    const prefixes = ['', '', 'of a ', 'of the ', ''];
+    const qualifierKeys = ['direction', 'aspect', 'form or variant', 'part', 'derivative'];
+    const qualifierValues = qualifierKeys.map((key) =>
+      {
+        return cmn.jsonGet(qualifiers, `${type} ${key} qualifier`, false);
+      });
+
+    let qualifierStr = '';
+    qualifierValues.forEach((qv, i) =>
+      {
+        if (qv)
+        {
+          if (qualifierStr)
+          {
+            qualifierStr += ` ${prefixes[i]}${qv}`;
+          }
+          else
+          {
+            qualifierStr = qv;
+          }
+        }
+      });
+
+    return qualifierStr;
+  }
+
+  function subjectQualifiersToString(qualifiers)
+  {
+    return qualifiersToString('subject', qualifiers);
+  }
+
+  function objectQualifiersToString(qualifiers)
+  {
+    return qualifiersToString('object', qualifiers);
+  }
+
+  function finalizeQualifiedPredicate(prefix, predicate, suffix)
+  {
+    if (prefix)
+    {
+      prefix += ' ';
+    }
+
+    if (suffix)
+    {
+      suffix = ` ${suffix} of`;
+    }
+
+    return `${prefix}${predicate}${suffix}`;
+  }
+
+  let predicate = kedgePredicate(kedge);
+  const qualifiers = kedgeToQualifiers(kedge);
+  // If we don't have any qualifiers, treat it like biolink v2
+  if (!qualifiers)
+  {
+    if (invert)
+    {
+      predicate = bl.invertBiolinkPredicate(predicate);
+    }
+
+    return predicate;
+  }
+
+  let subjectQualifierStr = subjectQualifiersToString(qualifiers);
+  let objectQualifierStr = objectQualifiersToString(qualifiers);
+  const qualified_predicate = cmn.jsonGet(qualifiers, 'qualified predicate', false);
+  if (qualified_predicate)
+  {
+    predicate = qualified_predicate;
+  }
+
+  if (invert)
+  {
+    return finalizeQualifiedPredicate(objectQualifierStr,
+                                      bl.invertBiolinkPredicate(predicate),
+                                      subjectQualifierStr);
+  }
+
+  return finalizeQualifiedPredicate(subjectQualifierStr,
+                                    predicate,
+                                    objectQualifierStr);
+}
+
 function makeRgraph(rnodes, redges, kgraph)
 {
   const knodes = cmn.jsonGet(kgraph, 'nodes');
@@ -412,14 +521,14 @@ function redgeToKey(redge, kgraph, nodeToCanonicalNode, doInvert = false)
 {
   const kedge = redgeToTrapiKedge(redge, kgraph);
   const ksubject = nodeToCanonicalNode(kedgeSubject(kedge));
-  const kpredicate = kedgePredicate(kedge);
+  const predicate = edgeToQualifiedPredicate(kedge, doInvert);
   const kobject = nodeToCanonicalNode(kedgeObject(kedge));
   if (doInvert)
   {
-    return pathToKey([kobject, bl.invertBiolinkPredicate(kpredicate), ksubject]);
+    return pathToKey([kobject, predicate, ksubject]);
   }
 
-  return pathToKey([ksubject, kpredicate, kobject]);
+  return pathToKey([ksubject, predicate, kobject]);
 }
 
 function makeRedgeToEdgeId(rgraph, kgraph)
@@ -822,19 +931,21 @@ function condensedSummariesToSummary(qid, condensedSummaries)
 
   function edgesToEdgesAndPublications(edges)
   {
-    function addInvertEdge(edges, edge)
+    function addInverseEdge(edges, edge)
     {
-      const edgePredicate = cmn.jsonGet(edge, 'predicates')[0];
-      const invertedPredicate = bl.invertBiolinkPredicate(edgePredicate);
+      const edgePredicate = cmn.jsonGet(edge, 'predicate');
+      const invertedPredicate = edgeToQualifiedPredicate(edge, true);
       const subject = cmn.jsonGet(edge, 'subject');
       const object = cmn.jsonGet(edge, 'object');
 
       const invertedEdgeKey = pathToKey([object, invertedPredicate, subject]);
       let invertedEdge = cmn.deepCopy(edge);
-      cmn.jsonMultiSet(invertedEdge, [['subject', object],
-        ['object', subject],
-        ['predicates', [invertedPredicate]]]);
+      cmn.jsonMultiSet(invertedEdge,
+                      [['subject', object],
+                       ['object', subject],
+                       ['predicate', invertedPredicate]]);
 
+      delete invertedEdge['qualifiers'];
       edges[invertedEdgeKey] = invertedEdge;
     }
 
@@ -843,7 +954,9 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       {
         extendSummaryPublications(publications, edge);
         delete edge['snippets'];
-        addInvertEdge(edges, edge);
+        addInverseEdge(edges, edge);
+        cmn.jsonSet(edge, 'predicate', edgeToQualifiedPredicate(edge));
+        delete edge['qualifiers'];
       });
 
     return [edges, publications];
