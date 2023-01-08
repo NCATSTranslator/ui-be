@@ -436,13 +436,13 @@ describe('creativeAnswersToSummary', () =>
                   {
                     edges.forEach((edge) =>
                       {
-                        assertInterface(edge, ['predicates', 'iri_types', 'aras', 'subject', 'object', 'publications']);
+                        assertInterface(edge, ['predicate', 'iri_types', 'aras', 'subject', 'object', 'publications']);
                       });
                   });
 
                 it('Should have the 2 edges be inverses', () =>
                   {
-                    assert.equal(e1.predicates[0], bl.invertBiolinkPredicate(e2.predicates[0]));
+                    assert.equal(e1.predicate, bl.invertBiolinkPredicate(e2.predicate));
                     assert.deepEqual(e1.iri_types, e2.iri_types);
                     assert.deepEqual(e1.aras, e2.aras);
                     assert.equal(e1.subject, e2.object);
@@ -450,14 +450,11 @@ describe('creativeAnswersToSummary', () =>
                     assert.deepEqual(e1.publications, e2.publications);
                   });
 
-                it('Should only have edges with biolink compliant predicates', () =>
+                it('Should only have edges with biolink compliant predicate', () =>
                   {
                     edges.forEach((edge) =>
                       {
-                        edge.predicates.forEach((predicate) =>
-                          {
-                            assert.ok(bl.isBiolinkPredicate(predicate));
-                          });
+                        assert.ok(bl.isBiolinkPredicate(edge.predicate));
                       });
                   });
 
@@ -826,7 +823,7 @@ describe('creativeAnswersToSummary', () =>
                       {
                         edge = edges.filter((e) =>
                           {
-                            return e.aras.length === 2 && e.predicates[0] === 'treats';
+                            return e.aras.length === 2 && e.predicate === 'treats';
                           })[0];
                       });
 
