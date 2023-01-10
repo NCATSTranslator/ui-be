@@ -6,6 +6,30 @@ export { ARSClient }
 // 6d7ce863-e4d3-4cf8-8a38-3b7191d17964
 // 26394fad-bfd9-4e32-bb90-ef9d5044f593
 
+/* Data format:
+{
+  pk: 'e0e1a38d-c422-49b9-b39e-0ff9d76bfd07',
+  completed: [
+    {
+      agent: 'ara-bte',
+      uuid: '004867d5-d2c6-47d6-9dea-2d9ccbbe6d69',
+      status: 'Done',
+      code: 200,
+      data: [Object] // Optional, only present if fetchCompleted=true
+    },
+    {
+      agent: 'kp-cam',
+      uuid: '7501c27e-c7a4-4295-8b6c-0dfa228210b1',
+      status: 'Done',
+      code: 200,
+      data: [Object]
+    }
+  ],
+  running: [ {...}, {...} ],
+  errored: [ {...}, {...} ], // Object in
+}
+
+*/
 class ARSClient {
     constructor(origin, getPath, postPath) {
         this.origin = origin;
@@ -112,7 +136,12 @@ class ARSClient {
                 case 202: running.push(extractFields(c));
                     break;
                 default:
-                    errored.push(extractFields(c));
+                    try {
+                        errored.push(extractFields(c));
+                    } catch (err) {
+                        console.error(`Error extracting fields from ARS error response: '${err}'`);
+                        errored.push(c);
+                    }
             }
         }
         if (!fetchCompleted) {
@@ -141,7 +170,8 @@ class ARSClient {
                         finalCompleted.push(elem);
                         console.log(`settled ${agent}`);
                     } else {
-                        // Unexpected case of being unable to fetch a result for an agent with code = 200
+                        //
+                        console.error('Unexpected case of being unable to fetch a result for an agent that reported code=200');
                         errored.push(item.value); // No idea what might be in this object
                     }
                 });
