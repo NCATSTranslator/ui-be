@@ -10,7 +10,7 @@ function msgId(msg) {
     if (msg.hasOwnProperty('message')) {
         return msg.message;
     } else if (msg.hasOwnProperty('pk')) {
-        return 'pk';
+        return msg.pk;
     } else {
         return null;
     }
