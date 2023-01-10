@@ -50,6 +50,52 @@ class ARSClient {
         return this.sendRecv(this.postURL, 'POST', {}, query)
     }
 
+    constructFilterRegexes(filterArray) {
+        return filterArray.map(e => {
+            if (typeof e === 'string') {
+                return new RegExp(e);
+            } else {
+                return e;
+            }
+        });
+    }
+
+    /* Given a list of agents, return a list that contains only those agents satisfying the filter conditions.
+     * If only whitelist filters are specified, all agents matching either an explicit agent or a regex are returned.
+     * If only blacklist filters are specified, only agents not matching an explicit agent and all regexes are returned.
+     * If both blacklist and whitelist filters are specified, an intermediate result is built applying whitelist filters,
+     * and then blacklist filters are applied to that intermediate result.
+     */
+    applyFilters(agentList, filters) {
+        let retval = [...agentList];
+        let hasWhiteList = false;
+        if (filters.hasOwnProperty('whitelist')) {
+            retval = retval.filter(e => filters.whitelist.includes(e));
+            hasWhiteList = true;
+        }
+        if (filters.hasOwnProperty('whitelistRx')) {
+            let whiteRxRes = agentList.filter(e => filters.whitelistRx.test(e));
+            if (hasWhiteList) {
+                retval = retval.concat(whiteRxRes)
+            } else {
+                retval = whiteRxRes;
+            }
+        }
+        /* Uniqify the result so far. If no white filters were present,
+         * retval is the same as masterList at this point. If white
+         * filters were present, retval is the result of applying them,
+         * and black filters should be applied to that result.
+         */
+        retval = [...new Set(retval)];
+
+        if (filters.hasOwnProperty('blacklist')) {
+            retval = retval.filter(e => !filters.blacklist.includes(e));
+        }
+        if (filters.hasOwnProperty('blacklistRx')) {
+            retval = retval.filter(e => !filters.blacklistRx.test(e));
+        }
+        return retval;
+    }
     /*
      * pkey: must be the UUID received upon submitting a query
      * fetchCompleted: if true, will fetch data for ARAs that have completed
@@ -60,9 +106,8 @@ class ARSClient {
      *   blacklistRx: <regexp>,
      * }
      *
-     * Filters are relevant only when fetchCompleted = true (specifying filters
-     * when fetchCompleted=false has no effect). Filters are applied on the list
-     * of completed (status = 200) agents in the following way:
+     * Filters are applied on the list of children returned in the base ARS response, in the
+     * following way:
      * - All agents exactly matching an element in the whitelist array are included
      * - All agents matching the whitelistRx are included
      * Note both filters are applied against the master list of agents. I.e, the
@@ -77,7 +122,7 @@ class ARSClient {
      * - The blacklists are applied to the list of agents matching the whitelists
      *
      */
-    async collectAllResults(pkey, fetchCompleted=false, filters={}) {
+    async collectAllResults(pkey, filters={}, fetchCompleted=false) {
 
         function extractFields(childMsg) {
             return {
@@ -88,48 +133,21 @@ class ARSClient {
             }
         }
 
-        function applyFilters(completedAgents, filters) {
-            let retval = [...completedAgents];
-            let hasWhiteList = false;
-            if (filters.hasOwnProperty('whitelist')) {
-                retval = retval.filter(e => filters.whitelist.includes(e));
-                hasWhiteList = true;
-            }
-            if (filters.hasOwnProperty('whitelistRx')) {
-                let whiteRxRes = completedAgents.filter(e => filters.whitelistRx.test(e));
-                if (hasWhiteList) {
-                    retval = retval.concat(whiteRxRes)
-                } else {
-                    retval = whiteRxRes;
-                }
-            }
-            /* Uniqify the result so far. If no white filters were present,
-             * retval is the same as masterList at this point. If white
-             * filters were present, retval is the result of applying them,
-             * and black filters should be applied to that result.
-             */
-            retval = [...new Set(retval)];
-
-            if (filters.hasOwnProperty('blacklist')) {
-                retval = retval.filter(e => !filters.blacklist.includes(e));
-            }
-            if (filters.hasOwnProperty('blacklistRx')) {
-                retval = retval.filter(e => !filters.blacklistRx.test(e));
-            }
-            return retval;
-        }
-
         /* Fetch all results, divvy up by status, narrow down the ones that completed
          * to ones that match the specified filters (if any), and return full message
          * data for only those (and only if requested)
          */
         let retval = {};
         let baseResult = await this.fetchMessage(pkey, true);
-        let completed = {}; // use a hash as a placeholder to make fetching data easier
+        let allChildrenAgents = baseResult.children.map(e => e.actor.agent);
+        let filteredChildrenAgents = this.applyFilters(allChildrenAgents, filters);
+        let filteredChildren = baseResult.children.filter(e => filteredChildrenAgents.includes(e.actor.agent));
+        // use a hash vs an array for completed results to make it easier to correlate fetched data
+        let completed = {};
         let running = [];
         let errored = [];
         // Divide results up by status
-        for (const c of baseResult.children) {
+        for (const c of filteredChildren) {
             switch (c.code) {
                 case 200: completed[c.actor.agent] = extractFields(c);
                     break;
@@ -152,7 +170,7 @@ class ARSClient {
                 errored: errored
             };
         } else {
-            let agents = applyFilters(Object.keys(completed), filters);
+            let agents = Object.keys(completed);
             // Get uuids corresp. to these agents, fetch their results in parallel
             let toFetch = agents.map(e => completed[e].uuid);
             const promises = toFetch.map(async (e) => {
