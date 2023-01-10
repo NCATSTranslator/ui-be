@@ -38,9 +38,9 @@ class TranslatorService {
         }
 
     }
-    async getQueryStatus(queryId) {
+    async getQueryStatus(queryId, filters={}) {
         try {
-            let res = await this.client.collectAllResults(queryId);
+            let res = await this.client.collectAllResults(queryId, filters);
             return res;
         } catch (err) {
             console.error(`Error querying status for ${queryId}: '${err}'`);
@@ -50,7 +50,7 @@ class TranslatorService {
 
     async getResults(queryId, filters={}) {
         try {
-            let res = await this.client.collectAllResults(queryId, true, filters);
+            let res = await this.client.collectAllResults(queryId, filters, true);
             return res;
         } catch (err) {
             console.error(`Error retrieving results for ${queryId}: '${err}'`);
