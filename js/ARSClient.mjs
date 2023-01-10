@@ -134,12 +134,12 @@ class ARSClient {
             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled#parameters
             await Promise.allSettled(promises).then(results => {
                 results.forEach(item => {
-
                     if (item.status === 'fulfilled') {
                         let agent = item.value.fields.name;
                         let elem = completed[agent];
                         elem.data = item.value.fields.data.message;
                         finalCompleted.push(elem);
+                        console.log(`settled ${agent}`);
                     } else {
                         // Unexpected case of being unable to fetch a result for an agent with code = 200
                         errored.push(item.value); // No idea what might be in this object
