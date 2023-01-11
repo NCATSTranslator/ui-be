@@ -15,7 +15,7 @@ export function start(ars, trapi, config)
   app.use(express.json());
   app.use(express.static('../build'));
   app.post('/creative_query',  makeEndpoint(isValidQuery,
-                                            trapi.diseaseToCreativeQuery,
+                                            trapi.queryToCreativeQuery,
                                             ars.postQuery,
                                             (diseaseCurie, qid) => { return qid; }));
   app.post('/creative_status', makeEndpoint(isValidQidObj,
@@ -38,7 +38,7 @@ export function start(ars, trapi, config)
 
 function isValidQuery(query)
 {
-  return cmn.isObj && cmn.jsonHasKey(query, 'disease');
+  return cmn.isObj;
 }
 
 function isValidQidObj(qidObj)

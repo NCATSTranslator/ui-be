@@ -24,44 +24,118 @@ export function makeMetadataObject(qid, agents)
   };
 }
 
-export function diseaseToCreativeQuery(diseaseObj)
+export function queryToCreativeQuery(query)
 {
-  function diseaseToTrapiQgraph(disease)
+  function buildCreativeQgraph(subject, object, predicate, direction)
   {
-    return {
-      'nodes': {
-        'drug': {
-          'categories': [bl.tagBiolink('ChemicalEntity')]
-        },
-        'disease': {
-          'ids': [disease],
-          'categories': [bl.tagBiolink('Disease')]
-        }
-      },
-      'edges': {
-        'treats': {
-          'subject': 'drug',
-          'object': 'disease',
-          'predicates': [bl.tagBiolink('treats')],
-          'knowledge_type': 'inferred'
-        }
+    function nodeToQgNode(node)
+    {
+      const qgNode = {};
+      qgNode['categories'] = [bl.tagBiolink(node.category)];
+      if (node.id)
+      {
+        qgNode['ids'] = [node.id];
       }
+
+      return qgNode;
+    }
+
+    const qgNodes = {};
+    qgNodes[subject.type] = nodeToQgNode(subject);
+    qgNodes[object.type] = nodeToQgNode(object);
+
+    const qgEdge = {
+      'subject': subject.type,
+      'object': object.type,
+      'predicates': [bl.tagBiolink(predicate)],
+      'knowledge_type': 'inferred',
+    };
+
+    if (direction)
+    {
+      qgEdge['qualifier_constraints'] = [
+        {
+          'qualifier_set': [
+            {
+              'qualifier_type_id': 'biolink:object_aspect_qualifier',
+              'qualifier_value': 'activity_or_abundance'
+            },
+            {
+              'qualifier_type_id': 'biolink:object_direction_qualifier',
+              'qualifier_value': direction
+            }
+          ]
+        }
+      ]
+    }
+
+    return {
+      'nodes': qgNodes,
+      'edges': {'t_edge': qgEdge}
     }
   }
 
-  if (!cmn.isObj(diseaseObj))
+  function diseaseToTrapiQgraph(disease)
   {
-    throw new TypeError(`Expected diseaseObj to be type object, got: ${diseaseObj}`);
+    return buildCreativeQgraph(
+      {'type': 'drug', 'category': 'ChemicalEntity'},
+      {'type': 'disease', 'category': 'Disease', 'id': disease},
+      'treats',
+      null);
   }
 
-  if (!cmn.jsonHasKey(diseaseObj, 'disease'))
+  function geneToTrapiQgraph(gene, direction)
   {
-    throw new ReferenceError(`Expected diseaseObj to have key disease, got: ${diseaseObj}`);
+    return buildCreativeQgraph(
+      {'type': 'chemical', 'category': 'ChemicalEntity'},
+      {'type': 'gene', 'category': 'Gene', 'id': gene},
+      'affects',
+      direction);
+  }
+
+  function chemicalToTrapiQgraph(chemical, direction)
+  {
+    return buildCreativeQgraph(
+      {'type': 'chemical', 'category': 'ChemicalEntity', 'id': chemical},
+      {'type': 'gene', 'category': 'Gene'},
+      'affects',
+      direction);
+  }
+
+  if (!cmn.isObj(query))
+  {
+    throw new TypeError(`Expected query to be type object, got: ${query}`);
+  }
+
+  const validKeys = ['type', 'curie', 'direction'];
+  for (const key of validKeys)
+  {
+    if (!cmn.jsonHasKey(query, key))
+    {
+      throw new ReferenceError(`Expected query to have key ${key}, got: ${query}`);
+    }
+  }
+
+  let qg = null;
+  const queryType = cmn.jsonGet(query, 'type');
+  switch (queryType)
+  {
+    case 'disease':
+      qg = diseaseToTrapiQgraph(cmn.jsonGet(query, 'curie'));
+      break;
+    case 'gene':
+      qg = geneToTrapiQgraph(cmn.jsonGet(query, 'curie'), cmn.jsonGet(query, 'direction'));
+      break;
+    case 'chemical':
+      qg = chemicalToTrapiQgraph(cmn.jsonGet(query, 'curie'), cmn.jsonGet(query, 'direction'));
+      break;
+    default:
+      throw new RangeError(`Expected query type to be one of [disease, gene, chemical], got: ${queryType}`);
   }
 
   return {
     'message': {
-      'query_graph': diseaseToTrapiQgraph(cmn.jsonGet(diseaseObj, 'disease'))
+      'query_graph': qg
     }
   };
 }

@@ -99,12 +99,12 @@ describe('makeMetadataObject', () =>
       });
   });
 
-describe('diseaseToCreativeQuery', () =>
+describe('queryToCreativeQuery', () =>
   {
-    it('Should generate a valid TRAPI creative query given a disease object', () =>
+    it('Should generate a valid TRAPI creative query given a valid query object', () =>
       {
         const curie = 'AWESOME:123';
-        const query = {
+        const diseaseQuery = {
           'message': {
             'query_graph': {
               'nodes': {
@@ -117,7 +117,7 @@ describe('diseaseToCreativeQuery', () =>
                 }
               },
               'edges': {
-                'treats': {
+                't_edge': {
                   'subject': 'drug',
                   'object': 'disease',
                   'predicates': ['biolink:treats'],
@@ -127,23 +127,72 @@ describe('diseaseToCreativeQuery', () =>
             }
           }
         };
-        const diseaseObject = {'disease': curie};
+        const diseaseObject = {'type': 'disease', 'curie': curie, 'direction': null};
+        assert.deepEqual(trapi.queryToCreativeQuery(diseaseObject), diseaseQuery);
 
-        assert.deepEqual(trapi.diseaseToCreativeQuery(diseaseObject), query);
+        const geneQuery = {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "gene": {
+                  "categories": ["biolink:Gene"],
+                  "ids": [curie]
+                },
+                "chemical": {
+                  "categories": ["biolink:ChemicalEntity"]
+                }
+              },
+              "edges": {
+                "t_edge": {
+                  "object": "gene",
+                  "subject": "chemical",
+                  "predicates": ["biolink:affects"],
+                  "knowledge_type": "inferred",
+                  "qualifier_constraints": [
+                    {
+                      "qualifier_set": [
+                        {
+                          "qualifier_type_id": "biolink:object_aspect_qualifier",
+                          "qualifier_value": "activity_or_abundance"
+                        },
+                        {
+                          "qualifier_type_id": "biolink:object_direction_qualifier",
+                          "qualifier_value": "increased"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        };
+        const geneObject = {'type': 'gene', 'curie': curie, 'direction': 'increased'};
+        assert.deepEqual(trapi.queryToCreativeQuery(geneObject), geneQuery);
+
       });
 
-    it('Should throw if the disease object is malformed', () =>
+    it('Should throw if the query object is malformed', () =>
       {
-        assert.throws(() => { return trapi.diseaseToCreativeQuery({}); });
-        assert.throws(() => { return trapi.diseaseToCreativeQuery({'abc': 'AWESOME:123'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'abc': 'AWESOME:123'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'disease': 'AWESOME:123'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'disease', 'curie': 'AWESOME:123'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'disease', 'direction': 'increased'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'curie': 'AWESOME:123', 'direction': 'increased'}); });
       });
 
-    it('Should throw if the disease object is not an object', () =>
+    it('Should throw if the query object is not an object', () =>
       {
-        assert.throws(() => { return trapi.diseaseToCreativeQuery(undefined); });
-        assert.throws(() => { return trapi.diseaseToCreativeQuery('AWESOME:123'); });
-        assert.throws(() => { return trapi.diseaseToCreativeQuery(['disease', 'AWESOME:123']); });
-        assert.throws(() => { return trapi.diseaseToCreativeQuery('{"disease": "AWESOME:123"}'); });
+        assert.throws(() => { return trapi.queryToCreativeQuery(undefined); });
+        assert.throws(() => { return trapi.queryToCreativeQuery('AWESOME:123'); });
+        assert.throws(() => { return trapi.queryToCreativeQuery(['disease', 'AWESOME:123']); });
+        assert.throws(() => { return trapi.queryToCreativeQuery('{"disease": "AWESOME:123"}'); });
+      });
+
+    it('Should throw if the query object does not have a valid type', () =>
+      {
+        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'fruit', 'curie': 'Apple', 'direction': 'red'}); });
       });
   });
 
