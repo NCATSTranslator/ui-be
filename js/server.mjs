@@ -85,7 +85,7 @@ function handleErrors(err, req, res, next)
   {
     res.status(500);
   }
-  res.send(err.message);
+  res.json(makeResponse('error', err.message));
 }
 
 function makeResponse(resStatus, resData)
