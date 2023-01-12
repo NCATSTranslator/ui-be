@@ -120,17 +120,17 @@ export function queryToCreativeQuery(query)
   const queryType = cmn.jsonGet(query, 'type');
   switch (queryType)
   {
-    case 'disease':
+    case 'drug':
       qg = diseaseToTrapiQgraph(cmn.jsonGet(query, 'curie'));
       break;
     case 'gene':
-      qg = geneToTrapiQgraph(cmn.jsonGet(query, 'curie'), cmn.jsonGet(query, 'direction'));
-      break;
-    case 'chemical':
       qg = chemicalToTrapiQgraph(cmn.jsonGet(query, 'curie'), cmn.jsonGet(query, 'direction'));
       break;
+    case 'chemical':
+      qg = geneToTrapiQgraph(cmn.jsonGet(query, 'curie'), cmn.jsonGet(query, 'direction'));
+      break;
     default:
-      throw new RangeError(`Expected query type to be one of [disease, gene, chemical], got: ${queryType}`);
+      throw new RangeError(`Expected query type to be one of [drug, gene, chemical], got: ${queryType}`);
   }
 
   return {
