@@ -78,8 +78,8 @@ function handleStatusRequest(config, service, filters) {
     return async function(req, res, next) {
         try {
             let uuid = req.body.qid;
-            let svcRes = await service.getQueryStatus(uuid, filters);
-            res.status(200).json(tsa.queryStatusToFE(svcRes));
+            let statusRes = await service.getQueryStatus(uuid, filters);
+            res.status(200).json(tsa.queryStatusToFE(statusRes));
         } catch (err) {
             req.log.error(`Internal Server Error: ${err}`);
             res.status(500).send("Internal Server Error");
