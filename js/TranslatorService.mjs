@@ -6,7 +6,7 @@ import * as arsmsg from './ARSMessages.mjs';
 import * as trapi from './trapi.mjs';
 
 export { TranslatorService };
-export { t, aa, mondo };
+// export { t, aa, mondo };
 
 
 /* Implements:
@@ -58,7 +58,9 @@ class TranslatorService {
         }
     }
 }
-
+/*
+// testing stuff
 var aa = new ARSClient('https://ars-prod.transltr.io', '/ars/api/messages', '/ars/api/submit');
 var t = new TranslatorService(aa);
 var mondo = 'MONDO:0005148';
+*/

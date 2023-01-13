@@ -3,7 +3,7 @@
 import { default as path } from 'node:path';
 import { default as url } from 'node:url';
 import { default as express } from 'express';
-import { default as pino, pinoHttp } from 'pino-http';
+import { default as pinoHttp } from 'pino-http';
 import * as tsa from './TranslatorServicexFEAdapter.mjs';
 
 export function startServer(config, service) {
@@ -91,11 +91,8 @@ function handleResultRequest(config, service, filters) {
     return async function(req, res, next) {
         try {
             let uuid = req.body.qid;
-            console.log(`uuid: ${uuid}`);
             let svcRes = await service.getResults(uuid, filters);
-            console.log(`svcres: ${svcRes}`);
             let retval = tsa.queryResultsToFE(svcRes);
-            console.log(`retval: ${retval}`);
             res.status(200).json(tsa.queryResultsToFE(svcRes));
         } catch (err) {
             req.log.error(`Internal Server Error: ${err}`);
