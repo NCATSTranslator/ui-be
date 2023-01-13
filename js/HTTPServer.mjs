@@ -4,7 +4,6 @@ import { default as path } from 'node:path';
 import { default as url } from 'node:url';
 import { default as express } from 'express';
 import { default as pino, pinoHttp } from 'pino-http';
-import * as cmn from './common.mjs';
 import * as tsa from './TranslatorServicexFEAdapter.mjs';
 
 export function startServer(config, service) {
@@ -14,7 +13,7 @@ export function startServer(config, service) {
     app.use(pinoHttp());
     app.use(express.json());
     app.use(express.static('../build'));
-    const filters = {whitelistRx: /^ara-/};
+    const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
     app.post('/creative_query',
         logQuerySubmissionRequest,
@@ -31,6 +30,11 @@ export function startServer(config, service) {
         validateQueryResultRequest,
         handleResultRequest(config, service, filters)
     );
+
+    app.get('*', (req, res, next) => {
+      res.sendFile(path.join(__root, '../build/index.html'));
+    });
+
     app.listen(8386);
 }
 
@@ -42,7 +46,7 @@ function validateQuerySubmissionRequest(req, res, next) {
         && query.disease.length > 0) {
             next();
     } else {
-        res.status(400).send("No disease specified in in request");
+        res.status(400).send("No disease specified in request");
     }
 }
 function handleQuerySubmissionRequest(config, service) {
