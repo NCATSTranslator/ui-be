@@ -1,6 +1,7 @@
 'use strict';
 
 import * as arsmsg from './ARSMessages.mjs';
+import * as trapi from './trapi.mjs';
 
 /* Translate messages coming from the Translator Service into the formats that the Frontend (FE) app expects */
 /* This module should not contain logic that goes beyond message transformations */
@@ -29,7 +30,7 @@ function queryResultsToFE(msg) {
 
     return {
         status: msg.running.length > 0 ? "running" : "success",
-        data: data
+        data: trapi.creativeAnswersToSummary(msg.pk, data)
     };
 }
 
