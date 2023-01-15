@@ -26,7 +26,7 @@ export { ARSClient }
     }
   ],
   running: [ {...}, {...} ],
-  errored: [ {...}, {...} ], // Object in
+  errored: [ {...}, {...} ], // Object in this array may differ in format from what is described above
 }
 
 */
