@@ -307,15 +307,17 @@
         (loop (append new-obj-left (cdr objs-left))
               (append new-res res))))))
 
-(define (make-summary-fragment paths nodes edges)
-  (list paths nodes edges))
+(define (make-summary-fragment paths nodes edges scores)
+  (list paths nodes edges scores))
 (define (summary-fragment-paths summary-fragment)
   (car summary-fragment))
 (define (summary-fragment-nodes summary-fragment)
   (cadr summary-fragment))
 (define (summary-fragment-edges summary-fragment)
   (caddr summary-fragment))
-(define empty-summary-fragment (make-summary-fragment '() '() '()))
+(define (summary-fragment-scores summary-fragment)
+  (cadddr summary-fragment))
+(define empty-summary-fragment (make-summary-fragment '() '() '() (jsexpr-object)))
 
 (define (make-condensed-summary agent summary-fragment)
   (cons agent summary-fragment))
@@ -330,11 +332,30 @@
   (summary-fragment-nodes (condensed-summary-fragment cs)))
 (define (condensed-summary-edges cs)
   (summary-fragment-edges (condensed-summary-fragment cs)))
+(define (condensed-summary-scores cs)
+  (summary-fragment-scores (condensed-summary-fragment cs)))
 (define (path->key path)
   (string->symbol (number->string (equal-hash-code path))))
 
 (define (merge-summary-attrs r s)
-  (map (lambda (r-attr s-attr) (append r-attr s-attr)) r s))
+  (define (merge-lists r s accessor)
+    (append (accessor r) (accessor s)))
+
+  (define (merge-scores r s)
+    (define current-scores (summary-fragment-scores s))
+    (define new-score (car (hash->list (summary-fragment-scores r))))
+    (define new-score-key (car new-score))
+    (define key-scores (jsexpr-object-ref current-scores new-score-key (jsexpr-array)))
+    (jsexpr-object-set
+      current-scores
+      new-score-key
+      (append `(,(cdr new-score)) key-scores)))
+
+  (make-summary-fragment
+    (merge-lists  r s summary-fragment-paths)
+    (merge-lists  r s summary-fragment-nodes)
+    (merge-lists  r s summary-fragment-edges)
+    (merge-scores r s)))
 
 (define (make-canonical-node-mapping all-nodes)
   (define-values (node-sets curies)
@@ -537,7 +558,9 @@
                    (rgraph-nodes rgraph))
               (map (lambda (redge)
                      (summarize-redge redge kgraph))
-                   (rgraph-edges rgraph))))))
+                   (rgraph-edges rgraph))
+              (make-jsexpr-object `((,(rnode->key drug kgraph node->canonical-node) .
+                                     ,(jsexpr-object-ref trapi-result 'normalized_score 0))))))))
 
   (map (lambda (answer)
          (let* ((reporting-agent (answer-agent   answer))
@@ -639,6 +662,19 @@
   (define (extend-summary-edges edges edge-updates agent)
     (extend-summary-obj edges edge-updates agent))
 
+  (define (extend-summary-scores scores new-scores)
+    (let loop ((score-keys (jsexpr-object-keys new-scores))
+               (scores scores))
+      (if (null? score-keys)
+        scores
+        (loop (cdr score-keys)
+              (jsexpr-object-transform
+                scores
+                (car score-keys)
+                (lambda (arr)
+                  (append arr (jsexpr-object-ref new-scores (car score-keys))))
+                (jsexpr-array))))))
+
   (define (extend-summary-publications publications edge)
     (define snippets (jsexpr-object-ref edge 'snippets))
     (define (make-publication-object type url snippet pubdate)
@@ -697,7 +733,7 @@
                       (jsexpr-object-set final-edges ik ie)
                       (extend-summary-publications publications e)))))))
 
-  (define (expand-results results paths nodes)
+  (define (expand-results results paths nodes scores)
     (define (pid->path paths pid)
       (jsexpr-object-ref-recursive
         paths
@@ -727,12 +763,14 @@
                   (drug-name (jsexpr-object-ref-recursive
                                nodes
                                `(,(string->symbol drug) names)))
-                  (disease (last subgraph)))
+                  (disease (last subgraph))
+                  (scores (jsexpr-object-ref scores (string->symbol drug))))
              (make-immutable-hash `((subject   . ,drug)
                                     (drug_name . ,(if (null? drug-name)
                                                     'null
                                                     (car drug-name)))
                                     (paths     . ,(sort ps path<?))
+                                    (score     . ,(/ (foldl + 0 scores) (length scores)))
                                     (object    . ,disease)))))
          results))
 
@@ -748,6 +786,7 @@
              (paths   (jsexpr-object))
              (nodes   (jsexpr-object))
              (edges   (jsexpr-object))
+             (scores  (jsexpr-object))
              (css     condensed-summaries))
     (cond ((null? css)
            (let-values (((edges publications)
@@ -768,7 +807,8 @@
                                     (map jsexpr-object-remove-duplicates
                                          (jsexpr-object-values results))
                                     paths
-                                    nodes))
+                                    nodes
+                                    scores))
                  (paths        . ,(jsexpr-object-map paths jsexpr-object-remove-duplicates))
                  (nodes        . ,(foldl (lambda (node-key nodes)
                                            (let* ((node (jsexpr-object-ref nodes node-key))
@@ -795,6 +835,7 @@
                   (extend-summary-paths paths new-paths agent)
                   (extend-summary-nodes nodes (condensed-summary-nodes cs) agent)
                   (extend-summary-edges edges (condensed-summary-edges cs) agent)
+                  (extend-summary-scores scores (condensed-summary-scores cs))
                   (cdr css))))))
 
 (define (trapi-answers->summary trapi-answers primary-predicates static-node-rules
