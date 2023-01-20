@@ -349,7 +349,7 @@
     (jsexpr-object-set
       current-scores
       new-score-key
-      (append `(,(cdr new-score)) key-scores)))
+      (cons (cdr new-score) key-scores)))
 
   (make-summary-fragment
     (merge-lists  r s summary-fragment-paths)
