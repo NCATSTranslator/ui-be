@@ -805,7 +805,6 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
   function trapiResultToSummaryFragment(trapiResult, kgraph)
   {
     const rgraph = trapiResultToRgraph(trapiResult, kgraph);
-
     if (!rgraph)
     {
       return emptySummaryFragment();
@@ -989,7 +988,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     Object.keys(newScores).forEach((resultNode) =>
       {
         const currentScores = cmn.jsonSetDefaultAndGet(scores, resultNode, []);
-        currentScores.push(newScores[resultNode]);
+        currentScores.push(...newScores[resultNode]);
       });
   }
 
