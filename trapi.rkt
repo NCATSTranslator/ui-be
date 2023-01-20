@@ -343,6 +343,7 @@
 
   (define (merge-scores r s)
     (define current-scores (summary-fragment-scores s))
+    ; There will only ever be one score per new summary fragment
     (define new-score (car (hash->list (summary-fragment-scores r))))
     (define new-score-key (car new-score))
     (define key-scores (jsexpr-object-ref current-scores new-score-key (jsexpr-array)))
@@ -770,6 +771,7 @@
                                                     'null
                                                     (car drug-name)))
                                     (paths     . ,(sort ps path<?))
+                                    ; The length of scores is guaranteed to be > 0
                                     (score     . ,(/ (foldl + 0 scores) (length scores)))
                                     (object    . ,disease)))))
          results))
