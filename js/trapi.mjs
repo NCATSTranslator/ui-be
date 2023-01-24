@@ -666,18 +666,19 @@ function rgraphFold(proc, init, acc)
   return res;
 }
 
-function makeSummaryFragment(paths, nodes, edges)
+function makeSummaryFragment(paths, nodes, edges, scores)
 {
   const summaryFragment = {};
   summaryFragment.paths = paths;
   summaryFragment.nodes = nodes;
   summaryFragment.edges = edges;
+  summaryFragment.scores = scores;
   return summaryFragment;
 }
 
 function emptySummaryFragment()
 {
-  return makeSummaryFragment([], [], []);
+  return makeSummaryFragment([], [], [], {});
 }
 
 function makeCondensedSummary(agent, summaryFragment)
@@ -700,6 +701,11 @@ function condensedSummaryEdges(condensedSummary)
   return condensedSummary.fragment.edges;
 }
 
+function condensedSummaryScores(condensedSummary)
+{
+  return condensedSummary.fragment.scores;
+}
+
 function pathToKey(path)
 {
   return hash(path);
@@ -707,10 +713,13 @@ function pathToKey(path)
 
 function mergeSummaryFragments(f1, f2)
 {
-  Object.keys(f1).forEach((k) =>
-    {
-      f1[k].push(...f2[k]);
-    });
+  f1.paths.push(...f2.paths);
+  f1.nodes.push(...f2.nodes);
+  f1.edges.push(...f2.edges);
+
+  const newScoreKey = Object.keys(f2.scores)[0]; // There is only one score per new summary fragment
+  const currentScores = cmn.jsonSetDefaultAndGet(f1.scores, newScoreKey, []);
+  currentScores.push(f2.scores[newScoreKey]);
 
   return f1;
 }
@@ -796,7 +805,6 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
   function trapiResultToSummaryFragment(trapiResult, kgraph)
   {
     const rgraph = trapiResultToRgraph(trapiResult, kgraph);
-
     if (!rgraph)
     {
       return emptySummaryFragment();
@@ -878,10 +886,16 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
         });
     }
 
+    const resultDrugKey = rnodeToKey(drug, kgraph, nodeToCanonicalNode);
+    const resultScore = cmn.jsonGet(trapiResult, 'normalized_score', 0);
+    const fragmentScore = {};
+    fragmentScore[resultDrugKey] = resultScore;
+
     return makeSummaryFragment(
       normalizePaths(rgraphPaths, kgraph),
       rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph); }),
-      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph); })
+      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph); }),
+      fragmentScore
     );
   }
 
@@ -969,6 +983,15 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     extendSummaryObj(edges, edgeUpdates, agent);
   }
 
+  function extendSummaryScores(scores, newScores)
+  {
+    Object.keys(newScores).forEach((resultNode) =>
+      {
+        const currentScores = cmn.jsonSetDefaultAndGet(scores, resultNode, []);
+        currentScores.push(...newScores[resultNode]);
+      });
+  }
+
   function extendSummaryPublications(publications, edge)
   {
     function makePublicationObject(type, url, snippet, pubdate)
@@ -1036,7 +1059,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     return [edges, publications];
   }
 
-  function expandResults(results, paths, nodes)
+  function expandResults(results, paths, nodes, scores)
   {
     function getPathFromPid(paths, pid)
     {
@@ -1081,11 +1104,14 @@ function condensedSummariesToSummary(qid, condensedSummaries)
         const drug = subgraph[0];
         const drugName = cmn.jsonGetFromKpath(nodes, [drug, 'names']);
         const disease = subgraph[subgraph.length-1];
+        const drugScores = scores[drug];
         return {
           'subject': drug,
           'drug_name': (cmn.isArrayEmpty(drugName)) ? drug : drugName[0],
           'paths': ps.sort(isPathLessThan),
-          'object': disease
+          'object': disease,
+          // drugScores.length is guarateed to be > 0
+          'score': drugScores.reduce((a, b) => { return a + b; }) / drugScores.length
         }
       });
   }
@@ -1109,6 +1135,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   let nodes = {};
   let edges = {};
   let publications = {};
+  let scores = {};
   condensedSummaries.forEach((cs) =>
     {
       const agent = cs.agent;
@@ -1117,6 +1144,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       extendSummaryPaths(paths, newPaths, agent);
       extendSummaryNodes(nodes, condensedSummaryNodes(cs), agent);
       extendSummaryEdges(edges, condensedSummaryEdges(cs), agent);
+      extendSummaryScores(scores, condensedSummaryScores(cs));
     });
 
   Object.values(edges).forEach((edge) =>
@@ -1147,7 +1175,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       pushIfEmpty(nodeCuries, k);
     });
 
-  results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes);
+  results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes, scores);
   Object.values(paths).forEach(objRemoveDuplicates);
 
   return {
