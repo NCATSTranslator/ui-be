@@ -6,6 +6,9 @@ import { idToTypeAndUrl, isValidId } from './evidence.mjs';
 import * as bl from './biolink-model.mjs';
 import { SERVER_CONFIG } from './config.mjs';
 
+const subjectKey = 'sn';
+const objectKey = 'on';
+
 export function makeMetadataObject(qid, agents)
 {
   if (qid === undefined || !cmn.isString(qid))
@@ -41,12 +44,12 @@ export function queryToCreativeQuery(query)
     }
 
     const qgNodes = {};
-    qgNodes[subject.type] = nodeToQgNode(subject);
-    qgNodes[object.type] = nodeToQgNode(object);
+    qgNodes[subjectKey] = nodeToQgNode(subject);
+    qgNodes[objectKey] = nodeToQgNode(object);
 
     const qgEdge = {
-      'subject': subject.type,
-      'object': object.type,
+      'subject': subjectKey,
+      'object': objectKey,
       'predicates': [bl.tagBiolink(predicate)],
       'knowledge_type': 'inferred',
     };
@@ -78,8 +81,8 @@ export function queryToCreativeQuery(query)
   function diseaseToTrapiQgraph(disease)
   {
     return buildCreativeQgraph(
-      {'type': 'drug', 'category': 'ChemicalEntity'},
-      {'type': 'disease', 'category': 'Disease', 'id': disease},
+      {'category': 'ChemicalEntity'},
+      {'category': 'Disease', 'id': disease},
       'treats',
       null);
   }
@@ -87,8 +90,8 @@ export function queryToCreativeQuery(query)
   function geneToTrapiQgraph(gene, direction)
   {
     return buildCreativeQgraph(
-      {'type': 'chemical', 'category': 'ChemicalEntity'},
-      {'type': 'gene', 'category': 'Gene', 'id': gene},
+      {'category': 'ChemicalEntity'},
+      {'category': 'Gene', 'id': gene},
       'affects',
       direction);
   }
@@ -96,8 +99,8 @@ export function queryToCreativeQuery(query)
   function chemicalToTrapiQgraph(chemical, direction)
   {
     return buildCreativeQgraph(
-      {'type': 'chemical', 'category': 'ChemicalEntity', 'id': chemical},
-      {'type': 'gene', 'category': 'Gene'},
+      {'category': 'ChemicalEntity', 'id': chemical},
+      {'category': 'Gene'},
       'affects',
       direction);
   }
@@ -132,6 +135,8 @@ export function queryToCreativeQuery(query)
     default:
       throw new RangeError(`Expected query type to be one of [drug, gene, chemical], got: ${queryType}`);
   }
+
+  console.log(JSON.stringify(qg));
 
   return {
     'message': {
@@ -811,8 +816,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
     }
 
     const nodeBindings = trapiResult['node_bindings'];
-    const drug = getBindingId(nodeBindings, 'drug');
-    const disease = getBindingId(nodeBindings, 'disease');
+    const drug = getBindingId(nodeBindings, subjectKey);
+    const disease = getBindingId(nodeBindings, objectKey);
     const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
     const maxPathLength = (2 * maxHops) + 1;
     const rgraphPaths = rgraphFold((path) =>
