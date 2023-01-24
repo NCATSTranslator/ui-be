@@ -136,8 +136,6 @@ export function queryToCreativeQuery(query)
       throw new RangeError(`Expected query type to be one of [drug, gene, chemical], got: ${queryType}`);
   }
 
-  console.log(JSON.stringify(qg));
-
   return {
     'message': {
       'query_graph': qg
@@ -418,7 +416,13 @@ function rnodeToTrapiKnode(nodeBinding, kgraph)
 
 function getBindingId(bindings, key)
 {
-  return cmn.jsonGet(cmn.jsonGet(bindings, key)[0], 'id');
+  const nodeBinding = cmn.jsonGet(bindings, key);
+  if (!nodeBinding)
+  {
+    return false;
+  }
+
+  return cmn.jsonGet(nodeBinding[0], 'id');
 }
 
 function flattenBindings(bindings)
@@ -818,6 +822,11 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
     const nodeBindings = trapiResult['node_bindings'];
     const drug = getBindingId(nodeBindings, subjectKey);
     const disease = getBindingId(nodeBindings, objectKey);
+    if (!drug || !disease)
+    {
+      return emptySummaryFragment();
+    }
+
     const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
     const maxPathLength = (2 * maxHops) + 1;
     const rgraphPaths = rgraphFold((path) =>
