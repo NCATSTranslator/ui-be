@@ -416,7 +416,7 @@ function rnodeToTrapiKnode(nodeBinding, kgraph)
 
 function getBindingId(bindings, key)
 {
-  const nodeBinding = cmn.jsonGet(bindings, key);
+  const nodeBinding = cmn.jsonGet(bindings, key, false);
   if (!nodeBinding)
   {
     return false;
