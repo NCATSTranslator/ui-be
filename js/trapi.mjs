@@ -6,6 +6,9 @@ import { idToTypeAndUrl, isValidId } from './evidence.mjs';
 import * as bl from './biolink-model.mjs';
 import { SERVER_CONFIG } from './config.mjs';
 
+const subjectKey = 'sn';
+const objectKey = 'on';
+
 export function makeMetadataObject(qid, agents)
 {
   if (qid === undefined || !cmn.isString(qid))
@@ -41,12 +44,12 @@ export function queryToCreativeQuery(query)
     }
 
     const qgNodes = {};
-    qgNodes[subject.type] = nodeToQgNode(subject);
-    qgNodes[object.type] = nodeToQgNode(object);
+    qgNodes[subjectKey] = nodeToQgNode(subject);
+    qgNodes[objectKey] = nodeToQgNode(object);
 
     const qgEdge = {
-      'subject': subject.type,
-      'object': object.type,
+      'subject': subjectKey,
+      'object': objectKey,
       'predicates': [bl.tagBiolink(predicate)],
       'knowledge_type': 'inferred',
     };
@@ -78,8 +81,8 @@ export function queryToCreativeQuery(query)
   function diseaseToTrapiQgraph(disease)
   {
     return buildCreativeQgraph(
-      {'type': 'drug', 'category': 'ChemicalEntity'},
-      {'type': 'disease', 'category': 'Disease', 'id': disease},
+      {'category': 'ChemicalEntity'},
+      {'category': 'Disease', 'id': disease},
       'treats',
       null);
   }
@@ -87,8 +90,8 @@ export function queryToCreativeQuery(query)
   function geneToTrapiQgraph(gene, direction)
   {
     return buildCreativeQgraph(
-      {'type': 'chemical', 'category': 'ChemicalEntity'},
-      {'type': 'gene', 'category': 'Gene', 'id': gene},
+      {'category': 'ChemicalEntity'},
+      {'category': 'Gene', 'id': gene},
       'affects',
       direction);
   }
@@ -96,8 +99,8 @@ export function queryToCreativeQuery(query)
   function chemicalToTrapiQgraph(chemical, direction)
   {
     return buildCreativeQgraph(
-      {'type': 'chemical', 'category': 'ChemicalEntity', 'id': chemical},
-      {'type': 'gene', 'category': 'Gene'},
+      {'category': 'ChemicalEntity', 'id': chemical},
+      {'category': 'Gene'},
       'affects',
       direction);
   }
@@ -413,7 +416,13 @@ function rnodeToTrapiKnode(nodeBinding, kgraph)
 
 function getBindingId(bindings, key)
 {
-  return cmn.jsonGet(cmn.jsonGet(bindings, key)[0], 'id');
+  const nodeBinding = cmn.jsonGet(bindings, key, false);
+  if (!nodeBinding)
+  {
+    return false;
+  }
+
+  return cmn.jsonGet(nodeBinding[0], 'id');
 }
 
 function flattenBindings(bindings)
@@ -802,7 +811,7 @@ function makeCanonicalNodeMapping(allNodes)
 
 function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, nodeToCanonicalNode, maxHops)
 {
-  function trapiResultToSummaryFragment(trapiResult, kgraph)
+  function trapiResultToSummaryFragment(trapiResult, kgraph, startKey, endKey)
   {
     const rgraph = trapiResultToRgraph(trapiResult, kgraph);
     if (!rgraph)
@@ -811,8 +820,13 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
     }
 
     const nodeBindings = trapiResult['node_bindings'];
-    const drug = getBindingId(nodeBindings, 'drug');
-    const disease = getBindingId(nodeBindings, 'disease');
+    const start = getBindingId(nodeBindings, startKey);
+    const end = getBindingId(nodeBindings, endKey);
+    if (!start || !end)
+    {
+      return emptySummaryFragment();
+    }
+
     const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
     const maxPathLength = (2 * maxHops) + 1;
     const rgraphPaths = rgraphFold((path) =>
@@ -822,7 +836,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
         {
           return cmn.makePair([], []);
         }
-        else if (currentRnode === disease)
+        else if (currentRnode === end)
         {
           return cmn.makePair([], [path]);
         }
@@ -842,7 +856,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
           return cmn.makePair(validPaths, []);
         }
       },
-      [[drug]],
+      [[start]],
       []);
 
     function summarizeRnode(rnode, kgraph)
@@ -886,10 +900,10 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
         });
     }
 
-    const resultDrugKey = rnodeToKey(drug, kgraph, nodeToCanonicalNode);
+    const resultStartKey = rnodeToKey(start, kgraph, nodeToCanonicalNode);
     const resultScore = cmn.jsonGet(trapiResult, 'normalized_score', 0);
     const fragmentScore = {};
-    fragmentScore[resultDrugKey] = resultScore;
+    fragmentScore[resultStartKey] = resultScore;
 
     return makeSummaryFragment(
       normalizePaths(rgraphPaths, kgraph),
@@ -899,12 +913,26 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
     );
   }
 
+  function getPathDirection(qgraph)
+  {
+    const qgraphNodes = cmn.jsonGet(qgraph, 'nodes');
+    const startIsSubject = cmn.jsonGetFromKpath(qgraphNodes, [subjectKey, 'ids'], false);
+    if (startIsSubject)
+    {
+      return [objectKey, subjectKey];
+    }
+
+    return [subjectKey, objectKey];
+  }
+
   return answers.map((answer) =>
     {
       const reportingAgent = answer.agent;
       const trapiMessage = answer.message;
       const trapiResults = cmn.jsonGet(trapiMessage, 'results');
       const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
+      const [startKey, endKey] = getPathDirection(cmn.jsonGet(trapiMessage, 'query_graph'));
+
       return makeCondensedSummary(
         reportingAgent,
         trapiResults.reduce(
@@ -912,7 +940,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
           {
             return mergeSummaryFragments(
               summaryFragment,
-              trapiResultToSummaryFragment(result, kgraph));
+              trapiResultToSummaryFragment(result, kgraph, startKey, endKey));
           },
           emptySummaryFragment()));
     });
@@ -928,7 +956,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     fragmentPaths.forEach((path) =>
       {
         const pathKey = pathToKey(path);
-        results.push(cmn.makePair(path[0], pathKey, 'drug', 'pathKey'))
+        results.push(cmn.makePair(path[0], pathKey, 'start', 'pathKey'))
         paths.push(cmn.makePair(pathKey, path, 'key', 'path'))
       });
 
@@ -939,7 +967,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   {
     newResults.forEach((result) =>
       {
-        let existingResult = cmn.jsonSetDefaultAndGet(results, result.drug, {});
+        let existingResult = cmn.jsonSetDefaultAndGet(results, result.start, {});
         let paths = cmn.jsonSetDefaultAndGet(existingResult, 'paths', [])
         paths.push(result.pathKey);
       });
@@ -1101,17 +1129,17 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       {
         const ps = cmn.jsonGet(result, 'paths');
         const subgraph = getPathFromPid(paths, ps[0]);
-        const drug = subgraph[0];
-        const drugName = cmn.jsonGetFromKpath(nodes, [drug, 'names']);
-        const disease = subgraph[subgraph.length-1];
-        const drugScores = scores[drug];
+        const start = subgraph[0];
+        const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
+        const end = subgraph[subgraph.length-1];
+        const startScores = scores[start];
         return {
-          'subject': drug,
-          'drug_name': (cmn.isArrayEmpty(drugName)) ? drug : drugName[0],
+          'subject': start,
+          'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
           'paths': ps.sort(isPathLessThan),
-          'object': disease,
-          // drugScores.length is guarateed to be > 0
-          'score': drugScores.reduce((a, b) => { return a + b; }) / drugScores.length
+          'object': end,
+          // startScores.length is guarateed to be > 0
+          'score': startScores.reduce((a, b) => { return a + b; }) / startScores.length
         }
       });
   }
