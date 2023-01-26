@@ -916,8 +916,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
   function getPathDirection(qgraph)
   {
     const qgraphNodes = cmn.jsonGet(qgraph, 'nodes');
-    const startIsSubject = cmn.jsonGetFromKpath(qgraphNodes, [subjectKey, 'ids'], false);
-    if (startIsSubject)
+    const startIsObject = cmn.jsonGetFromKpath(qgraphNodes, [subjectKey, 'ids'], false);
+    if (startIsObject)
     {
       return [objectKey, subjectKey];
     }
