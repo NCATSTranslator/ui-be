@@ -742,6 +742,31 @@ function makeCanonicalNodeMapping(allNodes)
            attrType === bl.tagBiolink('xref');
   }
 
+  function getCanonicalNode(nodes, priority)
+  {
+    const found = priority.map((x) => { return -1; });
+    nodes.forEach((node, i) =>
+      {
+        priority.forEach((p, j) =>
+          {
+            if (node.startsWith(p))
+            {
+              found[j] = i;
+            }
+          });
+      });
+
+    for (const i of found)
+    {
+      if (i != -1)
+      {
+        return nodes[i];
+      }
+    }
+
+    return nodes[0];
+  }
+
   const nodeSets = [];
   const resultCuries = [];
   allNodes.forEach((nodes) =>
@@ -796,7 +821,7 @@ function makeCanonicalNodeMapping(allNodes)
   mergedNodes.forEach((nodeSet) =>
     {
       const nodes = Array.from(nodeSet.keys());
-      const canonicalNode = nodes[0];
+      const canonicalNode = getCanonicalNode(nodes, SERVER_CONFIG.canonicalization_priority);
       nodes.forEach((curie) =>
         {
           nodeToCanonicalNode[curie] = canonicalNode;

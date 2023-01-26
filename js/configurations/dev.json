@@ -10,5 +10,6 @@
   "biolink_version": "3.1.2",
   "max_hops": 3,
   "log_level": "all",
-  "log_format": "common"
+  "log_format": "common",
+  "canonicalization_priority": "configurations/canon-priority.json"
 }
