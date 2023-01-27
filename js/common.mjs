@@ -65,6 +65,20 @@ export function setUnion(sets)
     new Set());
 }
 
+export function setToObject(set)
+{
+  const obj = {};
+  for (const k of set)
+  {
+    if (k !== undefined)
+    {
+      obj[k] = null;
+    }
+  }
+
+  return obj;
+}
+
 export function isObj(o)
 {
   return typeof o === 'object' &&

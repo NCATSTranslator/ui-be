@@ -155,14 +155,16 @@ export function creativeAnswersToSummary (qid, answers)
       aggregateProperty('name', ['names']),
       aggregateProperty('categories', ['types']),
       aggregateAttributes([bl.tagBiolink('xref')], 'curies'),
-      renameAndTransformAttribute(
+      tagAttribute(
         bl.tagBiolink('highest_FDA_approval_status'),
-        ['fda_info'],
         (fdaDescription) =>
         {
-          return {
-            'highest_fda_approval_status': fdaDescription
-          };
+          if (fdaDescription === "regular approval")
+          {
+            return "fda_approved";
+          }
+
+          return false;
         }),
       aggregateAttributes([bl.tagBiolink('description')], 'descriptions'),
       aggregateAttributes([bl.tagBiolink('synonym')], 'synonyms'),
@@ -388,6 +390,39 @@ function aggregateAttributes(attributeIds, tgtKey)
     attributeIds,
     tgtKey,
     (v) => { return cmn.isArray(v) ? v : [v] });
+}
+
+function tagAttribute(attributeId, transform)
+{
+  return makeMapping(
+    'attributes',
+    (attributes) =>
+    {
+      if (areNoAttributes(attributes))
+      {
+        return null;
+      }
+
+      for (const attribute of attributes)
+      {
+        if (attributeId === attrId(attribute))
+        {
+          return transform(attrValue(attribute));
+        }
+      }
+      return null;
+    },
+    (v, obj) =>
+    {
+      const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', new Set());
+      if (v)
+      {
+        currentTags.add(v);
+      }
+
+      return obj
+    },
+    new Set());
 }
 
 function makeSummarizeRules(rules)
@@ -1158,13 +1193,17 @@ function condensedSummariesToSummary(qid, condensedSummaries)
         const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
         const end = subgraph[subgraph.length-1];
         const startScores = scores[start];
+        const startTags = cmn.jsonGetFromKpath(nodes, [start, 'tags']);
+        const endTags = cmn.jsonGetFromKpath(nodes, [end, 'tags']);
+        const tags = cmn.setToObject(cmn.setUnion([startTags, endTags]));
         return {
           'subject': start,
           'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
           'paths': ps.sort(isPathLessThan),
           'object': end,
           // startScores.length is guarateed to be > 0
-          'score': startScores.reduce((a, b) => { return a + b; }) / startScores.length
+          'score': startScores.reduce((a, b) => { return a + b; }) / startScores.length,
+          'tags': tags
         }
       });
   }
