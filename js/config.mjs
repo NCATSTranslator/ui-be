@@ -2,11 +2,13 @@
 
 import * as cmn from './common.mjs';
 
-const argvs = process.argv;
-let configPath = (argvs.length < 3) ? 'configurations/mock.json' : argvs[2];
-export const SERVER_CONFIG = await cmn.readJson(configPath);
+export { loadConfigFromFile };
 
-if (!SERVER_CONFIG['document-root'])
-{
-  SERVER_CONFIG['document-root'] = process.cwd();
+async function loadConfigFromFile(filePath) {
+  console.log(filePath);
+  let retval = cmn.readJson(filePath);
+  if (!retval['document-root']) {
+    retval['document-root'] = process.cwd();
+  }
+  return retval;
 }

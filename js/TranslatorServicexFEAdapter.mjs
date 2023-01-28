@@ -18,7 +18,7 @@ function queryStatusToFE(msg) {
 }
 
 // msg: an ARS client message w/ results
-function queryResultsToFE(msg) {
+function queryResultsToFE(msg, maxHops) {
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
     let data = msg.completed.filter(e => Array.isArray(e.data.results) && e.data.results.length > 0).map(
@@ -30,7 +30,7 @@ function queryResultsToFE(msg) {
 
     return {
         status: msg.running.length > 0 ? "running" : "success",
-        data: trapi.creativeAnswersToSummary(msg.pk, data)
+        data: trapi.creativeAnswersToSummary(msg.pk, data, maxHops)
     };
 }
 

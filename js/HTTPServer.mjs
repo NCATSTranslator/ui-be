@@ -92,8 +92,8 @@ function handleResultRequest(config, service, filters) {
         try {
             let uuid = req.body.qid;
             let svcRes = await service.getResults(uuid, filters);
-            let retval = tsa.queryResultsToFE(svcRes);
-            res.status(200).json(tsa.queryResultsToFE(svcRes));
+            let retval = tsa.queryResultsToFE(svcRes, config.max_hops);
+            res.status(200).json(retval);
         } catch (err) {
             req.log.error(`Internal Server Error: ${err}`);
             res.status(500).send("Internal Server Error");

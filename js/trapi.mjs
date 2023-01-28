@@ -4,7 +4,6 @@ import { default as hash } from 'hash-sum';
 import * as cmn from './common.mjs';
 import { idToTypeAndUrl, isValidId } from './evidence.mjs';
 import * as bl from './biolink-model.mjs';
-import { SERVER_CONFIG } from './config.mjs';
 
 export function makeMetadataObject(qid, agents)
 {
@@ -66,7 +65,7 @@ export function diseaseToCreativeQuery(diseaseObj)
   };
 }
 
-export function creativeAnswersToSummary (qid, answers)
+export function creativeAnswersToSummary (qid, answers, maxHops)
 {
   const resultNodes = answers.map((answer) =>
     {
@@ -122,7 +121,6 @@ export function creativeAnswersToSummary (qid, answers)
         })
     ]);
 
-  const maxHops = SERVER_CONFIG.max_hops;
   return condensedSummariesToSummary(
     qid,
     creativeAnswersToCondensedSummaries(

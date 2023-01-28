@@ -1,7 +1,10 @@
 'use strict'
 
-import { SERVER_CONFIG } from './config.mjs';
+import { loadConfigFromFile }  from './config.mjs';
 import * as httpserver from './HTTPServer.mjs';
+
+// Load the config asap as basically everything depends on it
+const SERVER_CONFIG = await loadConfigFromFile(process.argv.length < 3 ? './configurations/mock.json' : './' + process.argv[2]);
 
 var Service;
 // Bootstrap the service -- this is a kludge. Services should offer factory or builder methods.
