@@ -139,6 +139,20 @@ class ARSClient {
          */
         let retval = {};
         let baseResult = await this.fetchMessage(pkey, true);
+
+        /* Special case: if the ARS starts queueing requests, it will return status: running
+         * and an empty children array. Catch this special case and exit early.
+         */
+        if (baseResult.children.length === 0 && baseResult.status === "Running") {
+            return {
+                pk: pkey,
+                queuing: true,
+                completed: [],
+                running: [],
+                errored: []
+            };
+        }
+
         let allChildrenAgents = baseResult.children.map(e => e.actor.agent);
         let filteredChildrenAgents = this.applyFilters(allChildrenAgents, filters);
         let filteredChildren = baseResult.children.filter(e => filteredChildrenAgents.includes(e.actor.agent));
@@ -202,6 +216,7 @@ class ARSClient {
                 };
             });
         }
+        retval.queuing = false;
         return retval;
     }
 

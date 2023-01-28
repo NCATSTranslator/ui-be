@@ -7,9 +7,17 @@ import * as trapi from './trapi.mjs';
 /* This module should not contain logic that goes beyond message transformations */
 export { queryStatusToFE, queryResultsToFE, querySubmitToFE };
 // msg: ARS client message with trace=y
+
+function determineStatus(msg) {
+    if (msg.queuing) {
+        return "running";
+    } else {
+        return msg.running.length > 0 ? "running" : "success";
+    }
+}
 function queryStatusToFE(msg) {
     return {
-        status: msg.running.length > 0 ? "running" : "success",
+        status: determineStatus(msg),
         data: {
             qid: msg.pk,
             aras: msg.completed.map(e => e.agent)
@@ -29,7 +37,7 @@ function queryResultsToFE(msg, maxHops) {
         });
 
     return {
-        status: msg.running.length > 0 ? "running" : "success",
+        status: determineStatus(msg),
         data: trapi.creativeAnswersToSummary(msg.pk, data, maxHops)
     };
 }
