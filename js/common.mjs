@@ -208,3 +208,22 @@ export class ServerError extends ApplicationError
     super(message, 500);
   }
 }
+
+
+export async function SendRecvJSON(url, method='GET', headers={}, body=null) {
+  let options = {
+      method: method,
+      headers: {...headers}
+  };
+  options.headers['Content-type'] = 'application/json';
+  if (body) {
+      options.body = JSON.stringify(body);
+  }
+  let resp = await fetch(url, options);
+  if (resp.ok) {
+      return resp.json();
+  } else {
+      let errmsg = `ERROR: status: ${resp.status}; msg: '${resp.statusText}'`;
+      throw new Error(errmsg);
+  }
+}

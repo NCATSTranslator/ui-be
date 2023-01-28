@@ -1,5 +1,6 @@
 'use strict'
 
+import { SendRecvJSON } from "./common.mjs";
 // export { ARSClient, aa, m0 ,m1 ,m2 ,m3 ,m4 ,m5 ,m6 ,m7 ,m8 ,m9 ,m10,m11 };
 export { ARSClient }
 
@@ -43,11 +44,11 @@ class ARSClient {
             url += '?trace=y';
         }
         //console.log(`fetching ${url}`);
-        return this.sendRecv(url, 'GET');
+        return SendRecvJSON(url, 'GET');
     }
 
     async postQuery(query) {
-        return this.sendRecv(this.postURL, 'POST', {}, query)
+        return SendRecvJSON(this.postURL, 'POST', {}, query)
     }
 
     constructFilterRegexes(filterArray) {
@@ -218,24 +219,6 @@ class ARSClient {
         }
         retval.queuing = false;
         return retval;
-    }
-
-    async sendRecv(url, method='GET', headers={}, body=null) {
-        let options = {
-            method: method,
-            headers: {...headers}
-        };
-        options.headers['Content-type'] = 'application/json';
-        if (body) {
-            options.body = JSON.stringify(body);
-        }
-        let resp = await fetch(url, options);
-        if (resp.ok) {
-            return resp.json();
-        } else {
-            let errmsg = `ERROR: status: ${resp.status}; msg: '${resp.statusText}'`;
-            throw new Error(errmsg);
-        }
     }
 }
 
