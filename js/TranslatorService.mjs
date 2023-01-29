@@ -1,13 +1,9 @@
 'use strict';
 
-
-import { ARSClient } from "./ARSClient.mjs";
 import * as arsmsg from './ARSMessages.mjs';
 import * as trapi from './trapi.mjs';
 
 export { TranslatorService };
-// export { t, aa, mondo };
-
 
 /* Implements:
  * - inputToQuery(input);
@@ -63,4 +59,5 @@ class TranslatorService {
 var aa = new ARSClient('https://ars-prod.transltr.io', '/ars/api/messages', '/ars/api/submit');
 var t = new TranslatorService(aa);
 var mondo = 'MONDO:0005148';
+export { t, aa, mondo };
 */
