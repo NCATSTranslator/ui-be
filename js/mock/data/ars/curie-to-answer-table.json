@@ -55,5 +55,6 @@
   "MONDO:0010200": ["test/ars/res11-mondo0010200.json",
                     "test/ars/res4-mondo0010200.json"],
   "empty": [],
-  "null-attrs": ["test/ars/null-attrs.json"]
+  "null-attrs": ["test/ars/null-attrs.json"],
+  "cox2": ["test/ars/cox2.json"]
 }

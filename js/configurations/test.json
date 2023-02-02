@@ -7,6 +7,7 @@
     "post_uri": "/ars/api/submit",
     "pull_uri": "/ars/api/messages"
   },
+  "biolink_version": "3.0.0",
   "max_hops": 3,
   "log_level": "all",
   "log_format": "common"

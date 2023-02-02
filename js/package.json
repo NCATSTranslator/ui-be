@@ -7,6 +7,7 @@
     "prod": "node main.mjs configurations/production.json",
     "test": "node main.mjs configurations/test.json",
     "ci":   "node main.mjs configurations/ci.json",
+    "dev":  "node main.mjs configurations/dev.json",
     "mock": "node --prof mock/main.mjs",
     "unit": "node --test"
   },

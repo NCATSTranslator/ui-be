@@ -99,27 +99,27 @@ describe('makeMetadataObject', () =>
       });
   });
 
-describe('diseaseToCreativeQuery', () =>
+describe('queryToCreativeQuery', () =>
   {
-    it('Should generate a valid TRAPI creative query given a disease object', () =>
+    it('Should generate a valid TRAPI creative query given a valid query object', () =>
       {
         const curie = 'AWESOME:123';
-        const query = {
+        const diseaseQuery = {
           'message': {
             'query_graph': {
               'nodes': {
-                'drug': {
+                'sn': {
                   'categories': ['biolink:ChemicalEntity']
                 },
-                'disease': {
+                'on': {
                   'ids': [curie],
                   'categories': ['biolink:Disease']
                 }
               },
               'edges': {
-                'treats': {
-                  'subject': 'drug',
-                  'object': 'disease',
+                't_edge': {
+                  'subject': 'sn',
+                  'object': 'on',
                   'predicates': ['biolink:treats'],
                   'knowledge_type': 'inferred'
                 }
@@ -127,23 +127,72 @@ describe('diseaseToCreativeQuery', () =>
             }
           }
         };
-        const diseaseObject = {'disease': curie};
+        const diseaseObject = {'type': 'drug', 'curie': curie, 'direction': null};
+        assert.deepEqual(trapi.queryToCreativeQuery(diseaseObject), diseaseQuery);
 
-        assert.deepEqual(trapi.diseaseToCreativeQuery(diseaseObject), query);
+        const geneQuery = {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "on": {
+                  "categories": ["biolink:Gene"],
+                  "ids": [curie]
+                },
+                "sn": {
+                  "categories": ["biolink:ChemicalEntity"]
+                }
+              },
+              "edges": {
+                "t_edge": {
+                  "object": "on",
+                  "subject": "sn",
+                  "predicates": ["biolink:affects"],
+                  "knowledge_type": "inferred",
+                  "qualifier_constraints": [
+                    {
+                      "qualifier_set": [
+                        {
+                          "qualifier_type_id": "biolink:object_aspect_qualifier",
+                          "qualifier_value": "activity_or_abundance"
+                        },
+                        {
+                          "qualifier_type_id": "biolink:object_direction_qualifier",
+                          "qualifier_value": "increased"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        };
+        const geneObject = {'type': 'chemical', 'curie': curie, 'direction': 'increased'};
+        assert.deepEqual(trapi.queryToCreativeQuery(geneObject), geneQuery);
+
       });
 
-    it('Should throw if the disease object is malformed', () =>
+    it('Should throw if the query object is malformed', () =>
       {
-        assert.throws(() => { return trapi.diseaseToCreativeQuery({}); });
-        assert.throws(() => { return trapi.diseaseToCreativeQuery({'abc': 'AWESOME:123'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'abc': 'AWESOME:123'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'disease': 'AWESOME:123'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'drug', 'curie': 'AWESOME:123'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'drug', 'direction': 'increased'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'curie': 'AWESOME:123', 'direction': 'increased'}); });
       });
 
-    it('Should throw if the disease object is not an object', () =>
+    it('Should throw if the query object is not an object', () =>
       {
-        assert.throws(() => { return trapi.diseaseToCreativeQuery(undefined); });
-        assert.throws(() => { return trapi.diseaseToCreativeQuery('AWESOME:123'); });
-        assert.throws(() => { return trapi.diseaseToCreativeQuery(['disease', 'AWESOME:123']); });
-        assert.throws(() => { return trapi.diseaseToCreativeQuery('{"disease": "AWESOME:123"}'); });
+        assert.throws(() => { return trapi.queryToCreativeQuery(undefined); });
+        assert.throws(() => { return trapi.queryToCreativeQuery('AWESOME:123'); });
+        assert.throws(() => { return trapi.queryToCreativeQuery(['disease', 'AWESOME:123']); });
+        assert.throws(() => { return trapi.queryToCreativeQuery('{"disease": "AWESOME:123"}'); });
+      });
+
+    it('Should throw if the query object does not have a valid type', () =>
+      {
+        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'fruit', 'curie': 'Apple', 'direction': 'red'}); });
       });
   });
 
@@ -436,13 +485,13 @@ describe('creativeAnswersToSummary', () =>
                   {
                     edges.forEach((edge) =>
                       {
-                        assertInterface(edge, ['predicates', 'iri_types', 'aras', 'subject', 'object', 'publications']);
+                        assertInterface(edge, ['predicate', 'iri_types', 'aras', 'subject', 'object', 'publications']);
                       });
                   });
 
                 it('Should have the 2 edges be inverses', () =>
                   {
-                    assert.equal(e1.predicates[0], bl.invertBiolinkPredicate(e2.predicates[0]));
+                    assert.equal(e1.predicate, bl.invertBiolinkPredicate(e2.predicate));
                     assert.deepEqual(e1.iri_types, e2.iri_types);
                     assert.deepEqual(e1.aras, e2.aras);
                     assert.equal(e1.subject, e2.object);
@@ -450,14 +499,11 @@ describe('creativeAnswersToSummary', () =>
                     assert.deepEqual(e1.publications, e2.publications);
                   });
 
-                it('Should only have edges with biolink compliant predicates', () =>
+                it('Should only have edges with biolink compliant predicate', () =>
                   {
                     edges.forEach((edge) =>
                       {
-                        edge.predicates.forEach((predicate) =>
-                          {
-                            assert.ok(bl.isBiolinkPredicate(predicate));
-                          });
+                        assert.ok(bl.isBiolinkPredicate(edge.predicate));
                       });
                   });
 
@@ -826,7 +872,7 @@ describe('creativeAnswersToSummary', () =>
                       {
                         edge = edges.filter((e) =>
                           {
-                            return e.aras.length === 2 && e.predicates[0] === 'treats';
+                            return e.aras.length === 2 && e.predicate === 'treats';
                           })[0];
                       });
 

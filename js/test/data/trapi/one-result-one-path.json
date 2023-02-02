@@ -5,19 +5,19 @@
       "results": [
         {
           "edge_bindings": {
-            "treats": [
+            "t_edge": [
               {
                 "id": "e0-nUAkUaDdam"
               }
             ]
           },
           "node_bindings": {
-            "drug": [
+            "sn": [
               {
                 "id": "PUBCHEM.COMPOUND:54454"
               }
             ],
-            "disease": [
+            "on": [
               {
                 "id": "HP:0003124"
               }
@@ -28,8 +28,8 @@
       "query_graph": {
         "edges": {
           "treats": {
-            "object": "disease",
-            "subject": "drug",
+            "object": "on",
+            "subject": "sn",
             "predicates": [
               "biolink:treats"
             ],
@@ -37,14 +37,14 @@
           }
         },
         "nodes": {
-          "drug": {
+          "sn": {
             "is_set": false,
             "categories": [
               "biolink:ChemicalEntity"
             ],
             "constraints": []
           },
-          "disease": {
+          "on": {
             "ids": [
               "HP:0003124"
             ],

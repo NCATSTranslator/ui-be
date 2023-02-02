@@ -5,6 +5,9 @@ import * as cmn from './common.mjs';
 import { idToTypeAndUrl, isValidId } from './evidence.mjs';
 import * as bl from './biolink-model.mjs';
 
+const subjectKey = 'sn';
+const objectKey = 'on';
+
 export function makeMetadataObject(qid, agents)
 {
   if (qid === undefined || !cmn.isString(qid))
@@ -23,44 +26,118 @@ export function makeMetadataObject(qid, agents)
   };
 }
 
-export function diseaseToCreativeQuery(diseaseObj)
+export function queryToCreativeQuery(query)
 {
-  function diseaseToTrapiQgraph(disease)
+  function buildCreativeQgraph(subject, object, predicate, direction)
   {
-    return {
-      'nodes': {
-        'drug': {
-          'categories': [bl.tagBiolink('ChemicalEntity')]
-        },
-        'disease': {
-          'ids': [disease],
-          'categories': [bl.tagBiolink('Disease')]
-        }
-      },
-      'edges': {
-        'treats': {
-          'subject': 'drug',
-          'object': 'disease',
-          'predicates': [bl.tagBiolink('treats')],
-          'knowledge_type': 'inferred'
-        }
+    function nodeToQgNode(node)
+    {
+      const qgNode = {};
+      qgNode['categories'] = [bl.tagBiolink(node.category)];
+      if (node.id)
+      {
+        qgNode['ids'] = [node.id];
       }
+
+      return qgNode;
+    }
+
+    const qgNodes = {};
+    qgNodes[subjectKey] = nodeToQgNode(subject);
+    qgNodes[objectKey] = nodeToQgNode(object);
+
+    const qgEdge = {
+      'subject': subjectKey,
+      'object': objectKey,
+      'predicates': [bl.tagBiolink(predicate)],
+      'knowledge_type': 'inferred',
+    };
+
+    if (direction)
+    {
+      qgEdge['qualifier_constraints'] = [
+        {
+          'qualifier_set': [
+            {
+              'qualifier_type_id': 'biolink:object_aspect_qualifier',
+              'qualifier_value': 'activity_or_abundance'
+            },
+            {
+              'qualifier_type_id': 'biolink:object_direction_qualifier',
+              'qualifier_value': direction
+            }
+          ]
+        }
+      ]
+    }
+
+    return {
+      'nodes': qgNodes,
+      'edges': {'t_edge': qgEdge}
     }
   }
 
-  if (!cmn.isObj(diseaseObj))
+  function diseaseToTrapiQgraph(disease)
   {
-    throw new TypeError(`Expected diseaseObj to be type object, got: ${diseaseObj}`);
+    return buildCreativeQgraph(
+      {'category': 'ChemicalEntity'},
+      {'category': 'Disease', 'id': disease},
+      'treats',
+      null);
   }
 
-  if (!cmn.jsonHasKey(diseaseObj, 'disease'))
+  function geneToTrapiQgraph(gene, direction)
   {
-    throw new ReferenceError(`Expected diseaseObj to have key disease, got: ${diseaseObj}`);
+    return buildCreativeQgraph(
+      {'category': 'ChemicalEntity'},
+      {'category': 'Gene', 'id': gene},
+      'affects',
+      direction);
+  }
+
+  function chemicalToTrapiQgraph(chemical, direction)
+  {
+    return buildCreativeQgraph(
+      {'category': 'ChemicalEntity', 'id': chemical},
+      {'category': 'Gene'},
+      'affects',
+      direction);
+  }
+
+  if (!cmn.isObj(query))
+  {
+    throw new TypeError(`Expected query to be type object, got: ${query}`);
+  }
+
+  const validKeys = ['type', 'curie', 'direction'];
+  for (const key of validKeys)
+  {
+    if (!cmn.jsonHasKey(query, key))
+    {
+      throw new ReferenceError(`Expected query to have key ${key}, got: ${query}`);
+    }
+  }
+
+  let qg = null;
+  const queryType = cmn.jsonGet(query, 'type');
+  switch (queryType)
+  {
+    case 'drug':
+      qg = diseaseToTrapiQgraph(cmn.jsonGet(query, 'curie'));
+      break;
+    case 'gene':
+      qg = chemicalToTrapiQgraph(cmn.jsonGet(query, 'curie'), cmn.jsonGet(query, 'direction'));
+      break;
+    case 'chemical':
+      qg = geneToTrapiQgraph(cmn.jsonGet(query, 'curie'), cmn.jsonGet(query, 'direction'));
+      break;
+    default:
+      throw new RangeError(`Expected query type to be one of [drug, gene, chemical], got: ${queryType}`);
   }
 
   return {
     'message': {
-      'query_graph': diseaseToTrapiQgraph(cmn.jsonGet(diseaseObj, 'disease'))
+      'query_graph': qg
     }
   };
 }
@@ -94,10 +171,8 @@ export function creativeAnswersToSummary (qid, answers, maxHops)
 
   const edgeRules = makeSummarizeRules(
     [
-      aggregateAndTransformProperty(
-        'predicate',
-        ['predicates'],
-        bl.sanitizePredicate),
+      transformProperty('predicate', bl.sanitizeBiolinkElement),
+      getProperty('qualifiers'),
       transformProperty('subject', nodeToCanonicalNode),
       transformProperty('object', nodeToCanonicalNode),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
@@ -339,7 +414,13 @@ function rnodeToTrapiKnode(nodeBinding, kgraph)
 
 function getBindingId(bindings, key)
 {
-  return cmn.jsonGet(cmn.jsonGet(bindings, key)[0], 'id');
+  const nodeBinding = cmn.jsonGet(bindings, key, false);
+  if (!nodeBinding)
+  {
+    return false;
+  }
+
+  return cmn.jsonGet(nodeBinding[0], 'id');
 }
 
 function flattenBindings(bindings)
@@ -364,6 +445,117 @@ function kedgeObject(kedge)
 function kedgePredicate(kedge)
 {
   return cmn.jsonGet(kedge, 'predicate');
+}
+
+function kedgeToQualifiers(kedge)
+{
+  const kedgeQualifiers = cmn.jsonGet(kedge, 'qualifiers', false);
+  if (!kedgeQualifiers)
+  {
+    return false;
+  }
+
+  const qualifiers = {};
+  kedgeQualifiers.forEach((q) =>
+    {
+      const qualifierKey = bl.sanitizeBiolinkElement(q['qualifier_type_id']);
+      const qualifierValue = bl.sanitizeBiolinkElement(q['qualifier_value']);
+      qualifiers[qualifierKey] = qualifierValue;
+    });
+
+  return qualifiers;
+}
+
+function edgeToQualifiedPredicate(kedge, invert = false)
+{
+  function qualifiersToString(type, qualifiers)
+  {
+    // TODO: How do part and derivative qualifiers interact? Correct ordering?
+    // TODO: How to handle the context qualifier?
+    // TODO: Make more robust to biolink qualifier changes.
+    // This ordering is important for building the correct statement
+    const prefixes = ['', '', 'of a ', 'of the ', ''];
+    const qualifierKeys = ['direction', 'aspect', 'form or variant', 'part', 'derivative'];
+    const qualifierValues = qualifierKeys.map((key) =>
+      {
+        return cmn.jsonGet(qualifiers, `${type} ${key} qualifier`, false);
+      });
+
+    let qualifierStr = '';
+    qualifierValues.forEach((qv, i) =>
+      {
+        if (qv)
+        {
+          if (qualifierStr)
+          {
+            qualifierStr += ` ${prefixes[i]}${qv}`;
+          }
+          else
+          {
+            qualifierStr = qv;
+          }
+        }
+      });
+
+    return qualifierStr;
+  }
+
+  function subjectQualifiersToString(qualifiers)
+  {
+    return qualifiersToString('subject', qualifiers);
+  }
+
+  function objectQualifiersToString(qualifiers)
+  {
+    return qualifiersToString('object', qualifiers);
+  }
+
+  function finalizeQualifiedPredicate(prefix, predicate, suffix)
+  {
+    if (prefix)
+    {
+      prefix += ' ';
+    }
+
+    if (suffix)
+    {
+      suffix = ` ${suffix} of`;
+    }
+
+    return `${prefix}${predicate}${suffix}`;
+  }
+
+  let predicate = kedgePredicate(kedge);
+  const qualifiers = kedgeToQualifiers(kedge);
+  // If we don't have any qualifiers, treat it like biolink v2
+  if (!qualifiers)
+  {
+    if (invert)
+    {
+      predicate = bl.invertBiolinkPredicate(predicate);
+    }
+
+    return predicate;
+  }
+
+  let subjectQualifierStr = subjectQualifiersToString(qualifiers);
+  let objectQualifierStr = objectQualifiersToString(qualifiers);
+  const qualified_predicate = cmn.jsonGet(qualifiers, 'qualified predicate', false);
+  if (qualified_predicate)
+  {
+    predicate = qualified_predicate;
+  }
+
+  if (invert)
+  {
+    return finalizeQualifiedPredicate(objectQualifierStr,
+                                      bl.invertBiolinkPredicate(predicate),
+                                      subjectQualifierStr);
+  }
+
+  return finalizeQualifiedPredicate(subjectQualifierStr,
+                                    predicate,
+                                    objectQualifierStr);
 }
 
 function makeRgraph(rnodes, redges, kgraph)
@@ -410,14 +602,14 @@ function redgeToKey(redge, kgraph, nodeToCanonicalNode, doInvert = false)
 {
   const kedge = redgeToTrapiKedge(redge, kgraph);
   const ksubject = nodeToCanonicalNode(kedgeSubject(kedge));
-  const kpredicate = kedgePredicate(kedge);
+  const predicate = edgeToQualifiedPredicate(kedge, doInvert);
   const kobject = nodeToCanonicalNode(kedgeObject(kedge));
   if (doInvert)
   {
-    return pathToKey([kobject, bl.invertBiolinkPredicate(kpredicate), ksubject]);
+    return pathToKey([kobject, predicate, ksubject]);
   }
 
-  return pathToKey([ksubject, kpredicate, kobject]);
+  return pathToKey([ksubject, predicate, kobject]);
 }
 
 function makeRedgeToEdgeId(rgraph, kgraph)
@@ -481,18 +673,19 @@ function rgraphFold(proc, init, acc)
   return res;
 }
 
-function makeSummaryFragment(paths, nodes, edges)
+function makeSummaryFragment(paths, nodes, edges, scores)
 {
   const summaryFragment = {};
   summaryFragment.paths = paths;
   summaryFragment.nodes = nodes;
   summaryFragment.edges = edges;
+  summaryFragment.scores = scores;
   return summaryFragment;
 }
 
 function emptySummaryFragment()
 {
-  return makeSummaryFragment([], [], []);
+  return makeSummaryFragment([], [], [], {});
 }
 
 function makeCondensedSummary(agent, summaryFragment)
@@ -515,6 +708,11 @@ function condensedSummaryEdges(condensedSummary)
   return condensedSummary.fragment.edges;
 }
 
+function condensedSummaryScores(condensedSummary)
+{
+  return condensedSummary.fragment.scores;
+}
+
 function pathToKey(path)
 {
   return hash(path);
@@ -522,10 +720,13 @@ function pathToKey(path)
 
 function mergeSummaryFragments(f1, f2)
 {
-  Object.keys(f1).forEach((k) =>
-    {
-      f1[k].push(...f2[k]);
-    });
+  f1.paths.push(...f2.paths);
+  f1.nodes.push(...f2.nodes);
+  f1.edges.push(...f2.edges);
+
+  const newScoreKey = Object.keys(f2.scores)[0]; // There is only one score per new summary fragment
+  const currentScores = cmn.jsonSetDefaultAndGet(f1.scores, newScoreKey, []);
+  currentScores.push(f2.scores[newScoreKey]);
 
   return f1;
 }
@@ -608,18 +809,22 @@ function makeCanonicalNodeMapping(allNodes)
 
 function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, nodeToCanonicalNode, maxHops)
 {
-  function trapiResultToSummaryFragment(trapiResult, kgraph)
+  function trapiResultToSummaryFragment(trapiResult, kgraph, startKey, endKey)
   {
     const rgraph = trapiResultToRgraph(trapiResult, kgraph);
-
     if (!rgraph)
     {
       return emptySummaryFragment();
     }
 
     const nodeBindings = trapiResult['node_bindings'];
-    const drug = getBindingId(nodeBindings, 'drug');
-    const disease = getBindingId(nodeBindings, 'disease');
+    const start = getBindingId(nodeBindings, startKey);
+    const end = getBindingId(nodeBindings, endKey);
+    if (!start || !end)
+    {
+      return emptySummaryFragment();
+    }
+
     const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
     const maxPathLength = (2 * maxHops) + 1;
     const rgraphPaths = rgraphFold((path) =>
@@ -629,7 +834,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
         {
           return cmn.makePair([], []);
         }
-        else if (currentRnode === disease)
+        else if (currentRnode === end)
         {
           return cmn.makePair([], [path]);
         }
@@ -649,7 +854,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
           return cmn.makePair(validPaths, []);
         }
       },
-      [[drug]],
+      [[start]],
       []);
 
     function summarizeRnode(rnode, kgraph)
@@ -693,11 +898,29 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
         });
     }
 
+    const resultStartKey = rnodeToKey(start, kgraph, nodeToCanonicalNode);
+    const resultScore = cmn.jsonGet(trapiResult, 'normalized_score', 0);
+    const fragmentScore = {};
+    fragmentScore[resultStartKey] = resultScore;
+
     return makeSummaryFragment(
       normalizePaths(rgraphPaths, kgraph),
       rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph); }),
-      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph); })
+      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph); }),
+      fragmentScore
     );
+  }
+
+  function getPathDirection(qgraph)
+  {
+    const qgraphNodes = cmn.jsonGet(qgraph, 'nodes');
+    const startIsObject = cmn.jsonGetFromKpath(qgraphNodes, [subjectKey, 'ids'], false);
+    if (startIsObject)
+    {
+      return [objectKey, subjectKey];
+    }
+
+    return [subjectKey, objectKey];
   }
 
   return answers.map((answer) =>
@@ -706,6 +929,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
       const trapiMessage = answer.message;
       const trapiResults = cmn.jsonGet(trapiMessage, 'results');
       const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
+      const [startKey, endKey] = getPathDirection(cmn.jsonGet(trapiMessage, 'query_graph'));
+
       return makeCondensedSummary(
         reportingAgent,
         trapiResults.reduce(
@@ -713,7 +938,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
           {
             return mergeSummaryFragments(
               summaryFragment,
-              trapiResultToSummaryFragment(result, kgraph));
+              trapiResultToSummaryFragment(result, kgraph, startKey, endKey));
           },
           emptySummaryFragment()));
     });
@@ -729,7 +954,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     fragmentPaths.forEach((path) =>
       {
         const pathKey = pathToKey(path);
-        results.push(cmn.makePair(path[0], pathKey, 'drug', 'pathKey'))
+        results.push(cmn.makePair(path[0], pathKey, 'start', 'pathKey'))
         paths.push(cmn.makePair(pathKey, path, 'key', 'path'))
       });
 
@@ -740,7 +965,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   {
     newResults.forEach((result) =>
       {
-        let existingResult = cmn.jsonSetDefaultAndGet(results, result.drug, {});
+        let existingResult = cmn.jsonSetDefaultAndGet(results, result.start, {});
         let paths = cmn.jsonSetDefaultAndGet(existingResult, 'paths', [])
         paths.push(result.pathKey);
       });
@@ -784,6 +1009,15 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     extendSummaryObj(edges, edgeUpdates, agent);
   }
 
+  function extendSummaryScores(scores, newScores)
+  {
+    Object.keys(newScores).forEach((resultNode) =>
+      {
+        const currentScores = cmn.jsonSetDefaultAndGet(scores, resultNode, []);
+        currentScores.push(...newScores[resultNode]);
+      });
+  }
+
   function extendSummaryPublications(publications, edge)
   {
     function makePublicationObject(type, url, snippet, pubdate)
@@ -820,19 +1054,21 @@ function condensedSummariesToSummary(qid, condensedSummaries)
 
   function edgesToEdgesAndPublications(edges)
   {
-    function addInvertEdge(edges, edge)
+    function addInverseEdge(edges, edge)
     {
-      const edgePredicate = cmn.jsonGet(edge, 'predicates')[0];
-      const invertedPredicate = bl.invertBiolinkPredicate(edgePredicate);
+      const edgePredicate = cmn.jsonGet(edge, 'predicate');
+      const invertedPredicate = edgeToQualifiedPredicate(edge, true);
       const subject = cmn.jsonGet(edge, 'subject');
       const object = cmn.jsonGet(edge, 'object');
 
       const invertedEdgeKey = pathToKey([object, invertedPredicate, subject]);
       let invertedEdge = cmn.deepCopy(edge);
-      cmn.jsonMultiSet(invertedEdge, [['subject', object],
-        ['object', subject],
-        ['predicates', [invertedPredicate]]]);
+      cmn.jsonMultiSet(invertedEdge,
+                      [['subject', object],
+                       ['object', subject],
+                       ['predicate', invertedPredicate]]);
 
+      delete invertedEdge['qualifiers'];
       edges[invertedEdgeKey] = invertedEdge;
     }
 
@@ -841,13 +1077,15 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       {
         extendSummaryPublications(publications, edge);
         delete edge['snippets'];
-        addInvertEdge(edges, edge);
+        addInverseEdge(edges, edge);
+        cmn.jsonSet(edge, 'predicate', edgeToQualifiedPredicate(edge));
+        delete edge['qualifiers'];
       });
 
     return [edges, publications];
   }
 
-  function expandResults(results, paths, nodes)
+  function expandResults(results, paths, nodes, scores)
   {
     function getPathFromPid(paths, pid)
     {
@@ -889,14 +1127,17 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       {
         const ps = cmn.jsonGet(result, 'paths');
         const subgraph = getPathFromPid(paths, ps[0]);
-        const drug = subgraph[0];
-        const drugName = cmn.jsonGetFromKpath(nodes, [drug, 'names']);
-        const disease = subgraph[subgraph.length-1];
+        const start = subgraph[0];
+        const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
+        const end = subgraph[subgraph.length-1];
+        const startScores = scores[start];
         return {
-          'subject': drug,
-          'drug_name': (cmn.isArrayEmpty(drugName)) ? drug : drugName[0],
+          'subject': start,
+          'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
           'paths': ps.sort(isPathLessThan),
-          'object': disease
+          'object': end,
+          // startScores.length is guarateed to be > 0
+          'score': startScores.reduce((a, b) => { return a + b; }) / startScores.length
         }
       });
   }
@@ -920,6 +1161,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
   let nodes = {};
   let edges = {};
   let publications = {};
+  let scores = {};
   condensedSummaries.forEach((cs) =>
     {
       const agent = cs.agent;
@@ -928,6 +1170,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       extendSummaryPaths(paths, newPaths, agent);
       extendSummaryNodes(nodes, condensedSummaryNodes(cs), agent);
       extendSummaryEdges(edges, condensedSummaryEdges(cs), agent);
+      extendSummaryScores(scores, condensedSummaryScores(cs));
     });
 
   Object.values(edges).forEach((edge) =>
@@ -958,7 +1201,7 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       pushIfEmpty(nodeCuries, k);
     });
 
-  results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes);
+  results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes, scores);
   Object.values(paths).forEach(objRemoveDuplicates);
 
   return {
