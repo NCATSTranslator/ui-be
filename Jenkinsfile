@@ -44,7 +44,7 @@ pipeline {
            when { expression { return env.BUILD == 'true' }}
             steps {
                 script {
-                    bash '''#!/bin/bash
+                    sh '''#!/bin/bash
                     source build-docker-container.sh -b main -f main -e ci
                     echo $version_tag
                     echo $image_name
