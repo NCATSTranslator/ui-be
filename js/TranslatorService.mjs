@@ -13,21 +13,22 @@ export { TranslatorService };
  */
 class TranslatorService
 {
-  constructor(client)
+  constructor(queryClient, outputAdapter)
   {
-    this.client = client;
+    this.queryClient = queryClient;
+    this.outputAdapter = outputAdapter;
   }
 
   inputToQuery(input)
   {
-    return trapi.diseaseToCreativeQuery(input);
+    return trapi.queryToCreativeQuery(input);
   }
 
   async submitQuery(query)
   {
     try
     {
-      let res = await this.client.postQuery(query);
+      let res = await this.queryClient.postQuery(query);
       if (arsmsg.isAcceptedQuery(res))
       {
         return res;
@@ -47,7 +48,7 @@ class TranslatorService
   {
     try
     {
-      let res = await this.client.collectAllResults(queryId, filters);
+      let res = await this.queryClient.collectAllResults(queryId, filters);
       return res;
     }
     catch (err)
@@ -61,7 +62,7 @@ class TranslatorService
   {
     try
     {
-      let res = await this.client.collectAllResults(queryId, filters, true);
+      let res = await this.queryClient.collectAllResults(queryId, filters, true);
       return res;
     }
     catch (err)

@@ -88,7 +88,7 @@ class ARSClient
     }
     if (filters.hasOwnProperty('whitelistRx'))
     {
-      let whiteRxRes = agentList.filter(e => filters.whitelistRx.test(e));
+      const whiteRxRes = agentList.filter(e => filters.whitelistRx.test(e));
       if (hasWhiteList)
       {
         retval = retval.concat(whiteRxRes)

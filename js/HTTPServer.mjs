@@ -4,7 +4,7 @@ import { default as path } from 'node:path';
 import { default as url } from 'node:url';
 import { default as express } from 'express';
 import { default as pinoHttp } from 'pino-http';
-import * as tsa from './TranslatorServicexFEAdapter.mjs';
+import * as cmn from './common.mjs';
 
 export function startServer(config, service)
 {
@@ -46,15 +46,13 @@ function logQuerySubmissionRequest(req, res, next)
 function validateQuerySubmissionRequest(req, res, next)
 {
   let query = req.body;
-  if (typeof query === 'object'
-    && query.hasOwnProperty('disease')
-    && query.disease.length > 0)
+  if (cmn.isObj(query))
   {
     next();
   }
   else
   {
-    res.status(400).send("No disease specified in request");
+    sendError(res, 400, "No disease specificed in request");
   }
 }
 
@@ -68,12 +66,12 @@ function handleQuerySubmissionRequest(config, service)
       req.log.info({query: query});
       let resp = await service.submitQuery(query);
       req.log.info({arsqueryresp: resp});
-      res.status(200).json(tsa.querySubmitToFE(resp));
+      res.status(200).json(service.outputAdapter.querySubmitToFE(resp));
     }
     catch (err)
     {
-      req.log.error(`Internal Server Error: ${err}`);
-      res.status(500).send("Internal Server Error");
+      logInternalServerError(req, err);
+      sendInternalServerError(res);
     }
   }
 }
@@ -81,7 +79,7 @@ function handleQuerySubmissionRequest(config, service)
 function validateQueryResultRequest(req, res, next)
 {
   let requestObj = req.body;
-  if (typeof requestObj === 'object'
+  if (cmn.isObj(requestObj)
     && requestObj.hasOwnProperty('qid')
     && requestObj.qid.length > 0)
   {
@@ -89,7 +87,7 @@ function validateQueryResultRequest(req, res, next)
   }
   else
   {
-    res.status(400).send("No query id specified in request");
+    sendError(res, 400, "No query id specificed in request");
   }
 }
 
@@ -101,12 +99,12 @@ function handleStatusRequest(config, service, filters)
     {
       let uuid = req.body.qid;
       let statusRes = await service.getQueryStatus(uuid, filters);
-      res.status(200).json(tsa.queryStatusToFE(statusRes));
+      res.status(200).json(service.outputAdapter.queryStatusToFE(statusRes));
     }
     catch (err)
     {
-      req.log.error(`Internal Server Error: ${err}`);
-      res.status(500).send("Internal Server Error");
+      logInternalServerError(req, err);
+      sendInternalServerError(res);
     }
   }
 }
@@ -119,13 +117,33 @@ function handleResultRequest(config, service, filters)
     {
       let uuid = req.body.qid;
       let svcRes = await service.getResults(uuid, filters);
-      let retval = tsa.queryResultsToFE(svcRes, config.max_hops);
+      let retval = service.outputAdapter.queryResultsToFE(svcRes, config.max_hops);
       res.status(200).json(retval);
     }
     catch (err)
     {
-      req.log.error(`Internal Server Error: ${err}`);
-      res.status(500).send("Internal Server Error");
+      logInternalServerError(req, err);
+      sendInternalServerError(res);
     }
   }
+}
+
+function sendError(res, errorCode, message)
+{
+  const response = {
+    'status': 'error',
+    'data': message
+  }
+
+  res.status(errorCode).json(response);
+}
+
+function sendInternalServerError(res)
+{
+  sendError(res, 500, 'Internal Server Error');
+}
+
+function logInternalServerError(req, err)
+{
+  req.log.error(`Internal Server Error: ${err}`);
 }
