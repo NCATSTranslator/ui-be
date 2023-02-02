@@ -2,6 +2,37 @@
   {
     "agent": "test1",
     "message": {
+      "query_graph": {
+        "edges": {
+          "treats": {
+            "object": "on",
+            "subject": "sn",
+            "predicates": [
+              "biolink:treats"
+            ],
+            "constraints": []
+          }
+        },
+        "nodes": {
+          "sn": {
+            "is_set": false,
+            "categories": [
+              "biolink:ChemicalEntity"
+            ],
+            "constraints": []
+          },
+          "on": {
+            "ids": [
+              "HP:0003124"
+            ],
+            "is_set": false,
+            "categories": [
+              "biolink:Disease"
+            ],
+            "constraints": []
+          }
+        }
+      },
       "results": [
         {
           "edge_bindings": {
@@ -12,12 +43,12 @@
             ]
           },
           "node_bindings": {
-            "drug": [
+            "sn": [
               {
                 "id": "panacea"
               }
             ],
-            "disease": [
+            "on": [
               {
                 "id": "everything"
               }
@@ -33,12 +64,12 @@
             ]
           },
           "node_bindings": {
-            "drug": [
+            "sn": [
               {
                 "id": "nc1"
               }
             ],
-            "disease": [
+            "on": [
               {
                 "id": "nc2"
               }
@@ -106,6 +137,37 @@
   {
     "agent": "test2",
     "message": {
+      "query_graph": {
+        "edges": {
+          "treats": {
+            "object": "on",
+            "subject": "sn",
+            "predicates": [
+              "biolink:treats"
+            ],
+            "constraints": []
+          }
+        },
+        "nodes": {
+          "sn": {
+            "is_set": false,
+            "categories": [
+              "biolink:ChemicalEntity"
+            ],
+            "constraints": []
+          },
+          "on": {
+            "ids": [
+              "HP:0003124"
+            ],
+            "is_set": false,
+            "categories": [
+              "biolink:Disease"
+            ],
+            "constraints": []
+          }
+        }
+      },
       "results": [
         {
           "edge_bindings": {
@@ -116,12 +178,12 @@
             ]
           },
           "node_bindings": {
-            "drug": [
+            "sn": [
               {
                 "id": "drug1"
               }
             ],
-            "disease": [
+            "on": [
               {
                 "id": "disease1"
               }
@@ -137,19 +199,19 @@
             ]
           },
           "node_bindings": {
-            "drug": [
+            "sn": [
               {
                 "id": "nc1"
               }
             ],
-            "disease": [
+            "on": [
               {
                 "id": "nc2"
               }
             ]
           }
         }
-      ], 
+      ],
       "knowledge_graph": {
         "nodes": {
           "drug1": {},

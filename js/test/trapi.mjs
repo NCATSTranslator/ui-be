@@ -108,18 +108,18 @@ describe('queryToCreativeQuery', () =>
           'message': {
             'query_graph': {
               'nodes': {
-                'drug': {
+                'sn': {
                   'categories': ['biolink:ChemicalEntity']
                 },
-                'disease': {
+                'on': {
                   'ids': [curie],
                   'categories': ['biolink:Disease']
                 }
               },
               'edges': {
                 't_edge': {
-                  'subject': 'drug',
-                  'object': 'disease',
+                  'subject': 'sn',
+                  'object': 'on',
                   'predicates': ['biolink:treats'],
                   'knowledge_type': 'inferred'
                 }
@@ -127,25 +127,25 @@ describe('queryToCreativeQuery', () =>
             }
           }
         };
-        const diseaseObject = {'type': 'disease', 'curie': curie, 'direction': null};
+        const diseaseObject = {'type': 'drug', 'curie': curie, 'direction': null};
         assert.deepEqual(trapi.queryToCreativeQuery(diseaseObject), diseaseQuery);
 
         const geneQuery = {
           "message": {
             "query_graph": {
               "nodes": {
-                "gene": {
+                "on": {
                   "categories": ["biolink:Gene"],
                   "ids": [curie]
                 },
-                "chemical": {
+                "sn": {
                   "categories": ["biolink:ChemicalEntity"]
                 }
               },
               "edges": {
                 "t_edge": {
-                  "object": "gene",
-                  "subject": "chemical",
+                  "object": "on",
+                  "subject": "sn",
                   "predicates": ["biolink:affects"],
                   "knowledge_type": "inferred",
                   "qualifier_constraints": [
@@ -167,7 +167,7 @@ describe('queryToCreativeQuery', () =>
             }
           }
         };
-        const geneObject = {'type': 'gene', 'curie': curie, 'direction': 'increased'};
+        const geneObject = {'type': 'chemical', 'curie': curie, 'direction': 'increased'};
         assert.deepEqual(trapi.queryToCreativeQuery(geneObject), geneQuery);
 
       });
@@ -177,8 +177,8 @@ describe('queryToCreativeQuery', () =>
         assert.throws(() => { return trapi.queryToCreativeQuery({}); });
         assert.throws(() => { return trapi.queryToCreativeQuery({'abc': 'AWESOME:123'}); });
         assert.throws(() => { return trapi.queryToCreativeQuery({'disease': 'AWESOME:123'}); });
-        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'disease', 'curie': 'AWESOME:123'}); });
-        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'disease', 'direction': 'increased'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'drug', 'curie': 'AWESOME:123'}); });
+        assert.throws(() => { return trapi.queryToCreativeQuery({'type': 'drug', 'direction': 'increased'}); });
         assert.throws(() => { return trapi.queryToCreativeQuery({'curie': 'AWESOME:123', 'direction': 'increased'}); });
       });
 

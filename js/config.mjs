@@ -2,12 +2,19 @@
 
 import * as cmn from './common.mjs';
 
-const argvs = process.argv;
-let configPath = (argvs.length < 3) ? 'configurations/mock.json' : argvs[2];
-export const SERVER_CONFIG = await cmn.readJson(configPath);
-SERVER_CONFIG['canonicalization_priority'] = await cmn.readJson(SERVER_CONFIG['canonicalization_priority']);
+export { loadConfigFromFile };
 
-if (!SERVER_CONFIG.document_root)
-{
-  SERVER_CONFIG.document_root = process.cwd();
+async function loadConfigFromFile(filePath) {
+  console.log(filePath);
+  let config = cmn.readJson(filePath);
+  if (!config['document-root'])
+  {
+    config['document-root'] = process.cwd();
+  }
+  if (config['canonicalization_priorty'])
+  {
+    config['canonicalization_priorty'] = await cmn.readJson(config['canonicalization_priority']);
+  }
+
+  return config;
 }
