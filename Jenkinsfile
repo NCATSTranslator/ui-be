@@ -45,7 +45,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    source ./build-docker-container.sh -b main -f main -e ci
+                    . build-docker-container.sh -b main -f main -e ci
                     echo $version_tag
                     echo $image_name
                     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin  853771734544.dkr.ecr.us-east-1.amazonaws.com
@@ -68,7 +68,7 @@ pipeline {
                         sh '''
                         aws --region ${AWS_REGION} eks update-kubeconfig --name ${KUBERNETES_BLUE_CLUSTER_NAME}
                         /bin/bash prepare.sh
-                        cd translator-ops/ops/ui
+                        cd translator-ops/ops/ui/
                         /bin/bash deploy.sh
                         '''
                     }
