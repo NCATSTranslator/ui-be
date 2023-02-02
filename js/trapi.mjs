@@ -649,6 +649,22 @@ function redgeToKey(redge, kgraph, nodeToCanonicalNode, doInvert = false)
   return pathToKey([ksubject, predicate, kobject]);
 }
 
+function summarizeRnode(rnode, kgraph, nodeRules)
+{
+  return cmn.makePair(rnodeToKey(rnode, kgraph, nodeToCanonicalNode),
+    nodeRules(rnodeToTrapiKnode(rnode, kgraph)),
+    'key',
+    'transforms');
+}
+
+function summarizeRedge(redge, kgraph, edgeRules)
+{
+  return cmn.makePair(redgeToKey(redge, kgraph, nodeToCanonicalNode),
+    edgeRules(redgeToTrapiKedge(redge, kgraph)),
+    'key',
+    'transforms');
+}
+
 function makeRedgeToEdgeId(rgraph, kgraph)
 {
   function makeEdgeId(subject, object)
@@ -919,22 +935,6 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
       [[start]],
       []);
 
-    function summarizeRnode(rnode, kgraph)
-    {
-      return cmn.makePair(rnodeToKey(rnode, kgraph, nodeToCanonicalNode),
-        nodeRules(rnodeToTrapiKnode(rnode, kgraph)),
-        'key',
-        'transforms');
-    }
-
-    function summarizeRedge(redge, kgraph)
-    {
-      return cmn.makePair(redgeToKey(redge, kgraph, nodeToCanonicalNode),
-        edgeRules(redgeToTrapiKedge(redge, kgraph)),
-        'key',
-        'transforms');
-    }
-
     function normalizePaths(rgraphPaths, kgraph)
     {
       function N(n) { return rnodeToKey(n, kgraph, nodeToCanonicalNode); }
@@ -967,8 +967,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
 
     return makeSummaryFragment(
       normalizePaths(rgraphPaths, kgraph),
-      rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph); }),
-      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph); }),
+      rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules); }),
+      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules); }),
       fragmentScore
     );
   }
@@ -1006,7 +1006,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
     });
 }
 
-function condensedSummariesToSummary(qid, condensedSummaries)
+async function condensedSummariesToSummary(qid, condensedSummaries)
 {
   function fragmentPathsToResultsAndPaths(fragmentPaths)
   {
@@ -1239,6 +1239,15 @@ function condensedSummariesToSummary(qid, condensedSummaries)
       extendSummaryScores(scores, condensedSummaryScores(cs));
     });
 
+  const endpoints = new Set();
+  results.forEach((result) =>
+    {
+      endpoints.add(result.subject);
+      endpoints.add(result.object);
+    });
+
+  const annotationsPromise = //molepro.getAnnotations(resultsToKgraph(results));
+
   Object.values(edges).forEach((edge) =>
     {
       objRemoveDuplicates(edge);
@@ -1256,26 +1265,57 @@ function condensedSummariesToSummary(qid, condensedSummaries)
     }
   };
 
-  Object.keys(nodes).forEach((k) =>
-    {
-      let node = nodes[k];
-      objRemoveDuplicates(node);
-      let nodeNames = cmn.jsonGet(node, 'names');
-      pushIfEmpty(nodeNames, k);
+  try
+  {
+    const annotationMessage = await annotationsPromise;
+    const nodeRules = makeSummarizeRules(
+      [
+        tagAttribute(
+          'ChEMBL:atc_classification',
+          (classification) =>
+          {
+            return `ATC_${classification[0]}`;
+          })
+      ]);
 
-      let nodeCuries = cmn.jsonGet(node, 'curies');
-      pushIfEmpty(nodeCuries, k);
-    });
+    const kgraph = cmn.jsonGetByKpath(annotationMessage, ['message', 'knowledge_graph'])
+    const knodes = cmn.jsonGet(kgraph, 'nodes');
+    const annotationUpdates = Object.keys(knodes).map((rnode) =>
+      {
+        return summarizeRnode(rnode, kgraph, nodeRules);
+      });
+    extendSummaryNodes(nodes, annotationUpdates, 'kp-molecular');
+  }
+  catch (err)
+  {
+    console.error(err);
+  }
+  finally
+  {
+    Object.keys(nodes).forEach((k) =>
+      {
+        let node = nodes[k];
+        objRemoveDuplicates(node);
+        let nodeNames = cmn.jsonGet(node, 'names');
+        pushIfEmpty(nodeNames, k);
 
-  results = expandResults(Object.values(results).map(objRemoveDuplicates), paths, nodes, scores);
-  Object.values(paths).forEach(objRemoveDuplicates);
+        let nodeCuries = cmn.jsonGet(node, 'curies');
+        pushIfEmpty(nodeCuries, k);
+      });
 
-  return {
-    'meta': metadataObject,
-    'results': results,
-    'paths': paths,
-    'nodes': nodes,
-    'edges': edges,
-    'publications': publications
-  };
+    results = expandResults(Object.values(results).map(objRemoveDuplicates),
+                            paths,
+                            nodes,
+                            scores);
+    Object.values(paths).forEach(objRemoveDuplicates);
+
+    return {
+      'meta': metadataObject,
+      'results': results,
+      'paths': paths,
+      'nodes': nodes,
+      'edges': edges,
+      'publications': publications
+    };
+  }
 }
