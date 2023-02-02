@@ -44,8 +44,8 @@ pipeline {
            when { expression { return env.BUILD == 'true' }}
             steps {
                 script {
-                    sh '''
-                    . build-docker-container.sh -b main -f main -e ci
+                    bash '''#!/bin/bash
+                    source build-docker-container.sh -b main -f main -e ci
                     echo $version_tag
                     echo $image_name
                     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin  853771734544.dkr.ecr.us-east-1.amazonaws.com
