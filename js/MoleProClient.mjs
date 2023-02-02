@@ -4,36 +4,40 @@ import { SendRecvJSON } from "./common.mjs";
 
 export { MoleProClient };
 
-class MoleProClient {
-    constructor(origin, queryPath) {
-        this.origin = origin;
-        this.queryPath = queryPath;
-        this.queryURL = `${origin}${queryPath}`;
-    }
+class MoleProClient
+{
+  constructor(origin, queryPath)
+  {
+    this.origin = origin;
+    this.queryPath = queryPath;
+    this.queryURL = `${origin}${queryPath}`;
+  }
 
-    static createKGFromNodeIds(attributes, nodeIds) {
-        let nodes = {};
-        nodeIds.forEach(e => { nodes[e] = {}; });
-        let retval = {
-            submitter: 'annotate_nodes',
-            workflow: [ {
-                id: 'annotate_nodes',
-                parameters: { attributes: attributes }
-            }],
-            message: {
-                knowledge_graph: {
-                    edges: {},
-                    nodes: nodes
-                }
-            }
-        };
-        return retval;
-    }
+  static createKGFromNodeIds(attributes, nodeIds)
+  {
+    let nodes = {};
+    nodeIds.forEach(e => { nodes[e] = {}; });
+    let retval = {
+      submitter: 'annotate_nodes',
+      workflow: [ {
+        id: 'annotate_nodes',
+        parameters: { attributes: attributes }
+      }],
+      message: {
+        knowledge_graph: {
+          edges: {},
+          nodes: nodes
+        }
+      }
+    };
+    return retval;
+  }
 
-    async annotateGraph(kg) {
-        let res = await SendRecvJSON(this.queryURL, 'POST', {}, kg);
-        return res;
-    }
+  async annotateGraph(kg)
+  {
+    let res = await SendRecvJSON(this.queryURL, 'POST', {}, kg);
+    return res;
+  }
 }
 /*
 let c = new MoleProClient('https://molepro-trapi.ci.transltr.io', '/molepro/trapi/v1.3/query');

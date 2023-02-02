@@ -11,51 +11,68 @@ export { TranslatorService };
  * - getQueryStatus(queryId)
  * - getResults(queryId, [filters])
  */
-class TranslatorService {
-    constructor(client) {
-        this.client = client;
+class TranslatorService
+{
+  constructor(client)
+  {
+    this.client = client;
+  }
+
+  inputToQuery(input)
+  {
+    return trapi.diseaseToCreativeQuery(input);
+  }
+
+  async submitQuery(query)
+  {
+    try
+    {
+      let res = await this.client.postQuery(query);
+      if (arsmsg.isAcceptedQuery(res))
+      {
+        return res;
+      }
+      else
+      {
+        throw new Error(`ARS rejected query with response: ${JSON.stringify(res)}`);
+      }
+    } catch (err)
+    {
+      console.error(`Error posting query: '${err}' [${JSON.stringify(query)}]`);
+      throw new Error(err);
     }
 
-    inputToQuery(input) {
-        return trapi.diseaseToCreativeQuery(input);
+  }
+  async getQueryStatus(queryId, filters={})
+  {
+    try
+    {
+      let res = await this.client.collectAllResults(queryId, filters);
+      return res;
     }
+    catch (err)
+    {
+      console.error(`Error querying status for ${queryId}: '${err}'`);
+      throw new Error(err);
+    }
+  }
 
-    async submitQuery(query) {
-        try {
-            let res = await this.client.postQuery(query);
-            if (arsmsg.isAcceptedQuery(res)) {
-                return res;
-            } else {
-                throw new Error(`ARS rejected query with response: ${JSON.stringify(res)}`);
-            }
-        } catch (err) {
-            console.error(`Error posting query: '${err}' [${JSON.stringify(query)}]`);
-            throw new Error(err);
-        }
-
+  async getResults(queryId, filters={})
+  {
+    try
+    {
+      let res = await this.client.collectAllResults(queryId, filters, true);
+      return res;
     }
-    async getQueryStatus(queryId, filters={}) {
-        try {
-            let res = await this.client.collectAllResults(queryId, filters);
-            return res;
-        } catch (err) {
-            console.error(`Error querying status for ${queryId}: '${err}'`);
-            throw new Error(err);
-        }
+    catch (err)
+    {
+      console.error(`Error retrieving results for ${queryId}: '${err}'`);
+      throw new Error(err);
     }
-
-    async getResults(queryId, filters={}) {
-        try {
-            let res = await this.client.collectAllResults(queryId, filters, true);
-            return res;
-        } catch (err) {
-            console.error(`Error retrieving results for ${queryId}: '${err}'`);
-            throw new Error(err);
-        }
-    }
+  }
 }
 /*
-// testing stuff
+  // testing stuff
 var aa = new ARSClient('https://ars-prod.transltr.io', '/ars/api/messages', '/ars/api/submit');
 var t = new TranslatorService(aa);
 var mondo = 'MONDO:0005148';

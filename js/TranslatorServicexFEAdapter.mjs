@@ -8,45 +8,56 @@ import * as trapi from './trapi.mjs';
 export { queryStatusToFE, queryResultsToFE, querySubmitToFE };
 // msg: ARS client message with trace=y
 
-function determineStatus(msg) {
-    if (msg.queuing) {
-        return "running";
-    } else {
-        return msg.running.length > 0 ? "running" : "success";
-    }
+function determineStatus(msg)
+{
+  if (msg.queuing)
+  {
+    return "running";
+  }
+  else
+  {
+    return msg.running.length > 0 ? "running" : "success";
+  }
 }
-function queryStatusToFE(msg) {
-    return {
-        status: determineStatus(msg),
-        data: {
-            qid: msg.pk,
-            aras: msg.completed.map(e => e.agent)
-        }
-    };
+function queryStatusToFE(msg)
+{
+  return {
+    status: determineStatus(msg),
+    data: {
+      qid: msg.pk,
+      aras: msg.completed.map(e => e.agent)
+    }
+  };
 }
 
 // msg: an ARS client message w/ results
-function queryResultsToFE(msg, maxHops) {
-    // Omit ARA results where the actual results array is empty
-    // Need to account for the ARS returning both null and []
-    let data = msg.completed.filter(e => Array.isArray(e.data.results) && e.data.results.length > 0).map(
-        e => { return {
-                agent: e.agent,
-                message: e.data
-            }
-        });
+function queryResultsToFE(msg, maxHops)
+{
+  // Omit ARA results where the actual results array is empty
+  // Need to account for the ARS returning both null and []
+  let data = msg.completed.filter(e =>
+    {
+      return Array.isArray(e.data.results) && e.data.results.length > 0;
+    }).map(e =>
+      {
+        return {
+          agent: e.agent,
+          message: e.data
+        }
+      });
 
-    return {
-        status: determineStatus(msg),
-        data: trapi.creativeAnswersToSummary(msg.pk, data, maxHops)
-    };
+  return {
+    status: determineStatus(msg),
+    data: trapi.creativeAnswersToSummary(msg.pk, data, maxHops)
+  };
 }
 
 // Currently the FE doesn't expect this message to be handling failure conditions
 // msg: The standard ARS message returned when you post a query
-function querySubmitToFE(msg) {
-    return {
-        status: 'success',
-        data: arsmsg.msgId(msg)
-    }
+function querySubmitToFE(msg)
+{
+  return {
+    status: 'success',
+    data: arsmsg.msgId(msg)
+  }
 }
