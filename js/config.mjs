@@ -6,14 +6,14 @@ export { loadConfigFromFile };
 
 async function loadConfigFromFile(filePath) {
   console.log(filePath);
-  let config = cmn.readJson(filePath);
+  let config = await cmn.readJson(filePath);
   if (!config['document-root'])
   {
     config['document-root'] = process.cwd();
   }
-  if (config['canonicalization_priorty'])
+  if (config['canonicalization_priority'])
   {
-    config['canonicalization_priorty'] = await cmn.readJson(config['canonicalization_priority']);
+    config['canonicalization_priority'] = await cmn.readJson(config['canonicalization_priority']);
   }
 
   return config;

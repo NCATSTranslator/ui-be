@@ -117,7 +117,9 @@ function handleResultRequest(config, service, filters)
     {
       let uuid = req.body.qid;
       let svcRes = await service.getResults(uuid, filters);
-      let retval = service.outputAdapter.queryResultsToFE(svcRes, config.max_hops);
+      let retval = await service.outputAdapter.queryResultsToFE(svcRes,
+        config.max_hops,
+        config.canonicalization_priority);
       res.status(200).json(retval);
     }
     catch (err)

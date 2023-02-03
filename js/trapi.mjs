@@ -142,13 +142,13 @@ export function queryToCreativeQuery(query)
   };
 }
 
-export function creativeAnswersToSummary (qid, answers, maxHops)
+export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, annotationClient)
 {
   const resultNodes = answers.map((answer) =>
     {
       return cmn.jsonGetFromKpath(answer.message, ['knowledge_graph', 'nodes']);
     });
-  const nodeToCanonicalNode = makeCanonicalNodeMapping(resultNodes);
+  const nodeToCanonicalNode = makeCanonicalNodeMapping(resultNodes, canonPriority);
   const nodeRules = makeSummarizeRules(
     [
       aggregateProperty('name', ['names']),
@@ -205,7 +205,28 @@ export function creativeAnswersToSummary (qid, answers, maxHops)
       nodeRules,
       edgeRules,
       nodeToCanonicalNode,
-      maxHops));
+      maxHops),
+    annotationClient);
+}
+
+function createKGFromNodeIds(nodeIds, attributes)
+{
+  const nodes = {};
+  nodeIds.forEach(e => { nodes[e] = {}; });
+  const retval = {
+    submitter: 'annotate_nodes',
+    workflow: [ {
+      id: 'annotate_nodes',
+      parameters: { attributes: attributes }
+    }],
+    message: {
+      knowledge_graph: {
+        edges: {},
+        nodes: nodes
+      }
+    }
+  };
+  return retval;
 }
 
 function makeMapping(key, transform, update, fallback)
@@ -412,15 +433,15 @@ function tagAttribute(attributeId, transform)
     },
     (v, obj) =>
     {
-      const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', new Set());
+      const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', []);
       if (v)
       {
-        currentTags.add(v);
+        currentTags.push(v);
       }
 
       return obj
     },
-    new Set());
+    null);
 }
 
 function makeSummarizeRules(rules)
@@ -430,7 +451,6 @@ function makeSummarizeRules(rules)
     return rules.map(rule => { return rule(obj); });
   };
 }
-
 
 function trapiBindingToKobj(binding, type, kgraph)
 {
@@ -647,7 +667,7 @@ function redgeToKey(redge, kgraph, nodeToCanonicalNode, doInvert = false)
   return pathToKey([ksubject, predicate, kobject]);
 }
 
-function summarizeRnode(rnode, kgraph, nodeRules)
+function summarizeRnode(rnode, kgraph, nodeToCanonicalNode, nodeRules)
 {
   return cmn.makePair(rnodeToKey(rnode, kgraph, nodeToCanonicalNode),
     nodeRules(rnodeToTrapiKnode(rnode, kgraph)),
@@ -655,7 +675,7 @@ function summarizeRnode(rnode, kgraph, nodeRules)
     'transforms');
 }
 
-function summarizeRedge(redge, kgraph, edgeRules)
+function summarizeRedge(redge, kgraph, nodeToCanonicalNode, edgeRules)
 {
   return cmn.makePair(redgeToKey(redge, kgraph, nodeToCanonicalNode),
     edgeRules(redgeToTrapiKedge(redge, kgraph)),
@@ -782,7 +802,7 @@ function mergeSummaryFragments(f1, f2)
   return f1;
 }
 
-function makeCanonicalNodeMapping(allNodes)
+function makeCanonicalNodeMapping(allNodes, canonPriority)
 {
   function isCurieAlias(attr)
   {
@@ -870,7 +890,7 @@ function makeCanonicalNodeMapping(allNodes)
   mergedNodes.forEach((nodeSet) =>
     {
       const nodes = Array.from(nodeSet.keys());
-      const canonicalNode = getCanonicalNode(nodes, SERVER_CONFIG.canonicalization_priority);
+      const canonicalNode = getCanonicalNode(nodes, canonPriority);
       nodes.forEach((curie) =>
         {
           nodeToCanonicalNode[curie] = canonicalNode;
@@ -965,8 +985,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
 
     return makeSummaryFragment(
       normalizePaths(rgraphPaths, kgraph),
-      rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules); }),
-      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules); }),
+      rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeToCanonicalNode, nodeRules); }),
+      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, nodeToCanonicalNode, edgeRules); }),
       fragmentScore
     );
   }
@@ -1004,7 +1024,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
     });
 }
 
-async function condensedSummariesToSummary(qid, condensedSummaries)
+async function condensedSummariesToSummary(qid, condensedSummaries, annotationClient)
 {
   function fragmentPathsToResultsAndPaths(fragmentPaths)
   {
@@ -1147,11 +1167,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries)
 
   function expandResults(results, paths, nodes, scores)
   {
-    function getPathFromPid(paths, pid)
-    {
-      return cmn.jsonGetFromKpath(paths, [pid, 'subgraph']);
-    }
-
     function isPathLessThan(pid1, pid2)
     {
       const path1 = getPathFromPid(paths, pid1);
@@ -1191,9 +1206,10 @@ async function condensedSummariesToSummary(qid, condensedSummaries)
         const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
         const end = subgraph[subgraph.length-1];
         const startScores = scores[start];
-        const startTags = cmn.jsonGetFromKpath(nodes, [start, 'tags']);
-        const endTags = cmn.jsonGetFromKpath(nodes, [end, 'tags']);
+        const startTags = new Set(cmn.jsonGetFromKpath(nodes, [start, 'tags']));
+        const endTags = new Set(cmn.jsonGetFromKpath(nodes, [end, 'tags']));
         const tags = cmn.setToObject(cmn.setUnion([startTags, endTags]));
+
         return {
           'subject': start,
           'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
@@ -1220,6 +1236,12 @@ async function condensedSummariesToSummary(qid, condensedSummaries)
     return obj;
   }
 
+  function getPathFromPid(paths, pid)
+  {
+    return cmn.jsonGetFromKpath(paths, [pid, 'subgraph']);
+  }
+
+
   let results = {};
   let paths = {};
   let nodes = {};
@@ -1237,15 +1259,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries)
       extendSummaryScores(scores, condensedSummaryScores(cs));
     });
 
-  const endpoints = new Set();
-  results.forEach((result) =>
-    {
-      endpoints.add(result.subject);
-      endpoints.add(result.object);
-    });
-
-  const annotationsPromise = //molepro.getAnnotations(resultsToKgraph(results));
-
   Object.values(edges).forEach((edge) =>
     {
       objRemoveDuplicates(edge);
@@ -1255,32 +1268,35 @@ async function condensedSummariesToSummary(qid, condensedSummaries)
   [edges, publications] = edgesToEdgesAndPublications(edges);
 
   const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agent; }));
-  function pushIfEmpty(arr, val)
-  {
-    if (cmn.isArrayEmpty(arr))
-    {
-      arr.push(val);
-    }
-  };
-
+  results = Object.values(results).map(objRemoveDuplicates)
   try
   {
-    const annotationMessage = await annotationsPromise;
-    const nodeRules = makeSummarizeRules(
-      [
-        tagAttribute(
-          'ChEMBL:atc_classification',
-          (classification) =>
-          {
-            return `ATC_${classification[0]}`;
-          })
-      ]);
+    const endpoints = new Set();
+    results.forEach((result) =>
+      {
+        const ps = cmn.jsonGet(result, 'paths');
+        const subgraph = getPathFromPid(paths, ps[0]);
+        endpoints.add(subgraph[0]);
+        endpoints.add(subgraph[subgraph.length-1]);
+      });
 
-    const kgraph = cmn.jsonGetByKpath(annotationMessage, ['message', 'knowledge_graph'])
+    const annotationMessage = await annotationClient.annotateGraph(
+      createKGFromNodeIds([...endpoints], ['biolink:description', 'ChEMBL:atc_classification']))
+    const nodeRules = makeSummarizeRules(
+        [
+          tagAttribute(
+            'ChEMBL:atc_classification',
+            (classification) =>
+            {
+              return `ATC_${classification[0]}`;
+            })
+        ]);
+
+    const kgraph = cmn.jsonGetFromKpath(annotationMessage, ['message', 'knowledge_graph'])
     const knodes = cmn.jsonGet(kgraph, 'nodes');
     const annotationUpdates = Object.keys(knodes).map((rnode) =>
       {
-        return summarizeRnode(rnode, kgraph, nodeRules);
+        return summarizeRnode(rnode, kgraph, cmn.identity, nodeRules);
       });
     extendSummaryNodes(nodes, annotationUpdates, 'kp-molecular');
   }
@@ -1290,6 +1306,14 @@ async function condensedSummariesToSummary(qid, condensedSummaries)
   }
   finally
   {
+    function pushIfEmpty(arr, val)
+    {
+      if (cmn.isArrayEmpty(arr))
+      {
+        arr.push(val);
+      }
+    };
+
     Object.keys(nodes).forEach((k) =>
       {
         let node = nodes[k];
@@ -1301,12 +1325,8 @@ async function condensedSummariesToSummary(qid, condensedSummaries)
         pushIfEmpty(nodeCuries, k);
       });
 
-    results = expandResults(Object.values(results).map(objRemoveDuplicates),
-                            paths,
-                            nodes,
-                            scores);
+    results = expandResults(results, paths, nodes, scores);
     Object.values(paths).forEach(objRemoveDuplicates);
-
     return {
       'meta': metadataObject,
       'results': results,

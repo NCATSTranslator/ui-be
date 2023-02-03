@@ -13,29 +13,9 @@ class MoleProClient
     this.queryURL = `${origin}${queryPath}`;
   }
 
-  static createKGFromNodeIds(attributes, nodeIds)
-  {
-    let nodes = {};
-    nodeIds.forEach(e => { nodes[e] = {}; });
-    let retval = {
-      submitter: 'annotate_nodes',
-      workflow: [ {
-        id: 'annotate_nodes',
-        parameters: { attributes: attributes }
-      }],
-      message: {
-        knowledge_graph: {
-          edges: {},
-          nodes: nodes
-        }
-      }
-    };
-    return retval;
-  }
-
   async annotateGraph(kg)
   {
-    let res = await SendRecvJSON(this.queryURL, 'POST', {}, kg);
+    const res = await SendRecvJSON(this.queryURL, 'POST', {}, kg);
     return res;
   }
 }
