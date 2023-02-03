@@ -1241,7 +1241,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     return cmn.jsonGetFromKpath(paths, [pid, 'subgraph']);
   }
 
-
   let results = {};
   let paths = {};
   let nodes = {};
@@ -1259,6 +1258,37 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       extendSummaryScores(scores, condensedSummaryScores(cs));
     });
 
+  results = Object.values(results).map(objRemoveDuplicates)
+  const endpoints = new Set();
+  results.forEach((result) =>
+    {
+      const ps = cmn.jsonGet(result, 'paths');
+      const subgraph = getPathFromPid(paths, ps[0]);
+      endpoints.add(subgraph[0]);
+      endpoints.add(subgraph[subgraph.length-1]);
+    });
+  const annotationPromise = annotationClient.annotateGraph(
+    createKGFromNodeIds([...endpoints], ['biolink:description', 'ChEMBL:atc_classification']))
+
+  function pushIfEmpty(arr, val)
+  {
+    if (cmn.isArrayEmpty(arr))
+    {
+      arr.push(val);
+    }
+  };
+
+  Object.keys(nodes).forEach((k) =>
+    {
+      let node = nodes[k];
+      objRemoveDuplicates(node);
+      let nodeNames = cmn.jsonGet(node, 'names');
+      pushIfEmpty(nodeNames, k);
+
+      let nodeCuries = cmn.jsonGet(node, 'curies');
+      pushIfEmpty(nodeCuries, k);
+    });
+
   Object.values(edges).forEach((edge) =>
     {
       objRemoveDuplicates(edge);
@@ -1266,22 +1296,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
-
   const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agent; }));
-  results = Object.values(results).map(objRemoveDuplicates)
   try
   {
-    const endpoints = new Set();
-    results.forEach((result) =>
-      {
-        const ps = cmn.jsonGet(result, 'paths');
-        const subgraph = getPathFromPid(paths, ps[0]);
-        endpoints.add(subgraph[0]);
-        endpoints.add(subgraph[subgraph.length-1]);
-      });
-
-    const annotationMessage = await annotationClient.annotateGraph(
-      createKGFromNodeIds([...endpoints], ['biolink:description', 'ChEMBL:atc_classification']))
     const nodeRules = makeSummarizeRules(
         [
           tagAttribute(
@@ -1292,6 +1309,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             })
         ]);
 
+    const annotationMessage = await annotationPromise;
     const kgraph = cmn.jsonGetFromKpath(annotationMessage, ['message', 'knowledge_graph'])
     const knodes = cmn.jsonGet(kgraph, 'nodes');
     const annotationUpdates = Object.keys(knodes).map((rnode) =>
@@ -1306,25 +1324,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   }
   finally
   {
-    function pushIfEmpty(arr, val)
-    {
-      if (cmn.isArrayEmpty(arr))
-      {
-        arr.push(val);
-      }
-    };
-
-    Object.keys(nodes).forEach((k) =>
-      {
-        let node = nodes[k];
-        objRemoveDuplicates(node);
-        let nodeNames = cmn.jsonGet(node, 'names');
-        pushIfEmpty(nodeNames, k);
-
-        let nodeCuries = cmn.jsonGet(node, 'curies');
-        pushIfEmpty(nodeCuries, k);
-      });
-
     results = expandResults(results, paths, nodes, scores);
     Object.values(paths).forEach(objRemoveDuplicates);
     return {
