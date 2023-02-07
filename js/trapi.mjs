@@ -1165,7 +1165,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     return [edges, publications];
   }
 
-  function expandResults(results, paths, nodes, scores)
+  function resultsToResultsAndTags(results, paths, nodes, scores)
   {
     function isPathLessThan(pid1, pid2)
     {
@@ -1198,7 +1198,8 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       return 1;
     }
 
-    return results.map((result) =>
+    const usedTags = [];
+    const expandedResults = results.map((result) =>
       {
         const ps = cmn.jsonGet(result, 'paths');
         const subgraph = getPathFromPid(paths, ps[0]);
@@ -1208,7 +1209,8 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         const startScores = scores[start];
         const startTags = new Set(cmn.jsonGetFromKpath(nodes, [start, 'tags']));
         const endTags = new Set(cmn.jsonGetFromKpath(nodes, [end, 'tags']));
-        const tags = cmn.setToObject(cmn.setUnion([startTags, endTags]));
+        const tags = cmn.setUnion([startTags, endTags]);
+        usedTags.push(...tags);
 
         return {
           'subject': start,
@@ -1217,9 +1219,11 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
           'object': end,
           // startScores.length is guarateed to be > 0
           'score': startScores.reduce((a, b) => { return a + b; }) / startScores.length,
-          'tags': tags
+          'tags': cmn.setToObject(tags)
         }
       });
+
+    return [expandedResults, [...new Set(usedTags)]];
   }
 
   function objRemoveDuplicates(obj)
@@ -1247,6 +1251,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   let edges = {};
   let publications = {};
   let scores = {};
+  let tags = [];
   condensedSummaries.forEach((cs) =>
     {
       const agent = cs.agent;
@@ -1324,7 +1329,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   }
   finally
   {
-    results = expandResults(results, paths, nodes, scores);
+    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores);
     Object.values(paths).forEach(objRemoveDuplicates);
     return {
       'meta': metadataObject,
@@ -1332,7 +1337,8 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       'paths': paths,
       'nodes': nodes,
       'edges': edges,
-      'publications': publications
+      'publications': publications,
+      'tags': tags
     };
   }
 }
