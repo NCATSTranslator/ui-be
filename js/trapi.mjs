@@ -160,7 +160,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
         {
           if (fdaDescription === "regular approval")
           {
-            return "fda_approved";
+            return makeTag("fda_approved", "FDA Approved");
           }
 
           return false;
@@ -433,10 +433,10 @@ function tagAttribute(attributeId, transform)
     },
     (v, obj) =>
     {
-      const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', []);
-      if (v)
+      const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', {});
+      if (v && currentTags[v.tag] === undefined)
       {
-        currentTags.push(v);
+        currentTags[v.tag] = v.description;
       }
 
       return obj
@@ -645,6 +645,17 @@ function edgeToQualifiedPredicate(kedge, invert = false)
   return finalizeQualifiedPredicate(subjectQualifierStr,
                                     predicate,
                                     objectQualifierStr);
+}
+
+function makeTag(tag, name, description = '')
+{
+  return {
+    'tag': tag,
+    'description': {
+      'name': name,
+      'value': description
+    }
+  }
 }
 
 function makeRgraph(rnodes, redges, kgraph)
@@ -1232,7 +1243,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       return 1;
     }
 
-    const usedTags = [];
+    const usedTags = {};
     const expandedResults = results.map((result) =>
       {
         const ps = cmn.jsonGet(result, 'paths');
@@ -1241,10 +1252,28 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
         const end = subgraph[subgraph.length-1];
         const startScores = scores[start];
-        const startTags = new Set(cmn.jsonGetFromKpath(nodes, [start, 'tags']));
-        const endTags = new Set(cmn.jsonGetFromKpath(nodes, [end, 'tags']));
-        const tags = cmn.setUnion([startTags, endTags]);
-        usedTags.push(...tags);
+        const startTags = cmn.jsonGetFromKpath(nodes, [start, 'tags']);
+        const uniqStartTags = Object.keys(startTags);
+        const endTags = cmn.jsonGetFromKpath(nodes, [end, 'tags']);
+        const uniqEndTags = Object.keys(endTags);
+        const tags = cmn.setUnion([new Set(...uniqStartTags),
+                                   new Set(...uniqEndTags)]);
+
+        uniqStartTags.forEach((tag) =>
+          {
+            if (usedTags[tag] === undefined)
+            {
+              usedTags[tag] = startTags[tag];
+            }
+          });
+
+        uniqEndTags.forEach((tag) =>
+          {
+            if (usedTags[tag] === undefined)
+            {
+              usedTags[tag] = endTags[tag];
+            }
+          });
 
         return {
           'subject': start,
@@ -1257,7 +1286,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         }
       });
 
-    return [expandedResults, [...new Set(usedTags)]];
+    return [expandedResults, usedTags];
   }
 
   function objRemoveDuplicates(obj)
@@ -1345,7 +1374,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             'ChEMBL:atc_classification',
             (classification) =>
             {
-              return `ATC_${classification[0]}`;
+              const highestLevel = classification.split('|')[0];
+              const [tag, description] = highestLevel.split('-');
+              return makeTag(`ATC_${tag}`, description);
             })
         ]);
 
