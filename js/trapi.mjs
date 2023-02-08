@@ -577,10 +577,29 @@ function edgeToQualifiedPredicate(kedge, invert = false)
       suffix = ` ${suffix} of`;
     }
 
-    return `${prefix}${predicate}${suffix}`;
+    const finalPredicate = `${prefix}${predicate}${suffix}`;
+    return finalPredicate;
   }
 
-  let predicate = kedgePredicate(kedge);
+  function getSpecialCase(predicate, qualifiers, invert)
+  {
+    const objDirectionQualifier = qualifiers['object direction qualifier'];
+    if (predicate === 'regulates' &&
+          (objDirectionQualifier === 'upregulated' ||
+           objDirectionQualifier === 'downregulated'))
+    {
+      if (invert)
+      {
+        return `is ${objDirectionQualifier} by`;
+      }
+
+      return objDirectionQualifier.replace('ed', 'es');
+    }
+
+    return false;
+  }
+
+  let predicate = bl.sanitizeBiolinkElement(kedgePredicate(kedge));
   const qualifiers = kedgeToQualifiers(kedge);
   // If we don't have any qualifiers, treat it like biolink v2
   if (!qualifiers)
@@ -593,14 +612,20 @@ function edgeToQualifiedPredicate(kedge, invert = false)
     return predicate;
   }
 
-  let subjectQualifierStr = subjectQualifiersToString(qualifiers);
-  let objectQualifierStr = objectQualifiersToString(qualifiers);
-  const qualified_predicate = cmn.jsonGet(qualifiers, 'qualified predicate', false);
-  if (qualified_predicate)
+  const qualifiedPredicate = cmn.jsonGet(qualifiers, 'qualified predicate', false);
+  if (qualifiedPredicate)
   {
-    predicate = qualified_predicate;
+    predicate = qualifiedPredicate;
   }
 
+  const specialCase = getSpecialCase(predicate, qualifiers, invert);
+  if (specialCase)
+  {
+    return specialCase;
+  }
+
+  let subjectQualifierStr = subjectQualifiersToString(qualifiers);
+  let objectQualifierStr = objectQualifiersToString(qualifiers);
   if (invert)
   {
     return finalizeQualifiedPredicate(objectQualifierStr,
@@ -1296,6 +1321,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
+
   const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agent; }));
   try
   {
