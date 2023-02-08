@@ -1256,8 +1256,8 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         const uniqStartTags = Object.keys(startTags);
         const endTags = cmn.jsonGetFromKpath(nodes, [end, 'tags']);
         const uniqEndTags = Object.keys(endTags);
-        const tags = cmn.setUnion([new Set(...uniqStartTags),
-                                   new Set(...uniqEndTags)]);
+        const tags = cmn.setUnion([new Set(uniqStartTags),
+                                   new Set(uniqEndTags)]);
 
         uniqStartTags.forEach((tag) =>
           {
