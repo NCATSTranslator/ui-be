@@ -565,7 +565,7 @@ function edgeToQualifiedPredicate(kedge, invert = false)
                               [directionPrefix, false, 'of a', 'of the', false]);
   }
 
-  function objectQualifiersToString(qualifiers, directionPrefix = '')
+  function objectQualifiersToString(qualifiers, directionPrefix = false)
   {
     return qualifiersToString('object',
                               qualifiers,
