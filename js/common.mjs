@@ -16,6 +16,11 @@ export function deepCopy(o)
   return JSON.parse(JSON.stringify(o));
 }
 
+export function capitalize(s)
+{
+  return `${s[0].toUpperCase()}${s.slice(1).toLowerCase()}`;
+}
+
 export function identity(x)
 {
   return x;

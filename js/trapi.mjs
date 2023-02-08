@@ -1375,8 +1375,8 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             (classification) =>
             {
               const highestLevel = classification.split('|')[0];
-              const [tag, description] = highestLevel.split('-');
-              return makeTag(`ATC_${tag}`, description);
+              const [tag, description] = highestLevel.split(/-(.*)/s);
+              return makeTag(`ATC_${tag}`, cmn.capitalize(description));
             })
         ]);
 
