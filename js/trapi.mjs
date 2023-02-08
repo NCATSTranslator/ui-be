@@ -523,13 +523,12 @@ function kedgeToQualifiers(kedge)
 
 function edgeToQualifiedPredicate(kedge, invert = false)
 {
-  function qualifiersToString(type, qualifiers)
+  function qualifiersToString(type, qualifiers, prefixes)
   {
     // TODO: How do part and derivative qualifiers interact? Correct ordering?
     // TODO: How to handle the context qualifier?
     // TODO: Make more robust to biolink qualifier changes.
     // This ordering is important for building the correct statement
-    const prefixes = ['', '', 'of a ', 'of the ', ''];
     const qualifierKeys = ['direction', 'aspect', 'form or variant', 'part', 'derivative'];
     const qualifierValues = qualifierKeys.map((key) =>
       {
@@ -543,26 +542,34 @@ function edgeToQualifiedPredicate(kedge, invert = false)
         {
           if (qualifierStr)
           {
-            qualifierStr += ` ${prefixes[i]}${qv}`;
+            qualifierStr += ' '
           }
-          else
+
+          if (prefixes[i])
           {
-            qualifierStr = qv;
+            qualifierStr += `${prefixes[i]} `;
+
           }
+
+          qualifierStr += qv;
         }
       });
 
     return qualifierStr;
   }
 
-  function subjectQualifiersToString(qualifiers)
+  function subjectQualifiersToString(qualifiers, directionPrefix = false)
   {
-    return qualifiersToString('subject', qualifiers);
+    return qualifiersToString('subject',
+                              qualifiers,
+                              [directionPrefix, false, 'of a', 'of the', false]);
   }
 
-  function objectQualifiersToString(qualifiers)
+  function objectQualifiersToString(qualifiers, directionPrefix = '')
   {
-    return qualifiersToString('object', qualifiers);
+    return qualifiersToString('object',
+                              qualifiers,
+                              [directionPrefix, false, 'of a', 'of the', false]);
   }
 
   function finalizeQualifiedPredicate(prefix, predicate, suffix)
@@ -624,15 +631,17 @@ function edgeToQualifiedPredicate(kedge, invert = false)
     return specialCase;
   }
 
-  let subjectQualifierStr = subjectQualifiersToString(qualifiers);
-  let objectQualifierStr = objectQualifiersToString(qualifiers);
   if (invert)
   {
+    const subjectQualifierStr = subjectQualifiersToString(qualifiers);
+    const objectQualifierStr = objectQualifiersToString(qualifiers, 'has');
     return finalizeQualifiedPredicate(objectQualifierStr,
                                       bl.invertBiolinkPredicate(predicate),
                                       subjectQualifierStr);
   }
 
+  const subjectQualifierStr = subjectQualifiersToString(qualifiers, 'has');
+  const objectQualifierStr = objectQualifiersToString(qualifiers);
   return finalizeQualifiedPredicate(subjectQualifierStr,
                                     predicate,
                                     objectQualifierStr);
