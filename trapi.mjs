@@ -891,13 +891,16 @@ function makeCanonicalNodeMapping(allNodes, canonPriority)
           let node = cmn.jsonGet(nodes, curie);
           let attributes = cmn.jsonGet(node, 'attributes', []);
           let aliases = [curie];
-          attributes.forEach((attr) =>
-            {
-              if (isCurieAlias(attr))
+          if (!areNoAttributes(attributes))
+          {
+            attributes.forEach((attr) =>
               {
-                aliases.push(...attrValue(attr));
-              }
-            });
+                if (isCurieAlias(attr))
+                {
+                  aliases.push(...attrValue(attr));
+                }
+              });
+          }
 
           nodeSets.push(new Set(aliases));
         });
