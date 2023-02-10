@@ -13,7 +13,7 @@ export function startServer(config, service)
   const app = express();
   app.use(pinoHttp());
   app.use(express.json());
-  app.use(express.static('../build'));
+  app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
   app.post('/creative_query',
@@ -31,7 +31,7 @@ export function startServer(config, service)
 
   app.get('*', (req, res, next) =>
     {
-      res.sendFile(path.join(__root, '../build/index.html'));
+      res.sendFile(path.join(__root, 'build/index.html'));
     });
 
   app.listen(8386);

@@ -5,7 +5,7 @@ import * as cmn from './common.mjs';
 let BIOLINK_PREDICATES = null;
 export async function loadBiolinkPredicates(biolinkVersion)
 {
-  const biolinkModel = await cmn.readJson(`../assets/biolink-model/${biolinkVersion}/biolink-model.json`);
+  const biolinkModel = await cmn.readJson(`./assets/biolink-model/${biolinkVersion}/biolink-model.json`);
   const slots = cmn.jsonGet(biolinkModel, 'slots');
   BIOLINK_PREDICATES = makeBlPredicates(slots);
 }
