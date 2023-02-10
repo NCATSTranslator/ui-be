@@ -1,4 +1,4 @@
-FROM josefkaye/noderacket:latest
+FROM node:18
 ARG APP_ENVIRONMENT=production
 WORKDIR /app
 

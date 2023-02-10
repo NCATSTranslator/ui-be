@@ -14,13 +14,16 @@ export APP_ENVIRONMENT
 #
 case "$APP_ENVIRONMENT" in
     production)
-        config_file="configurations/production.yaml"
+        config_file="configurations/production.json"
         ;;
     test)
-        config_file="configurations/test.yaml"
+        config_file="configurations/test.json"
         ;;
     ci)
-        config_file="configurations/ci.yaml"
+        config_file="configurations/ci.json"
+        ;;
+    dev)
+        config_file="configurations/dev.json"
         ;;
     *)
         echo "Unexpected value $APP_ENVIRONMENT for APP_ENVIRONMENT"
@@ -35,4 +38,5 @@ if [ $# -eq 1 ]; then
 fi
 
 echo "using file $config_file"
-racket server.rkt "$config_file"
+node StartServer.mjs "$config_file"
+

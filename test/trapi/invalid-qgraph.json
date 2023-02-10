@@ -1,1 +1,0 @@
-{"nods":[{"name":"","type":"ChemicalEntity"},{"name":"","type":"Gene"},{"name":"RHOBTB2","type":"Gene"}],"edges":[{"source":0,"target":1,"type":"entity_negatively_regulates_entity"},{"source":1,"target":2,"type":"entity_positively_regulates_entity"}]}
