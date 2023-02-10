@@ -38,6 +38,5 @@ if [ $# -eq 1 ]; then
 fi
 
 echo "using file $config_file"
-# racket server.rkt "$config_file"
 node StartServer.mjs "$config_file"
 
