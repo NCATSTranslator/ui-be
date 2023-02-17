@@ -607,7 +607,11 @@ function edgeToQualifiedPredicate(kedge, invert = false)
   }
 
   let predicate = bl.sanitizeBiolinkElement(kedgePredicate(kedge));
-  const qualifiers = kedgeToQualifiers(kedge);
+  let qualifiers = kedgeToQualifiers(kedge);
+  if (!qualifiers && bl.isDeprecatedPredicate(predicate))
+  {
+    [predicate, qualifiers] = bl.deprecatedPredicateToPredicateAndQualifiers(predicate);
+  }
   // If we don't have any qualifiers, treat it like biolink v2
   if (!qualifiers)
   {
