@@ -4,11 +4,13 @@ import * as cmn from './common.mjs';
 
 let BIOLINK_PREDICATES = null;
 let DEPRECATED_TO_QUALIFIED_PREDICATE_MAP = null;
-export async function loadBiolinkPredicates(biolinkVersion, supportDeprecatedPredicates)
+let PREFIX_CATALOG = null;
+export async function loadBiolinkPredicates(biolinkVersion, supportDeprecatedPredicates, prefixCatalog)
 {
   const biolinkModel = await cmn.readJson(`./assets/biolink-model/${biolinkVersion}/biolink-model.json`);
   const slots = cmn.jsonGet(biolinkModel, 'slots');
   BIOLINK_PREDICATES = makeBlPredicates(slots);
+  PREFIX_CATALOG = await cmn.readJson(`./assets/biolink-model/common/${prefixCatalog}`);
   if (supportDeprecatedPredicates)
   {
     DEPRECATED_TO_QUALIFIED_PREDICATE_MAP = await cmn.readJson(`./assets/biolink-model/${biolinkVersion}/deprecated-predicate-mapping.json`);
@@ -59,6 +61,18 @@ export function deprecatedPredicateToPredicateAndQualifiers(predicate)
 {
   const qualifiedPredicate = DEPRECATED_TO_QUALIFIED_PREDICATE_MAP[predicate];
   return [qualifiedPredicate.predicate, qualifiedPredicate];
+}
+
+export function curieToUrl(curie)
+{
+  const [curiePrefix, curieId] = curie.split(':');
+  const url = PREFIX_CATALOG[curiePrefix];
+  if (!url)
+  {
+    return false;
+  }
+
+  return `${url}${curieId}`;
 }
 
 function InvalidPredicateError(predicate)

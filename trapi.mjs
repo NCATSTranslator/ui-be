@@ -1362,6 +1362,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
 
       let nodeCuries = cmn.jsonGet(node, 'curies');
       pushIfEmpty(nodeCuries, k);
+      cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
     });
 
   Object.values(edges).forEach((edge) =>
