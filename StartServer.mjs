@@ -12,7 +12,8 @@ import * as httpserver from './HTTPServer.mjs';
 const SERVER_CONFIG = await loadConfigFromFile(process.argv.length < 3 ? './configurations/mock.json' : './' + process.argv[2]);
 await loadBiolink(SERVER_CONFIG.biolink.version,
                   SERVER_CONFIG.biolink.support_deprecated_predicates,
-                  SERVER_CONFIG.biolink.infores_catalog);
+                  SERVER_CONFIG.biolink.infores_catalog,
+                  SERVER_CONFIG.biolink.prefix_catalog);
 
 // Bootstrap the service -- this is a kludge. Services should offer factory or builder methods.
 const queryClient = new ARSClient(
