@@ -179,7 +179,9 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
       transformProperty('object', nodeToCanonicalNode),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
-      aggregateAttributes(['biolink:primary_knowledge_source', 'biolink:original_knowledge_source'], 'provenance'),
+      aggregateAttributes([bl.tagBiolink('primary_knowledge_source'),
+                           bl.tagBiolink('original_knowledge_source')],
+                          'provenance'),
       aggregateAndTransformAttributes(
         [
           bl.tagBiolink('supporting_document'),
@@ -1369,7 +1371,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     {
       objRemoveDuplicates(edge);
       cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(isValidId); });
-      cmn.jsonUpdate(edge, 'provenance', (provenance) => { return provenance.map(inforesToUrl); });
+      cmn.jsonUpdate(edge, 'provenance', (provenance) => { return provenance.map(bl.inforesToUrl); });
     });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
