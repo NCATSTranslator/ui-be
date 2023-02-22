@@ -11,7 +11,10 @@
     "host": "molepro-trapi.ci.transltr.io",
     "pull_uri": "/molepro/trapi/v1.3/query"
   },
-  "biolink_version": "3.1.2",
+  "biolink": {
+    "version": "3.1.2",
+    "support_deprecated_predicates": true
+  },
   "max_hops": 3,
   "log_level": "all",
   "log_format": "common",

@@ -3,11 +3,16 @@
 import * as cmn from './common.mjs';
 
 let BIOLINK_PREDICATES = null;
-export async function loadBiolinkPredicates(biolinkVersion)
+let DEPRECATED_TO_QUALIFIED_PREDICATE_MAP = null;
+export async function loadBiolinkPredicates(biolinkVersion, supportDeprecatedPredicates)
 {
   const biolinkModel = await cmn.readJson(`./assets/biolink-model/${biolinkVersion}/biolink-model.json`);
   const slots = cmn.jsonGet(biolinkModel, 'slots');
   BIOLINK_PREDICATES = makeBlPredicates(slots);
+  if (supportDeprecatedPredicates)
+  {
+    DEPRECATED_TO_QUALIFIED_PREDICATE_MAP = await cmn.readJson(`./assets/biolink-model/${biolinkVersion}/deprecated-predicate-mapping.json`);
+  }
 }
 
 export function tagBiolink(str)
@@ -15,9 +20,17 @@ export function tagBiolink(str)
   return biolinkifyPredicate(str);
 }
 
+export function isDeprecatedPredicate(s)
+{
+  return !!DEPRECATED_TO_QUALIFIED_PREDICATE_MAP &&
+         DEPRECATED_TO_QUALIFIED_PREDICATE_MAP[sanitizeBiolinkElement(s)] !== undefined;
+}
+
 export function isBiolinkPredicate(s)
 {
-  return BIOLINK_PREDICATES[sanitizeBiolinkElement(s)] !== undefined;
+  const sanitizedPredicate = sanitizeBiolinkElement(s);
+  return BIOLINK_PREDICATES[sanitizedPredicate] !== undefined ||
+         isDeprecatedPredicate(sanitizedPredicate);
 }
 
 export function sanitizeBiolinkElement(pred)
@@ -40,6 +53,12 @@ export function invertBiolinkPredicate(pred, biolinkify = false)
   }
 
   throw InvalidPredicateError(p);
+}
+
+export function deprecatedPredicateToPredicateAndQualifiers(predicate)
+{
+  const qualifiedPredicate = DEPRECATED_TO_QUALIFIED_PREDICATE_MAP[predicate];
+  return [qualifiedPredicate.predicate, qualifiedPredicate];
 }
 
 function InvalidPredicateError(predicate)
