@@ -1372,7 +1372,10 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     {
       objRemoveDuplicates(edge);
       cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(isValidId); });
-      cmn.jsonUpdate(edge, 'provenance', (provenance) => { return provenance.map(bl.inforesToUrl); });
+      cmn.jsonUpdate(edge, 'provenance', (provenance) =>
+        {
+          return provenance.map(bl.inforesToUrl).filter(cmn.identity);
+        });
     });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
