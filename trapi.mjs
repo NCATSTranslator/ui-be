@@ -179,6 +179,9 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
       transformProperty('object', nodeToCanonicalNode),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
+      aggregateAttributes([bl.tagBiolink('primary_knowledge_source'),
+                           bl.tagBiolink('original_knowledge_source')],
+                          'provenance'),
       aggregateAndTransformAttributes(
         [
           bl.tagBiolink('supporting_document'),
@@ -1362,12 +1365,17 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
 
       let nodeCuries = cmn.jsonGet(node, 'curies');
       pushIfEmpty(nodeCuries, k);
+      cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
     });
 
   Object.values(edges).forEach((edge) =>
     {
       objRemoveDuplicates(edge);
-      cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(isValidId) });
+      cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(isValidId); });
+      cmn.jsonUpdate(edge, 'provenance', (provenance) =>
+        {
+          return provenance.map(bl.inforesToUrl).filter(cmn.identity);
+        });
     });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
