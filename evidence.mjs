@@ -2,6 +2,7 @@ export function isValidId(id)
 {
   return id.startsWith('PMID') ||
          id.startsWith('NCT') ||
+         id.startsWith('PMC') ||
          id.startsWith('clinicaltrialsNCT') ||
          id.startsWith('DOI');
 }
@@ -35,6 +36,11 @@ export function idToTypeAndUrl(id)
     return taggedIdToUrl(id, 'https://pubmed.ncbi.nlm.nih.gov');
   }
 
+  function pmcidToUrl(id)
+  {
+    return `https://www.ncbi.nlm.nih.gov/pmc/${id}`;
+  }
+
   function nctidToUrl(id)
   {
     return `https://clinicaltrials.gov/ct2/show/${id}`;
@@ -53,6 +59,10 @@ export function idToTypeAndUrl(id)
   if (hasTag(id, 'PMID'))
   {
     return ['PMID', pmidToUrl(id)];
+  }
+  else if (hasTag(id, 'PMC'))
+  {
+    return ['PMC', pmcidToUrl(id)];
   }
   else if (hasTag(id, 'NCT'))
   {
