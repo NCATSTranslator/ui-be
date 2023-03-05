@@ -254,7 +254,7 @@ export async function sleep(ms) {
   );
 }
 
-// Usage: await withTimeout(() => sendRecvJSON(...), 1000);
+// Usage: await withTimeout(async () => sendRecvJSON(...), 1000);
 // fun must be an asynch function.
 export async function withTimeout(fun, ms) {
   const timeoutID = setTimeout(() => { throw new Error(`withTimeout exceeded timeout ${ms} ms.`)}, ms);
