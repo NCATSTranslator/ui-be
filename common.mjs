@@ -246,3 +246,25 @@ export async function SendRecvJSON(url, method='GET', headers={}, body=null) {
       throw new Error(errmsg);
   }
 }
+
+// Usage: await sleep(250);
+export async function sleep(ms) {
+  return new Promise((resolve) =>
+    setTimeout(() => resolve(), ms)
+  );
+}
+
+// Usage: await withTimeout(async () => sendRecvJSON(...), 1000);
+// fun must be an asynch function.
+export async function withTimeout(fun, ms) {
+  const timeoutID = setTimeout(() => { throw new Error(`withTimeout exceeded timeout ${ms} ms.`)}, ms);
+  try {
+    const retval = await fun();
+    clearTimeout(timeoutID);
+    return retval;
+  } catch (error) {
+    clearTimeout(timeoutID);
+    throw error;
+  }
+
+}
