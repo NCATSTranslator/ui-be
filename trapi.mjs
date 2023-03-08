@@ -2,7 +2,7 @@
 
 import { default as hash } from 'hash-sum';
 import * as cmn from './common.mjs';
-import { idToTypeAndUrl, isValidId } from './evidence.mjs';
+import * as ev from './evidence.mjs';
 import * as bl from './biolink-model.mjs';
 
 const subjectKey = 'sn';
@@ -1164,7 +1164,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     const publicationIds = cmn.jsonGet(edge, 'publications', []);
     publicationIds.forEach((id) =>
       {
-        const [type, url] = idToTypeAndUrl(id);
+        const [type, url] = ev.idToTypeAndUrl(id);
         let publicationObj = false;
         for (const snippet of snippets)
         {
@@ -1371,7 +1371,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   Object.values(edges).forEach((edge) =>
     {
       objRemoveDuplicates(edge);
-      cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(isValidId); });
+      cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(ev.isValidId); });
       cmn.jsonUpdate(edge, 'provenance', (provenance) =>
         {
           return provenance.map(bl.inforesToUrl).filter(cmn.identity);
