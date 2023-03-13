@@ -11,10 +11,17 @@ async function loadConfigFromFile(filePath) {
   {
     config['document-root'] = process.cwd();
   }
-  if (config['canonicalization_priority'])
-  {
-    config['canonicalization_priority'] = await cmn.readJson(config['canonicalization_priority']);
-  }
+
+  await loadAndReplace(config, 'canonicalization_priority');
+  await loadAndReplace(config, 'frontend');
 
   return config;
+}
+
+async function loadAndReplace(config, prop)
+{
+  if (config[prop])
+  {
+    config[prop] = await cmn.readJson(config[prop]);
+  }
 }

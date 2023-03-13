@@ -29,6 +29,9 @@ export function startServer(config, service)
            validateQueryResultRequest,
            handleResultRequest(config, service, filters));
 
+  app.get('/config',
+          handleConfigRequest(config));
+
   app.get('*', (req, res, next) =>
     {
       res.sendFile(path.join(__root, 'build/index.html'));
@@ -127,6 +130,14 @@ function handleResultRequest(config, service, filters)
       logInternalServerError(req, err);
       sendInternalServerError(res);
     }
+  }
+}
+
+function handleConfigRequest(config)
+{
+  return async function(req, res)
+  {
+    res.status(200).json(config.frontend);
   }
 }
 
