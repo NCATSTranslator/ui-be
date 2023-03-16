@@ -66,15 +66,15 @@ export function deprecatedPredicateToPredicateAndQualifiers(predicate)
   return [qualifiedPredicate.predicate, qualifiedPredicate];
 }
 
-export function inforesToUrl(infores)
+export function inforesToProvenance(infores)
 {
-  const url = INFORES_CATALOG[infores];
-  if (!url)
+  const provenance = INFORES_CATALOG[infores];
+  if (!provenance)
   {
     return false;
   }
 
-  return url
+  return provenance;
 }
 
 export function curieToUrl(curie)

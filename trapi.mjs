@@ -168,8 +168,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
       getProperty('object'),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
-      aggregateAttributes([bl.tagBiolink('primary_knowledge_source'),
-                           bl.tagBiolink('original_knowledge_source')],
+      aggregateAttributes([bl.tagBiolink('primary_knowledge_source')],
                           'provenance'),
       aggregateAndTransformAttributes(
         [
@@ -1277,7 +1276,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(ev.isValidId); });
       cmn.jsonUpdate(edge, 'provenance', (provenance) =>
         {
-          return provenance.map(bl.inforesToUrl).filter(cmn.identity);
+          return provenance.map(bl.inforesToProvenance).filter(cmn.identity);
         });
     });
 
