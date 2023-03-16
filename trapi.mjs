@@ -148,7 +148,6 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
     {
       return cmn.jsonGetFromKpath(answer.message, ['knowledge_graph', 'nodes']);
     });
-  const nodeToCanonicalNode = makeCanonicalNodeMapping(resultNodes, canonPriority);
   const nodeRules = makeSummarizeRules(
     [
       aggregateProperty('name', ['names']),
@@ -165,8 +164,8 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
     [
       transformProperty('predicate', bl.sanitizeBiolinkElement),
       getProperty('qualifiers'),
-      transformProperty('subject', nodeToCanonicalNode),
-      transformProperty('object', nodeToCanonicalNode),
+      getProperty('subject'),
+      getProperty('object'),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
       aggregateAttributes([bl.tagBiolink('primary_knowledge_source'),
@@ -197,7 +196,6 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
       answers,
       nodeRules,
       edgeRules,
-      nodeToCanonicalNode,
       maxHops),
     annotationClient);
 }
@@ -422,6 +420,7 @@ function tagAttribute(attributeId, transform)
           return transform(attrValue(attribute));
         }
       }
+
       return null;
     },
     (v, obj) =>
@@ -703,17 +702,17 @@ function trapiResultToRgraph(trapiResult, kgraph)
     kgraph);
 }
 
-function rnodeToKey(rnode, kgraph, nodeToCanonicalNode)
+function rnodeToKey(rnode, kgraph)
 {
-  return nodeToCanonicalNode(rnode);
+  return rnode;
 }
 
-function redgeToKey(redge, kgraph, nodeToCanonicalNode, doInvert = false)
+function redgeToKey(redge, kgraph, doInvert = false)
 {
   const kedge = redgeToTrapiKedge(redge, kgraph);
-  const ksubject = nodeToCanonicalNode(kedgeSubject(kedge));
+  const ksubject = kedgeSubject(kedge);
   const predicate = edgeToQualifiedPredicate(kedge, doInvert);
-  const kobject = nodeToCanonicalNode(kedgeObject(kedge));
+  const kobject = kedgeObject(kedge);
   if (doInvert)
   {
     return pathToKey([kobject, predicate, ksubject]);
@@ -722,17 +721,17 @@ function redgeToKey(redge, kgraph, nodeToCanonicalNode, doInvert = false)
   return pathToKey([ksubject, predicate, kobject]);
 }
 
-function summarizeRnode(rnode, kgraph, nodeToCanonicalNode, nodeRules)
+function summarizeRnode(rnode, kgraph, nodeRules)
 {
-  return cmn.makePair(rnodeToKey(rnode, kgraph, nodeToCanonicalNode),
+  return cmn.makePair(rnodeToKey(rnode, kgraph),
     nodeRules(rnodeToTrapiKnode(rnode, kgraph)),
     'key',
     'transforms');
 }
 
-function summarizeRedge(redge, kgraph, nodeToCanonicalNode, edgeRules)
+function summarizeRedge(redge, kgraph, edgeRules)
 {
-  return cmn.makePair(redgeToKey(redge, kgraph, nodeToCanonicalNode),
+  return cmn.makePair(redgeToKey(redge, kgraph),
     edgeRules(redgeToTrapiKedge(redge, kgraph)),
     'key',
     'transforms');
@@ -857,111 +856,7 @@ function mergeSummaryFragments(f1, f2)
   return f1;
 }
 
-function makeCanonicalNodeMapping(allNodes, canonPriority)
-{
-  function isCurieAlias(attr)
-  {
-    const attrType = attrId(attr);
-    return attrType === bl.tagBiolink('same_as') ||
-           attrType === bl.tagBiolink('xref');
-  }
-
-  function getCanonicalNode(nodes, priority)
-  {
-    const found = priority.map((x) => { return -1; });
-    nodes.forEach((node, i) =>
-      {
-        priority.forEach((p, j) =>
-          {
-            if (node.startsWith(p))
-            {
-              found[j] = i;
-            }
-          });
-      });
-
-    for (const i of found)
-    {
-      if (i != -1)
-      {
-        return nodes[i];
-      }
-    }
-
-    return nodes[0];
-  }
-
-  const nodeSets = [];
-  const resultCuries = [];
-  allNodes.forEach((nodes) =>
-    {
-      let curies = Object.keys(nodes);
-      curies.forEach((curie) =>
-        {
-          let node = cmn.jsonGet(nodes, curie);
-          let attributes = cmn.jsonGet(node, 'attributes', []);
-          let aliases = [curie];
-          if (!areNoAttributes(attributes))
-          {
-            attributes.forEach((attr) =>
-              {
-                if (isCurieAlias(attr))
-                {
-                  aliases.push(...attrValue(attr));
-                }
-              });
-          }
-
-          nodeSets.push(new Set(aliases));
-        });
-
-      resultCuries.push(...curies);
-    });
-
-  const allCuries = resultCuries.concat(cmn.setUnion(nodeSets).keys());
-  const mergedNodes = allCuries.reduce((nodeSets, curie) =>
-    {
-      let mergeableBags = [];
-      let unmergedBags = [];
-      nodeSets.forEach((nodeSet) =>
-        {
-          if (nodeSet.has(curie))
-          {
-            mergeableBags.push(nodeSet);
-          }
-          else
-          {
-            unmergedBags.push(nodeSet);
-          }
-        });
-
-      if (!cmn.isArrayEmpty(mergeableBags))
-      {
-        unmergedBags.push(cmn.setUnion(mergeableBags));
-      }
-
-      return unmergedBags;
-    },
-    nodeSets);
-
-  const nodeToCanonicalNode = new Object();
-  mergedNodes.forEach((nodeSet) =>
-    {
-      const nodes = Array.from(nodeSet.keys());
-      const canonicalNode = getCanonicalNode(nodes, canonPriority);
-      nodes.forEach((curie) =>
-        {
-          nodeToCanonicalNode[curie] = canonicalNode;
-        });
-    });
-
-  return function(node)
-  {
-    return nodeToCanonicalNode[node] || false;
-  }
-}
-
-function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, nodeToCanonicalNode, maxHops)
+function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxHops)
 {
   function trapiResultToSummaryFragment(trapiResult, kgraph, startKey, endKey)
   {
@@ -998,7 +893,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
           rnodeToOutEdges(currentRnode).forEach((edge) =>
             {
               const target = edge.target
-              if (!path.includes(target) && !!nodeToCanonicalNode(target))
+              if (!path.includes(target))
               {
                 let newPath = [...path, edge.redge, edge.target];
                 validPaths.push(newPath);
@@ -1013,8 +908,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
 
     function normalizePaths(rgraphPaths, kgraph)
     {
-      function N(n) { return rnodeToKey(n, kgraph, nodeToCanonicalNode); }
-      function E(e, o) { return redgeToKey(e, kgraph, nodeToCanonicalNode, isRedgeInverted(e, o, kgraph)); }
+      function N(n) { return rnodeToKey(n, kgraph); }
+      function E(e, o) { return redgeToKey(e, kgraph, isRedgeInverted(e, o, kgraph)); }
       return rgraphPaths.map(path =>
         {
           let normalizedPath = [];
@@ -1036,15 +931,15 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, node
         });
     }
 
-    const resultStartKey = rnodeToKey(start, kgraph, nodeToCanonicalNode);
+    const resultStartKey = rnodeToKey(start, kgraph);
     const resultScore = cmn.jsonGet(trapiResult, 'normalized_score', 0);
     const fragmentScore = {};
     fragmentScore[resultStartKey] = resultScore;
 
     return makeSummaryFragment(
       normalizePaths(rgraphPaths, kgraph),
-      rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeToCanonicalNode, nodeRules); }),
-      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, nodeToCanonicalNode, edgeRules); }),
+      rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules); }),
+      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules); }),
       fragmentScore
     );
   }
@@ -1348,6 +1243,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       endpoints.add(subgraph[0]);
       endpoints.add(subgraph[subgraph.length-1]);
     });
+
   const annotationPromise = annotationClient.annotateGraph(
     createKGFromNodeIds([...endpoints],
                         [
@@ -1408,8 +1304,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     const knodes = cmn.jsonGet(kgraph, 'nodes');
     const annotationUpdates = Object.keys(knodes).map((rnode) =>
       {
-        return summarizeRnode(rnode, kgraph, cmn.identity, nodeRules);
+        return summarizeRnode(rnode, kgraph, nodeRules);
       });
+
     extendSummaryNodes(nodes, annotationUpdates, 'kp-molecular');
   }
   catch (err)
