@@ -153,17 +153,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
       aggregateProperty('name', ['names']),
       aggregateProperty('categories', ['types']),
       aggregateAttributes([bl.tagBiolink('xref')], 'curies'),
-      tagAttribute(
-        bl.tagBiolink('highest_FDA_approval_status'),
-        (fdaDescription) =>
-        {
-          if (fdaDescription === "regular approval")
-          {
-            return makeTag("fda_approved", "FDA Approved");
-          }
-
-          return false;
-        }),
+      tagFdaApproval,
       aggregateAttributes([bl.tagBiolink('description')], 'descriptions'),
       aggregateAttributes([bl.tagBiolink('synonym')], 'synonyms'),
       aggregateAttributes([bl.tagBiolink('same_as')], 'same_as'),
@@ -445,6 +435,19 @@ function tagAttribute(attributeId, transform)
     },
     null);
 }
+
+const tagFdaApproval = tagAttribute(
+  bl.tagBiolink('highest_FDA_approval_status'),
+  (fdaDescription) =>
+  {
+    if (fdaDescription === 'regular approval' ||
+        fdaDescription === 'FDA Approval')
+    {
+      return makeTag('fda_approved', 'FDA Approved');
+    }
+
+    return false;
+  });
 
 function makeSummarizeRules(rules)
 {
@@ -1242,7 +1245,11 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     });
 
   const annotationPromise = annotationClient.annotateGraph(
-    createKGFromNodeIds([...endpoints], ['biolink:description', 'ChEMBL:atc_classification']))
+    createKGFromNodeIds([...endpoints],
+                        [
+                          'ChEMBL:atc_classification',
+                          bl.tagBiolink('highest_FDA_approval_status')
+                        ]));
 
   function pushIfEmpty(arr, val)
   {
@@ -1288,7 +1295,8 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
               const highestLevel = classification.split('|')[0];
               const [tag, description] = highestLevel.split(/-(.*)/s);
               return makeTag(`ATC_${tag}`, cmn.capitalize(description));
-            })
+            }),
+          tagFdaApproval
         ]);
 
     const annotationMessage = await annotationPromise;

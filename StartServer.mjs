@@ -21,7 +21,8 @@ const queryClient = new ARSClient(
   SERVER_CONFIG.ars_endpoint.pull_uri, SERVER_CONFIG.ars_endpoint.post_uri);
 const annotationClient = new MoleProClient(
   `https://${SERVER_CONFIG.molepro_endpoint.host}`,
-  SERVER_CONFIG.molepro_endpoint.pull_uri);
+  SERVER_CONFIG.molepro_endpoint.pull_uri,
+  SERVER_CONFIG.molepro_endpoint.timeout_ms);
 const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
 const service = new TranslatorService(queryClient, outputAdapter);
 

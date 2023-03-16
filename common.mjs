@@ -256,15 +256,13 @@ export async function sleep(ms) {
 
 // Usage: await withTimeout(async () => sendRecvJSON(...), 1000);
 // fun must be an asynch function.
-export async function withTimeout(fun, ms) {
-  const timeoutID = setTimeout(() => { throw new Error(`withTimeout exceeded timeout ${ms} ms.`)}, ms);
-  try {
-    const retval = await fun();
-    clearTimeout(timeoutID);
-    return retval;
-  } catch (error) {
-    clearTimeout(timeoutID);
-    throw error;
-  }
-
+export async function withTimeout(fun, ms)
+{
+  let timer;
+  return Promise.race([
+    fun(),
+    new Promise((_r, rej) =>
+      {
+        return timer = setTimeout(rej, ms, new Error(`withTimeout exceeded timeout ${ms} ms.`));
+      })]).finally(() => clearTimeout(timer));
 }
