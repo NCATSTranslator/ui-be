@@ -21,6 +21,5 @@
   "frontend": "configurations/frontend/ci.json",
   "max_hops": 3,
   "log_level": "all",
-  "log_format": "common",
-  "canonicalization_priority": "configurations/canon-priority.json"
+  "log_format": "common"
 }
