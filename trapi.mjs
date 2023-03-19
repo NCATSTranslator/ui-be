@@ -162,7 +162,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
 
   const edgeRules = makeSummarizeRules(
     [
-      transformProperty('predicate', bl.sanitizeBiolinkElement),
+      transformProperty('predicate', bl.sanitizeBiolinkPredicate),
       getProperty('qualifiers'),
       getProperty('subject'),
       getProperty('object'),
@@ -517,8 +517,8 @@ function kedgeToQualifiers(kedge)
   const qualifiers = {};
   kedgeQualifiers.forEach((q) =>
     {
-      const qualifierKey = bl.sanitizeBiolinkElement(q['qualifier_type_id']);
-      const qualifierValue = bl.sanitizeBiolinkElement(q['qualifier_value']);
+      const qualifierKey = bl.sanitizeBiolinkPredicate(q['qualifier_type_id']);
+      const qualifierValue = bl.sanitizeBiolinkPredicate(q['qualifier_value']);
       qualifiers[qualifierKey] = qualifierValue;
     });
 
@@ -610,7 +610,7 @@ function edgeToQualifiedPredicate(kedge, invert = false)
     return false;
   }
 
-  let predicate = bl.sanitizeBiolinkElement(kedgePredicate(kedge));
+  let predicate = bl.sanitizeBiolinkPredicate(kedgePredicate(kedge));
   let qualifiers = kedgeToQualifiers(kedge);
   if (!qualifiers && bl.isDeprecatedPredicate(predicate))
   {
