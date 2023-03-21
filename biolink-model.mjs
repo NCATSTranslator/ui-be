@@ -202,12 +202,11 @@ function sortBiolinkPredicates(preds) {
  * specific). Some of these are classes that say `mixin: true` or have `mixins: [ 'outcome' ]`, and
  * some are just other things we haven't investigated deeply.
  */
-export function biolinkifyCategory(s) {
+export function biolinkifyClass(s) {
   const str = s.split(' ').map((e) => cmn.capitalizeFirstLetter(e)).join('');
   return `biolink:${str}`;
 }
 
-export
 export async function stuff() {
   let f = await cmn.readJson('./b2.json');
   let c = f.classes;
