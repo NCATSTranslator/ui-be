@@ -11,7 +11,9 @@ let PREFIX_CATALOG = null;
 export async function loadBiolink(biolinkVersion, supportDeprecatedPredicates, inforesCatalog, prefixCatalog) {
   const biolinkModel = await cmn.readJson(`./assets/biolink-model/${biolinkVersion}/biolink-model.json`);
   const slots = cmn.jsonGet(biolinkModel, 'slots');
+  const classes = cmn.jsonGet(biolinkModel, 'classes');
   BIOLINK_PREDICATES = makeBlPredicates(slots);
+  BIOLINK_CLASSES = makeBlClasses(classes);
   INFORES_CATALOG = await cmn.readJson(`./assets/biolink-model/common/${inforesCatalog}`);
   PREFIX_CATALOG = await cmn.readJson(`./assets/biolink-model/common/${prefixCatalog}`);
   if (supportDeprecatedPredicates) {
@@ -77,6 +79,11 @@ function InvalidPredicateError(predicate) {
   const error = new Error(`Expected a valid biolink predicate. Got: ${predicate}`, 'biolink-model.mjs');
 }
 InvalidPredicateError.prototype = Object.create(Error.prototype);
+
+function InvalidClassError(blClass) {
+  const error = new Error(`Expected a valid biolink class. Got: ${blClass}`, 'biolink-model.mjs');
+}
+InvalidClassError.prototype = Object.create(Error.prototype);
 
 function getParent(pred, record) {
   if (pred === 'related to') {
@@ -200,61 +207,64 @@ function sortBiolinkPredicates(preds) {
  * There are a number of top-level classes in the 'classes' field that are not descended from 'entity',
  * and we don't do anything very special with them besides treating them as rank 0 items, (i.e. least
  * specific). Some of these are classes that say `mixin: true` or have `mixins: [ 'outcome' ]`, and
- * some are just other things we haven't investigated deeply.
+ * some are other things we haven't investigated deeply.
  */
 export function biolinkifyClass(s) {
   const str = s.split(' ').map((e) => cmn.capitalizeFirstLetter(e)).join('');
   return `biolink:${str}`;
 }
 
-export async function stuff() {
-  let f = await cmn.readJson('./b2.json');
-  let c = f.classes;
-/*  Object.entries(c).forEach((e) => {
-    if (e[1].hasOwnProperty('is_a')) {
-      console.log(`${e[0]}: ${e[1].is_a}`);
-    } else {
-      console.log(`${e[0]} is a mother`);
-    }
-  });*/
-
-}
-
-export function entityRank(target, classes) {
+export function classRank(target, classes) {
   if (!classes.hasOwnProperty(target)) {
     throw new Error(`${target} is not a Biolink class`);
   }
   let obj = classes[target];
-  if (!obj.hasOwnProperty('is_a')) {
-    return 0
+  if (obj.is_a !== null) {
+    return 1 + classRank(obj.is_a, classes);
   } else {
-    return 1 + entityRank(obj.is_a, classes);
+    return 0;
   }
 }
 
-export function mkBlClass(classData) {
+function makeBlClass(classData) {
   let retval = {};
   retval.is_a = cmn.jsonGet(classData, 'is_a', null);
+  if (retval.is_a) {
+    retval.is_a = biolinkifyClass(retval.is_a);
+  }
   retval.description = cmn.jsonGet(classData, 'description', null);
   return retval;
 }
 
-async function loadBiolinkClasses(file) {
-  let f = await cmn.readJson(file);
-  let classes = f.classes;
+function makeBlClasses(classes) {
   let retval = {};
   Object.entries(classes).forEach((e) => {
+    /* Unlike predicates, it's easier to convert the file data into biolink format
+     * than to safely split the biolink values into space-separated words :-/ */
+    let name = biolinkifyClass(e[0]);
+    let value = e[1];
+    let data = makeBlClass(value);
+    retval[name] = data;
+  });
+  // Assign ranks to each node
+  Object.entries(retval).forEach((e) => {
     let name = e[0];
     let value = e[1];
-    let data = mkBlClass(value);
-    data.rank = entityRank(name, classes);
-    retval[name] = data;
+    value.rank = classRank(name, retval);
   });
   return retval;
 }
 
-let myFile = './b2.json';
-let f = await cmn.readJson(myFile);
-let c = f.classes;
-let bb = await loadBiolinkClasses(myFile);
-export { f, c, bb };
+// Inputs are expected to be in biolink form: `biolink:RNAProductIsoform`
+export function isBiolinkClassMoreSpecific(class1, class2) {
+  let d1 = cmn.jsonGet(BIOLINK_CLASSES, class1, false);
+  let d2 = cmn.jsonGet(BIOLINK_CLASSES, class2, false);
+
+  if (!d1) {
+    throw InvalidClassError(class1);
+  } else if (!d2) {
+    throw InvalidClassError(class2);
+  } else {
+    return d1.rank > d2.rank;
+  }
+}
