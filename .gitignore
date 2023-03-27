@@ -4,7 +4,8 @@ ui-build
 ui-prototype-one
 ui-fe
 **/node_modules
-**.swp
+**/*.swp
+**/*.swo
 *.log
 junk
 *~
