@@ -1262,15 +1262,15 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   Object.keys(nodes).forEach((k) =>
     {
       // Remove any duplicates on all node attributes
-      let node = nodes[k];
+      const node = nodes[k];
       objRemoveDuplicates(node);
 
       // Provide a CURIE as a fallback if the node has no name
-      let nodeNames = cmn.jsonGet(node, 'names');
+      const nodeNames = cmn.jsonGet(node, 'names');
       pushIfEmpty(nodeNames, k);
 
       // Provide a CURIE as a fallback if the node has no other CURIEs
-      let nodeCuries = cmn.jsonGet(node, 'curies');
+      const nodeCuries = cmn.jsonGet(node, 'curies');
       pushIfEmpty(nodeCuries, k);
       cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
     });
@@ -1289,6 +1289,29 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         {
           return provenance.map(bl.inforesToProvenance).filter(cmn.identity);
         });
+    });
+
+  // Path post-processing
+  Object.values(paths).forEach((path) =>
+    {
+      // Add tags for paths
+      const tags = new Set();
+      for (let i = 0; i < path.subgraph.length; ++i)
+      {
+        if (i % 2 === 0)
+        {
+          const node = nodes[path.subgraph[i]];
+          if (node !== undefined) // Remove me when result graphs are fixed
+          {
+            Object.values(node.tags).forEach((tag) =>
+              {
+                tags.add(tag);
+              });
+          }
+        }
+      }
+
+      path.tags = [...tags];
     });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
