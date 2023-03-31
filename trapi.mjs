@@ -1326,9 +1326,13 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   }
   finally
   {
+
+    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores);
     // Path post-processing
     Object.values(paths).forEach((path) =>
       {
+        // Remove duplicates from every attribute on a path
+        objRemoveDuplicates(path);
         // Add tags for paths
         const tags = new Set();
         for (let i = 0; i < path.subgraph.length; ++i)
@@ -1349,8 +1353,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         path.tags = [...tags];
       });
 
-    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores);
-    Object.values(paths).forEach(objRemoveDuplicates);
     return {
       'meta': metadataObject,
       'results': results,
