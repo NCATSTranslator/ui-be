@@ -27,21 +27,21 @@ export function tagBiolink(str) {
 
 export function isDeprecatedPredicate(s) {
   return !!DEPRECATED_TO_QUALIFIED_PREDICATE_MAP &&
-         DEPRECATED_TO_QUALIFIED_PREDICATE_MAP[sanitizeBiolinkPredicate(s)] !== undefined;
+         DEPRECATED_TO_QUALIFIED_PREDICATE_MAP[sanitizeBiolinkItem(s)] !== undefined;
 }
 
 export function isBiolinkPredicate(s) {
-  const sanitizedPredicate = sanitizeBiolinkPredicate(s);
+  const sanitizedPredicate = sanitizeBiolinkItem(s);
   return BIOLINK_PREDICATES[sanitizedPredicate] !== undefined ||
          isDeprecatedPredicate(sanitizedPredicate);
 }
 
-export function sanitizeBiolinkPredicate(pred) {
+export function sanitizeBiolinkItem(pred) {
   return pred.replaceAll('_', ' ').replaceAll('biolink:', '');
 }
 
 export function invertBiolinkPredicate(pred, biolinkify = false) {
-  const p = sanitizeBiolinkPredicate(pred);
+  const p = sanitizeBiolinkItem(pred);
   const biolinkPredicate = cmn.jsonGet(BIOLINK_PREDICATES, p, false);
   if (biolinkPredicate) {
     if (biolinkify) {
@@ -176,12 +176,12 @@ function biolinkifyPredicate(pred) {
 }
 
 function getBiolinkPredicateData(pred) {
-  return cmn.jsonGet(BIOLINK_PREDICATES, sanitizeBiolinkPredicate(pred), false);
+  return cmn.jsonGet(BIOLINK_PREDICATES, sanitizeBiolinkItem(pred), false);
 }
 
 function isBiolinkPredicateMoreSpecific(pred1, pred2) {
-  const p1 = sanitizeBiolinkPredicate(pred1);
-  const p2 = sanitizeBiolinkPredicate(pred2);
+  const p1 = sanitizeBiolinkItem(pred1);
+  const p2 = sanitizeBiolinkItem(pred2);
   const biolinkPredicate1 = getBiolinkPredicateData(p1);
   const biolinkPredicate2 = getBiolinkPredicateData(p2);
 
