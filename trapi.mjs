@@ -1291,29 +1291,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         });
     });
 
-  // Path post-processing
-  Object.values(paths).forEach((path) =>
-    {
-      // Add tags for paths
-      const tags = new Set();
-      for (let i = 0; i < path.subgraph.length; ++i)
-      {
-        if (i % 2 === 0)
-        {
-          const node = nodes[path.subgraph[i]];
-          if (node !== undefined) // Remove me when result graphs are fixed
-          {
-            Object.values(node.tags).forEach((tag) =>
-              {
-                tags.add(tag);
-              });
-          }
-        }
-      }
-
-      path.tags = [...tags];
-    });
-
   [edges, publications] = edgesToEdgesAndPublications(edges);
 
   const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agent; }));
@@ -1349,6 +1326,29 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   }
   finally
   {
+    // Path post-processing
+    Object.values(paths).forEach((path) =>
+      {
+        // Add tags for paths
+        const tags = new Set();
+        for (let i = 0; i < path.subgraph.length; ++i)
+        {
+          if (i % 2 === 0)
+          {
+            const node = nodes[path.subgraph[i]];
+            if (node !== undefined) // Remove me when result graphs are fixed
+            {
+              Object.values(node.tags).forEach((tag) =>
+                {
+                  tags.add(tag);
+                });
+            }
+          }
+        }
+
+        path.tags = [...tags];
+      });
+
     [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores);
     Object.values(paths).forEach(objRemoveDuplicates);
     return {
