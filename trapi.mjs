@@ -1258,22 +1258,33 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
     }
   };
 
+  // Node post-processing
   Object.keys(nodes).forEach((k) =>
     {
+      // Remove any duplicates on all node attributes
       let node = nodes[k];
       objRemoveDuplicates(node);
+
+      // Provide a CURIE as a fallback if the node has no name
       let nodeNames = cmn.jsonGet(node, 'names');
       pushIfEmpty(nodeNames, k);
 
+      // Provide a CURIE as a fallback if the node has no other CURIEs
       let nodeCuries = cmn.jsonGet(node, 'curies');
       pushIfEmpty(nodeCuries, k);
       cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
     });
 
+  // Edge post-processing
   Object.values(edges).forEach((edge) =>
     {
+      // Remove any duplicates on all edge attributes
       objRemoveDuplicates(edge);
+
+      // Remove any publications that do not have a valid identifier
       cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(ev.isValidId); });
+
+      // Convert all infores to provenance
       cmn.jsonUpdate(edge, 'provenance', (provenance) =>
         {
           return provenance.map(bl.inforesToProvenance).filter(cmn.identity);
@@ -1285,6 +1296,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agent; }));
   try
   {
+    // Node annotation
     const nodeRules = makeSummarizeRules(
         [
           tagAttribute(
