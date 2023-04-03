@@ -37,13 +37,13 @@ git checkout $be_branch
 git pull
 be_tag=$(git rev-parse --short HEAD)
 # Clone but do not build the FE dependencies; do that inside the container
-./build-fe.sh "$fe_branch" "$app_env" no
+./build-fe.sh "$fe_branch" no
 cd ui-fe
 fe_tag=$(git rev-parse --short HEAD)
 cd ..
 timestamp=$(date -u "+%Y.%m.%dt%H.%M.%Sz")
 version_tag="FE.${fe_tag}_BE.${be_tag}_$timestamp.$app_env"
 # Removing latest tag
-docker build --no-cache -t "$image_name:$version_tag" -t "$image_name:$app_env" --build-arg APP_ENVIRONMENT="$app_env" .
+docker build --no-cache -t "$image_name:$version_tag" -t "$image_name:$app_env" .
 echo "restoring branch $save_branch"
 git checkout $save_branch
