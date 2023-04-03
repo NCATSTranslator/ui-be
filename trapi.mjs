@@ -1293,7 +1293,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             {
               const highestLevel = classification.split('|')[0];
               const [tag, description] = highestLevel.split(/-(.*)/s);
-              return makeTag(`ATC_${tag}`, cmn.capitalize(description));
+              return makeTag(`ATC_${tag}`, cmn.titleize(description));
             }),
           tagFdaApproval
         ]);
