@@ -21,6 +21,14 @@ export function capitalize(s)
   return `${s[0].toUpperCase()}${s.slice(1).toLowerCase()}`;
 }
 
+/* Different from above function in that for biolinkifying category names, we want to allow
+ * internal case preservation for things like `RNA product'
+ */
+export function capitalizeFirstLetter(s)
+{
+  return `${s[0].toUpperCase()}${s.slice(1)}`;
+}
+
 export function identity(x)
 {
   return x;
