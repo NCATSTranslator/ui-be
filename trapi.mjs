@@ -162,7 +162,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
 
   const edgeRules = makeSummarizeRules(
     [
-      transformProperty('predicate', bl.sanitizeBiolinkElement),
+      transformProperty('predicate', bl.sanitizeBiolinkItem),
       getProperty('qualifiers'),
       getProperty('subject'),
       getProperty('object'),
@@ -517,8 +517,8 @@ function kedgeToQualifiers(kedge)
   const qualifiers = {};
   kedgeQualifiers.forEach((q) =>
     {
-      const qualifierKey = bl.sanitizeBiolinkElement(q['qualifier_type_id']);
-      const qualifierValue = bl.sanitizeBiolinkElement(q['qualifier_value']);
+      const qualifierKey = bl.sanitizeBiolinkItem(q['qualifier_type_id']);
+      const qualifierValue = bl.sanitizeBiolinkItem(q['qualifier_value']);
       qualifiers[qualifierKey] = qualifierValue;
     });
 
@@ -610,7 +610,7 @@ function edgeToQualifiedPredicate(kedge, invert = false)
     return false;
   }
 
-  let predicate = bl.sanitizeBiolinkElement(kedgePredicate(kedge));
+  let predicate = bl.sanitizeBiolinkItem(kedgePredicate(kedge));
   let qualifiers = kedgeToQualifiers(kedge);
   if (!qualifiers && bl.isDeprecatedPredicate(predicate))
   {
@@ -1305,7 +1305,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             {
               const highestLevel = classification.split('|')[0];
               const [tag, description] = highestLevel.split(/-(.*)/s);
-              return makeTag(`ATC_${tag}`, cmn.capitalize(description));
+              return makeTag(`ATC_${tag}`, cmn.titleize(description));
             }),
           tagFdaApproval
         ]);
