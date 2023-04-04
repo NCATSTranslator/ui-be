@@ -659,11 +659,16 @@ function makeTag(tag, name, description = '')
 {
   return {
     'tag': tag,
-    'description': {
-      'name': name,
-      'value': description
-    }
-  }
+    'description': makeTagDescription(name, description)
+  };
+}
+
+function makeTagDescription(name, description = '')
+{
+  return {
+    'name': name,
+    'value': description
+  };
 }
 
 function makeRgraph(rnodes, redges, kgraph)
@@ -1159,28 +1164,13 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
         const end = subgraph[subgraph.length-1];
         const startScores = scores[start];
-        const startTags = cmn.jsonGetFromKpath(nodes, [start, 'tags']);
-        const uniqStartTags = Object.keys(startTags);
-        const endTags = cmn.jsonGetFromKpath(nodes, [end, 'tags']);
-        const uniqEndTags = Object.keys(endTags);
-        const tags = cmn.setUnion([new Set(uniqStartTags),
-                                   new Set(uniqEndTags)]);
-
-        uniqStartTags.forEach((tag) =>
-          {
-            if (usedTags[tag] === undefined)
-            {
-              usedTags[tag] = startTags[tag];
-            }
+        const tags = {};
+        ps.forEach((p) => {
+          Object.keys(paths[p].tags).forEach((tag) => {
+            usedTags[tag] = paths[p].tags[tag];
+            tags[tag] = null;
           });
-
-        uniqEndTags.forEach((tag) =>
-          {
-            if (usedTags[tag] === undefined)
-            {
-              usedTags[tag] = endTags[tag];
-            }
-          });
+        });
 
         return {
           'subject': start,
@@ -1189,7 +1179,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
           'object': end,
           // startScores.length is guarateed to be > 0
           'score': startScores.reduce((a, b) => { return a + b; }) / startScores.length,
-          'tags': cmn.setToObject(tags)
+          'tags': tags
         }
       });
 
@@ -1326,15 +1316,13 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   }
   finally
   {
-
-    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores);
     // Path post-processing
     Object.values(paths).forEach((path) =>
       {
         // Remove duplicates from every attribute on a path
         objRemoveDuplicates(path);
-        // Add tags for paths
-        const tags = new Set();
+        // Add tags for paths by processing nodes
+        const tags = {};
         for (let i = 0; i < path.subgraph.length; ++i)
         {
           if (i % 2 === 0)
@@ -1342,17 +1330,25 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             const node = nodes[path.subgraph[i]];
             if (node !== undefined) // Remove me when result graphs are fixed
             {
-              Object.values(node.tags).forEach((tag) =>
-                {
-                  tags.add(tag);
-                });
+              // Take all node tags
+              Object.keys(node.tags).forEach((k) => { tags[k] = node.tags[k]; });
+
+              // Generate tags based on the node category
+              const type = bl.sanitizeBiolinkItem(node.types[0]);
+              const description = makeTagDescription(type);
+              if (i === 0) {
+                tags[`rc:${type}`] = description;
+              }
+
+              tags[`pc:${type}`] = description;
             }
           }
         }
 
-        path.tags = [...tags];
+        path.tags = tags;
       });
 
+    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores);
     return {
       'meta': metadataObject,
       'results': results,
