@@ -1177,8 +1177,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
           'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
           'paths': ps.sort(isPathLessThan),
           'object': end,
-          // startScores.length is guarateed to be > 0
-          'score': startScores.reduce((a, b) => { return a + b; }) / startScores.length,
+          'score': Math.max(...startScores),
           'tags': tags
         }
       });
