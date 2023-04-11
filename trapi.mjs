@@ -442,7 +442,7 @@ const tagFdaApproval = tagAttribute(
     if (fdaDescription === 'regular approval' ||
         fdaDescription === 'FDA Approval')
     {
-      return makeTag('fda_approved', 'FDA Approved');
+      return makeTag('fda:approved', 'FDA Approved');
     }
 
     return false;
@@ -1294,7 +1294,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             {
               const highestLevel = classification.split('|')[0];
               const [tag, description] = highestLevel.split(/-(.*)/s);
-              return makeTag(`ATC_${tag}`, cmn.titleize(description));
+              return makeTag(`atc:${tag}`, cmn.titleize(description));
             }),
           tagFdaApproval
         ]);
