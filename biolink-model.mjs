@@ -255,16 +255,16 @@ function makeBlClasses(classes) {
   return retval;
 }
 
-// Inputs are expected to be in biolink form: `biolink:RNAProductIsoform`
-export function isBiolinkClassMoreSpecific(class1, class2) {
-  let d1 = cmn.jsonGet(BIOLINK_CLASSES, class1, false);
-  let d2 = cmn.jsonGet(BIOLINK_CLASSES, class2, false);
-
+export function biolinkClassCmpFn(classA, classB) {
+  let d1 = cmn.jsonGet(BIOLINK_CLASSES, classA, false);
+  let d2 = cmn.jsonGet(BIOLINK_CLASSES, classB, false);
+  //console.log(`d1: ${d1.rank}; d2: ${d2.rank}`);
   if (!d1) {
     throw InvalidClassError(class1);
   } else if (!d2) {
     throw InvalidClassError(class2);
   } else {
-    return d1.rank > d2.rank;
+    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#description
+    return d2.rank - d1.rank;
   }
 }

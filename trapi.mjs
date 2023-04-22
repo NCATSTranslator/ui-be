@@ -1253,6 +1253,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       // Remove any duplicates on all node attributes
       const node = nodes[k];
       objRemoveDuplicates(node);
+      node.types.sort(bl.biolinkClassCmpFn);
 
       // Provide a CURIE as a fallback if the node has no name
       const nodeNames = cmn.jsonGet(node, 'names');
