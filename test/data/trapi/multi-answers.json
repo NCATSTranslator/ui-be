@@ -1,0 +1,285 @@
+[
+  {
+    "agent": "test1",
+    "message": {
+      "query_graph": {
+        "edges": {
+          "treats": {
+            "object": "on",
+            "subject": "sn",
+            "predicates": [
+              "biolink:treats"
+            ],
+            "constraints": []
+          }
+        },
+        "nodes": {
+          "sn": {
+            "is_set": false,
+            "categories": [
+              "biolink:ChemicalEntity"
+            ],
+            "constraints": []
+          },
+          "on": {
+            "ids": [
+              "HP:0003124"
+            ],
+            "is_set": false,
+            "categories": [
+              "biolink:Disease"
+            ],
+            "constraints": []
+          }
+        }
+      },
+      "results": [
+        {
+          "edge_bindings": {
+            "e1": [
+              {
+                "id": "a1e1"
+              }
+            ]
+          },
+          "node_bindings": {
+            "sn": [
+              {
+                "id": "panacea"
+              }
+            ],
+            "on": [
+              {
+                "id": "everything"
+              }
+            ]
+          }
+        },
+        {
+          "edge_bindings": {
+            "ec1": [
+              {
+                "id": "ec1"
+              }
+            ]
+          },
+          "node_bindings": {
+            "sn": [
+              {
+                "id": "nc1"
+              }
+            ],
+            "on": [
+              {
+                "id": "nc2"
+              }
+            ]
+          }
+        }
+      ],
+      "knowledge_graph": {
+        "nodes": {
+          "panacea": {},
+          "everything": {},
+          "nc1": {
+            "name": "DrugA",
+            "categories": ["biolink:SmallMolecule"],
+            "attributes": [
+              {
+                "attribute_type_id": "biolink:xref",
+                "value": [ "TEST:001" ]
+              },
+              {
+                "attribute_type_id": "biolink:description",
+                "value": "A made up drug"
+              },
+              {
+                "attribute_type_id": "biolink:synonym",
+                "value": "DrugX"
+              },
+              {
+                "attribute_type_id": "biolink:same_as",
+                "value": "DrugY"
+              },
+              {
+                "attribute_type_id": "biolink:IriType",
+                "value": "TEST:007"
+              }
+            ]
+          },
+          "nc2": {}
+        },
+        "edges": {
+          "a1e1": {
+            "subject": "panacea",
+            "object": "everything",
+            "predicate": "biolink:treats"
+          },
+          "ec1": {
+            "subject": "nc1",
+            "object": "nc2",
+            "predicate": "biolink:treats",
+            "attributes": [
+              {
+                "attribute_type_id": "biolink:IriType",
+                "value": "ETEST:001"
+              },
+              {
+                "attribute_type_id": "biolink:supporting_document",
+                "value":"PMID:123|PMID:124"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  {
+    "agent": "test2",
+    "message": {
+      "query_graph": {
+        "edges": {
+          "treats": {
+            "object": "on",
+            "subject": "sn",
+            "predicates": [
+              "biolink:treats"
+            ],
+            "constraints": []
+          }
+        },
+        "nodes": {
+          "sn": {
+            "is_set": false,
+            "categories": [
+              "biolink:ChemicalEntity"
+            ],
+            "constraints": []
+          },
+          "on": {
+            "ids": [
+              "HP:0003124"
+            ],
+            "is_set": false,
+            "categories": [
+              "biolink:Disease"
+            ],
+            "constraints": []
+          }
+        }
+      },
+      "results": [
+        {
+          "edge_bindings": {
+            "e1": [
+              {
+                "id": "a2e1"
+              }
+            ]
+          },
+          "node_bindings": {
+            "sn": [
+              {
+                "id": "drug1"
+              }
+            ],
+            "on": [
+              {
+                "id": "disease1"
+              }
+            ]
+          }
+        },
+        {
+          "edge_bindings": {
+            "ec1": [
+              {
+                "id": "ec1"
+              }
+            ]
+          },
+          "node_bindings": {
+            "sn": [
+              {
+                "id": "nc1"
+              }
+            ],
+            "on": [
+              {
+                "id": "nc2"
+              }
+            ]
+          }
+        }
+      ],
+      "knowledge_graph": {
+        "nodes": {
+          "drug1": {},
+          "disease1": {},
+          "nc1": {
+            "name": "DrugA",
+            "categories": ["biolink:NamedEntity"],
+            "attributes": [
+              {
+                "attribute_type_id": "biolink:xref",
+                "value": [ "TEST:002", "TEST:003" ]
+              },
+              {
+                "attribute_type_id": "biolink:description",
+                "value": "A made up drug"
+              },
+              {
+                "attribute_type_id": "biolink:synonym",
+                "value": "DrugX"
+              },
+              {
+                "attribute_type_id": "biolink:same_as",
+                "value": "DrugZ"
+              },
+              {
+                "attribute_type_id": "biolink:IriType",
+                "value": "TEST:007"
+              }
+            ]
+          },
+          "nc2": {}
+        },
+        "edges": {
+          "a2e1": {
+            "subject": "drug1",
+            "object": "disease1",
+            "predicate": "biolink:treats"
+          },
+          "ec1": {
+            "subject": "nc1",
+            "object": "nc2",
+            "predicate": "biolink:treats",
+            "attributes": [
+              {
+                "attribute_type_id": "biolink:IriType",
+                "value": "ETEST:002"
+              },
+              {
+                "attribute_type_id": "bts:sentence",
+                "value": {
+                  "PMID:123": {
+                    "sentence": "123",
+                    "publication date": "ABC"
+                  },
+                  "PMID:124": {
+                    "sentence": "124",
+                    "publication date": "ABD"
+                  }
+                }
+              },
+              {
+                "attribute_type_id": "biolink:supporting_document",
+                "value": "PMID:123"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+]

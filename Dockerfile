@@ -1,13 +1,13 @@
-FROM josefkaye/noderacket:latest
-ARG APP_ENVIRONMENT=production
+FROM node:18
 WORKDIR /app
 
 # Assumes parent script has cloned ui-fe repo and checked out right branch
 # This script assumes no git actions
 COPY . ./
-RUN cd ui-fe \
+RUN npm install \
+  && cd ui-fe \
   && npm install \
-  && npm run build:${APP_ENVIRONMENT} \
+  && npm run build \
   && npm prune \
   && npm cache clean --force \
   && npm uninstall npm -g \
@@ -19,5 +19,3 @@ RUN cd ui-fe \
 EXPOSE 8386
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-
-

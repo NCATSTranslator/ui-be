@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Heart Disease",
+    "id": "MONDO:0005267",
+    "uuid": "666d5092-45dc-475a-b55f-ef6592ac5094"
+  },
+  {
+    "name": "Type 2 Diabetes",
+    "id":  "MONDO:0005148",
+    "uuid": "c9894b2b-126e-4c43-9136-dfa20c565d27"
+  },
+  {
+    "name": "Alzheimer's",
+    "id": "MONDO:0004975",
+    "uuid": "08cefb07-f93d-4fd6-9702-914ccad9f343"
+  },
+  {
+    "name": "Multiple Sclerosis",
+    "id": "MONDO:0005301",
+    "uuid": "cd3cb585-1df4-4eb6-acde-d14168a7d6aa"
+  },
+  {
+    "name": "NGLY1-Deficiency",
+    "id": "MONDO:0015286",
+    "uuid": "f216873c-08dd-4262-a73f-38ea578f8e84"
+  }
+]

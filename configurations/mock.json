@@ -1,0 +1,11 @@
+{
+  "document_root": false,
+  "port": 8386,
+  "response_timeout": 300,
+  "ars_endpoint": false,
+  "biolink_version": "3.1.2",
+  "max_hops": 3,
+  "log_level": "all",
+  "log_format": "common",
+  "canonicalization_priority": "configurations/canon-priority.json"
+}
