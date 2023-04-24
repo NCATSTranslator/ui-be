@@ -8,7 +8,7 @@ usage()
     exit 1
 }
 
-if [ $# -lt 6 ]; then
+if [ $# -lt 4 ]; then
     usage
     exit 1
 fi
