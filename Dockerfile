@@ -1,5 +1,4 @@
 FROM node:18
-ARG APP_ENVIRONMENT=production
 WORKDIR /app
 
 # Assumes parent script has cloned ui-fe repo and checked out right branch
@@ -8,7 +7,7 @@ COPY . ./
 RUN npm install \
   && cd ui-fe \
   && npm install \
-  && npm run build:${APP_ENVIRONMENT} \
+  && npm run build \
   && npm prune \
   && npm cache clean --force \
   && npm uninstall npm -g \
