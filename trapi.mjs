@@ -1250,8 +1250,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   // Node post-processing
   Object.keys(nodes).forEach((k) =>
     {
-      // Remove any duplicates on all node attributes
       const node = nodes[k];
+      node.curies.push(k);
+      // Remove any duplicates on all node attributes
       objRemoveDuplicates(node);
       node.types.sort(bl.biolinkClassCmpFn);
 
@@ -1259,9 +1260,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       const nodeNames = cmn.jsonGet(node, 'names');
       pushIfEmpty(nodeNames, k);
 
-      // Provide a CURIE as a fallback if the node has no other CURIEs
-      const nodeCuries = cmn.jsonGet(node, 'curies');
-      pushIfEmpty(nodeCuries, k);
       cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
     });
 
