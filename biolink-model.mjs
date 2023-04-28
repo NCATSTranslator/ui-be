@@ -260,10 +260,10 @@ export function biolinkClassCmpFn(classA, classB) {
   let d2 = cmn.jsonGet(BIOLINK_CLASSES, classB, false);
   //console.log(`d1: ${d1.rank}; d2: ${d2.rank}`);
   if (!d1) {
-    console.error(`Expected a valid biolink class. Got: ${classA}`, 'biolink-model.mjs');
+    console.error(`Expected a valid biolink class. Got: ${classA}`);
     d1 = { rank: 0 };
   } else if (!d2) {
-    console.error(`Expected a valid biolink class. Got: ${classB}`, 'biolink-model.mjs');
+    console.error(`Expected a valid biolink class. Got: ${classB}`);
     d2 = { rank: 0 };
   }
 

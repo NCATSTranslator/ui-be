@@ -509,7 +509,7 @@ function kedgePredicate(kedge)
 function kedgeToQualifiers(kedge)
 {
   const kedgeQualifiers = cmn.jsonGet(kedge, 'qualifiers', false);
-  if (!kedgeQualifiers)
+  if (!kedgeQualifiers || cmn.isArray(kedgeQualifiers))
   {
     return false;
   }
@@ -1093,7 +1093,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   {
     function addInverseEdge(edges, edge)
     {
-      const edgePredicate = cmn.jsonGet(edge, 'predicate');
       const invertedPredicate = edgeToQualifiedPredicate(edge, true);
       const subject = cmn.jsonGet(edge, 'subject');
       const object = cmn.jsonGet(edge, 'object');
