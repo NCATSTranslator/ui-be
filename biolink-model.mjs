@@ -260,11 +260,13 @@ export function biolinkClassCmpFn(classA, classB) {
   let d2 = cmn.jsonGet(BIOLINK_CLASSES, classB, false);
   //console.log(`d1: ${d1.rank}; d2: ${d2.rank}`);
   if (!d1) {
-    throw InvalidClassError(class1);
+    console.error(`Expected a valid biolink class. Got: ${classA}`);
+    d1 = { rank: 0 };
   } else if (!d2) {
-    throw InvalidClassError(class2);
-  } else {
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#description
-    return d2.rank - d1.rank;
+    console.error(`Expected a valid biolink class. Got: ${classB}`);
+    d2 = { rank: 0 };
   }
+
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/sort#description
+  return d2.rank - d1.rank;
 }

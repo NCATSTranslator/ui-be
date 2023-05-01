@@ -509,7 +509,7 @@ function kedgePredicate(kedge)
 function kedgeToQualifiers(kedge)
 {
   const kedgeQualifiers = cmn.jsonGet(kedge, 'qualifiers', false);
-  if (!kedgeQualifiers)
+  if (!kedgeQualifiers || cmn.isArray(kedgeQualifiers))
   {
     return false;
   }
@@ -1093,7 +1093,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   {
     function addInverseEdge(edges, edge)
     {
-      const edgePredicate = cmn.jsonGet(edge, 'predicate');
       const invertedPredicate = edgeToQualifiedPredicate(edge, true);
       const subject = cmn.jsonGet(edge, 'subject');
       const object = cmn.jsonGet(edge, 'object');
@@ -1250,8 +1249,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   // Node post-processing
   Object.keys(nodes).forEach((k) =>
     {
-      // Remove any duplicates on all node attributes
       const node = nodes[k];
+      node.curies.push(k);
+      // Remove any duplicates on all node attributes
       objRemoveDuplicates(node);
       node.types.sort(bl.biolinkClassCmpFn);
 
@@ -1259,9 +1259,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       const nodeNames = cmn.jsonGet(node, 'names');
       pushIfEmpty(nodeNames, k);
 
-      // Provide a CURIE as a fallback if the node has no other CURIEs
-      const nodeCuries = cmn.jsonGet(node, 'curies');
-      pushIfEmpty(nodeCuries, k);
       cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
     });
 
