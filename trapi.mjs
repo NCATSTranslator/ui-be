@@ -509,7 +509,7 @@ function kedgePredicate(kedge)
 function kedgeToQualifiers(kedge)
 {
   const kedgeQualifiers = cmn.jsonGet(kedge, 'qualifiers', false);
-  if (!kedgeQualifiers || cmn.isArray(kedgeQualifiers))
+  if (!kedgeQualifiers || cmn.isArrayEmpty(kedgeQualifiers))
   {
     return false;
   }
