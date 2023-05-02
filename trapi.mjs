@@ -493,11 +493,25 @@ function flattenBindings(bindings)
 
 function getEdgeBindings(analyses, auxGraphs)
 {
-  if (!analyses) {
+  if (!analyses)
+  {
     return false;
   }
 
-  return false;
+  const edgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings'));
+  const supportGraphs = cmn.jsonGet(analysis, 'support_graphs', false);
+  if (supportGraphs)
+  {
+    supportGraphs.forEach((gid) => {
+      const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
+      if (auxGraph)
+      {
+        edgeBindings.push(...cmn.jsonGet(auxGraph, 'edges', []));
+      }
+    });
+  }
+
+  return edgeBindings;
 }
 
 function kedgeSubject(kedge)
