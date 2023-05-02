@@ -491,6 +491,15 @@ function flattenBindings(bindings)
     []);
 }
 
+function getEdgeBindings(analyses, auxGraphs)
+{
+  if (!analyses) {
+    return false;
+  }
+
+  return false;
+}
+
 function kedgeSubject(kedge)
 {
   return cmn.jsonGet(kedge, 'subject');
@@ -673,6 +682,11 @@ function makeTagDescription(name, description = '')
 
 function makeRgraph(rnodes, redges, kgraph)
 {
+  if (!redges)
+  {
+    return false;
+  }
+
   const knodes = cmn.jsonGet(kgraph, 'nodes');
   for (const rnode of rnodes)
   {
@@ -699,10 +713,14 @@ function isRedgeInverted(redge, subject, kgraph)
   return subject === kedgeObject(kedge);
 }
 
-function trapiResultToRgraph(trapiResult, kgraph)
+function trapiResultToRgraph(trapiResult, kgraph, auxGraphs)
 {
-  return makeRgraph(flattenBindings(cmn.jsonGet(trapiResult, 'node_bindings')),
-    flattenBindings(cmn.jsonGet(trapiResult, 'edge_bindings')),
+  // First approximation:
+  //   Gather all edge bindings here
+
+  return makeRgraph(
+    flattenBindings(cmn.jsonGet(trapiResult, 'node_bindings')),
+    getEdgeBindings(cmn.jsonGet(trapiResult, 'analyses', false), auxGraphs),
     kgraph);
 }
 
@@ -862,9 +880,9 @@ function mergeSummaryFragments(f1, f2)
 
 function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxHops)
 {
-  function trapiResultToSummaryFragment(trapiResult, kgraph, startKey, endKey)
+  function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey)
   {
-    const rgraph = trapiResultToRgraph(trapiResult, kgraph);
+    const rgraph = trapiResultToRgraph(trapiResult, kgraph, auxGraphs);
     if (!rgraph)
     {
       return emptySummaryFragment();
@@ -966,6 +984,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
       const trapiMessage = answer.message;
       const trapiResults = cmn.jsonGet(trapiMessage, 'results');
       const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
+      const auxGraphs = cmn.jsonGet(trapiMessage, 'auxiliary_graphs');
       const [startKey, endKey] = getPathDirection(cmn.jsonGet(trapiMessage, 'query_graph'));
 
       return makeCondensedSummary(
@@ -975,7 +994,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
           {
             return mergeSummaryFragments(
               summaryFragment,
-              trapiResultToSummaryFragment(result, kgraph, startKey, endKey));
+              trapiResultToSummaryFragment(result, kgraph, auxGraphs, startKey, endKey));
           },
           emptySummaryFragment()));
     });
