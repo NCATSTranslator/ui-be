@@ -997,9 +997,9 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
     {
       const reportingAgent = answer.agent;
       const trapiMessage = answer.message;
-      const trapiResults = cmn.jsonGet(trapiMessage, 'results');
+      const trapiResults = cmn.jsonGet(trapiMessage, 'results', []);
       const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
-      const auxGraphs = cmn.jsonGet(trapiMessage, 'auxiliary_graphs');
+      const auxGraphs = cmn.jsonGet(trapiMessage, 'auxiliary_graphs', {});
       const [startKey, endKey] = getPathDirection(cmn.jsonGet(trapiMessage, 'query_graph'));
 
       return makeCondensedSummary(
