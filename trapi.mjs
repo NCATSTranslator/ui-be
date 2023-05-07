@@ -174,7 +174,8 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
         [
           bl.tagBiolink('supporting_document'),
           bl.tagBiolink('Publication'),
-          bl.tagBiolink('publications')
+          bl.tagBiolink('publications'),
+          bl.tagBiolink('publication') // Remove me when this is fixed in the ARA/KPs
         ],
         'publications',
         (evidence) =>
@@ -509,7 +510,7 @@ function kedgePredicate(kedge)
 function kedgeToQualifiers(kedge)
 {
   const kedgeQualifiers = cmn.jsonGet(kedge, 'qualifiers', false);
-  if (!kedgeQualifiers || cmn.isArray(kedgeQualifiers))
+  if (!kedgeQualifiers || cmn.isArrayEmpty(kedgeQualifiers))
   {
     return false;
   }
