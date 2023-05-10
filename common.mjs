@@ -81,6 +81,16 @@ export function isArrayEmpty(a)
   throw new TypeError(`Expected array got ${a}`);
 }
 
+export function distinctArray(a)
+{
+  if (isArray(a))
+  {
+    return [...new Set(a)];
+  }
+
+  throw new TypeError(`Expected array got ${a}`);
+}
+
 export function setUnion(sets)
 {
   return sets.reduce((unionedSet, set) =>

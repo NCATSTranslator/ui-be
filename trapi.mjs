@@ -492,27 +492,44 @@ function flattenBindings(bindings)
     []);
 }
 
-function getEdgeBindings(analyses, auxGraphs)
+function processAnalyses(analyses, auxGraphs, kgraph)
 {
-  if (!analyses)
+  let nodeBindings = [];
+  let edgeBindings = [];
+  const scores = [];
+  analyses.forEach((analysis) =>
   {
-    return false;
-  }
+    edgeBindings.push(...flattenBindings(cmn.jsonGet(analysis, 'edge_bindings')));
+    const score = cmn.jsonGet(analysis, 'score', false);
+    if (score)
+    {
+      scores.push(score);
+    }
 
-  const edgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings'));
-  const supportGraphs = cmn.jsonGet(analysis, 'support_graphs', false);
-  if (supportGraphs)
+    const supportGraphs = cmn.jsonGet(analysis, 'support_graphs', false);
+    if (supportGraphs)
+    {
+      supportGraphs.forEach((gid) => {
+        const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
+        if (auxGraph)
+        {
+          edgeBindings.push(...cmn.jsonGet(auxGraph, 'edges', []));
+        }
+      });
+    }
+  });
+
+  edgeBindings = cmn.distinctArray(edgeBindings);
+  edgeBindings.forEach((eb) =>
   {
-    supportGraphs.forEach((gid) => {
-      const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
-      if (auxGraph)
-      {
-        edgeBindings.push(...cmn.jsonGet(auxGraph, 'edges', []));
-      }
-    });
-  }
-
-  return edgeBindings;
+    const kedge = redgeToTrapiKedge(eb, kgraph);
+    nodeBindings.push(kedgeSubject(kedge));
+    nodeBindings.push(kedgeObject(kedge));
+  });
+  
+  nodeBindings = cmn.distinctArray(nodeBindings);
+  const maxScore = (cmn.isArrayEmpty(scores) ? 0.0 : Math.max(scores));
+  return [nodeBindings, edgeBindings, 100 * maxScore];
 }
 
 function kedgeSubject(kedge)
@@ -695,7 +712,7 @@ function makeTagDescription(name, description = '')
   };
 }
 
-function makeRgraph(rnodes, redges, kgraph)
+function makeRgraph(rnodes, redges, score, kgraph)
 {
   if (!redges)
   {
@@ -718,6 +735,7 @@ function makeRgraph(rnodes, redges, kgraph)
       const kedge = redgeToTrapiKedge(redge, kgraph);
       return bl.isBiolinkPredicate(kedgePredicate(kedge));
     });
+  rgraph.score = score;
 
   return rgraph;
 }
@@ -733,10 +751,17 @@ function trapiResultToRgraph(trapiResult, kgraph, auxGraphs)
   // First approximation:
   //   Gather all edge bindings here
 
-  return makeRgraph(
-    flattenBindings(cmn.jsonGet(trapiResult, 'node_bindings')),
-    getEdgeBindings(cmn.jsonGet(trapiResult, 'analyses', false), auxGraphs),
-    kgraph);
+  const analyses = cmn.jsonGet(trapiResult, 'analyses', false);
+  if (!analyses)
+  {
+    return false;
+  }
+
+  let [nodeBindings, edgeBindings, score] = processAnalyses(analyses, auxGraphs, kgraph);
+  nodeBindings.push(...flattenBindings(cmn.jsonGet(trapiResult, 'node_bindings')));
+  nodeBindings = cmn.distinctArray(nodeBindings);
+
+  return makeRgraph(nodeBindings, edgeBindings, score, kgraph);
 }
 
 function rnodeToKey(rnode, kgraph)
@@ -969,9 +994,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
     }
 
     const resultStartKey = rnodeToKey(start, kgraph);
-    const resultScore = cmn.jsonGet(trapiResult, 'normalized_score', 0);
     const fragmentScore = {};
-    fragmentScore[resultStartKey] = resultScore;
+    fragmentScore[resultStartKey] = rgraph.score;
 
     return makeSummaryFragment(
       normalizePaths(rgraphPaths, kgraph),
