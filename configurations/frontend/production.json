@@ -2,22 +2,22 @@
   {
     "name": "Heart Disease",
     "id": "MONDO:0005267",
-    "uuid": "b07fcefd-84c9-4c63-b052-97799222dcab"
+    "uuid": "be10296f-6153-4998-8f96-eb732a9cb5c4"
   },
   {
     "name": "Type 2 Diabetes",
     "id": "MONDO:0005148",
-    "uuid": "fb7e180a-4ab9-471a-a68d-0f947f3d8d0c"
+    "uuid": "8fc56914-e916-43a1-9221-ce6c2b0ebe60"
   },
   {
     "name": "Alzheimer's",
     "id": "MONDO:0004975",
-    "uuid": "3e3ce543-85ee-4a06-970e-05e4a8658825"
+    "uuid": "e3dd122a-d364-4c3d-a10b-1dc759187dbc"
   },
   {
     "name": "Multiple Sclerosis",
     "id": "MONDO:0005301",
-    "uuid": "77fec913-2673-46af-83c6-d99a5a39d271"
+    "uuid": "ad124147-69e4-4de1-889c-2f483b144bfd"
   }
 ]
 
