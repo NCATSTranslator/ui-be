@@ -449,7 +449,6 @@ function getPrimarySource(sources)
     {
       return [id];
     }
-
   }
 
   return [];
