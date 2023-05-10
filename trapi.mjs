@@ -163,13 +163,12 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
   const edgeRules = makeSummarizeRules(
     [
       transformProperty('predicate', bl.sanitizeBiolinkItem),
+      aggregateAndTransformProperty('sources', ['provenance'], getPrimarySource),
       getProperty('qualifiers'),
       getProperty('subject'),
       getProperty('object'),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
-      aggregateAttributes([bl.tagBiolink('primary_knowledge_source')],
-                          'provenance'),
       aggregateAndTransformAttributes(
         [
           bl.tagBiolink('supporting_document'),
@@ -434,6 +433,26 @@ function tagAttribute(attributeId, transform)
       return obj
     },
     null);
+}
+
+function getPrimarySource(sources)
+{
+  for (let source of sources)
+  {
+    const id = cmn.jsonGet(source, 'resource_id', false);
+    const role = cmn.jsonGet(source, 'resource_role', false);
+    if (!role || !id)
+    {
+      continue;
+    }
+    else if (role === bl.tagBiolink('primary_knowledge_source'))
+    {
+      return [id];
+    }
+
+  }
+
+  return [];
 }
 
 const tagFdaApproval = tagAttribute(
