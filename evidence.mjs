@@ -7,6 +7,16 @@ export function isValidId(id)
          id.startsWith('DOI');
 }
 
+export function normalize(id)
+{
+  if (id.startsWith('PMC:'))
+  {
+    return id.replace(':', '');
+  }
+
+  return id;
+}
+
 export function idToTypeAndUrl(id)
 {
   function stripTag(id)

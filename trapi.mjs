@@ -182,11 +182,11 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
         {
           if (cmn.isArray(evidence))
           {
-            return evidence;
+            return evidence.map(ev.normalize);
           }
 
           // Split on ',' OR (|) '|'
-          return evidence.split(/,|\|/);
+          return evidence.split(/,|\|/).map(ev.normalize);
         })
     ]);
 
