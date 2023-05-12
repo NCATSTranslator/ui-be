@@ -445,7 +445,7 @@ function getPrimarySource(sources)
     {
       continue;
     }
-    else if (role === bl.tagBiolink('primary_knowledge_source'))
+    else if (role === 'primary_knowledge_source')
     {
       return [id];
     }
