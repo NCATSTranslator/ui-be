@@ -2,26 +2,26 @@
   {
     "name": "Heart Disease",
     "id": "MONDO:0005267",
-    "uuid": "3a469eb2-5f78-4391-a6c8-6cdfd11ca7cb"
+    "uuid": "e0178c35-173e-448b-a6a6-4f4f443bbb8f"
   },
   {
     "name": "Type 2 Diabetes",
     "id": "MONDO:0005148",
-    "uuid": "37298beb-ce35-4000-aead-21e3f209e1f6"
+    "uuid": "faa6bd41-ff33-4027-b427-c41225453570"
   },
   {
     "name": "Alzheimer's",
     "id": "MONDO:0004975",
-    "uuid": "49c5e6d6-a19a-47f8-bc3a-053cdfcca38e"
+    "uuid": "90e394fc-1b7c-4abe-a0fe-f95720cdd4f4"
   },
   {
     "name": "Multiple Sclerosis",
     "id": "MONDO:0005301",
-    "uuid": "fa7f00a8-ea76-43f9-8eb5-c6203fab42e2"
+    "uuid": "8ad68a6d-6e34-406d-971a-7d3b91869690"
   },
   {
     "name": "NGLY1-Deficiency",
     "id": "MONDO:0014109",
-    "uuid": "27a22609-4da8-4700-87d1-964d0ef918c0"
+    "uuid": "31256b4c-577e-42d2-8192-f5243ad2183a"
   }
 ]
