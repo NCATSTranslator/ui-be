@@ -163,13 +163,12 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
   const edgeRules = makeSummarizeRules(
     [
       transformProperty('predicate', bl.sanitizeBiolinkItem),
+      aggregateAndTransformProperty('sources', ['provenance'], getPrimarySource),
       getProperty('qualifiers'),
       getProperty('subject'),
       getProperty('object'),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
-      aggregateAttributes([bl.tagBiolink('primary_knowledge_source')],
-                          'provenance'),
       aggregateAndTransformAttributes(
         [
           bl.tagBiolink('supporting_document'),
@@ -436,6 +435,25 @@ function tagAttribute(attributeId, transform)
     null);
 }
 
+function getPrimarySource(sources)
+{
+  for (let source of sources)
+  {
+    const id = cmn.jsonGet(source, 'resource_id', false);
+    const role = cmn.jsonGet(source, 'resource_role', false);
+    if (!role || !id)
+    {
+      continue;
+    }
+    else if (role === 'primary_knowledge_source')
+    {
+      return [id];
+    }
+  }
+
+  return [];
+}
+
 const tagFdaApproval = tagAttribute(
   bl.tagBiolink('highest_FDA_approval_status'),
   (fdaDescription) =>
@@ -492,6 +510,46 @@ function flattenBindings(bindings)
     []);
 }
 
+function processAnalyses(analyses, auxGraphs, kgraph)
+{
+  let nodeBindings = [];
+  let edgeBindings = [];
+  const scores = [];
+  analyses.forEach((analysis) =>
+  {
+    edgeBindings.push(...flattenBindings(cmn.jsonGet(analysis, 'edge_bindings')));
+    const score = cmn.jsonGet(analysis, 'score', false);
+    if (score)
+    {
+      scores.push(score);
+    }
+
+    const supportGraphs = cmn.jsonGet(analysis, 'support_graphs', false);
+    if (supportGraphs)
+    {
+      supportGraphs.forEach((gid) => {
+        const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
+        if (auxGraph)
+        {
+          edgeBindings.push(...cmn.jsonGet(auxGraph, 'edges', []));
+        }
+      });
+    }
+  });
+
+  edgeBindings = cmn.distinctArray(edgeBindings);
+  edgeBindings.forEach((eb) =>
+  {
+    const kedge = redgeToTrapiKedge(eb, kgraph);
+    nodeBindings.push(kedgeSubject(kedge));
+    nodeBindings.push(kedgeObject(kedge));
+  });
+  
+  nodeBindings = cmn.distinctArray(nodeBindings);
+  const maxScore = (cmn.isArrayEmpty(scores) ? 0.0 : Math.max(scores));
+  return [nodeBindings, edgeBindings, 100 * maxScore];
+}
+
 function kedgeSubject(kedge)
 {
   return cmn.jsonGet(kedge, 'subject');
@@ -510,7 +568,7 @@ function kedgePredicate(kedge)
 function kedgeToQualifiers(kedge)
 {
   const kedgeQualifiers = cmn.jsonGet(kedge, 'qualifiers', false);
-  if (!kedgeQualifiers || cmn.isArrayEmpty(kedgeQualifiers))
+  if (!kedgeQualifiers || !cmn.isArray(kedgeQualifiers) || cmn.isArrayEmpty(kedgeQualifiers))
   {
     return false;
   }
@@ -518,9 +576,14 @@ function kedgeToQualifiers(kedge)
   const qualifiers = {};
   kedgeQualifiers.forEach((q) =>
     {
-      const qualifierKey = bl.sanitizeBiolinkItem(q['qualifier_type_id']);
-      const qualifierValue = bl.sanitizeBiolinkItem(q['qualifier_value']);
-      qualifiers[qualifierKey] = qualifierValue;
+      const qualifierKey = q['qualifier_type_id'];
+      const qualifierValue = q['qualifier_value'];
+      if (qualifierKey === undefined || qualifierValue === undefined)
+      {
+        return false;
+      }
+
+      qualifiers[bl.sanitizeBiolinkItem(qualifierKey)] = bl.sanitizeBiolinkItem(qualifierValue);
     });
 
   return qualifiers;
@@ -672,8 +735,13 @@ function makeTagDescription(name, description = '')
   };
 }
 
-function makeRgraph(rnodes, redges, kgraph)
+function makeRgraph(rnodes, redges, score, kgraph)
 {
+  if (!redges)
+  {
+    return false;
+  }
+
   const knodes = cmn.jsonGet(kgraph, 'nodes');
   for (const rnode of rnodes)
   {
@@ -690,6 +758,7 @@ function makeRgraph(rnodes, redges, kgraph)
       const kedge = redgeToTrapiKedge(redge, kgraph);
       return bl.isBiolinkPredicate(kedgePredicate(kedge));
     });
+  rgraph.score = score;
 
   return rgraph;
 }
@@ -700,11 +769,22 @@ function isRedgeInverted(redge, subject, kgraph)
   return subject === kedgeObject(kedge);
 }
 
-function trapiResultToRgraph(trapiResult, kgraph)
+function trapiResultToRgraph(trapiResult, kgraph, auxGraphs)
 {
-  return makeRgraph(flattenBindings(cmn.jsonGet(trapiResult, 'node_bindings')),
-    flattenBindings(cmn.jsonGet(trapiResult, 'edge_bindings')),
-    kgraph);
+  // First approximation:
+  //   Gather all edge bindings here
+
+  const analyses = cmn.jsonGet(trapiResult, 'analyses', false);
+  if (!analyses)
+  {
+    return false;
+  }
+
+  let [nodeBindings, edgeBindings, score] = processAnalyses(analyses, auxGraphs, kgraph);
+  nodeBindings.push(...flattenBindings(cmn.jsonGet(trapiResult, 'node_bindings')));
+  nodeBindings = cmn.distinctArray(nodeBindings);
+
+  return makeRgraph(nodeBindings, edgeBindings, score, kgraph);
 }
 
 function rnodeToKey(rnode, kgraph)
@@ -863,9 +943,9 @@ function mergeSummaryFragments(f1, f2)
 
 function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxHops)
 {
-  function trapiResultToSummaryFragment(trapiResult, kgraph, startKey, endKey)
+  function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey)
   {
-    const rgraph = trapiResultToRgraph(trapiResult, kgraph);
+    const rgraph = trapiResultToRgraph(trapiResult, kgraph, auxGraphs);
     if (!rgraph)
     {
       return emptySummaryFragment();
@@ -937,9 +1017,8 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
     }
 
     const resultStartKey = rnodeToKey(start, kgraph);
-    const resultScore = cmn.jsonGet(trapiResult, 'normalized_score', 0);
     const fragmentScore = {};
-    fragmentScore[resultStartKey] = resultScore;
+    fragmentScore[resultStartKey] = rgraph.score;
 
     return makeSummaryFragment(
       normalizePaths(rgraphPaths, kgraph),
@@ -965,8 +1044,9 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
     {
       const reportingAgent = answer.agent;
       const trapiMessage = answer.message;
-      const trapiResults = cmn.jsonGet(trapiMessage, 'results');
+      const trapiResults = cmn.jsonGet(trapiMessage, 'results', []);
       const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
+      const auxGraphs = cmn.jsonGet(trapiMessage, 'auxiliary_graphs', {});
       const [startKey, endKey] = getPathDirection(cmn.jsonGet(trapiMessage, 'query_graph'));
 
       return makeCondensedSummary(
@@ -976,7 +1056,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
           {
             return mergeSummaryFragments(
               summaryFragment,
-              trapiResultToSummaryFragment(result, kgraph, startKey, endKey));
+              trapiResultToSummaryFragment(result, kgraph, auxGraphs, startKey, endKey));
           },
           emptySummaryFragment()));
     });
