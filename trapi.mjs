@@ -568,7 +568,7 @@ function kedgePredicate(kedge)
 function kedgeToQualifiers(kedge)
 {
   const kedgeQualifiers = cmn.jsonGet(kedge, 'qualifiers', false);
-  if (!kedgeQualifiers || cmn.isArrayEmpty(kedgeQualifiers))
+  if (!kedgeQualifiers || !cmn.isArray(kedgeQualifiers) || cmn.isArrayEmpty(kedgeQualifiers))
   {
     return false;
   }
@@ -576,9 +576,14 @@ function kedgeToQualifiers(kedge)
   const qualifiers = {};
   kedgeQualifiers.forEach((q) =>
     {
-      const qualifierKey = bl.sanitizeBiolinkItem(q['qualifier_type_id']);
-      const qualifierValue = bl.sanitizeBiolinkItem(q['qualifier_value']);
-      qualifiers[qualifierKey] = qualifierValue;
+      const qualifierKey = q['qualifier_type_id'];
+      const qualifierValue = q['qualifier_value'];
+      if (qualifierKey === undefined || qualifierValue === undefined)
+      {
+        return false;
+      }
+
+      qualifiers[bl.sanitizeBiolinkItem(qualifierKey)] = bl.sanitizeBiolinkItem(qualifierValue);
     });
 
   return qualifiers;
