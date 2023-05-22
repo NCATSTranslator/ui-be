@@ -10,8 +10,7 @@ fi
 fe_repo="https://github.com/NCATSTranslator/ui-fe.git"
 fe_src="ui-fe"
 fe_branch="${1}"
-app_env="${2}"
-do_build="${3}"
+do_build="${2}"
 echo "Starting UI build"
 if [ ! -d "${fe_src}" ]; then
    echo "Cloning front end"
@@ -24,7 +23,7 @@ if [ "${do_build}" = "yes" ]; then
     echo "Installing front end dependencies"
     npm install
     echo "Building front end source"
-    npm run build:$app_env
+    npm run build
     echo "Done building front end"
 else
     echo "Skipping npm build process"
