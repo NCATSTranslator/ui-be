@@ -510,46 +510,6 @@ function flattenBindings(bindings)
     []);
 }
 
-function processAnalyses(analyses, auxGraphs, kgraph)
-{
-  let nodeBindings = [];
-  let edgeBindings = [];
-  const scores = [];
-  analyses.forEach((analysis) =>
-  {
-    edgeBindings.push(...flattenBindings(cmn.jsonGet(analysis, 'edge_bindings')));
-    const score = cmn.jsonGet(analysis, 'score', false);
-    if (score)
-    {
-      scores.push(score);
-    }
-
-    const supportGraphs = cmn.jsonGet(analysis, 'support_graphs', false);
-    if (supportGraphs)
-    {
-      supportGraphs.forEach((gid) => {
-        const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
-        if (auxGraph)
-        {
-          edgeBindings.push(...cmn.jsonGet(auxGraph, 'edges', []));
-        }
-      });
-    }
-  });
-
-  edgeBindings = cmn.distinctArray(edgeBindings);
-  edgeBindings.forEach((eb) =>
-  {
-    const kedge = redgeToTrapiKedge(eb, kgraph);
-    nodeBindings.push(kedgeSubject(kedge));
-    nodeBindings.push(kedgeObject(kedge));
-  });
-  
-  nodeBindings = cmn.distinctArray(nodeBindings);
-  const maxScore = (cmn.isArrayEmpty(scores) ? 0.0 : Math.max(scores));
-  return [nodeBindings, edgeBindings, 100 * maxScore];
-}
-
 function kedgeSubject(kedge)
 {
   return cmn.jsonGet(kedge, 'subject');
@@ -563,6 +523,31 @@ function kedgeObject(kedge)
 function kedgePredicate(kedge)
 {
   return cmn.jsonGet(kedge, 'predicate');
+}
+
+function kedgeAttributes(kedge)
+{
+  const attributes = cmn.jsonGet(kedge, 'attributes', null);
+  if (areNoAttributes(attributes))
+  {
+    return [];
+  }
+
+  return attributes;
+}
+
+function kedgeSupportGraphs(kedge)
+{
+  const attributes = kedgeAttributes(kedge);
+  for (const attr of attributes)
+  {
+    if (attrId(attr) === bl.tagBiolink('support_graphs'))
+    {
+      return attrValue(attr);
+    }
+  };
+
+  return [];
 }
 
 function kedgeToQualifiers(kedge)
@@ -769,22 +754,55 @@ function isRedgeInverted(redge, subject, kgraph)
   return subject === kedgeObject(kedge);
 }
 
-function trapiResultToRgraph(trapiResult, kgraph, auxGraphs)
+function analysisToRgraph(analysis, kgraph, auxGraphs)
 {
-  // First approximation:
-  //   Gather all edge bindings here
-
-  const analyses = cmn.jsonGet(trapiResult, 'analyses', false);
-  if (!analyses)
+  const score = cmn.jsonGet(analysis, 'score', 0);
+  let unprocessedEdgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings', []));
+  let unprocessedSupportGraphs = cmn.jsonGet(analysis, 'support_graphs', []);
+  const edgeBindings = new Set();
+  const nodeBindings = new Set();
+  const supportGraphs = new Set();
+  while (!cmn.isArrayEmpty(unprocessedEdgeBindings) || !cmn.isArrayEmpty(unprocessedSupportGraphs))
   {
-    return false;
+    while (!cmn.isArrayEmpty(unprocessedEdgeBindings))
+    {
+      const eb = unprocessedEdgeBindings.pop();
+      const kedge = redgeToTrapiKedge(eb, kgraph);
+      nodeBindings.add(kedgeSubject(kedge));
+      nodeBindings.add(kedgeObject(kedge));
+      const edgeSupportGraphs = kedgeSupportGraphs(kedge);
+      edgeSupportGraphs.forEach((sg) =>
+      {
+        if (!supportGraphs.has(sg))
+        {
+          unprocessedSupportGraphs.push(sg);
+        }
+      });
+
+      edgeBindings.add(eb);
+    };
+
+    while (!cmn.isArrayEmpty(unprocessedSupportGraphs))
+    {
+      const gid = unprocessedSupportGraphs.pop();
+      const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
+      if (auxGraph)
+      {
+        const sgEdgeBindings = cmn.jsonGet(auxGraph, 'edges', []);
+        sgEdgeBindings.forEach((eb) =>
+        {
+          if (!edgeBindings.has(eb))
+          {
+            unprocessedEdgeBindings.push(eb);
+          }
+        }); 
+      }
+
+      supportGraphs.add(gid);
+    }
   }
 
-  let [nodeBindings, edgeBindings, score] = processAnalyses(analyses, auxGraphs, kgraph);
-  nodeBindings.push(...flattenBindings(cmn.jsonGet(trapiResult, 'node_bindings')));
-  nodeBindings = cmn.distinctArray(nodeBindings);
-
-  return makeRgraph(nodeBindings, edgeBindings, score, kgraph);
+  return makeRgraph([...nodeBindings], [...edgeBindings], score, kgraph);
 }
 
 function rnodeToKey(rnode, kgraph)
@@ -945,87 +963,101 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
 {
   function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey)
   {
-    const rgraph = trapiResultToRgraph(trapiResult, kgraph, auxGraphs);
-    if (!rgraph)
+    function analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end)
     {
-      return emptySummaryFragment();
+      function normalizePaths(rgraphPaths, kgraph)
+      {
+        function N(n) { return rnodeToKey(n, kgraph); }
+        function E(e, o) { return redgeToKey(e, kgraph, isRedgeInverted(e, o, kgraph)); }
+        return rgraphPaths.map(path =>
+          {
+            let normalizedPath = [];
+            const pathLength = path.length - 1;
+            if (pathLength < 0)
+            {
+              return normalizedPath;
+            }
+
+            for (let i = 0; i < pathLength; i+=2)
+            {
+              const node = path[i];
+              const edge = path[i+1];
+              normalizedPath.push(N(node), E(edge, node));
+            }
+
+            normalizedPath.push(N(path[pathLength]));
+            return normalizedPath;
+          });
+      }
+
+      const rgraph = analysisToRgraph(analysis, kgraph, auxGraphs);
+      if (!rgraph)
+      {
+        return emptySummaryFragment();
+      }
+
+      const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
+      const maxPathLength = (2 * maxHops) + 1;
+      const rgraphPaths = rgraphFold((path) =>
+        {
+          const currentRnode = path[path.length-1];
+          if (maxPathLength < path.length)
+          {
+            return cmn.makePair([], []);
+          }
+          else if (currentRnode === end)
+          {
+            return cmn.makePair([], [path]);
+          }
+          else
+          {
+            let validPaths = [];
+            rnodeToOutEdges(currentRnode).forEach((edge) =>
+              {
+                const target = edge.target
+                if (!path.includes(target))
+                {
+                  let newPath = [...path, edge.redge, edge.target];
+                  validPaths.push(newPath);
+                }
+              });
+
+            return cmn.makePair(validPaths, []);
+          }
+        },
+        [[start]],
+        []);
+
+      const fragmentScore = {};
+      const resultStartKey = rnodeToKey(start, kgraph);
+      fragmentScore[resultStartKey] = rgraph.score;
+
+      return makeSummaryFragment(
+        normalizePaths(rgraphPaths, kgraph),
+        rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules); }),
+        rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules); }),
+        fragmentScore
+      );
     }
 
-    const nodeBindings = trapiResult['node_bindings'];
-    const start = getBindingId(nodeBindings, startKey);
-    const end = getBindingId(nodeBindings, endKey);
+    const resultNodeBindings = trapiResult['node_bindings'];
+    const start = getBindingId(resultNodeBindings, startKey);
+    const end = getBindingId(resultNodeBindings, endKey);
+
     if (!start || !end)
     {
       return emptySummaryFragment();
     }
 
-    const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
-    const maxPathLength = (2 * maxHops) + 1;
-    const rgraphPaths = rgraphFold((path) =>
+    const analyses = cmn.jsonGet(trapiResult, 'analyses', [])
+    return analyses.reduce(
+      (resultSummaryFragment, analysis) =>
       {
-        const currentRnode = path[path.length-1];
-        if (maxPathLength < path.length)
-        {
-          return cmn.makePair([], []);
-        }
-        else if (currentRnode === end)
-        {
-          return cmn.makePair([], [path]);
-        }
-        else
-        {
-          let validPaths = [];
-          rnodeToOutEdges(currentRnode).forEach((edge) =>
-            {
-              const target = edge.target
-              if (!path.includes(target))
-              {
-                let newPath = [...path, edge.redge, edge.target];
-                validPaths.push(newPath);
-              }
-            });
-
-          return cmn.makePair(validPaths, []);
-        }
+        return mergeSummaryFragments(
+          resultSummaryFragment,
+          analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
       },
-      [[start]],
-      []);
-
-    function normalizePaths(rgraphPaths, kgraph)
-    {
-      function N(n) { return rnodeToKey(n, kgraph); }
-      function E(e, o) { return redgeToKey(e, kgraph, isRedgeInverted(e, o, kgraph)); }
-      return rgraphPaths.map(path =>
-        {
-          let normalizedPath = [];
-          const pathLength = path.length - 1;
-          if (pathLength < 0)
-          {
-            return normalizedPath;
-          }
-
-          for (let i = 0; i < pathLength; i+=2)
-          {
-            const node = path[i];
-            const edge = path[i+1];
-            normalizedPath.push(N(node), E(edge, node));
-          }
-
-          normalizedPath.push(N(path[pathLength]));
-          return normalizedPath;
-        });
-    }
-
-    const resultStartKey = rnodeToKey(start, kgraph);
-    const fragmentScore = {};
-    fragmentScore[resultStartKey] = rgraph.score;
-
-    return makeSummaryFragment(
-      normalizePaths(rgraphPaths, kgraph),
-      rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules); }),
-      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules); }),
-      fragmentScore
-    );
+      emptySummaryFragment()); 
   }
 
   function getPathDirection(qgraph)
