@@ -9,7 +9,7 @@
   },
   "molepro_endpoint": {
     "host": "molepro-trapi.ci.transltr.io",
-    "pull_uri": "/molepro/trapi/v1.3/query",
+    "pull_uri": "/molepro/trapi/v1.4/query",
     "timeout_ms": 60000
   },
   "biolink": {
