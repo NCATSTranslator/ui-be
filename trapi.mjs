@@ -550,6 +550,11 @@ function processAnalyses(analyses, auxGraphs, kgraph)
   return [nodeBindings, edgeBindings, 100 * maxScore];
 }
 
+function isNodeIndex(index)
+{
+  return index % 2 === 0;
+}
+
 function kedgeSubject(kedge)
 {
   return cmn.jsonGet(kedge, 'subject');
@@ -1042,7 +1047,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
 
   return answers.map((answer) =>
     {
-      const reportingAgent = answer.agent;
+      const reportingAgent = answer.agent.slice(4,);
       const trapiMessage = answer.message;
       const trapiResults = cmn.jsonGet(trapiMessage, 'results', []);
       const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
@@ -1403,7 +1408,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         const tags = {};
         for (let i = 0; i < path.subgraph.length; ++i)
         {
-          if (i % 2 === 0)
+          if (isNodeIndex(i))
           {
             const node = nodes[path.subgraph[i]];
             if (node !== undefined) // Remove me when result graphs are fixed
@@ -1422,6 +1427,13 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             }
           }
         }
+
+        // Generate tags based on the aras for this path
+        const aras = cmn.jsonGet(path, 'aras');
+        aras.forEach((ara) =>
+        {
+          tags[`ara:${ara}`] = makeTagDescription(cmn.titleize(ara));
+        });
 
         path.tags = tags;
       });
