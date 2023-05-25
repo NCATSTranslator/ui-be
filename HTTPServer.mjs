@@ -122,7 +122,7 @@ function handleResultRequest(config, service, filters)
       let svcRes = await service.getResults(uuid, filters);
       let retval = await service.outputAdapter.queryResultsToFE(svcRes,
         config.max_hops,
-        config.canonicalization_priority);
+        config.ara_to_infores_map);
       res.status(200).json(retval);
     }
     catch (err)

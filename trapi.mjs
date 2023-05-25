@@ -142,7 +142,7 @@ export function queryToCreativeQuery(query)
   };
 }
 
-export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, annotationClient)
+export function creativeAnswersToSummary (qid, answers, maxHops, agentToInforesMap, annotationClient)
 {
   const resultNodes = answers.map((answer) =>
     {
@@ -188,6 +188,11 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
           return evidence.split(/,|\|/).map(ev.normalize);
         })
     ]);
+  
+  function agentToName(agent)
+  {
+    return bl.inforesToProvenance(agentToInforesMap[agent]).name;
+  }
 
   return condensedSummariesToSummary(
     qid,
@@ -196,6 +201,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
       nodeRules,
       edgeRules,
       maxHops),
+    agentToName,
     annotationClient);
 }
 
@@ -1067,7 +1073,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
     });
 }
 
-async function condensedSummariesToSummary(qid, condensedSummaries, annotationClient)
+async function condensedSummariesToSummary(qid, condensedSummaries, agentToName, annotationClient)
 {
   function fragmentPathsToResultsAndPaths(fragmentPaths)
   {
@@ -1432,7 +1438,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         const aras = cmn.jsonGet(path, 'aras');
         aras.forEach((ara) =>
         {
-          tags[`ara:${ara}`] = makeTagDescription(cmn.titleize(ara));
+          tags[`ara:${ara}`] = makeTagDescription(agentToName(ara));
         });
 
         path.tags = tags;
