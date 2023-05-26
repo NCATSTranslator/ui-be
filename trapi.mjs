@@ -142,7 +142,7 @@ export function queryToCreativeQuery(query)
   };
 }
 
-export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, annotationClient)
+export function creativeAnswersToSummary (qid, answers, maxHops, agentToInforesMap, annotationClient)
 {
   const resultNodes = answers.map((answer) =>
     {
@@ -188,6 +188,11 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
           return evidence.split(/,|\|/).map(ev.normalize);
         })
     ]);
+  
+  function agentToName(agent)
+  {
+    return bl.inforesToProvenance(agentToInforesMap[agent]).name;
+  }
 
   return condensedSummariesToSummary(
     qid,
@@ -196,6 +201,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
       nodeRules,
       edgeRules,
       maxHops),
+    agentToName,
     annotationClient);
 }
 
@@ -523,6 +529,11 @@ function kedgeObject(kedge)
 function kedgePredicate(kedge)
 {
   return cmn.jsonGet(kedge, 'predicate');
+}
+
+function isNodeIndex(index)
+{
+  return index % 2 === 0;
 }
 
 function kedgeAttributes(kedge)
@@ -1074,7 +1085,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
 
   return answers.map((answer) =>
     {
-      const reportingAgent = answer.agent;
+      const reportingAgent = answer.agent.slice(4,);
       const trapiMessage = answer.message;
       const trapiResults = cmn.jsonGet(trapiMessage, 'results', []);
       const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
@@ -1094,7 +1105,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
     });
 }
 
-async function condensedSummariesToSummary(qid, condensedSummaries, annotationClient)
+async function condensedSummariesToSummary(qid, condensedSummaries, agentToName, annotationClient)
 {
   function fragmentPathsToResultsAndPaths(fragmentPaths)
   {
@@ -1435,7 +1446,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         const tags = {};
         for (let i = 0; i < path.subgraph.length; ++i)
         {
-          if (i % 2 === 0)
+          if (isNodeIndex(i))
           {
             const node = nodes[path.subgraph[i]];
             if (node !== undefined) // Remove me when result graphs are fixed
@@ -1454,6 +1465,13 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             }
           }
         }
+
+        // Generate tags based on the aras for this path
+        const aras = cmn.jsonGet(path, 'aras');
+        aras.forEach((ara) =>
+        {
+          tags[`ara:${ara}`] = makeTagDescription(agentToName(ara));
+        });
 
         path.tags = tags;
       });
