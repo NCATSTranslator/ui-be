@@ -483,7 +483,7 @@ function makeSummarizeRules(rules)
 
 function trapiBindingToKobj(binding, type, kgraph)
 {
-  return cmn.jsonGet(cmn.jsonGet(kgraph, type), binding);
+  return cmn.jsonGet(cmn.jsonGet(kgraph, type, {}), binding, false);
 }
 
 function redgeToTrapiKedge(edgeBinding, kgraph)
@@ -779,6 +779,11 @@ function analysisToRgraph(analysis, kgraph, auxGraphs)
     {
       const eb = unprocessedEdgeBindings.pop();
       const kedge = redgeToTrapiKedge(eb, kgraph);
+      if (!kedge)
+      {
+        return false;
+      }
+
       nodeBindings.add(kedgeSubject(kedge));
       nodeBindings.add(kedgeObject(kedge));
       const edgeSupportGraphs = kedgeSupportGraphs(kedge);
