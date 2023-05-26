@@ -769,7 +769,7 @@ function analysisToRgraph(analysis, kgraph, auxGraphs)
 {
   const score = cmn.jsonGet(analysis, 'score', 0);
   let unprocessedEdgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings', []));
-  let unprocessedSupportGraphs = cmn.jsonGet(analysis, 'support_graphs', []);
+  let unprocessedSupportGraphs = [];
   const edgeBindings = new Set();
   const nodeBindings = new Set();
   const supportGraphs = new Set();
