@@ -932,6 +932,13 @@ function emptySummaryFragment()
   return makeSummaryFragment([], [], [], {});
 }
 
+function isEmptySummaryFragment(summaryFragment)
+{
+  return cmn.isArrayEmpty(summaryFragment.paths) &&
+         cmn.isArrayEmpty(summaryFragment.nodes) &&
+         cmn.isArrayEmpty(summaryFragment.edges);
+} 
+
 function makeCondensedSummary(agent, summaryFragment)
 {
   return cmn.makePair(agent, summaryFragment, 'agent', 'fragment');
@@ -967,10 +974,11 @@ function mergeSummaryFragments(f1, f2)
   f1.paths.push(...f2.paths);
   f1.nodes.push(...f2.nodes);
   f1.edges.push(...f2.edges);
-
-  const newScoreKey = Object.keys(f2.scores)[0]; // There is only one score per new summary fragment
-  const currentScores = cmn.jsonSetDefaultAndGet(f1.scores, newScoreKey, []);
-  currentScores.push(f2.scores[newScoreKey]);
+  Object.keys(f2.scores).forEach((k) =>
+  {
+    const currentScores = cmn.jsonSetDefaultAndGet(f1.scores, k, []);
+    currentScores.push(...f2.scores[k]);
+  });
 
   return f1;
 }
@@ -1044,15 +1052,11 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
         [[start]],
         []);
 
-      const fragmentScore = {};
-      const resultStartKey = rnodeToKey(start, kgraph);
-      fragmentScore[resultStartKey] = rgraph.score;
-
       return makeSummaryFragment(
         normalizePaths(rgraphPaths, kgraph),
         rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules); }),
         rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules); }),
-        fragmentScore
+        {} 
       );
     }
 
@@ -1066,14 +1070,23 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
     }
 
     const analyses = cmn.jsonGet(trapiResult, 'analyses', [])
-    return analyses.reduce(
-      (resultSummaryFragment, analysis) =>
+    const resultSummaryFragment = analyses.reduce(
+      (rsf, analysis) =>
       {
         return mergeSummaryFragments(
-          resultSummaryFragment,
+          rsf,
           analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
       },
       emptySummaryFragment()); 
+    
+    if (!isEmptySummaryFragment(resultSummaryFragment))
+    {
+      // Insert the score after the analyses have been merged
+      const resultStartKey = rnodeToKey(start, kgraph);
+      resultSummaryFragment.scores[resultStartKey] = [trapiResult['normalized_score']];
+    }
+
+    return resultSummaryFragment;
   }
 
   function getPathDirection(qgraph)
