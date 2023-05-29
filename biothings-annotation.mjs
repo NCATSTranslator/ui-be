@@ -100,7 +100,16 @@ function getChemicalChebiRoles(annotation)
     ids = [ids];
   }
 
-  return ids.map((id) => { return { id: id, name: chebi.getName(id) } });
+  const roles = [];
+  ids.forEach((id) => {
+    const highLevelId = chebi.getHighLevelRole(id);
+    if (highLevelId !== null)
+    {
+      roles.push({ id: highLevelId, name: chebi.getName(highLevelId) });
+    }
+  });
+
+  return roles;
 }
 
 function getChemicalFdaApproval(annotation)

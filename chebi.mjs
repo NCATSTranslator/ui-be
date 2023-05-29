@@ -15,3 +15,21 @@ export function getName(chebiId) {
 export function getParent(chebiId) {
   return CHEBI_ROLES[chebiId].is_a;
 }
+
+export function getHighLevelRole(chebiId) {
+  let parentOfParent = getParent(getParent(chebiId));
+  if (parentOfParent === undefined) {
+    return null;
+  }
+
+  while (!rootNode(parentOfParent)) {
+    chebiId = getParent(chebiId);
+    parentOfParent = getParent(parentOfParent);
+  }
+
+  return chebiId;
+}
+
+function rootNode(chebiId) {
+  return chebiId === 'CHEBI:50906';
+}
