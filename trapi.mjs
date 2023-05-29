@@ -1468,7 +1468,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
               return [];
             }
 
-            return chebiRoles.map((role) => { return makeTag(`role:${role.id}`, role.name)});
+            return chebiRoles.map((role) => { return makeTag(`role:${role.id}`, cmn.titleize(role.name))});
           })
       ]);
 
