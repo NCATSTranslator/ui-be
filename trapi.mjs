@@ -4,6 +4,7 @@ import { default as hash } from 'hash-sum';
 import * as cmn from './common.mjs';
 import * as ev from './evidence.mjs';
 import * as bl from './biolink-model.mjs';
+import * as bta from './biothings-annotation.mjs';
 
 const subjectKey = 'sn';
 const objectKey = 'on';
@@ -205,16 +206,11 @@ export function creativeAnswersToSummary (qid, answers, maxHops, agentToInforesM
     annotationClient);
 }
 
-function createKGFromNodeIds(nodeIds, attributes)
+function createKGFromNodeIds(nodeIds)
 {
   const nodes = {};
   nodeIds.forEach(e => { nodes[e] = {}; });
   const retval = {
-    submitter: 'annotate_nodes',
-    workflow: [ {
-      id: 'annotate_nodes',
-      parameters: { attributes: attributes }
-    }],
     message: {
       knowledge_graph: {
         edges: {},
@@ -362,7 +358,16 @@ function renameAndTransformAttribute(attributeId, kpath, transform)
 
       return null;
     },
-    (v, obj) => { return cmn.jsonSetFromKpath(obj, kpath, v); },
+    (v, obj) =>
+    {
+      const currentValue = cmn.jsonGetFromKpath(obj, kpath, false);
+      if (currentValue && v === null)
+      {
+        return obj;
+      }
+
+      return cmn.jsonSetFromKpath(obj, kpath, v);
+    },
     null);
 }
 
@@ -415,7 +420,7 @@ function tagAttribute(attributeId, transform)
     {
       if (areNoAttributes(attributes))
       {
-        return null;
+        return [];
       }
 
       for (const attribute of attributes)
@@ -426,15 +431,23 @@ function tagAttribute(attributeId, transform)
         }
       }
 
-      return null;
+      return [];
     },
-    (v, obj) =>
+    (vs, obj) =>
     {
       const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', {});
-      if (v && currentTags[v.tag] === undefined)
+      if (!cmn.isArray(vs))
       {
-        currentTags[v.tag] = v.description;
+        vs = [vs];
       }
+
+      vs.forEach((v) =>
+      {
+        if (v && currentTags[v.tag] === undefined)
+        {
+          currentTags[v.tag] = v.description;
+        }
+      });
 
       return obj
     },
@@ -1373,13 +1386,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
       endpoints.add(subgraph[subgraph.length-1]);
     });
 
-  const annotationPromise = annotationClient.annotateGraph(
-    createKGFromNodeIds([...endpoints],
-                        [
-                          'ChEMBL:atc_classification',
-                          bl.tagBiolink('highest_FDA_approval_status')
-                        ]));
-
+  const annotationPromise = annotationClient.annotateGraph(createKGFromNodeIds(Object.keys(nodes)));
   function pushIfEmpty(arr, val)
   {
     if (cmn.isArrayEmpty(arr))
@@ -1387,22 +1394,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
       arr.push(val);
     }
   };
-
-  // Node post-processing
-  Object.keys(nodes).forEach((k) =>
-    {
-      const node = nodes[k];
-      node.curies.push(k);
-      // Remove any duplicates on all node attributes
-      objRemoveDuplicates(node);
-      node.types.sort(bl.biolinkClassCmpFn);
-
-      // Provide a CURIE as a fallback if the node has no name
-      const nodeNames = cmn.jsonGet(node, 'names');
-      pushIfEmpty(nodeNames, k);
-
-      cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
-    });
 
   // Edge post-processing
   Object.values(edges).forEach((edge) =>
@@ -1427,27 +1418,68 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
   {
     // Node annotation
     const nodeRules = makeSummarizeRules(
-        [
-          tagAttribute(
-            'ChEMBL:atc_classification',
-            (classification) =>
+      [
+        renameAndTransformAttribute(
+          'biothings_annotations',
+          ['names'],
+          (annotations) =>
+          {
+            const name = bta.getName(annotations);
+            if (name === null)
             {
-              const highestLevel = classification.split('|')[0];
-              const [tag, description] = highestLevel.split(/-(.*)/s);
-              return makeTag(`atc:${tag}`, cmn.titleize(description));
-            }),
-          tagFdaApproval
-        ]);
+              return null;
+            }
 
-    const annotationMessage = await annotationPromise;
-    const kgraph = cmn.jsonGetFromKpath(annotationMessage, ['message', 'knowledge_graph'])
-    const knodes = cmn.jsonGet(kgraph, 'nodes');
+            return [name];
+
+          }),
+        renameAndTransformAttribute(
+          'biothings_annotations',
+          ['descriptions'],
+          (annotations) =>
+          {
+            const description = bta.getDescription(annotations);
+            if (description === null)
+            {
+              return null;
+            }
+
+            return [description];
+          }),
+        tagAttribute(
+          'biothings_annotations',
+          (annotations) =>
+          {
+            const fdaApproval = bta.getFdaApproval(annotations);
+            if (fdaApproval === null)
+            {
+              return [];
+            }
+
+            return makeTag('fda:approved', 'FDA Approved');
+          }),
+        tagAttribute(
+          'biothings_annotations',
+          (annotations) =>
+          {
+            const chebiRoles = bta.getChebiRoles(annotations);
+            if (chebiRoles === null)
+            {
+              return [];
+            }
+
+            return chebiRoles.map((role) => { return makeTag(`role:${role.id}`, role.name)});
+          })
+      ]);
+
+    const knodes = await annotationPromise;
+    const kgraph = { 'nodes': knodes };
     const annotationUpdates = Object.keys(knodes).map((rnode) =>
       {
         return summarizeRnode(rnode, kgraph, nodeRules);
       });
 
-    extendSummaryNodes(nodes, annotationUpdates, 'kp-molecular');
+    extendSummaryNodes(nodes, annotationUpdates, 'biothings-annotator');
   }
   catch (err)
   {
@@ -1455,6 +1487,22 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
   }
   finally
   {
+    // Node post-processing
+    Object.keys(nodes).forEach((k) =>
+      {
+        const node = nodes[k];
+        node.curies.push(k);
+        // Remove any duplicates on all node attributes
+        objRemoveDuplicates(node);
+        node.types.sort(bl.biolinkClassCmpFn);
+
+        // Provide a CURIE as a fallback if the node has no name
+        const nodeNames = cmn.jsonGet(node, 'names');
+        pushIfEmpty(nodeNames, k);
+
+        cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
+      });
+
     // Path post-processing
     Object.values(paths).forEach((path) =>
       {

@@ -2,10 +2,11 @@
 
 import { loadConfigFromFile }  from './config.mjs';
 import { loadBiolink } from './biolink-model.mjs';
+import { loadChebi } from './chebi.mjs';
 import { TranslatorService } from './TranslatorService.mjs';
 import { TranslatorServicexFEAdapter } from './TranslatorServicexFEAdapter.mjs';
 import { ARSClient } from './ARSClient.mjs';
-import { MoleProClient } from './MoleProClient.mjs';
+import { KGAnnotationClient } from './KGAnnotationClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 
 // Load the config asap as basically everything depends on it
@@ -14,15 +15,16 @@ await loadBiolink(SERVER_CONFIG.biolink.version,
                   SERVER_CONFIG.biolink.support_deprecated_predicates,
                   SERVER_CONFIG.biolink.infores_catalog,
                   SERVER_CONFIG.biolink.prefix_catalog);
+await loadChebi();
 
 // Bootstrap the service -- this is a kludge. Services should offer factory or builder methods.
 const queryClient = new ARSClient(
   `https://${SERVER_CONFIG.ars_endpoint.host}`,
   SERVER_CONFIG.ars_endpoint.pull_uri, SERVER_CONFIG.ars_endpoint.post_uri);
-const annotationClient = new MoleProClient(
-  `https://${SERVER_CONFIG.molepro_endpoint.host}`,
-  SERVER_CONFIG.molepro_endpoint.pull_uri,
-  SERVER_CONFIG.molepro_endpoint.timeout_ms);
+const annotationClient = new KGAnnotationClient(
+  `https://${SERVER_CONFIG.annotation_endpoint.host}`,
+  SERVER_CONFIG.annotation_endpoint.pull_uri,
+  SERVER_CONFIG.annotation_endpoint.timeout_ms);
 const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
 const service = new TranslatorService(queryClient, outputAdapter);
 

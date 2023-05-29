@@ -7,7 +7,7 @@
     "post_uri": "/ars/api/submit",
     "pull_uri": "/ars/api/messages"
   },
-  "molepro_endpoint": {
+  "annotation_endpoint": {
     "host": "molepro-trapi.transltr.io",
     "pull_uri": "/molepro/trapi/v1.3/query",
     "timeout_ms": 60000
