@@ -14,6 +14,7 @@ async function loadConfigFromFile(filePath) {
 
   await loadAndReplace(config, 'canonicalization_priority');
   await loadAndReplace(config, 'frontend');
+  await loadAndReplace(config, 'ara_to_infores_map');
 
   return config;
 }

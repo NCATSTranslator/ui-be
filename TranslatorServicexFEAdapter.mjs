@@ -46,7 +46,7 @@ class TranslatorServicexFEAdapter
     };
   }
 
-  async queryResultsToFE(msg, maxHops, canonPriority)
+  async queryResultsToFE(msg, maxHops, agentToInforesMap)
   {
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
@@ -66,7 +66,7 @@ class TranslatorServicexFEAdapter
       data: await trapi.creativeAnswersToSummary(msg.pk,
         data,
         maxHops,
-        canonPriority,
+        agentToInforesMap,
         this.annotationClient)
     };
   }

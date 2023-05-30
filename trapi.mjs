@@ -4,6 +4,7 @@ import { default as hash } from 'hash-sum';
 import * as cmn from './common.mjs';
 import * as ev from './evidence.mjs';
 import * as bl from './biolink-model.mjs';
+import * as bta from './biothings-annotation.mjs';
 
 const subjectKey = 'sn';
 const objectKey = 'on';
@@ -142,7 +143,7 @@ export function queryToCreativeQuery(query)
   };
 }
 
-export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, annotationClient)
+export function creativeAnswersToSummary (qid, answers, maxHops, agentToInforesMap, annotationClient)
 {
   const resultNodes = answers.map((answer) =>
     {
@@ -188,6 +189,11 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
           return evidence.split(/,|\|/).map(ev.normalize);
         })
     ]);
+  
+  function agentToName(agent)
+  {
+    return bl.inforesToProvenance(agentToInforesMap[agent]).name;
+  }
 
   return condensedSummariesToSummary(
     qid,
@@ -196,19 +202,15 @@ export function creativeAnswersToSummary (qid, answers, maxHops, canonPriority, 
       nodeRules,
       edgeRules,
       maxHops),
+    agentToName,
     annotationClient);
 }
 
-function createKGFromNodeIds(nodeIds, attributes)
+function createKGFromNodeIds(nodeIds)
 {
   const nodes = {};
   nodeIds.forEach(e => { nodes[e] = {}; });
   const retval = {
-    submitter: 'annotate_nodes',
-    workflow: [ {
-      id: 'annotate_nodes',
-      parameters: { attributes: attributes }
-    }],
     message: {
       knowledge_graph: {
         edges: {},
@@ -356,7 +358,16 @@ function renameAndTransformAttribute(attributeId, kpath, transform)
 
       return null;
     },
-    (v, obj) => { return cmn.jsonSetFromKpath(obj, kpath, v); },
+    (v, obj) =>
+    {
+      const currentValue = cmn.jsonGetFromKpath(obj, kpath, false);
+      if (currentValue && v === null)
+      {
+        return obj;
+      }
+
+      return cmn.jsonSetFromKpath(obj, kpath, v);
+    },
     null);
 }
 
@@ -409,7 +420,7 @@ function tagAttribute(attributeId, transform)
     {
       if (areNoAttributes(attributes))
       {
-        return null;
+        return [];
       }
 
       for (const attribute of attributes)
@@ -420,15 +431,23 @@ function tagAttribute(attributeId, transform)
         }
       }
 
-      return null;
+      return [];
     },
-    (v, obj) =>
+    (vs, obj) =>
     {
       const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', {});
-      if (v && currentTags[v.tag] === undefined)
+      if (!cmn.isArray(vs))
       {
-        currentTags[v.tag] = v.description;
+        vs = [vs];
       }
+
+      vs.forEach((v) =>
+      {
+        if (v && currentTags[v.tag] === undefined)
+        {
+          currentTags[v.tag] = v.description;
+        }
+      });
 
       return obj
     },
@@ -477,7 +496,7 @@ function makeSummarizeRules(rules)
 
 function trapiBindingToKobj(binding, type, kgraph)
 {
-  return cmn.jsonGet(cmn.jsonGet(kgraph, type), binding);
+  return cmn.jsonGet(cmn.jsonGet(kgraph, type, {}), binding, false);
 }
 
 function redgeToTrapiKedge(edgeBinding, kgraph)
@@ -510,46 +529,6 @@ function flattenBindings(bindings)
     []);
 }
 
-function processAnalyses(analyses, auxGraphs, kgraph)
-{
-  let nodeBindings = [];
-  let edgeBindings = [];
-  const scores = [];
-  analyses.forEach((analysis) =>
-  {
-    edgeBindings.push(...flattenBindings(cmn.jsonGet(analysis, 'edge_bindings')));
-    const score = cmn.jsonGet(analysis, 'score', false);
-    if (score)
-    {
-      scores.push(score);
-    }
-
-    const supportGraphs = cmn.jsonGet(analysis, 'support_graphs', false);
-    if (supportGraphs)
-    {
-      supportGraphs.forEach((gid) => {
-        const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
-        if (auxGraph)
-        {
-          edgeBindings.push(...cmn.jsonGet(auxGraph, 'edges', []));
-        }
-      });
-    }
-  });
-
-  edgeBindings = cmn.distinctArray(edgeBindings);
-  edgeBindings.forEach((eb) =>
-  {
-    const kedge = redgeToTrapiKedge(eb, kgraph);
-    nodeBindings.push(kedgeSubject(kedge));
-    nodeBindings.push(kedgeObject(kedge));
-  });
-  
-  nodeBindings = cmn.distinctArray(nodeBindings);
-  const maxScore = (cmn.isArrayEmpty(scores) ? 0.0 : Math.max(scores));
-  return [nodeBindings, edgeBindings, 100 * maxScore];
-}
-
 function kedgeSubject(kedge)
 {
   return cmn.jsonGet(kedge, 'subject');
@@ -563,6 +542,36 @@ function kedgeObject(kedge)
 function kedgePredicate(kedge)
 {
   return cmn.jsonGet(kedge, 'predicate');
+}
+
+function isNodeIndex(index)
+{
+  return index % 2 === 0;
+}
+
+function kedgeAttributes(kedge)
+{
+  const attributes = cmn.jsonGet(kedge, 'attributes', null);
+  if (areNoAttributes(attributes))
+  {
+    return [];
+  }
+
+  return attributes;
+}
+
+function kedgeSupportGraphs(kedge)
+{
+  const attributes = kedgeAttributes(kedge);
+  for (const attr of attributes)
+  {
+    if (attrId(attr) === bl.tagBiolink('support_graphs'))
+    {
+      return attrValue(attr);
+    }
+  };
+
+  return [];
 }
 
 function kedgeToQualifiers(kedge)
@@ -769,22 +778,60 @@ function isRedgeInverted(redge, subject, kgraph)
   return subject === kedgeObject(kedge);
 }
 
-function trapiResultToRgraph(trapiResult, kgraph, auxGraphs)
+function analysisToRgraph(analysis, kgraph, auxGraphs)
 {
-  // First approximation:
-  //   Gather all edge bindings here
-
-  const analyses = cmn.jsonGet(trapiResult, 'analyses', false);
-  if (!analyses)
+  const score = cmn.jsonGet(analysis, 'score', 0);
+  let unprocessedEdgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings', []));
+  let unprocessedSupportGraphs = [];
+  const edgeBindings = new Set();
+  const nodeBindings = new Set();
+  const supportGraphs = new Set();
+  while (!cmn.isArrayEmpty(unprocessedEdgeBindings) || !cmn.isArrayEmpty(unprocessedSupportGraphs))
   {
-    return false;
+    while (!cmn.isArrayEmpty(unprocessedEdgeBindings))
+    {
+      const eb = unprocessedEdgeBindings.pop();
+      const kedge = redgeToTrapiKedge(eb, kgraph);
+      if (!kedge)
+      {
+        return false;
+      }
+
+      nodeBindings.add(kedgeSubject(kedge));
+      nodeBindings.add(kedgeObject(kedge));
+      const edgeSupportGraphs = kedgeSupportGraphs(kedge);
+      edgeSupportGraphs.forEach((sg) =>
+      {
+        if (!supportGraphs.has(sg))
+        {
+          unprocessedSupportGraphs.push(sg);
+        }
+      });
+
+      edgeBindings.add(eb);
+    };
+
+    while (!cmn.isArrayEmpty(unprocessedSupportGraphs))
+    {
+      const gid = unprocessedSupportGraphs.pop();
+      const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
+      if (auxGraph)
+      {
+        const sgEdgeBindings = cmn.jsonGet(auxGraph, 'edges', []);
+        sgEdgeBindings.forEach((eb) =>
+        {
+          if (!edgeBindings.has(eb))
+          {
+            unprocessedEdgeBindings.push(eb);
+          }
+        }); 
+      }
+
+      supportGraphs.add(gid);
+    }
   }
 
-  let [nodeBindings, edgeBindings, score] = processAnalyses(analyses, auxGraphs, kgraph);
-  nodeBindings.push(...flattenBindings(cmn.jsonGet(trapiResult, 'node_bindings')));
-  nodeBindings = cmn.distinctArray(nodeBindings);
-
-  return makeRgraph(nodeBindings, edgeBindings, score, kgraph);
+  return makeRgraph([...nodeBindings], [...edgeBindings], score, kgraph);
 }
 
 function rnodeToKey(rnode, kgraph)
@@ -898,6 +945,13 @@ function emptySummaryFragment()
   return makeSummaryFragment([], [], [], {});
 }
 
+function isEmptySummaryFragment(summaryFragment)
+{
+  return cmn.isArrayEmpty(summaryFragment.paths) &&
+         cmn.isArrayEmpty(summaryFragment.nodes) &&
+         cmn.isArrayEmpty(summaryFragment.edges);
+} 
+
 function makeCondensedSummary(agent, summaryFragment)
 {
   return cmn.makePair(agent, summaryFragment, 'agent', 'fragment');
@@ -933,10 +987,11 @@ function mergeSummaryFragments(f1, f2)
   f1.paths.push(...f2.paths);
   f1.nodes.push(...f2.nodes);
   f1.edges.push(...f2.edges);
-
-  const newScoreKey = Object.keys(f2.scores)[0]; // There is only one score per new summary fragment
-  const currentScores = cmn.jsonSetDefaultAndGet(f1.scores, newScoreKey, []);
-  currentScores.push(f2.scores[newScoreKey]);
+  Object.keys(f2.scores).forEach((k) =>
+  {
+    const currentScores = cmn.jsonSetDefaultAndGet(f1.scores, k, []);
+    currentScores.push(...f2.scores[k]);
+  });
 
   return f1;
 }
@@ -945,87 +1000,106 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
 {
   function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey)
   {
-    const rgraph = trapiResultToRgraph(trapiResult, kgraph, auxGraphs);
-    if (!rgraph)
+    function analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end)
     {
-      return emptySummaryFragment();
+      function normalizePaths(rgraphPaths, kgraph)
+      {
+        function N(n) { return rnodeToKey(n, kgraph); }
+        function E(e, o) { return redgeToKey(e, kgraph, isRedgeInverted(e, o, kgraph)); }
+        return rgraphPaths.map(path =>
+          {
+            let normalizedPath = [];
+            const pathLength = path.length - 1;
+            if (pathLength < 0)
+            {
+              return normalizedPath;
+            }
+
+            for (let i = 0; i < pathLength; i+=2)
+            {
+              const node = path[i];
+              const edge = path[i+1];
+              normalizedPath.push(N(node), E(edge, node));
+            }
+
+            normalizedPath.push(N(path[pathLength]));
+            return normalizedPath;
+          });
+      }
+
+      const rgraph = analysisToRgraph(analysis, kgraph, auxGraphs);
+      if (!rgraph)
+      {
+        return emptySummaryFragment();
+      }
+
+      const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
+      const maxPathLength = (2 * maxHops) + 1;
+      const rgraphPaths = rgraphFold((path) =>
+        {
+          const currentRnode = path[path.length-1];
+          if (maxPathLength < path.length)
+          {
+            return cmn.makePair([], []);
+          }
+          else if (currentRnode === end)
+          {
+            return cmn.makePair([], [path]);
+          }
+          else
+          {
+            let validPaths = [];
+            rnodeToOutEdges(currentRnode).forEach((edge) =>
+              {
+                const target = edge.target
+                if (!path.includes(target))
+                {
+                  let newPath = [...path, edge.redge, edge.target];
+                  validPaths.push(newPath);
+                }
+              });
+
+            return cmn.makePair(validPaths, []);
+          }
+        },
+        [[start]],
+        []);
+
+      return makeSummaryFragment(
+        normalizePaths(rgraphPaths, kgraph),
+        rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules); }),
+        rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules); }),
+        {} 
+      );
     }
 
-    const nodeBindings = trapiResult['node_bindings'];
-    const start = getBindingId(nodeBindings, startKey);
-    const end = getBindingId(nodeBindings, endKey);
+    const resultNodeBindings = trapiResult['node_bindings'];
+    const start = getBindingId(resultNodeBindings, startKey);
+    const end = getBindingId(resultNodeBindings, endKey);
+
     if (!start || !end)
     {
       return emptySummaryFragment();
     }
 
-    const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
-    const maxPathLength = (2 * maxHops) + 1;
-    const rgraphPaths = rgraphFold((path) =>
+    const analyses = cmn.jsonGet(trapiResult, 'analyses', [])
+    const resultSummaryFragment = analyses.reduce(
+      (rsf, analysis) =>
       {
-        const currentRnode = path[path.length-1];
-        if (maxPathLength < path.length)
-        {
-          return cmn.makePair([], []);
-        }
-        else if (currentRnode === end)
-        {
-          return cmn.makePair([], [path]);
-        }
-        else
-        {
-          let validPaths = [];
-          rnodeToOutEdges(currentRnode).forEach((edge) =>
-            {
-              const target = edge.target
-              if (!path.includes(target))
-              {
-                let newPath = [...path, edge.redge, edge.target];
-                validPaths.push(newPath);
-              }
-            });
-
-          return cmn.makePair(validPaths, []);
-        }
+        return mergeSummaryFragments(
+          rsf,
+          analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
       },
-      [[start]],
-      []);
-
-    function normalizePaths(rgraphPaths, kgraph)
+      emptySummaryFragment()); 
+    
+    if (!isEmptySummaryFragment(resultSummaryFragment))
     {
-      function N(n) { return rnodeToKey(n, kgraph); }
-      function E(e, o) { return redgeToKey(e, kgraph, isRedgeInverted(e, o, kgraph)); }
-      return rgraphPaths.map(path =>
-        {
-          let normalizedPath = [];
-          const pathLength = path.length - 1;
-          if (pathLength < 0)
-          {
-            return normalizedPath;
-          }
-
-          for (let i = 0; i < pathLength; i+=2)
-          {
-            const node = path[i];
-            const edge = path[i+1];
-            normalizedPath.push(N(node), E(edge, node));
-          }
-
-          normalizedPath.push(N(path[pathLength]));
-          return normalizedPath;
-        });
+      // Insert the score after the analyses have been merged
+      const resultStartKey = rnodeToKey(start, kgraph);
+      resultSummaryFragment.scores[resultStartKey] = [trapiResult['normalized_score']];
     }
 
-    const resultStartKey = rnodeToKey(start, kgraph);
-    const fragmentScore = {};
-    fragmentScore[resultStartKey] = rgraph.score;
-
-    return makeSummaryFragment(
-      normalizePaths(rgraphPaths, kgraph),
-      rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules); }),
-      rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules); }),
-      fragmentScore
-    );
+    return resultSummaryFragment;
   }
 
   function getPathDirection(qgraph)
@@ -1042,7 +1116,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
 
   return answers.map((answer) =>
     {
-      const reportingAgent = answer.agent;
+      const reportingAgent = answer.agent.slice(4,);
       const trapiMessage = answer.message;
       const trapiResults = cmn.jsonGet(trapiMessage, 'results', []);
       const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
@@ -1062,7 +1136,7 @@ function creativeAnswersToCondensedSummaries(answers, nodeRules, edgeRules, maxH
     });
 }
 
-async function condensedSummariesToSummary(qid, condensedSummaries, annotationClient)
+async function condensedSummariesToSummary(qid, condensedSummaries, agentToName, annotationClient)
 {
   function fragmentPathsToResultsAndPaths(fragmentPaths)
   {
@@ -1312,13 +1386,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       endpoints.add(subgraph[subgraph.length-1]);
     });
 
-  const annotationPromise = annotationClient.annotateGraph(
-    createKGFromNodeIds([...endpoints],
-                        [
-                          'ChEMBL:atc_classification',
-                          bl.tagBiolink('highest_FDA_approval_status')
-                        ]));
-
+  const annotationPromise = annotationClient.annotateGraph(createKGFromNodeIds(Object.keys(nodes)));
   function pushIfEmpty(arr, val)
   {
     if (cmn.isArrayEmpty(arr))
@@ -1326,22 +1394,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
       arr.push(val);
     }
   };
-
-  // Node post-processing
-  Object.keys(nodes).forEach((k) =>
-    {
-      const node = nodes[k];
-      node.curies.push(k);
-      // Remove any duplicates on all node attributes
-      objRemoveDuplicates(node);
-      node.types.sort(bl.biolinkClassCmpFn);
-
-      // Provide a CURIE as a fallback if the node has no name
-      const nodeNames = cmn.jsonGet(node, 'names');
-      pushIfEmpty(nodeNames, k);
-
-      cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
-    });
 
   // Edge post-processing
   Object.values(edges).forEach((edge) =>
@@ -1366,27 +1418,68 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   {
     // Node annotation
     const nodeRules = makeSummarizeRules(
-        [
-          tagAttribute(
-            'ChEMBL:atc_classification',
-            (classification) =>
+      [
+        renameAndTransformAttribute(
+          'biothings_annotations',
+          ['names'],
+          (annotations) =>
+          {
+            const name = bta.getName(annotations);
+            if (name === null)
             {
-              const highestLevel = classification.split('|')[0];
-              const [tag, description] = highestLevel.split(/-(.*)/s);
-              return makeTag(`atc:${tag}`, cmn.titleize(description));
-            }),
-          tagFdaApproval
-        ]);
+              return null;
+            }
 
-    const annotationMessage = await annotationPromise;
-    const kgraph = cmn.jsonGetFromKpath(annotationMessage, ['message', 'knowledge_graph'])
-    const knodes = cmn.jsonGet(kgraph, 'nodes');
+            return [name];
+
+          }),
+        renameAndTransformAttribute(
+          'biothings_annotations',
+          ['descriptions'],
+          (annotations) =>
+          {
+            const description = bta.getDescription(annotations);
+            if (description === null)
+            {
+              return null;
+            }
+
+            return [description];
+          }),
+        tagAttribute(
+          'biothings_annotations',
+          (annotations) =>
+          {
+            const fdaApproval = bta.getFdaApproval(annotations);
+            if (fdaApproval === null)
+            {
+              return [];
+            }
+
+            return makeTag('fda:approved', 'FDA Approved');
+          }),
+        tagAttribute(
+          'biothings_annotations',
+          (annotations) =>
+          {
+            const chebiRoles = bta.getChebiRoles(annotations);
+            if (chebiRoles === null)
+            {
+              return [];
+            }
+
+            return chebiRoles.map((role) => { return makeTag(`role:${role.id}`, cmn.titleize(role.name))});
+          })
+      ]);
+
+    const knodes = await annotationPromise;
+    const kgraph = { 'nodes': knodes };
     const annotationUpdates = Object.keys(knodes).map((rnode) =>
       {
         return summarizeRnode(rnode, kgraph, nodeRules);
       });
 
-    extendSummaryNodes(nodes, annotationUpdates, 'kp-molecular');
+    extendSummaryNodes(nodes, annotationUpdates, 'biothings-annotator');
   }
   catch (err)
   {
@@ -1394,6 +1487,22 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
   }
   finally
   {
+    // Node post-processing
+    Object.keys(nodes).forEach((k) =>
+      {
+        const node = nodes[k];
+        node.curies.push(k);
+        // Remove any duplicates on all node attributes
+        objRemoveDuplicates(node);
+        node.types.sort(bl.biolinkClassCmpFn);
+
+        // Provide a CURIE as a fallback if the node has no name
+        const nodeNames = cmn.jsonGet(node, 'names');
+        pushIfEmpty(nodeNames, k);
+
+        cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
+      });
+
     // Path post-processing
     Object.values(paths).forEach((path) =>
       {
@@ -1403,7 +1512,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
         const tags = {};
         for (let i = 0; i < path.subgraph.length; ++i)
         {
-          if (i % 2 === 0)
+          if (isNodeIndex(i))
           {
             const node = nodes[path.subgraph[i]];
             if (node !== undefined) // Remove me when result graphs are fixed
@@ -1422,6 +1531,13 @@ async function condensedSummariesToSummary(qid, condensedSummaries, annotationCl
             }
           }
         }
+
+        // Generate tags based on the aras for this path
+        const aras = cmn.jsonGet(path, 'aras');
+        aras.forEach((ara) =>
+        {
+          tags[`ara:${ara}`] = makeTagDescription(agentToName(ara));
+        });
 
         path.tags = tags;
       });

@@ -2,9 +2,9 @@
 
 import { SendRecvJSON, withTimeout } from "./common.mjs";
 
-export { MoleProClient };
+export { KGAnnotationClient };
 
-class MoleProClient
+class KGAnnotationClient 
 {
   constructor(origin, queryPath, defaultTimeout)
   {
