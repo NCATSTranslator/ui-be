@@ -1451,7 +1451,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
           (annotations) =>
           {
             const fdaApproval = bta.getFdaApproval(annotations);
-            if (fdaApproval === null)
+            if (!fdaApproval)
             {
               return [];
             }
