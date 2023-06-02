@@ -1419,33 +1419,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
     // Node annotation
     const nodeRules = makeSummarizeRules(
       [
-        renameAndTransformAttribute(
-          'biothings_annotations',
-          ['names'],
-          (annotations) =>
-          {
-            const name = bta.getName(annotations);
-            if (name === null)
-            {
-              return null;
-            }
-
-            return [name];
-
-          }),
-        renameAndTransformAttribute(
-          'biothings_annotations',
-          ['descriptions'],
-          (annotations) =>
-          {
-            const description = bta.getDescription(annotations);
-            if (description === null)
-            {
-              return null;
-            }
-
-            return [description];
-          }),
         tagAttribute(
           'biothings_annotations',
           (annotations) =>
