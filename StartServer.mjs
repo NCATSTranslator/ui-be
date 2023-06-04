@@ -17,6 +17,11 @@ await loadBiolink(SERVER_CONFIG.biolink.version,
                   SERVER_CONFIG.biolink.prefix_catalog);
 await loadChebi();
 
+if (process.argv.length > 3) {
+  const secrets = await loadConfigFromFile(process.argv[3]);
+  SERVER_CONFIG.secrets = secrets;
+}
+
 // Bootstrap the service -- this is a kludge. Services should offer factory or builder methods.
 const queryClient = new ARSClient(
   `https://${SERVER_CONFIG.ars_endpoint.host}`,
