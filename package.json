@@ -6,8 +6,8 @@
   "scripts": {
     "prod": "node StartServer.mjs configurations/production.json",
     "test": "node StartServer.mjs configurations/test.json",
-    "ci":   "node StartServer.mjs configurations/ci.json",
-    "dev":  "node StartServer.mjs configurations/dev.json",
+    "ci": "node StartServer.mjs configurations/ci.json",
+    "dev": "node StartServer.mjs configurations/dev.json",
     "mock": "node --prof mock/main.mjs",
     "unit": "node --test"
   },
@@ -16,6 +16,7 @@
   "dependencies": {
     "express": "^4.18.2",
     "hash-sum": "^2.0.0",
+    "jsonwebtoken": "^9.0.0",
     "pino-http": "^8.2.1"
   }
 }

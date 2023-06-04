@@ -5,6 +5,7 @@ import { default as url } from 'node:url';
 import { default as express } from 'express';
 import { default as pinoHttp } from 'pino-http';
 import * as cmn from './common.mjs';
+import * as sso from './SocialSignOn.mjs';
 
 export function startServer(config, service)
 {
@@ -32,8 +33,8 @@ export function startServer(config, service)
   app.get(['/admin/config', '/config'],
           handleConfigRequest(config));
 
-  app.get('/oauth2/redir/google',
-          handleAuthRedirRequest(config));
+  app.get('/oauth2/redir/:provider',
+          sso.SSORedirectHandler(config));
 
   app.get('/login', function (req, res, next) {
     res.sendFile(path.join(__root, 'build', 'login.html'));
@@ -45,28 +46,6 @@ export function startServer(config, service)
     });
 
   app.listen(8386);
-}
-
-function handleAuthRedirRequest(config)
-{
-  return async function(req, res, next) {
-    const scopes = req.query.scope;
-    const auth_code = req.query.code;
-    const body = {
-      client_id: config.auth_social.google.client_id,
-      client_secret: config.secrets.auth_social.google.client_secret,
-      redirect_uri: 'http://localhost:8386/oauth2/redir/google',
-      grant_type: 'authorization_code',
-      code: auth_code
-    };
-    const token_data = await cmn.SendRecvJSON('https://oauth2.googleapis.com/token', 'POST', {}, body);
-
-
-    res.status(200).json({
-      hi: "this is fine",
-      stuff: token_data
-      })
-  };
 }
 
 function logQuerySubmissionRequest(req, res, next)
