@@ -22,8 +22,9 @@ function SSORedirectHandler(config) {
           client_id: config.auth.social_providers.facebook.client_id,
           client_secret: config.secrets.auth.social_providers.facebook.client_secret,
           redirect_uri: config.auth.social_providers.facebook.redirect_uri,
-          token_uri: config.auth.social_providers.facebook.token_uri
-        }, req);
+          token_uri: config.auth.social_providers.facebook.token_uri,
+          user_data_uri: config.auth.social_providers.facebook.user_data_uri
+        });
         break;
       default: console.log(`Cannot handle provider: ${provider}`); break;
     }
@@ -37,15 +38,20 @@ function SSORedirectHandler(config) {
 }
 
 
-async function facebookHandler(auth_code, client_config, req) {
+async function facebookHandler(auth_code, client_config) {
   const params = new URLSearchParams({
     client_id: client_config.client_id,
     client_secret: client_config.client_secret,
     redirect_uri: client_config.redirect_uri,
     code: auth_code,
   }).toString();
-  const url = client_config.token_uri + '?' + params;
-  let data = await SendRecvJSON(url, 'GET', {});
+  let url = client_config.token_uri + '?' + params;
+  let data = await SendRecvJSON(url, 'GET');
+  const access_token = data.access_token;
+  url = client_config.user_data_uri + '?'
+    + 'access_token=' + encodeURIComponent(access_token)
+    + '&fields=' + ['id', 'email', 'name', 'picture'].join(',');
+  data = await SendRecvJSON(url, 'GET');
   return data;
 }
 
