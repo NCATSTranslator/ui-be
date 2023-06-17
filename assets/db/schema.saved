@@ -73,19 +73,42 @@ ALTER SEQUENCE public.preferences_id_seq OWNED BY public.preferences.id;
 --
 
 CREATE TABLE public.sessions (
-    id uuid NOT NULL,
-    token text NOT NULL,
+    id integer NOT NULL,
+    token uuid NOT NULL,
     time_token_created timestamp with time zone DEFAULT now() NOT NULL,
     time_session_created timestamp with time zone DEFAULT now() NOT NULL,
     time_session_updated timestamp with time zone DEFAULT now() NOT NULL,
     linked_from uuid,
     force_kill boolean DEFAULT false NOT NULL,
     user_id uuid,
-    data json
+    data jsonb,
+    auth_from text
 );
 
 
 ALTER TABLE public.sessions OWNER TO postgres;
+
+--
+-- Name: sessions_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.sessions_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.sessions_id_seq OWNER TO postgres;
+
+--
+-- Name: sessions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.sessions_id_seq OWNED BY public.sessions.id;
+
 
 --
 -- Name: user_preferences; Type: TABLE; Schema: public; Owner: postgres
@@ -131,7 +154,7 @@ CREATE TABLE public.users (
     time_created timestamp with time zone DEFAULT now() NOT NULL,
     time_updated timestamp with time zone DEFAULT now() NOT NULL,
     profile_pic_url text,
-    data json
+    data jsonb
 );
 
 
@@ -142,6 +165,13 @@ ALTER TABLE public.users OWNER TO postgres;
 --
 
 ALTER TABLE ONLY public.preferences ALTER COLUMN id SET DEFAULT nextval('public.preferences_id_seq'::regclass);
+
+
+--
+-- Name: sessions id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sessions ALTER COLUMN id SET DEFAULT nextval('public.sessions_id_seq'::regclass);
 
 
 --
