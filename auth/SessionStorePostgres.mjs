@@ -42,13 +42,13 @@ class SessionStorePostgres extends iSessionStore {
       res = await client.query('insert into sessions '
         + '(token, time_token_created, time_session_created, time_session_updated, '
         + ' linked_from, force_kill, user_id, data, auth_provider) '
-        + 'values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id',
+        + 'values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *',
         [session_data.token, session_data.time_token_created, session_data.time_session_created,
         session_data.time_session_updated, session_data.linked_from, session_data.force_kill,
         session_data.user_id, session_data.data, session_data.auth_provider
         ]);
       if (res.rows.length > 0) {
-        res = res.rows[0];
+        res = new Session(res.rows[0]);
       } else {
         res = null;
       }
@@ -75,15 +75,15 @@ class SessionStorePostgres extends iSessionStore {
       + 'user_id = $7, '
       + 'data = $8, '
       + 'auth_provider = $9 '
-      + 'where id = $10',
+      + 'where id = $10 returning *',
         [session_data.token, session_data.time_token_created, session_data.time_session_created,
           session_data.time_session_updated, session_data.linked_from, session_data.force_kill,
           session_data.user_id, session_data.data, session_data.auth_provider, session_data.id
         ]);
-      if (res.rowCount > 0) {
-        res = true;
+      if (res.rows.length > 0) {
+        res = new Session(res.rows[0]);
       } else {
-        res = false;
+        res = null;
       }
     } catch (err) {
       console.log(err);
