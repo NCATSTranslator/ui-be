@@ -12,6 +12,7 @@ class SessionStorePostgres extends iSessionStore {
 
   constructor(config) {
     super();
+    // https://node-postgres.com/apis/pool#new-pool
     this.pool = new pg.Pool(config);
   }
 
