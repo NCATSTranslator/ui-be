@@ -8,9 +8,9 @@ class Session {
   constructor({
     id = null,
     token = uuidv4(),
-    time_token_created = new Date().toISOString(),
-    time_session_created = new Date().toISOString(),
-    time_session_updated = new Date().toISOString(),
+    time_token_created = new Date(),
+    time_session_created = new Date(),
+    time_session_updated = new Date(),
     linked_from = null,
     force_kill = false,
     user_id = null,
@@ -32,9 +32,9 @@ class Session {
   static createNewUnauthSession({
     id = null,
     token = uuidv4(),
-    time_token_created = new Date().toISOString(),
-    time_session_created = new Date().toISOString(),
-    time_session_updated = new Date().toISOString(),
+    time_token_created = new Date(),
+    time_session_created = new Date(),
+    time_session_updated = new Date(),
     data = null
   } = {}) {
     return new Session({
@@ -47,14 +47,14 @@ class Session {
     });
   }
 
-  updateSessionTime(time = new Date().toISOString()) {
+  updateSessionTime(time = new Date()) {
     this.time_session_updated = time;
     return this;
   }
 
   refreshSessionToken(token = uuidv4()) {
     this.token = token;
-    this.time_token_created = new Date().toISOString();
+    this.time_token_created = new Date();
     return this;
   }
 
