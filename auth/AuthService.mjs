@@ -54,7 +54,7 @@ class AuthService {
     try {
       session_data.refreshSessionToken();
       session_data.updateSessionTime()
-      return this.SessionStore.updateSession();
+      return this.SessionStore.updateSession(session_data);
     } catch (err) {
       console.log(err);
       return false;
