@@ -7,6 +7,7 @@ export { AuthService };
 
 class AuthService {
   constructor(config) {
+    // TODO: don't instantiate here: pass in a working SessionStore.
     this.SessionStore = new SessionStorePostgres({
       host: 'localhost',
       user: 'postgres',
