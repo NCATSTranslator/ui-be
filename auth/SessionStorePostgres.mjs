@@ -34,7 +34,7 @@ class SessionStorePostgres extends iSessionStore {
     }
   }
 
-  async createNewSession(sessionData) {
+  async createNewSession(session_data) {
     let res = null;
     let client = null;
     try {
@@ -43,9 +43,9 @@ class SessionStorePostgres extends iSessionStore {
         + '(token, time_token_created, time_session_created, time_session_updated, '
         + ' linked_from, force_kill, user_id, data, auth_provider) '
         + 'values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id',
-        [sessionData.token, sessionData.time_token_created, sessionData.time_session_created,
-        sessionData.time_session_updated, sessionData.linked_from, sessionData.force_kill,
-        sessionData.user_id, sessionData.data, sessionData.auth_provider
+        [session_data.token, session_data.time_token_created, session_data.time_session_created,
+        session_data.time_session_updated, session_data.linked_from, session_data.force_kill,
+        session_data.user_id, session_data.data, session_data.auth_provider
         ]);
       if (res.rows.length > 0) {
         res = res.rows[0];
@@ -60,7 +60,7 @@ class SessionStorePostgres extends iSessionStore {
     }
   }
 
-  async updateSession(sessionData) {
+  async updateSession(session_data) {
     let res = null;
     let client = null;
     try {
@@ -76,9 +76,9 @@ class SessionStorePostgres extends iSessionStore {
       + 'data = $8, '
       + 'auth_provider = $9 '
       + 'where id = $10',
-        [sessionData.token, sessionData.time_token_created, sessionData.time_session_created,
-          sessionData.time_session_updated, sessionData.linked_from, sessionData.force_kill,
-          sessionData.user_id, sessionData.data, sessionData.auth_provider, sessionData.id
+        [session_data.token, session_data.time_token_created, session_data.time_session_created,
+          session_data.time_session_updated, session_data.linked_from, session_data.force_kill,
+          session_data.user_id, session_data.data, session_data.auth_provider, session_data.id
         ]);
       if (res.rowCount > 0) {
         res = true;

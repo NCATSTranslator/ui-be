@@ -50,7 +50,7 @@ class AuthService {
     }
   }
 
-  async refreshToken(session_data) {
+  async refreshSessionToken(session_data) {
     try {
       session_data.refreshSessionToken();
       session_data.updateSessionTime()
