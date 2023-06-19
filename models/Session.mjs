@@ -1,8 +1,10 @@
+'use strict';
+
 import { v4 as uuidv4 } from 'uuid';
 
-export { SessionData };
+export { Session };
 
-class SessionData {
+class Session {
   constructor({
     id = null,
     token = uuidv4(),
@@ -35,7 +37,7 @@ class SessionData {
     time_session_updated = new Date().toISOString(),
     data = null
   } = {}) {
-    return new SessionData({
+    return new Session({
       id,
       token,
       time_token_created,
@@ -50,13 +52,13 @@ class SessionData {
     return this;
   }
 
-  updateSessionToken(token = uuidv4()) {
+  refreshSessionToken(token = uuidv4()) {
     this.token = token;
     this.time_token_created = new Date().toISOString();
     return this;
   }
-  
-  updateSessionData(updatedFields = {}) {
+
+  updateSession(updatedFields = {}) {
     for (let key in updatedFields) {
       if (this.hasOwnProperty(key)) {
         this[key] = updatedFields[key];
