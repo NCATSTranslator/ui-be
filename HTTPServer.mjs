@@ -21,6 +21,8 @@ export function startServer(config, service)
   app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
+  app.all(['/api/*', '/admin/*', '/login'], loggahh);
+
   app.post(['/creative_query', '/api/creative_query'],
            logQuerySubmissionRequest,
            validateQuerySubmissionRequest,
@@ -50,6 +52,12 @@ export function startServer(config, service)
     });
 
   app.listen(8386);
+}
+
+function loggahh(req, res, next) {
+  console.log("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-");
+  console.log(`These be the headers for ${req.ip}: ${JSON.stringify(req.headers)}`);
+  next();
 }
 
 function logQuerySubmissionRequest(req, res, next)
