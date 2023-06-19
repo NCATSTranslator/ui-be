@@ -21,7 +21,8 @@ export function startServer(config, service)
   app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
-  app.all(['/api/*', '/admin/*', '/login'], loggahh);
+  // app.all(['/api/*', '/admin/*', '/login'], loggahh);
+  app.all(['*'], loggahh);
 
   app.post(['/creative_query', '/api/creative_query'],
            logQuerySubmissionRequest,

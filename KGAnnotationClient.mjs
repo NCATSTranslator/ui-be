@@ -4,7 +4,7 @@ import { SendRecvJSON, withTimeout } from "./common.mjs";
 
 export { KGAnnotationClient };
 
-class KGAnnotationClient 
+class KGAnnotationClient
 {
   constructor(origin, queryPath, defaultTimeout)
   {
@@ -16,6 +16,8 @@ class KGAnnotationClient
 
   async annotateGraph(kg, timeout=this.defaultTimeout)
   {
+    console.log(this.queryURL);
+    console.log(JSON.stringify(kg));
     const res = withTimeout(async () =>
       {
         return SendRecvJSON(this.queryURL, 'POST', {}, kg);
