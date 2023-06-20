@@ -1494,7 +1494,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
               Object.keys(node.tags).forEach((k) => { tags[k] = node.tags[k]; });
 
               // Generate tags based on the node category
-              const type = bl.sanitizeBiolinkItem(node.types[0]);
+              const type = cmn.isArrayEmpty(node.types) ?
+                           'Named Thing' :
+                            bl.sanitizeBiolinkItem(node.types[0]);
               const description = makeTagDescription(type);
               if (i === 0) {
                 tags[`rc:${type}`] = description;
