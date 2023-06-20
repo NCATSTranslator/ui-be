@@ -1,6 +1,6 @@
 'use strict';
 
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, validate as uuidValidate, version as uuidVersion } from 'uuid';
 
 export { Session };
 
@@ -56,6 +56,10 @@ class Session {
     this.token = token;
     this.time_token_created = new Date();
     return this;
+  }
+
+  syntacticallyValidToken(uuid) {
+    return uuidValidate(uuid) && uuidVersion(uuid) === 4;
   }
 
   updateSession(updatedFields = {}) {
