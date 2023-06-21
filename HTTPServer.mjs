@@ -16,20 +16,20 @@ export function startServer(config, service)
   app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
-  app.post('/creative_query',
+  app.post(['/api/creative_query', '/creative_query'],
            logQuerySubmissionRequest,
            validateQuerySubmissionRequest,
            handleQuerySubmissionRequest(config, service));
 
-  app.post('/creative_status',
+  app.post(['/api/creative_status', '/creative_status'],
            validateQueryResultRequest,
            handleStatusRequest(config, service, filters));
 
-  app.post('/creative_result',
+  app.post(['/api/creative_result', '/creative_result'],
            validateQueryResultRequest,
            handleResultRequest(config, service, filters));
 
-  app.get('/config',
+  app.get(['/admin/config', '/config'],
           handleConfigRequest(config));
 
   app.get('*', (req, res, next) =>
