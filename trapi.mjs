@@ -1419,7 +1419,6 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
             } else if (fdaApproval === 0) {
               return makeTag('fda:0', 'Not FDA Approved');
             } else {
-              console.log(fdaApproval);
               return makeTag(`fda:${fdaApproval}`, `FDA-Level ${fdaApproval}`);
             }
           }),

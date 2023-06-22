@@ -3,9 +3,11 @@
 import * as cmn from './common.mjs';
 
 let CHEBI_ROLES = null;
+let CHEBI_ROOTS = null;
 
 export async function loadChebi() {
   CHEBI_ROLES = await cmn.readJson('./assets/chebi/chebi_roles.json');
+  CHEBI_ROOTS = await cmn.readJson('./assets/chebi/chebi_roots.json');
 }
 
 export function getName(chebiId) {
@@ -17,19 +19,19 @@ export function getParent(chebiId) {
 }
 
 export function getHighLevelRole(chebiId) {
-  let parentOfParent = getParent(getParent(chebiId));
-  if (parentOfParent === undefined) {
+  let parent = getParent(chebiId);
+  if (parent === undefined) {
     return null;
   }
 
-  while (!rootNode(parentOfParent)) {
+  while (!rootNode(parent)) {
     chebiId = getParent(chebiId);
-    parentOfParent = getParent(parentOfParent);
+    parent = getParent(parent);
   }
 
   return chebiId;
 }
 
 function rootNode(chebiId) {
-  return chebiId === 'CHEBI:50906';
+  return CHEBI_ROOTS.includes(chebiId);
 }
