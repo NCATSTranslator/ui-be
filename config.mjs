@@ -15,6 +15,10 @@ async function loadConfigFromFile(filePath) {
   await loadAndReplace(config, 'canonicalization_priority');
   await loadAndReplace(config, 'frontend');
   await loadAndReplace(config, 'ara_to_infores_map');
+  await loadAndReplace(config, 'auth');
+  await loadAndReplace(config, 'sessions');
+  await loadAndReplace(config, 'storage');
+  await loadAndReplace(config, 'secrets');
 
   return config;
 }
