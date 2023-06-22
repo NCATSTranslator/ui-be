@@ -6,8 +6,12 @@ import { Session } from '../models/Session.mjs';
 export { AuthService };
 
 class AuthService {
-  constructor(config) {
+  constructor(token_ttl_sec, session_absolute_ttl_sec, session_max_idle_time_sec, config=null) {
     // TODO: don't instantiate here: pass in a working SessionStore.
+    this.token_ttl_sec = token_ttl_sec;
+    this.session_absolute_ttl_sec = session_absolute_ttl_sec;
+    this.session_max_idle_time_sec = session_max_idle_time_sec;
+
     this.SessionStore = new SessionStorePostgres({
       host: 'localhost',
       user: 'postgres',
@@ -18,10 +22,9 @@ class AuthService {
   }
 
   async createNewUnauthSession() {
-    const session_data = Session.createNewUnauthSession();
     let res = null;
     try {
-       res = this.SessionStore.createNewSession(session_data);
+       res = this.SessionStore.createNewSession(new Session());
        console.log(`wow that worked! ${res}`);
        return res;
     } catch (err) {
@@ -61,4 +64,5 @@ class AuthService {
       return false;
     }
   }
+
 }
