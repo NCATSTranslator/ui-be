@@ -75,7 +75,7 @@ function getChemicalChebiRoles(annotation)
 function getChemicalFdaApproval(annotation)
 {
   const fdaApproved = cmn.jsonGetFromKpath(annotation, ['chembl', 'max_phase'], 0);
-  return fdaApproved === 4;
+  return fdaApproved;
 }
 
 function isChemical(annotation)

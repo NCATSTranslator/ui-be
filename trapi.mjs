@@ -154,7 +154,6 @@ export function creativeAnswersToSummary (qid, answers, maxHops, agentToInforesM
       aggregateProperty('name', ['names']),
       aggregateProperty('categories', ['types']),
       aggregateAttributes([bl.tagBiolink('xref')], 'curies'),
-      tagFdaApproval,
       aggregateAttributes([bl.tagBiolink('description')], 'descriptions'),
       aggregateAttributes([bl.tagBiolink('synonym')], 'synonyms'),
       aggregateAttributes([bl.tagBiolink('same_as')], 'same_as'),
@@ -436,6 +435,10 @@ function tagAttribute(attributeId, transform)
     (vs, obj) =>
     {
       const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', {});
+      if (!vs) {
+        return obj;
+      }
+
       if (!cmn.isArray(vs))
       {
         vs = [vs];
@@ -472,19 +475,6 @@ function getPrimarySource(sources)
 
   return [];
 }
-
-const tagFdaApproval = tagAttribute(
-  bl.tagBiolink('highest_FDA_approval_status'),
-  (fdaDescription) =>
-  {
-    if (fdaDescription === 'regular approval' ||
-        fdaDescription === 'FDA Approval')
-    {
-      return makeTag('fda:approved', 'FDA Approved');
-    }
-
-    return false;
-  });
 
 function makeSummarizeRules(rules)
 {
@@ -1424,12 +1414,14 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
           (annotations) =>
           {
             const fdaApproval = bta.getFdaApproval(annotations);
-            if (!fdaApproval)
-            {
-              return [];
+            if (fdaApproval === null) {
+              return false;
+            } else if (fdaApproval === 0) {
+              return makeTag('fda:0', 'Not FDA Approved');
+            } else {
+              console.log(fdaApproval);
+              return makeTag(`fda:${fdaApproval}`, `FDA-Level ${fdaApproval}`);
             }
-
-            return makeTag('fda:approved', 'FDA Approved');
           }),
         tagAttribute(
           'biothings_annotations',
