@@ -29,24 +29,6 @@ class Session {
     this.auth_provider = auth_provider;
   }
 
-  static createNewUnauthSession({
-    id = null,
-    token = uuidv4(),
-    time_token_created = new Date(),
-    time_session_created = new Date(),
-    time_session_updated = new Date(),
-    data = null
-  } = {}) {
-    return new Session({
-      id,
-      token,
-      time_token_created,
-      time_session_created,
-      time_session_updated,
-      data
-    });
-  }
-
   updateSessionTime(time = new Date()) {
     this.time_session_updated = time;
     return this;
