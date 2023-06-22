@@ -9,7 +9,7 @@ import { default as cookieParser } from 'cookie-parser';
 import * as cmn from './common.mjs';
 import * as sso from './SocialSignOn.mjs';
 
-export function startServer(config, service)
+export function startServer(config, translatorService, authService)
 {
   console.log(config);
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
@@ -22,20 +22,20 @@ export function startServer(config, service)
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
   // app.all(['/api/*', '/admin/*', '/login'], loggahh);
-  app.all(['*'], loggahh);
+  app.all(['*'], validateSession);
 
   app.post(['/creative_query', '/api/creative_query'],
            logQuerySubmissionRequest,
            validateQuerySubmissionRequest,
-           handleQuerySubmissionRequest(config, service));
+           handleQuerySubmissionRequest(config, translatorService));
 
   app.post(['/creative_status', '/api/creative_status'],
            validateQueryResultRequest,
-           handleStatusRequest(config, service, filters));
+           handleStatusRequest(config, translatorService, filters));
 
   app.post(['/creative_result', '/api/creative_result'],
            validateQueryResultRequest,
-           handleResultRequest(config, service, filters));
+           handleResultRequest(config, translatorService, filters));
 
   app.get(['/config', '/admin/config'],
           handleConfigRequest(config));
@@ -55,9 +55,29 @@ export function startServer(config, service)
   app.listen(8386);
 }
 
-function loggahh(req, res, next) {
-  console.log("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-");
-  console.log(`These be the headers for ${req.ip}: ${JSON.stringify(req.headers)}`);
+async function validateSession(req, res, next) {
+  let session_token = req.cookies.session_token;
+  console.log(`-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==- ${session_token}`);
+  try {
+    let session = await authService.validateUnauthSession(session_token);
+    if (!session) {
+      logInternalServerError("Some error with session validation");
+      sendInternalServerError("Some error with session validation");
+    }
+    console.log(`<<<<<<>>>>>>> ${session.token}`);
+
+    res.cookie('session_token', session.token, {
+      maxAge: AUTH_SERVICE.token_ttl_sec * 1000,
+      httpOnly: true,
+      secure: true,
+      sameSite: 'Lax'
+    });
+  } catch (err) {
+    logInternalServerError(`Auth validation error: ${err}`);
+    sendInternalServerError(`Auth validation error: ${err}`);
+  }
+  // Note that we've now created the session in the db; if something else fails in the middleware stack,
+  // that session in the DB is invalid and we don't have a way of rolling it back.
   next();
 }
 

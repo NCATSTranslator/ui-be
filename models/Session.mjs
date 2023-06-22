@@ -40,8 +40,8 @@ class Session {
     return this;
   }
 
-  syntacticallyValidToken(uuid) {
-    return uuidValidate(uuid) && uuidVersion(uuid) === 4;
+  static isTokenSyntacticallyValid(token) {
+    return uuidValidate(token) && uuidVersion(token) === 4;
   }
 
   updateSession(updatedFields = {}) {

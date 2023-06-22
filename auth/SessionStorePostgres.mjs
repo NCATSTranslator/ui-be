@@ -36,6 +36,7 @@ class SessionStorePostgres extends iSessionStore {
   }
 
   async createNewSession(session_data) {
+    console.log(`DBDB 01: ${JSON.stringify(session_data)}`);
     let res = null;
     let client = null;
     try {
@@ -49,14 +50,18 @@ class SessionStorePostgres extends iSessionStore {
         session_data.user_id, session_data.data, session_data.auth_provider
         ]);
       if (res.rows.length > 0) {
+        console.log('why should this be hard? ');
         res = new Session(res.rows[0]);
+        console.log(`DBDB 2: ${JSON.stringify(res)}`);
       } else {
+        console.log('it is actually null wtf');
         res = null;
       }
     } catch (err) {
       console.log(err);
     } finally {
       client.release();
+      console.log(`DBDB 3: ${JSON.stringify(res)}`);
       return res;
     }
   }

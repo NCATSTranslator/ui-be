@@ -6,12 +6,12 @@ import { Session } from '../models/Session.mjs';
 export { AuthService };
 
 class AuthService {
-  constructor(token_ttl_sec, session_absolute_ttl_sec, session_max_idle_time_sec, config=null) {
-    // TODO: don't instantiate here: pass in a working SessionStore.
+  constructor(token_ttl_sec, session_max_idle_time_sec, session_absolute_ttl_sec, config=null) {
     this.token_ttl_sec = token_ttl_sec;
     this.session_absolute_ttl_sec = session_absolute_ttl_sec;
     this.session_max_idle_time_sec = session_max_idle_time_sec;
 
+    // TODO: don't instantiate here: pass in a working SessionStore.
     this.SessionStore = new SessionStorePostgres({
       host: 'localhost',
       user: 'postgres',
@@ -25,7 +25,6 @@ class AuthService {
     let res = null;
     try {
        res = this.SessionStore.createNewSession(new Session());
-       console.log(`wow that worked! ${res}`);
        return res;
     } catch (err) {
       console.log(err);
@@ -45,8 +44,8 @@ class AuthService {
   }
 
   async updateSessionTime(session_data) {
-    session_data.updateSessionTime();
     try {
+      session_data.updateSessionTime();
       return this.SessionStore.updateSession(session_data);
     } catch (err) {
       console.log(err);
@@ -62,6 +61,36 @@ class AuthService {
     } catch (err) {
       console.log(err);
       return false;
+    }
+  }
+
+  isTokenExpired(session_data) {
+    return (new Date() - session_data.time_token_created) > (this.token_ttl_sec * 1000);
+  }
+
+  isSessionExpired(session_data) {
+    const now = new Date();
+    return (now - session_data.time_session_updated) > (this.session_max_idle_time_sec * 1000)
+      || (now - session_data.time_session_created) > (this.session_absolute_ttl_sec * 1000);
+  }
+
+  async validateUnauthSession(token) {
+    try {
+      if (!token || !Session.isTokenSyntacticallyValid(token)) {
+        console.log("we didn't get a session");
+        return this.createNewUnauthSession();
+      }
+      let session_data = await this.retrieveSessionByToken(token);
+      if (!session_data || this.isSessionExpired(session_data)) {
+        return this.createNewUnauthSession();
+      } else if (this.isTokenExpired(session_data)) {
+        return this.refreshSessionToken(session_data);
+      } else {
+        return this.updateSessionTime(session_data);
+      }
+    } catch (err) {
+      console.log(err);
+      return null;
     }
   }
 
