@@ -21,6 +21,15 @@ export function getChebiRoles(annotation)
     noHandler);
 }
 
+export function getDrugIndications(annotation)
+{
+  return parseAnnotation(
+    annotation,
+    noHandler,
+    getChemicalDrugIndications,
+    noHandler);
+}
+
 function parseAnnotation(annotation, diseaseHandler, chemicalHandler, geneHandler, fallback = null)  
 {
   annotation = annotation[0];
@@ -76,6 +85,24 @@ function getChemicalFdaApproval(annotation)
 {
   const fdaApproved = cmn.jsonGetFromKpath(annotation, ['chembl', 'max_phase'], 0);
   return fdaApproved;
+}
+
+function getChemicalDrugIndications(annotation)
+{
+  const indicationObjs = cmn.jsonGetFromKpath(annotation, ['chembl', 'drug_indications'], []);
+  const indications = [];
+  indicationObjs.forEach((obj) => {
+    const id = cmn.jsonGet(obj, 'mesh_id', false);
+    const indication = cmn.jsonGet(obj, 'mesh_heading', false);
+    if (id && indication) {
+      indications.push({
+        id: id,
+        name: indication
+      });
+    }
+  });
+
+  return indications;
 }
 
 function isChemical(annotation)

@@ -1433,6 +1433,19 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
             }
 
             return chebiRoles.map((role) => { return makeTag(`role:${role.id}`, cmn.titleize(role.name))});
+          }),
+        tagAttribute(
+          'biothings_annotations',
+          (annotations) =>
+          {
+            const indications = bta.getDrugIndications(annotations);
+            if (indications === null) {
+              return [];
+            }
+
+            return indications.map((indication) => {
+              return makeTag(`di:${indication.id}`, `${indication.name}`);
+            });
           })
       ]);
 
