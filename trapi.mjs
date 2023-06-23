@@ -154,7 +154,6 @@ export function creativeAnswersToSummary (qid, answers, maxHops, agentToInforesM
       aggregateProperty('name', ['names']),
       aggregateProperty('categories', ['types']),
       aggregateAttributes([bl.tagBiolink('xref')], 'curies'),
-      tagFdaApproval,
       aggregateAttributes([bl.tagBiolink('description')], 'descriptions'),
       aggregateAttributes([bl.tagBiolink('synonym')], 'synonyms'),
       aggregateAttributes([bl.tagBiolink('same_as')], 'same_as'),
@@ -436,6 +435,10 @@ function tagAttribute(attributeId, transform)
     (vs, obj) =>
     {
       const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', {});
+      if (!vs) {
+        return obj;
+      }
+
       if (!cmn.isArray(vs))
       {
         vs = [vs];
@@ -472,19 +475,6 @@ function getPrimarySource(sources)
 
   return [];
 }
-
-const tagFdaApproval = tagAttribute(
-  bl.tagBiolink('highest_FDA_approval_status'),
-  (fdaDescription) =>
-  {
-    if (fdaDescription === 'regular approval' ||
-        fdaDescription === 'FDA Approval')
-    {
-      return makeTag('fda:approved', 'FDA Approved');
-    }
-
-    return false;
-  });
 
 function makeSummarizeRules(rules)
 {
@@ -1424,12 +1414,13 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
           (annotations) =>
           {
             const fdaApproval = bta.getFdaApproval(annotations);
-            if (!fdaApproval)
-            {
-              return [];
+            if (fdaApproval === null) {
+              return false;
+            } else if (fdaApproval === 0) {
+              return makeTag('fda:0', 'Not FDA Approved');
+            } else {
+              return makeTag(`fda:${fdaApproval}`, `FDA-Level ${fdaApproval}`);
             }
-
-            return makeTag('fda:approved', 'FDA Approved');
           }),
         tagAttribute(
           'biothings_annotations',
@@ -1442,6 +1433,19 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
             }
 
             return chebiRoles.map((role) => { return makeTag(`role:${role.id}`, cmn.titleize(role.name))});
+          }),
+        tagAttribute(
+          'biothings_annotations',
+          (annotations) =>
+          {
+            const indications = bta.getDrugIndications(annotations);
+            if (indications === null) {
+              return [];
+            }
+
+            return indications.map((indication) => {
+              return makeTag(`di:${indication.id}`, `${indication.name}`);
+            });
           })
       ]);
 
@@ -1494,7 +1498,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
               Object.keys(node.tags).forEach((k) => { tags[k] = node.tags[k]; });
 
               // Generate tags based on the node category
-              const type = bl.sanitizeBiolinkItem(node.types[0]);
+              const type = cmn.isArrayEmpty(node.types) ?
+                           'Named Thing' :
+                            bl.sanitizeBiolinkItem(node.types[0]);
               const description = makeTagDescription(type);
               if (i === 0) {
                 tags[`rc:${type}`] = description;
