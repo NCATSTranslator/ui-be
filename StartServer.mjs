@@ -36,7 +36,7 @@ const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
 const TRANSLATOR_SERVICE = new TranslatorService(queryClient, outputAdapter);
 
 const AUTH_SERVICE = new AuthService(SERVER_CONFIG.sessions.token_ttl_sec,
-  SERVER_CONFIG.sessions.session_absolute_ttl_sec, SERVER_CONFIG.sessions.session_max_idle_time_sec,
+  SERVER_CONFIG.sessions.session_max_idle_time_sec, SERVER_CONFIG.sessions.session_absolute_ttl_sec,
   {
     ...SERVER_CONFIG.storage.sessions_pg,
     password: SERVER_CONFIG.secrets.storage.sessions_pg.password

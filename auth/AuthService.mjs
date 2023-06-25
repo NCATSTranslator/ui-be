@@ -74,6 +74,10 @@ class AuthService {
       || (now - session_data.time_session_created) > (this.session_absolute_ttl_sec * 1000);
   }
 
+  isTokenSyntacticallyValid(token) {
+    return token && Session.isTokenSyntacticallyValid(token);
+  }
+
   async validateUnauthSession(token) {
     try {
       if (!token || !Session.isTokenSyntacticallyValid(token)) {

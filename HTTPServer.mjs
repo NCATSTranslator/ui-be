@@ -22,7 +22,7 @@ export function startServer(config, translatorService, authService)
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
   // app.all(['/api/*', '/admin/*', '/login'], loggahh);
-  app.all(['*'], validateSession);
+  app.all(['*'], validateSession(config, authService));
 
   app.post(['/creative_query', '/api/creative_query'],
            logQuerySubmissionRequest,
@@ -55,30 +55,52 @@ export function startServer(config, translatorService, authService)
   app.listen(8386);
 }
 
-async function validateSession(req, res, next) {
-  let session_token = req.cookies.session_token;
-  console.log(`-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==- ${session_token}`);
-  try {
-    let session = await authService.validateUnauthSession(session_token);
-    if (!session) {
-      logInternalServerError("Some error with session validation");
-      sendInternalServerError("Some error with session validation");
-    }
-    console.log(`<<<<<<>>>>>>> ${session.token}`);
 
-    res.cookie('session_token', session.token, {
-      maxAge: AUTH_SERVICE.token_ttl_sec * 1000,
-      httpOnly: true,
-      secure: true,
-      sameSite: 'Lax'
-    });
-  } catch (err) {
-    logInternalServerError(`Auth validation error: ${err}`);
-    sendInternalServerError(`Auth validation error: ${err}`);
+function setSessionCookie(res, cookie_name, max_age_sec, session_data) {
+  console.log(`_+_+_+_+_ set session cookie: [${cookie_name}/${max_age_sec}]: ${JSON.stringify(session_data)}`);
+  res.cookie(cookie_name, session_data.token, {
+    maxAge: max_age_sec * 1000,
+    httpOnly: true,
+    secure: true,
+    sameSite: 'Lax'
+  });
+}
+function validateSession(config, auth_service) {
+  return async function (req, res, next) {
+    let session_data = null;
+    let cookie_token = req.cookies.session_token;
+    let cookie_max_age = auth_service.session_absolute_ttl_sec;
+    let cookie_name = 'session_token';
+    console.log(`-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==- ${cookie_token}`);
+    try {
+      if (!auth_service.isTokenSyntacticallyValid(cookie_token)) {
+        console.log(">>> >>> >>> did not recv a valid token; creating a new session");
+        session_data = await auth_service.createNewUnauthSession();
+        setSessionCookie(res, cookie_name, cookie_max_age, session_data);
+      } else {
+        session_data = await auth_service.retrieveSessionByToken(cookie_token);
+        if (!session_data || auth_service.isSessionExpired(session_data)) {
+          console.log(">>> >>> >>> Sess expired or could not retrieve; creating a new session");
+          session_data = await auth_service.createNewUnauthSession();
+          setSessionCookie(res, cookie_name, cookie_max_age, session_data);
+        } else if (auth_service.isTokenExpired(session_data)) {
+          // Order matters; check session expiry before checking token expiry
+          console.log(">>> >>> >>> Token expired; creating a new TOKEN");
+          session_data = await auth_service.refreshSessionToken(session_data);
+          setSessionCookie(res, cookie_name, cookie_max_age, session_data);
+        } else {
+          // we have a valid existing session
+          console.log(">>> >>> >>> Session was valid; updating time");
+          session_data = await auth_service.updateSessionTime(session_data);
+        }
+        console.log(`>>> >>> >>> session_data: ${JSON.stringify(session_data)}`);
+      }
+    } catch (err) {
+      logInternalServerError(`Auth validation error: ${err}`);
+      sendInternalServerError(`Auth validation error: ${err}`);
+    }
+    next();
   }
-  // Note that we've now created the session in the db; if something else fails in the middleware stack,
-  // that session in the DB is invalid and we don't have a way of rolling it back.
-  next();
 }
 
 function logQuerySubmissionRequest(req, res, next)
