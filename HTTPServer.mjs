@@ -56,9 +56,9 @@ export function startServer(config, translatorService, authService)
 }
 
 
-function setSessionCookie(res, cookieName, maxAgeSec, sessionData) {
-  console.log(`_+_+_+_+_ set session cookie: [${cookieName}/${maxAgeSec}]: ${JSON.stringify(sessionData)}`);
-  res.cookie(cookieName, sessionData.token, {
+function setSessionCookie(res, cookieName, cookieVal, maxAgeSec) {
+  console.log(`_+_+_+_+_ set session cookie: [${cookieName}/${maxAgeSec}]: ${cookieVal}`);
+  res.cookie(cookieName, cookieVal, {
     maxAge: maxAgeSec * 1000,
     httpOnly: true,
     secure: true,
@@ -77,18 +77,18 @@ function validateSession(config, authService) {
       if (!authService.isTokenSyntacticallyValid(cookieToken)) {
         console.log(">>> >>> >>> did not recv a valid token; creating a new session");
         sessionData = await authService.createNewUnauthSession();
-        setSessionCookie(res, cookieName, cookieMaxAge, sessionData);
+        setSessionCookie(res, cookieName, sessionData.token, cookieMaxAge);
       } else {
         sessionData = await authService.retrieveSessionByToken(cookieToken);
         if (!sessionData || authService.isSessionExpired(sessionData)) {
           console.log(">>> >>> >>> Sess expired or could not retrieve; creating a new session");
           sessionData = await authService.createNewUnauthSession();
-          setSessionCookie(res, cookieName, cookieMaxAge, sessionData);
+          setSessionCookie(res, cookieName, sessionData.token, cookieMaxAge);
         } else if (authService.isTokenExpired(sessionData)) {
           // Order matters; check session expiry before checking token expiry
           console.log(">>> >>> >>> Token expired; creating a new TOKEN");
           sessionData = await authService.refreshSessionToken(sessionData);
-          setSessionCookie(res, cookieName, cookieMaxAge, sessionData);
+          setSessionCookie(res, cookieName, sessionData.token, cookieMaxAge);
         } else {
           // we have a valid existing session
           console.log(">>> >>> >>> Session was valid; updating time");

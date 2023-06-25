@@ -59,13 +59,13 @@ class AuthService {
   }
 
   isTokenExpired(sessionData) {
-    return (new Date() - sessionData.time_token_created) > (this.token_ttl_sec * 1000);
+    return (new Date() - sessionData.time_token_created) > (this.tokenTTLSec * 1000);
   }
 
   isSessionExpired(sessionData) {
     const now = new Date();
-    return (now - sessionData.time_session_updated) > (this.session_max_idle_time_sec * 1000)
-      || (now - sessionData.time_session_created) > (this.session_absolute_ttl_sec * 1000);
+    return (now - sessionData.time_session_updated) > (this.sessionMaxIdleTimeSec * 1000)
+      || (now - sessionData.time_session_created) > (this.sessionAbsoluteTTLSec * 1000);
   }
 
   isTokenSyntacticallyValid(token) {
