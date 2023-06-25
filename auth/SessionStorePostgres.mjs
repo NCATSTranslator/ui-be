@@ -50,7 +50,6 @@ class SessionStorePostgres extends iSessionStore {
         session_data.user_id, session_data.data, session_data.auth_provider
         ]);
       if (res.rows.length > 0) {
-        console.log('why should this be hard? ');
         res = new Session(res.rows[0]);
         console.log(`DBDB 2: ${JSON.stringify(res)}`);
       } else {
