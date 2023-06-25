@@ -12,6 +12,7 @@ import * as sso from './SocialSignOn.mjs';
 export function startServer(config, translatorService, authService)
 {
   console.log(config);
+  console.log(authService);
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
   app.use(pinoHttp());

@@ -1,24 +1,23 @@
 'use strict';
 
-//import { SessionStorePostgres } from './SessionStorePostgres.mjs';
-//import { Session } from '../models/Session.mjs';
+import { Session } from '../models/Session.mjs';
 
 export { AuthService };
 
 class AuthService {
-  constructor(sessionParams, sessionStore, sessionModel) {
+  constructor(sessionParams, sessionStore) {
     this.tokenTTLSec = sessionParams.tokenTTLSec;
     this.sessionAbsoluteTTLSec = sessionParams.sessionAbsoluteTTLSec;
     this.sessionMaxIdleTimeSec = sessionParams.sessionMaxIdleTimeSec;
 
     this.sessionStore = sessionStore;
-    this.sessionModel = sessionModel;
   }
 
   async createNewUnauthSession() {
     let res = null;
     try {
-       res = this.SessionStore.createNewSession(new this.sessionModel());
+       res = this.sessionStore.createNewSession(new Session());
+       console.log(`authservice: new session: ${JSON.stringify(res)}`);
        return res;
     } catch (err) {
       console.log(err);
@@ -29,7 +28,7 @@ class AuthService {
   async retrieveSessionByToken(token) {
     let res = null;
     try {
-      res = this.SessionStore.retrieveSessionByToken(token);
+      res = this.sessionStore.retrieveSessionByToken(token);
       return res;
     } catch (err) {
       console.log(err);
@@ -40,7 +39,7 @@ class AuthService {
   async updateSessionTime(sessionData) {
     try {
       sessionData.updateSessionTime();
-      return this.SessionStore.updateSession(sessionData);
+      return this.sessionStore.updateSession(sessionData);
     } catch (err) {
       console.log(err);
       return false;
@@ -51,7 +50,7 @@ class AuthService {
     try {
       sessionData.refreshSessionToken();
       sessionData.updateSessionTime()
-      return this.SessionStore.updateSession(sessionData);
+      return this.sessionStore.updateSession(sessionData);
     } catch (err) {
       console.log(err);
       return false;
@@ -69,7 +68,7 @@ class AuthService {
   }
 
   isTokenSyntacticallyValid(token) {
-    return token && this.sessionModel.isTokenSyntacticallyValid(token);
+    return token && Session.isTokenSyntacticallyValid(token);
   }
 
 }

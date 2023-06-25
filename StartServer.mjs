@@ -9,6 +9,7 @@ import { ARSClient } from './ARSClient.mjs';
 import { KGAnnotationClient } from './KGAnnotationClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './auth/AuthService.mjs';
+import { SessionStorePostgres } from './auth/SessionStorePostgres.mjs';
 
 // Load the config asap as basically everything depends on it
 const SERVER_CONFIG = await loadConfigFromFile(process.argv.length < 3 ? './configurations/mock.json' : './' + process.argv[2]);
@@ -35,11 +36,15 @@ const annotationClient = new KGAnnotationClient(
 const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
 const TRANSLATOR_SERVICE = new TranslatorService(queryClient, outputAdapter);
 
-const AUTH_SERVICE = new AuthService(SERVER_CONFIG.sessions.token_ttl_sec,
-  SERVER_CONFIG.sessions.session_max_idle_time_sec, SERVER_CONFIG.sessions.session_absolute_ttl_sec,
-  {
+const AUTH_SERVICE = new AuthService({
+    tokenTTLSec: SERVER_CONFIG.sessions.token_ttl_sec,
+    sessionAbsoluteTTLSec: SERVER_CONFIG.sessions.session_absolute_ttl_sec,
+    sessionMaxIdleTimeSec: SERVER_CONFIG.sessions.session_max_idle_time_sec
+  }, new SessionStorePostgres({
     ...SERVER_CONFIG.storage.sessions_pg,
     password: SERVER_CONFIG.secrets.storage.sessions_pg.password
-  });
+  })
+);
+
 console.log("alles gut");
 httpserver.startServer(SERVER_CONFIG, TRANSLATOR_SERVICE, AUTH_SERVICE);
