@@ -23,28 +23,29 @@ export function startServer(config, translatorService, authService)
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
   // app.all(['/api/*', '/admin/*', '/login'], loggahh);
-  app.all(['*'], validateSession(config, authService));
+  //app.all(['*'], validateSession(config, authService));
+  app.all(['/main/*'], validateSession(config, authService));
 
-  app.post(['/creative_query', '/api/creative_query'],
+  app.post(['/creative_query', '/api/creative_query', '/main/api/creative_query'],
            logQuerySubmissionRequest,
            validateQuerySubmissionRequest,
            handleQuerySubmissionRequest(config, translatorService));
 
-  app.post(['/creative_status', '/api/creative_status'],
+  app.post(['/creative_status', '/api/creative_status', '/main/api/creative_query'],
            validateQueryResultRequest,
            handleStatusRequest(config, translatorService, filters));
 
-  app.post(['/creative_result', '/api/creative_result'],
+  app.post(['/creative_result', '/api/creative_result', '/main/api/creative_result'],
            validateQueryResultRequest,
            handleResultRequest(config, translatorService, filters));
 
-  app.get(['/config', '/admin/config'],
+  app.get(['/config', '/admin/config',  '/main/admin/config'],
           handleConfigRequest(config));
 
   app.get('/oauth2/redir/:provider',
           sso.SSORedirectHandler(config));
 
-  app.get('/login', function (req, res, next) {
+  app.get(['/login', '/main/login/'], function (req, res, next) {
     res.sendFile(path.join(__root, 'build', 'login.html'));
   });
 
