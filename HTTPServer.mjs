@@ -70,7 +70,7 @@ function validateSession(config, authService) {
     let sessionData = null;
     let cookieName = 'session_token';
     let cookieToken = req.cookies[cookieName];
-    let cookieMaxAge = authService.session_absolute_ttl_sec;
+    let cookieMaxAge = authService.sessionAbsoluteTTLSec;
 
     console.log(`-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==- ${cookieToken}`);
     try {
@@ -94,7 +94,7 @@ function validateSession(config, authService) {
           console.log(">>> >>> >>> Session was valid; updating time");
           sessionData = await authService.updateSessionTime(sessionData);
         }
-        console.log(`>>> >>> >>> session_data: ${JSON.stringify(sessionData)}`);
+        console.log(`>>> >>> >>> sessionData: ${JSON.stringify(sessionData)}`);
       }
     } catch (err) {
       logInternalServerError(`Auth validation error: ${err}`);
