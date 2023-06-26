@@ -1446,6 +1446,18 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
             return indications.map((indication) => {
               return makeTag(`di:${indication.id}`, `${indication.name}`);
             });
+          }),
+        renameAndTransformAttribute(
+          'biothings_annotations',
+          ['descriptions'],
+          (annotations) =>
+          {
+            const description = bta.getDescription(annotations);
+            if (description === null) {
+              return [];
+            }
+
+            return [description];
           })
       ]);
 
