@@ -24,14 +24,14 @@ class User {
     this.id = id;
     this.name = name;
     this.email = email;
-    this.timeCreated = time_created;
-    this.timeUpdated = time_updated;
-    this.profilePicUrl = profile_pic_url;
+    this.time_created = time_created;
+    this.time_updated = time_updated;
+    this.profile_pic_url = profile_pic_url;
     this.data = data;
   }
 
   updateUpdatedTime(time = new Date()) {
-    this.timeUpdated = time;
+    this.time_updated = time;
     return this;
   }
 
