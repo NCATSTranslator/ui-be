@@ -29,6 +29,26 @@ class UserStorePostgres {
     }
   }
 
+
+  async retrieveUserByEmail(email) {
+    let client = null;
+    let retval = null;
+    try {
+      client = await this.pool.connect();
+      const res = await client.query('SELECT * FROM users WHERE email = $1', [email]);
+      if (res.rows.length > 0) {
+        retval = new User(res.rows[0]);
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      if (client) {
+        client.release();
+      }
+      return retval;
+    }
+  }
+
   async createNewUser(userData) {
     let client = null;
     let retval = null;
@@ -38,8 +58,8 @@ class UserStorePostgres {
         INSERT INTO users (id, name, email, time_created, time_updated, profile_pic_url, data)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
-      `, [userData.id, userData.name, userData.email, userData.timeCreated,
-          userData.timeUpdated, userData.profilePicUrl, userData.data]);
+      `, [userData.id, userData.name, userData.email, userData.time_created,
+          userData.time_updated, userData.profile_pic_url, userData.data]);
       if (res.rows.length > 0) {
         retval = new User(res.rows[0]);
       }
