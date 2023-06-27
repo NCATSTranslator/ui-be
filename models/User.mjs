@@ -13,6 +13,7 @@ class User {
     time_updated = new Date(),
     profile_pic_url = null,
     data = null,
+    deleted = false
   } = {}) {
 
     if (!name) {
@@ -28,6 +29,7 @@ class User {
     this.time_updated = time_updated;
     this.profile_pic_url = profile_pic_url;
     this.data = data;
+    this.deleted = deleted;
   }
 
   updateUpdatedTime(time = new Date()) {
@@ -35,6 +37,10 @@ class User {
     return this;
   }
 
+  deleteUser() {
+    this.deleted = true;
+    return this;
+  }
   updateUser(updatedFields = {}) {
     for (let key in updatedFields) {
       if (this.hasOwnProperty(key)) {
