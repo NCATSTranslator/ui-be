@@ -13,33 +13,38 @@ export function startServer(config, translatorService, authService)
 {
   console.log(config);
   console.log(authService);
+  const demopath = '/demo';
+  const mainpath = '/main';
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
   app.use(pinoHttp());
   app.use(express.json());
   app.use(cookieParser());
 
+
   app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
-  // app.all(['/api/*', '/admin/*', '/login'], loggahh);
-  //app.all(['*'], validateSession(config, authService));
   app.all(['/main/*'], validateSession(config, authService));
 
-  app.post(['/creative_query', '/api/creative_query', '/main/api/creative_query'],
+  app.post(['/creative_query', '/api/creative_query',
+            `${demopath}/api/creative_query`, `${mainpath}/api/creative_query`],
            logQuerySubmissionRequest,
            validateQuerySubmissionRequest,
            handleQuerySubmissionRequest(config, translatorService));
 
-  app.post(['/creative_status', '/api/creative_status', '/main/api/creative_query'],
+  app.post(['/creative_status', '/api/creative_status',
+            `${demopath}/api/creative_status`, `${mainpath}/api/creative_status`],
            validateQueryResultRequest,
            handleStatusRequest(config, translatorService, filters));
 
-  app.post(['/creative_result', '/api/creative_result', '/main/api/creative_result'],
+  app.post(['/creative_result', '/api/creative_result',
+            `${demopath}/api/creative_result`, `${mainpath}/api/creative_result`],
            validateQueryResultRequest,
            handleResultRequest(config, translatorService, filters));
 
-  app.get(['/config', '/admin/config',  '/main/admin/config'],
+  app.get(['/config', '/admin/config',
+           `${demopath}/admin/config`, `${mainpath}/admin/config`],
           handleConfigRequest(config));
 
   app.get('/oauth2/redir/:provider',
@@ -47,6 +52,10 @@ export function startServer(config, translatorService, authService)
 
   app.get(['/login', '/main/login/'], function (req, res, next) {
     res.sendFile(path.join(__root, 'build', 'login.html'));
+  });
+
+  app.get([`${demopath}/dummypage.html`, `${mainpath}/dummypage.html`], function (req, res, next) {
+    res.sendFile(path.join(__root, 'build', 'dummypage.html'));
   });
 
   app.get('*', (req, res, next) =>
