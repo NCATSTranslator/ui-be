@@ -1,16 +1,22 @@
 'use strict';
 
 import { Session } from '../models/Session.mjs';
+import { User } from '../models/User.mjs';
 
 export { AuthService };
 
 class AuthService {
-  constructor(sessionParams, sessionStore) {
+  constructor(sessionParams, sessionStore, userStore) {
     this.tokenTTLSec = sessionParams.tokenTTLSec;
     this.sessionAbsoluteTTLSec = sessionParams.sessionAbsoluteTTLSec;
     this.sessionMaxIdleTimeSec = sessionParams.sessionMaxIdleTimeSec;
 
     this.sessionStore = sessionStore;
+    this.userStore = userStore;
+  }
+
+  async getUserById(id) {
+    return this.userStore.retrieveUserById(id);
   }
 
   async createNewUnauthSession() {
