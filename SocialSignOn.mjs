@@ -2,9 +2,32 @@
 
 import jwt from 'jsonwebtoken';
 import { SendRecvJSON } from './common.mjs';
-export { SSORedirectHandler };
+export { handleSSORedirect };
 
-function SSORedirectHandler(config) {
+async function handleSSORedirect(provider, authcode, config) {
+  let retval = null;
+  switch (provider) {
+    case 'google': retval = await googleHandler(authcode, {
+        client_id: config.auth.social_providers.google.client_id,
+        client_secret: config.secrets.auth.social_providers.google.client_secret,
+        redirect_uri: config.auth.social_providers.google.redirect_uri,
+        token_uri: config.auth.social_providers.google.token_uri
+      });
+      break;
+    case 'facebook': retval = await facebookHandler(authcode, {
+        client_id: config.auth.social_providers.facebook.client_id,
+        client_secret: config.secrets.auth.social_providers.facebook.client_secret,
+        redirect_uri: config.auth.social_providers.facebook.redirect_uri,
+        token_uri: config.auth.social_providers.facebook.token_uri,
+        user_data_uri: config.auth.social_providers.facebook.user_data_uri
+      });
+      break;
+    default: console.log(`Cannot handle provider: ${provider}`); break;
+  }
+  return retval;
+}
+
+function OBSOLETESSORedirectHandler(config) {
   return async function(req, res, next) {
     let data = null;
     const provider = req.params.provider;
@@ -46,13 +69,26 @@ async function facebookHandler(auth_code, client_config) {
     code: auth_code,
   }).toString();
   let url = client_config.token_uri + '?' + params;
-  let data = await SendRecvJSON(url, 'GET');
-  const access_token = data.access_token;
+  let token = await SendRecvJSON(url, 'GET');
+  const access_token = token.access_token;
   url = client_config.user_data_uri + '?'
     + 'access_token=' + encodeURIComponent(access_token)
     + '&fields=' + ['id', 'email', 'name', 'picture'].join(',');
-  data = await SendRecvJSON(url, 'GET');
-  return data;
+  let data = await SendRecvJSON(url, 'GET');
+  return {
+    provider: 'facebook',
+    email: data.email,
+    external_id: data.id,
+    name: data.name,
+    profile_pic_url: data.picture.data.url,
+    access_token: access_token,
+    access_token_expires_in: token.expires_in,
+    refresh_token: null,
+    raw_data: {
+      token: token,
+      data: data
+    }
+  };
 }
 
 async function googleHandler(auth_code, client_config) {
@@ -65,7 +101,17 @@ async function googleHandler(auth_code, client_config) {
   };
   let data = await SendRecvJSON(client_config.token_uri, 'POST', {}, body);
   data.id_token = parseJWT(data.id_token);
-  return data;
+  return {
+    provider: 'google',
+    email: data.id_token.payload.email,
+    external_id: data.id_token.payload.sub,
+    name: data.id_token.payload.name,
+    profile_pic_url: data.id_token.payload.picture,
+    access_token: data.access_token,
+    access_token_expires_in: data.expires_in,
+    refresh_token: data.refresh_token,
+    raw_data: data
+  };
 }
 
 function parseJWT(token, secret=null) {

@@ -7,14 +7,13 @@ import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
 
 import * as cmn from './common.mjs';
-import * as sso from './SocialSignOn.mjs';
 
 export function startServer(config, translatorService, authService)
 {
   console.log(config);
   console.log(authService);
-  const demopath = '/demo';
-  const mainpath = '/main';
+  const demopath = config.demosite_path;
+  const mainpath = config.mainsite_path;
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
   app.use(pinoHttp());
@@ -25,7 +24,8 @@ export function startServer(config, translatorService, authService)
   app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
-  app.all(['/main/*'], validateSession(config, authService));
+  app.all('/demo/*', validateUnauthSession(config, authService));
+  app.all('/main/*', validateAuthSession(config, authService));
 
   app.post(['/creative_query', '/api/creative_query',
             `${demopath}/api/creative_query`, `${mainpath}/api/creative_query`],
@@ -47,15 +47,21 @@ export function startServer(config, translatorService, authService)
            `${demopath}/admin/config`, `${mainpath}/admin/config`],
           handleConfigRequest(config));
 
-  app.get('/oauth2/redir/:provider',
-          sso.SSORedirectHandler(config));
+  app.get('/oauth2/redir/:provider', handleLogin(config, authService));
 
-  app.get(['/login', '/main/login/'], function (req, res, next) {
+
+  app.get(['/login'], function (req, res, next) {
     res.sendFile(path.join(__root, 'build', 'login.html'));
   });
 
-  app.get([`${demopath}/dummypage.html`, `${mainpath}/dummypage.html`], function (req, res, next) {
-    res.sendFile(path.join(__root, 'build', 'dummypage.html'));
+  app.get([`${demopath}/dummypage.html`, `${mainpath}/dummypage.html`],
+    function (req, res, next) {
+      res.sendFile(path.join(__root, 'build', 'dummypage.html'));
+  });
+
+  app.get([`${demopath}/dm2.html`, `${mainpath}/dm2.html`],
+    function (req, res, next) {
+      res.sendFile(path.join(__root, 'build', 'dm2.html'));
   });
 
   app.get('*', (req, res, next) =>
@@ -66,20 +72,86 @@ export function startServer(config, translatorService, authService)
   app.listen(8386);
 }
 
-
-function setSessionCookie(res, cookieName, cookieVal, maxAgeSec) {
+function handleLogin(config, authService) {
+  return async function(req, res, next) {
+    const provider = req.params.provider;
+    const authcode = req.query.code;
+    let newSession = await authService.handleSSORedirect(provider, authcode, config);
+    if (!newSession) {
+      res.status(403).send("There was an error with your login. Please try again with a different account or contact the UI team");
+    } else {
+      let cookieName = config.session_cookie_name;
+      let cookiePath = config.mainsite_path;
+      let cookieMaxAge = authService.sessionAbsoluteTTLSec;
+      setSessionCookie(res, cookieName, newSession.token, cookiePath, cookieMaxAge);
+      console.error(`>> %% %% %% we set a sessin cookie`);
+      res.redirect(302, `${config.mainsite_path}/dummypage.html`);
+    }
+    next();
+  }
+}
+function setSessionCookie(res, cookieName, cookieVal, cookiePath, maxAgeSec) {
   console.log(`_+_+_+_+_ set session cookie: [${cookieName}/${maxAgeSec}]: ${cookieVal}`);
   res.cookie(cookieName, cookieVal, {
     maxAge: maxAgeSec * 1000,
+    path: cookiePath,
     httpOnly: true,
     secure: true,
     sameSite: 'Lax'
   });
 }
-function validateSession(config, authService) {
+
+function validateAuthSession(config, authService) {
+  return async function(req, res, next) {
+    let cookieName = config.session_cookie_name;
+    let cookiePath = config.mainsite_path;
+    let cookieToken = req.cookies[cookieName];
+    let cookieMaxAge = authService.sessionAbsoluteTTLSec;
+
+    if (!cookieToken || !authService.isTokenSyntacticallyValid(cookieToken)) {
+      console.error(`%% %% %% no cookie found`);
+      return res.redirect(302, `/login`);
+    }
+    console.error(`%% %% %% we get cookie: ${cookieToken}`);
+
+    let session = await authService.retrieveSessionByToken(cookieToken);
+    console.error(`%% %% %% we get session: ${JSON.stringify(session)}`);
+    if (!session) {
+      console.error(`%% %% %% no session found for ${cookieToken}`);
+      return res.redirect(302, `/login`);
+    }
+    if (!session.user_id || session.force_kill) {
+      console.error(`%% %% %% no user found for ${JSON.stringify(session)} or else force killed`);
+      return res.redirect(302, `/login`);
+    }
+    const user = await authService.getUserById(session.user_id);
+    if (!user) {
+      // tricky - what if this is new user? Guess we need to ensure user creation has already happened
+      console.error(`%% %% %% no user found`);
+      return res.redirect(302, `/login`);
+    } else if (user.deleted) {
+      console.error(`%% %% %% User deleted`);
+      return res.status(403).send('This account has been deactivated. Please re-register to use the site');
+    } else if (authService.isSessionExpired(session)) {
+      console.error(`%% %% %% Session expired: ${JSON.stringify(session)}`);
+      return res.redirect(302, `/login`);
+    } else if (authService.isTokenExpired(session)) {
+      console.error(`%% %% %% Token expired, refreshing: ${JSON.stringify(session)}`);
+      session = await authService.refreshSessionToken(session);
+      setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+    } else {
+      // Valid session - update time
+      console.error(`%% %% %% session good, udpating time: ${JSON.stringify(session)}`);
+      session = await authService.updateSessionTime(session);
+    }
+    next();
+  }
+}
+function validateUnauthSession(config, authService) {
   return async function (req, res, next) {
-    let sessionData = null;
-    let cookieName = 'session_token';
+    let session = null;
+    let cookieName = config.session_cookie_name;
+    let cookiePath = config.demosite_path;
     let cookieToken = req.cookies[cookieName];
     let cookieMaxAge = authService.sessionAbsoluteTTLSec;
 
@@ -87,25 +159,25 @@ function validateSession(config, authService) {
     try {
       if (!authService.isTokenSyntacticallyValid(cookieToken)) {
         console.log(">>> >>> >>> did not recv a valid token; creating a new session");
-        sessionData = await authService.createNewUnauthSession();
-        setSessionCookie(res, cookieName, sessionData.token, cookieMaxAge);
+        session = await authService.createNewUnauthSession();
+        setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
       } else {
-        sessionData = await authService.retrieveSessionByToken(cookieToken);
-        if (!sessionData || authService.isSessionExpired(sessionData)) {
+        session = await authService.retrieveSessionByToken(cookieToken);
+        if (!session || authService.isSessionExpired(session)) {
           console.log(">>> >>> >>> Sess expired or could not retrieve; creating a new session");
-          sessionData = await authService.createNewUnauthSession();
-          setSessionCookie(res, cookieName, sessionData.token, cookieMaxAge);
-        } else if (authService.isTokenExpired(sessionData)) {
+          session = await authService.createNewUnauthSession();
+          setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+        } else if (authService.isTokenExpired(session)) {
           // Order matters; check session expiry before checking token expiry
           console.log(">>> >>> >>> Token expired; creating a new TOKEN");
-          sessionData = await authService.refreshSessionToken(sessionData);
-          setSessionCookie(res, cookieName, sessionData.token, cookieMaxAge);
+          session = await authService.refreshSessionToken(session);
+          setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
         } else {
           // we have a valid existing session
           console.log(">>> >>> >>> Session was valid; updating time");
-          sessionData = await authService.updateSessionTime(sessionData);
+          session = await authService.updateSessionTime(session);
         }
-        console.log(`>>> >>> >>> sessionData: ${JSON.stringify(sessionData)}`);
+        console.log(`>>> >>> >>> sessionData: ${JSON.stringify(session)}`);
       }
     } catch (err) {
       logInternalServerError(`Auth validation error: ${err}`);

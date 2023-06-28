@@ -2,6 +2,7 @@
 
 import { Session } from '../models/Session.mjs';
 import { User } from '../models/User.mjs';
+import * as sso from '../SocialSignOn.mjs';
 
 export { AuthService };
 
@@ -23,7 +24,7 @@ class AuthService {
     let res = null;
     try {
        res = this.sessionStore.createNewSession(new Session());
-       console.log(`authservice: new session: ${JSON.stringify(res)}`);
+       console.log(`authservice: new unauth session: ${JSON.stringify(res)}`);
        return res;
     } catch (err) {
       console.log(err);
@@ -31,6 +32,18 @@ class AuthService {
     }
   }
 
+  async createNewAuthSession(user) {
+    let res = null;
+    try {
+      res = this.sessionStore.createNewSession(new Session({user_id: user.id}));
+      console.log(`authservice: new auth session: ${JSON.stringify(res)}`);
+      return res;
+   } catch (err) {
+     console.log(err);
+     return res;
+   }
+
+  }
   async retrieveSessionByToken(token) {
     let res = null;
     try {
@@ -77,4 +90,25 @@ class AuthService {
     return token && Session.isTokenSyntacticallyValid(token);
   }
 
+  async handleSSORedirect(provider, authcode, config) {
+    const SSOData = await sso.handleSSORedirect(provider, authcode, config);
+    let email = SSOData.email;
+    let user = await this.userStore.retrieveUserByEmail(email);
+    if (user) {
+      if (user.deleted) {
+        return null;
+      } else {
+        return this.createNewAuthSession(user);
+      }
+    } else {
+      user = await this.userStore.createNewUser(new User({
+        name: SSOData.name,
+        email: SSOData.email,
+        profile_pic_url: SSOData.profile_pic_url,
+        data: SSOData.raw_data,
+        deleted: false
+      }));
+      return this.createNewAuthSession(user);
+    }
+  }
 }
