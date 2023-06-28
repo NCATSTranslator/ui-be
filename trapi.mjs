@@ -1391,7 +1391,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
       // Remove any duplicates on all edge attributes
       objRemoveDuplicates(edge);
 
-      // Remove any publications that do not have a valid identifier
+      // Remove any publications that are not valid
       cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(ev.isValidId); });
 
       // Convert all infores to provenance
