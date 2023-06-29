@@ -149,6 +149,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, agentToInforesM
     {
       return cmn.jsonGetFromKpath(answer.message, ['knowledge_graph', 'nodes']);
     });
+
   const nodeRules = makeSummarizeRules(
     [
       aggregateProperty('name', ['names']),
@@ -1434,8 +1435,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
 
             return chebiRoles.map((role) => { return makeTag(`role:${role.id}`, cmn.titleize(role.name))});
           }),
-        tagAttribute(
+        renameAndTransformAttribute(
           'biothings_annotations',
+          ['indications'],
           (annotations) =>
           {
             const indications = bta.getDrugIndications(annotations);
@@ -1443,9 +1445,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
               return [];
             }
 
-            return indications.map((indication) => {
-              return makeTag(`di:${indication.id}`, `${indication.name}`);
-            });
+            return indications;
           })
       ]);
 
@@ -1485,6 +1485,30 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
       {
         // Remove duplicates from every attribute on a path
         objRemoveDuplicates(path);
+
+        // Determine if drug is indicated for disease
+        const start = nodes[path.subgraph[0]];
+        if (start.indications !== undefined) {
+          const startIndications = new Set(start.indications);
+          const end = nodes[path.subgraph[path.subgraph.length-1]];
+          const endMeshIds = end.curies.filter((curie) => { return curie.startsWith('MESH:'); });
+          let indicatedFor = false;
+          for (let i = 0; i < endMeshIds.length; i++) {
+            if (startIndications.has(endMeshIds[i])) {
+              indicatedFor = true;
+              break;
+            }
+          }
+
+          if (indicatedFor) {
+            start.tags['di:ind'] = makeTagDescription('Indicated for Disease');
+          } else {
+            start.tags['di:not'] = makeTagDescription('Not Indicated for Disease');
+          }
+
+          cmn.jsonDelete(start, 'indications');
+        }
+
         // Add tags for paths by processing nodes
         const tags = {};
         for (let i = 0; i < path.subgraph.length; ++i)
