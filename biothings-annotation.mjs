@@ -112,12 +112,8 @@ function getChemicalDrugIndications(annotation)
   const indications = [];
   indicationObjs.forEach((obj) => {
     const id = cmn.jsonGet(obj, 'mesh_id', false);
-    const indication = cmn.jsonGet(obj, 'mesh_heading', false);
-    if (id && indication) {
-      indications.push({
-        id: id,
-        name: indication
-      });
+    if (id) {
+      indications.push(`MESH:${id}`);
     }
   });
 

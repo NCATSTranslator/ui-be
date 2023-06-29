@@ -163,6 +163,12 @@ export function jsonSet(obj, key, v)
   return obj;
 }
 
+export function jsonDelete(obj, key)
+{
+  delete obj[key];
+  return obj;
+}
+
 export function jsonMultiSet(obj, kvps)
 {
   kvps.forEach((kvp) =>

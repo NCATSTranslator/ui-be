@@ -149,6 +149,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, agentToInforesM
     {
       return cmn.jsonGetFromKpath(answer.message, ['knowledge_graph', 'nodes']);
     });
+
   const nodeRules = makeSummarizeRules(
     [
       aggregateProperty('name', ['names']),
@@ -1391,7 +1392,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
       // Remove any duplicates on all edge attributes
       objRemoveDuplicates(edge);
 
-      // Remove any publications that do not have a valid identifier
+      // Remove any publications that are not valid
       cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(ev.isValidId); });
 
       // Convert all infores to provenance
@@ -1416,10 +1417,16 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
             const fdaApproval = bta.getFdaApproval(annotations);
             if (fdaApproval === null) {
               return false;
-            } else if (fdaApproval === 0) {
-              return makeTag('fda:0', 'Not FDA Approved');
+            } else if (fdaApproval < 4) {
+              const tags = [];
+              if (fdaApproval > 0) {
+                tags.push(makeTag(`fda:${fdaApproval}`, `Clinical Trial Phase ${fdaApproval}`));
+              }
+              
+              tags.push(makeTag('fda:0', 'Not FDA Approved'));
+              return tags;
             } else {
-              return makeTag(`fda:${fdaApproval}`, `FDA-Level ${fdaApproval}`);
+              return makeTag(`fda:${fdaApproval}`, `FDA Approved`);
             }
           }),
         tagAttribute(
@@ -1434,8 +1441,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
 
             return chebiRoles.map((role) => { return makeTag(`role:${role.id}`, cmn.titleize(role.name))});
           }),
-        tagAttribute(
+        renameAndTransformAttribute(
           'biothings_annotations',
+          ['indications'],
           (annotations) =>
           {
             const indications = bta.getDrugIndications(annotations);
@@ -1443,9 +1451,7 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
               return [];
             }
 
-            return indications.map((indication) => {
-              return makeTag(`di:${indication.id}`, `${indication.name}`);
-            });
+            return indications;
           }),
         renameAndTransformAttribute(
           'biothings_annotations',
@@ -1490,6 +1496,9 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
         pushIfEmpty(nodeNames, k);
 
         cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
+
+        // Add tag attribute to nodes that don't have one
+        cmn.jsonSetDefaultAndGet(node, 'tags', []);
       });
 
     // Path post-processing
@@ -1497,6 +1506,30 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
       {
         // Remove duplicates from every attribute on a path
         objRemoveDuplicates(path);
+
+        // Determine if drug is indicated for disease
+        const start = nodes[path.subgraph[0]];
+        if (start.indications !== undefined) {
+          const startIndications = new Set(start.indications);
+          const end = nodes[path.subgraph[path.subgraph.length-1]];
+          const endMeshIds = end.curies.filter((curie) => { return curie.startsWith('MESH:'); });
+          let indicatedFor = false;
+          for (let i = 0; i < endMeshIds.length; i++) {
+            if (startIndications.has(endMeshIds[i])) {
+              indicatedFor = true;
+              break;
+            }
+          }
+
+          if (indicatedFor) {
+            start.tags['di:ind'] = makeTagDescription('Indicated for Disease');
+          } else {
+            start.tags['di:not'] = makeTagDescription('Not Indicated for Disease');
+          }
+
+          cmn.jsonDelete(start, 'indications');
+        }
+
         // Add tags for paths by processing nodes
         const tags = {};
         for (let i = 0; i < path.subgraph.length; ++i)
