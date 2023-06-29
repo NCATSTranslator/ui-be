@@ -12,6 +12,15 @@ export function getFdaApproval(annotation)
     noHandler);
 }
 
+export function getDescription(annotation)
+{
+  return parseAnnotation(
+    annotation,
+    getDiseaseDescription,
+    noHandler,
+    getGeneDescription);
+}
+
 export function getChebiRoles(annotation)
 {
   return parseAnnotation(
@@ -49,6 +58,16 @@ function parseAnnotation(annotation, diseaseHandler, chemicalHandler, geneHandle
   } 
 
   return fallback;
+}
+
+function getDiseaseDescription(annotation)
+{
+  let description = cmn.jsonGetFromKpath(annotation, ['disease_ontology', 'def'], null);
+  if (description !== null) {
+    description = description.split('[')[0];
+  }
+
+  return description;
 }
 
 function isDisease(annotation)
@@ -104,6 +123,11 @@ function getChemicalDrugIndications(annotation)
 function isChemical(annotation)
 {
   return annotation.chebi !== undefined || annotation.chembl !== undefined;
+}
+
+function getGeneDescription(annotation)
+{
+  return cmn.jsonGet(annotation, 'summary', null);
 }
 
 function isGene(annotation)
