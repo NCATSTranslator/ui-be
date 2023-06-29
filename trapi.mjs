@@ -1416,10 +1416,16 @@ async function condensedSummariesToSummary(qid, condensedSummaries, agentToName,
             const fdaApproval = bta.getFdaApproval(annotations);
             if (fdaApproval === null) {
               return false;
-            } else if (fdaApproval === 0) {
-              return makeTag('fda:0', 'Not FDA Approved');
+            } else if (fdaApproval < 4) {
+              const tags = [];
+              if (fdaApproval > 0) {
+                tags.push(makeTag(`fda:${fdaApproval}`, `Clinical Trial Phase ${fdaApproval}`));
+              }
+              
+              tags.push(makeTag('fda:0', 'Not FDA Approved'));
+              return tags;
             } else {
-              return makeTag(`fda:${fdaApproval}`, `FDA-Level ${fdaApproval}`);
+              return makeTag(`fda:${fdaApproval}`, `FDA Approved`);
             }
           }),
         tagAttribute(
