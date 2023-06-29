@@ -1,10 +1,12 @@
 export function isValidId(id)
 {
-  return id.startsWith('PMID') ||
-         id.startsWith('NCT') ||
-         id.startsWith('PMC') ||
-         id.startsWith('clinicaltrialsNCT') ||
-         id.startsWith('DOI');
+  const [url, type] = idToTypeAndUrl(id);
+  const isValid = !!url && !!type;
+  if (!isValid) {
+    console.error(`Invalid id: ${id}`);
+  }
+
+  return isValid;
 }
 
 export function normalize(id)
@@ -38,7 +40,7 @@ export function idToTypeAndUrl(id)
       return `${url}/${strippedId}`;
     }
 
-    return 'Unknown';
+    return false;
   }
 
   function pmidToUrl(id)
@@ -88,6 +90,6 @@ export function idToTypeAndUrl(id)
   }
   else
   {
-    return ['Unknown', 'Unknown'];
+    return [false, false];
   }
 }
