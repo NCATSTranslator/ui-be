@@ -25,6 +25,8 @@ for (const env of environments) {
         preRunQueries[env].push({
           "name": query.name,
           "id": query.curie,
+          "type": query.type,
+          "direction": query.direction,
           "uuid": arsResp.pk
         });
       } catch (err) {
@@ -43,5 +45,3 @@ for (const [env, queries] of Object.entries(preRunQueries)) {
     process.exit();
   }
 }
-
-console.log('Prerun query generation complete.');
