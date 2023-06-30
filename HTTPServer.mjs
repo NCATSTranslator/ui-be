@@ -78,16 +78,14 @@ function handleLogin(config, authService) {
     const authcode = req.query.code;
     let newSession = await authService.handleSSORedirect(provider, authcode, config);
     if (!newSession) {
-      res.status(403).send("There was an error with your login. Please try again with a different account or contact the UI team");
+      return res.status(403).send("There was an error with your login. Please try again with a different account or contact the UI team");
     } else {
       let cookieName = config.session_cookie_name;
       let cookiePath = config.mainsite_path;
       let cookieMaxAge = authService.sessionAbsoluteTTLSec;
       setSessionCookie(res, cookieName, newSession.token, cookiePath, cookieMaxAge);
-      console.error(`>> %% %% %% we set a sessin cookie`);
-      res.redirect(302, `${config.mainsite_path}/dummypage.html`);
+      return res.redirect(302, `${config.mainsite_path}/dummypage.html`);
     }
-    next();
   }
 }
 function setSessionCookie(res, cookieName, cookieVal, cookiePath, maxAgeSec) {

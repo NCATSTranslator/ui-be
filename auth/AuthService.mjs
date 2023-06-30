@@ -105,7 +105,7 @@ class AuthService {
         name: SSOData.name,
         email: SSOData.email,
         profile_pic_url: SSOData.profile_pic_url,
-        data: SSOData.raw_data,
+        data: null,
         deleted: false
       }));
       return this.createNewAuthSession(user);
