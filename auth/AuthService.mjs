@@ -20,7 +20,7 @@ class AuthService {
     return this.userStore.retrieveUserById(id);
   }
 
-  async createNewUnauthSession() {
+  async createNewUnauthSession(SSOData) {
     let res = null;
     try {
        res = this.sessionStore.createNewSession(new Session());
@@ -32,10 +32,14 @@ class AuthService {
     }
   }
 
-  async createNewAuthSession(user) {
+  async createNewAuthSession(user, SSOData) {
     let res = null;
     try {
-      res = this.sessionStore.createNewSession(new Session({user_id: user.id}));
+      res = this.sessionStore.createNewSession(new Session({
+        user_id: user.id,
+        auth_provider: SSOData.provider,
+        data: SSOData.raw_data
+      }));
       console.log(`authservice: new auth session: ${JSON.stringify(res)}`);
       return res;
    } catch (err) {
@@ -98,17 +102,15 @@ class AuthService {
       if (user.deleted) {
         return null;
       } else {
-        return this.createNewAuthSession(user);
+        return this.createNewAuthSession(user, SSOData);
       }
     } else {
       user = await this.userStore.createNewUser(new User({
         name: SSOData.name,
         email: SSOData.email,
         profile_pic_url: SSOData.profile_pic_url,
-        data: null,
-        deleted: false
       }));
-      return this.createNewAuthSession(user);
+      return this.createNewAuthSession(user, SSOData);
     }
   }
 }
