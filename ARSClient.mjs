@@ -190,6 +190,8 @@ class ARSClient
           break;
         case 202: running.push(extractFields(c));
           break;
+        case 206: completed[c.actor.agent] = extractFields(c);
+          break;
         default:
           try
           {
