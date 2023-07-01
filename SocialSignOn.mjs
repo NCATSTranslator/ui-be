@@ -27,40 +27,6 @@ async function handleSSORedirect(provider, authcode, config) {
   return retval;
 }
 
-function OBSOLETESSORedirectHandler(config) {
-  return async function(req, res, next) {
-    let data = null;
-    const provider = req.params.provider;
-    const auth_code = req.query.code;
-
-    switch (provider) {
-      case 'google': data = await googleHandler(auth_code, {
-          client_id: config.auth.social_providers.google.client_id,
-          client_secret: config.secrets.auth.social_providers.google.client_secret,
-          redirect_uri: config.auth.social_providers.google.redirect_uri,
-          token_uri: config.auth.social_providers.google.token_uri
-        });
-        break;
-      case 'facebook': data = await facebookHandler(auth_code, {
-          client_id: config.auth.social_providers.facebook.client_id,
-          client_secret: config.secrets.auth.social_providers.facebook.client_secret,
-          redirect_uri: config.auth.social_providers.facebook.redirect_uri,
-          token_uri: config.auth.social_providers.facebook.token_uri,
-          user_data_uri: config.auth.social_providers.facebook.user_data_uri
-        });
-        break;
-      default: console.log(`Cannot handle provider: ${provider}`); break;
-    }
-
-    res.status(200).json({
-      hi: "this is groovy",
-      provider: provider,
-      token_data: data
-    });
-  }
-}
-
-
 async function facebookHandler(auth_code, client_config) {
   const params = new URLSearchParams({
     client_id: client_config.client_id,

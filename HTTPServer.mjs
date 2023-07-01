@@ -11,7 +11,6 @@ import * as cmn from './common.mjs';
 export function startServer(config, translatorService, authService)
 {
   console.log(config);
-  console.log(authService);
   const demopath = config.demosite_path;
   const mainpath = config.mainsite_path;
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
