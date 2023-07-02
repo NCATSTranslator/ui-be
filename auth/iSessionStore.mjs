@@ -3,7 +3,7 @@
 export { iSessionStore };
 
 class iSessionStore {
-  constructor(config) {
+  constructor(pool, config=null) {
     if (new.target === iSessionStore) {
       throw new Error("This is an abstract class and should not be instantiated directly");
     }

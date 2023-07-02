@@ -11,6 +11,7 @@ import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './auth/AuthService.mjs';
 import { SessionStorePostgres } from './auth/SessionStorePostgres.mjs';
 import { UserStorePostgres } from './users/UserStorePostgres.mjs';
+import { pg } from './postgres_preamble.mjs';
 
 // Load the config asap as basically everything depends on it
 const SERVER_CONFIG = await loadConfigFromFile(process.argv.length < 3 ? './configurations/mock.json' : './' + process.argv[2]);
@@ -37,18 +38,19 @@ const annotationClient = new KGAnnotationClient(
 const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
 const TRANSLATOR_SERVICE = new TranslatorService(queryClient, outputAdapter);
 
-const AUTH_SERVICE = new AuthService({
+const AUTH_SERVICE = (function (config) {
+  const dbPool = new pg.Pool({
+    ...config.storage.pg_local,
+    password: config.secrets.pg_local.password
+  });
+  return new AuthService({
     tokenTTLSec: SERVER_CONFIG.sessions.token_ttl_sec,
     sessionAbsoluteTTLSec: SERVER_CONFIG.sessions.session_absolute_ttl_sec,
     sessionMaxIdleTimeSec: SERVER_CONFIG.sessions.session_max_idle_time_sec
-  }, new SessionStorePostgres({
-    ...SERVER_CONFIG.storage.sessions_pg,
-    password: SERVER_CONFIG.secrets.storage.sessions_pg.password
-  }), new UserStorePostgres({
-    ...SERVER_CONFIG.storage.sessions_pg,
-    password: SERVER_CONFIG.secrets.storage.sessions_pg.password
-  })
-);
+  },
+  new SessionStorePostgres(dbPool),
+  new UserStorePostgres(dbPool));
+})(SERVER_CONFIG);
 
 console.log("alles gut");
 httpserver.startServer(SERVER_CONFIG, TRANSLATOR_SERVICE, AUTH_SERVICE);

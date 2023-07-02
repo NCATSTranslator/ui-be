@@ -6,8 +6,8 @@ import { UserPreference } from '../models/UserPreference.mjs'; // path to the Us
 export { UserPreferenceStorePostgres };
 
 class UserPreferenceStorePostgres {
-  constructor(config) {
-    this.pool = new pg.Pool(config);
+  constructor(pool, config=null) {
+    this.pool = pool ? pool : new pg.Pool(config);
   }
 
   async retrieveUserPreferencesById(userId) {

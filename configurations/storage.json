@@ -1,5 +1,5 @@
 {
-  "sessions_pg": {
+  "pg_local": {
     "host": "localhost",
     "user": "postgres",
     "port": "5432",

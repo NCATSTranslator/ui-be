@@ -10,10 +10,10 @@ export { SessionStorePostgres };
 
 class SessionStorePostgres extends iSessionStore {
 
-  constructor(config) {
+  constructor(pool, config=null) {
     super();
     // https://node-postgres.com/apis/pool#new-pool
-    this.pool = new pg.Pool(config);
+    this.pool = pool ? pool : new pg.Pool(config);
   }
   async retrieveSessionByToken(token) {
     let retval = null;

@@ -6,8 +6,8 @@ import { User } from '../models/User.mjs';
 export { UserStorePostgres };
 
 class UserStorePostgres {
-  constructor(config) {
-    this.pool = new pg.Pool(config);
+  constructor(pool, config=null) {
+    this.pool = pool ? pool : new pg.Pool(config);
   }
 
   async retrieveUserById(id) {

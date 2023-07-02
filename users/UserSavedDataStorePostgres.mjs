@@ -4,8 +4,8 @@ import { UserSavedData } from '../models/UserSavedData.mjs'; // assuming UserSav
 export { UserSavedDataStorePostgres };
 
 class UserSavedDataStorePostgres {
-  constructor(config) {
-    this.pool = new pg.Pool(config);
+  constructor(pool, config=null) {
+    this.pool = pool ? pool : new pg.Pool(config);
   }
 
   async retrieveUserSavedDataByUserId(uid, excludeDeleted=true) {
