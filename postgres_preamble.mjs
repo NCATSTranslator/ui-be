@@ -3,7 +3,7 @@
 // This worked after a bit of trial and error.
 import pg from 'pg';
 
-export { pg, pgExec };
+export { pg, pgExec, pgExecTrans };
 
 /* Technically unsafe due to integer precision in node but probably fine in reality.
  * Allows count() results to be returned as numbers instead of strings.
@@ -20,6 +20,24 @@ async function pgExec(pool, sql, sqlParams=[]) {
   } catch (err) {
     console.error(err);
     throw err;
+  } finally {
+    if (client) {
+      client.release();
+    }
+  }
+}
+
+async function pgExecTrans(pool, fun, args) {
+  let client = null;
+  try {
+    client = await pool.connect();
+    await client.query('BEGIN');
+    const res = await fun(args, client);
+    await client.query('COMMIT');
+    return res;
+  } catch (err) {
+    console.error(err);
+    await client.query('ROLLBACK');
   } finally {
     if (client) {
       client.release();
