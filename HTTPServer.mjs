@@ -6,11 +6,16 @@ import { default as express } from 'express';
 import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
 
+import { createUserRouter } from './routers/UserRouter.mjs';
+
 import * as wutil from './webutils.mjs';
 import * as cmn from './common.mjs';
 
-export function startServer(config, translatorService, authService) {
-  console.log(config);
+export function startServer(config, services) {
+  console.log("Der Anfang ist das Ende und das Ende ist der Anfang");
+  const translatorService = services.translatorService;
+  const authService = services.authService;
+  const userService = services.userService;
   const demopath = config.demosite_path;
   const mainpath = config.mainsite_path;
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
@@ -24,6 +29,7 @@ export function startServer(config, translatorService, authService) {
 
   app.all('/demo/*', validateUnauthSession(config, authService));
   app.all('/main/*', validateAuthSession(config, authService));
+  app.use('/api/users', createUserRouter(config, services));
 
   app.post(['/creative_query', '/api/creative_query',
             `${demopath}/api/creative_query`, `${mainpath}/api/creative_query`],
