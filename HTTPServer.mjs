@@ -9,8 +9,7 @@ import { default as cookieParser } from 'cookie-parser';
 import * as wutil from './webutils.mjs';
 import * as cmn from './common.mjs';
 
-export function startServer(config, translatorService, authService)
-{
+export function startServer(config, translatorService, authService) {
   console.log(config);
   const demopath = config.demosite_path;
   const mainpath = config.mainsite_path;
@@ -19,7 +18,6 @@ export function startServer(config, translatorService, authService)
   app.use(pinoHttp());
   app.use(express.json());
   app.use(cookieParser());
-
 
   app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
@@ -64,10 +62,9 @@ export function startServer(config, translatorService, authService)
       res.sendFile(path.join(__root, 'build', 'dm2.html'));
   });
 
-  app.get('*', (req, res, next) =>
-    {
-      res.sendFile(path.join(__root, 'build/index.html'));
-    });
+  app.get('*', (req, res, next) => {
+    res.sendFile(path.join(__root, 'build/index.html'));
+  });
 
   app.listen(8386);
 }
@@ -88,6 +85,7 @@ function handleLogin(config, authService) {
     }
   }
 }
+
 function setSessionCookie(res, cookieName, cookieVal, cookiePath, maxAgeSec) {
   console.log(`_+_+_+_+_ set session cookie: [${cookieName}/${maxAgeSec}]: ${cookieVal}`);
   res.cookie(cookieName, cookieVal, {
@@ -124,7 +122,6 @@ function validateAuthSession(config, authService) {
     }
     const user = await authService.getUserById(session.user_id);
     if (!user) {
-      // tricky - what if this is new user? Guess we need to ensure user creation has already happened
       console.error(`%% %% %% no user found`);
       return res.redirect(302, `/login`);
     } else if (user.deleted) {
@@ -145,6 +142,7 @@ function validateAuthSession(config, authService) {
     next();
   }
 }
+
 function validateUnauthSession(config, authService) {
   return async function (req, res, next) {
     let session = null;
@@ -185,103 +183,78 @@ function validateUnauthSession(config, authService) {
   }
 }
 
-function logQuerySubmissionRequest(req, res, next)
-{
+function logQuerySubmissionRequest(req, res, next) {
   req.log.info({reqBody: req.body});
   next();
 }
 
-function validateQuerySubmissionRequest(req, res, next)
-{
+function validateQuerySubmissionRequest(req, res, next) {
   let query = req.body;
-  if (cmn.isObj(query))
-  {
+  if (cmn.isObj(query)) {
     next();
   }
-  else
-  {
+  else {
     return wutil.sendError(res, 400, "No disease specificed in request");
   }
 }
 
-function handleQuerySubmissionRequest(config, service)
-{
-  return async function(req, res, next)
-  {
-    try
-    {
+function handleQuerySubmissionRequest(config, service) {
+  return async function(req, res, next) {
+    try {
       let query = service.inputToQuery(req.body);
       req.log.info({query: query});
       let resp = await service.submitQuery(query);
       req.log.info({arsqueryresp: resp});
-      res.status(200).json(service.outputAdapter.querySubmitToFE(resp));
-    }
-    catch (err)
-    {
+      return res.status(200).json(service.outputAdapter.querySubmitToFE(resp));
+    } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
     }
   }
 }
 
-function validateQueryResultRequest(req, res, next)
-{
+function validateQueryResultRequest(req, res, next) {
   let requestObj = req.body;
   if (cmn.isObj(requestObj)
     && requestObj.hasOwnProperty('qid')
-    && requestObj.qid.length > 0)
-  {
+    && requestObj.qid.length > 0) {
     next();
-  }
-  else
-  {
+  } else {
     return wutil.sendError(res, 400, "No query id specificed in request");
   }
 }
 
-function handleStatusRequest(config, service, filters)
-{
-  return async function(req, res, next)
-  {
-    try
-    {
+function handleStatusRequest(config, service, filters) {
+  return async function(req, res, next) {
+    try {
       let uuid = req.body.qid;
       let statusRes = await service.getQueryStatus(uuid, filters);
-      res.status(200).json(service.outputAdapter.queryStatusToFE(statusRes));
-    }
-    catch (err)
-    {
+      return res.status(200).json(service.outputAdapter.queryStatusToFE(statusRes));
+    } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
     }
   }
 }
 
-function handleResultRequest(config, service, filters)
-{
-  return async function(req, res, next)
-  {
-    try
-    {
+function handleResultRequest(config, service, filters) {
+  return async function(req, res, next) {
+    try {
       let uuid = req.body.qid;
       let svcRes = await service.getResults(uuid, filters);
       let retval = await service.outputAdapter.queryResultsToFE(svcRes,
         config.max_hops,
         config.ara_to_infores_map);
-      res.status(200).json(retval);
-    }
-    catch (err)
-    {
+      return res.status(200).json(retval);
+    } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
     }
   }
 }
 
-function handleConfigRequest(config)
-{
-  return async function(req, res)
-  {
-    res.status(200).json(config.frontend);
+function handleConfigRequest(config) {
+  return async function(req, res) {
+    return res.status(200).json(config.frontend);
   }
 }
