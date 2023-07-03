@@ -24,9 +24,7 @@ class UserPreferenceStorePostgres {
   }
 
   async updateUserPreferences(userId, userPreferences) {
-    return pgExecTrans(this.pool, async (args, client) => {
-      const userId = args.userId;
-      const userPreferences = args.userPreferences
+    return pgExecTrans(this.pool, async (client, userId, userPreferences) => {
       const updatedPrefNames = [];
       for (let userPreference of userPreferences) {
         const checkSql = `

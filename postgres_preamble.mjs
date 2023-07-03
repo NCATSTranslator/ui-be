@@ -27,12 +27,12 @@ async function pgExec(pool, sql, sqlParams=[]) {
   }
 }
 
-async function pgExecTrans(pool, fun, args) {
+async function pgExecTrans(pool, fun, ...args) {
   let client = null;
   try {
     client = await pool.connect();
     await client.query('BEGIN');
-    const res = await fun(args, client);
+    const res = await fun(client, ...args);
     await client.query('COMMIT');
     return res;
   } catch (err) {
