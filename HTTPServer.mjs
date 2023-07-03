@@ -6,6 +6,7 @@ import { default as express } from 'express';
 import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
 
+import * as wutil from './webutils.mjs';
 import * as cmn from './common.mjs';
 
 export function startServer(config, translatorService, authService)
@@ -177,8 +178,8 @@ function validateUnauthSession(config, authService) {
         console.log(`>>> >>> >>> sessionData: ${JSON.stringify(session)}`);
       }
     } catch (err) {
-      logInternalServerError(`Auth validation error: ${err}`);
-      sendInternalServerError(`Auth validation error: ${err}`);
+      wutil.logInternalServerError(`Auth validation error: ${err}`);
+      return wutil.sendInternalServerError(`Auth validation error: ${err}`);
     }
     next();
   }
@@ -199,7 +200,7 @@ function validateQuerySubmissionRequest(req, res, next)
   }
   else
   {
-    sendError(res, 400, "No disease specificed in request");
+    return wutil.sendError(res, 400, "No disease specificed in request");
   }
 }
 
@@ -217,8 +218,8 @@ function handleQuerySubmissionRequest(config, service)
     }
     catch (err)
     {
-      logInternalServerError(req, err);
-      sendInternalServerError(res);
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
     }
   }
 }
@@ -234,7 +235,7 @@ function validateQueryResultRequest(req, res, next)
   }
   else
   {
-    sendError(res, 400, "No query id specificed in request");
+    return wutil.sendError(res, 400, "No query id specificed in request");
   }
 }
 
@@ -250,8 +251,8 @@ function handleStatusRequest(config, service, filters)
     }
     catch (err)
     {
-      logInternalServerError(req, err);
-      sendInternalServerError(res);
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
     }
   }
 }
@@ -271,8 +272,8 @@ function handleResultRequest(config, service, filters)
     }
     catch (err)
     {
-      logInternalServerError(req, err);
-      sendInternalServerError(res);
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
     }
   }
 }
@@ -283,24 +284,4 @@ function handleConfigRequest(config)
   {
     res.status(200).json(config.frontend);
   }
-}
-
-function sendError(res, errorCode, message)
-{
-  const response = {
-    'status': 'error',
-    'data': message
-  }
-
-  res.status(errorCode).json(response);
-}
-
-function sendInternalServerError(res)
-{
-  sendError(res, 500, 'Internal Server Error');
-}
-
-function logInternalServerError(req, err)
-{
-  req.log.error(`Internal Server Error: ${err}`);
 }
