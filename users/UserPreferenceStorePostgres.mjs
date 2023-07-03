@@ -49,7 +49,7 @@ class UserPreferenceStorePostgres {
         updatedPrefNames.push(userPreference.pref_name);
       }
       return updatedPrefNames;
-    }, {userId: userId, userPreferences: userPreferences});
+    }, userId, userPreferences);
   }
 
   async retrieveSpecificUserPreference(userId, prefName) {
