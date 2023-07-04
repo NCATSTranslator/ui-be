@@ -64,7 +64,8 @@ class UserSavedDataStorePostgres {
     return data.length > 0 ? data : null;
   }
 
-  async updateUserSavedDataPartial(userSavedData) {
+  async updateUserSavedDataPartial(userSavedData, includeDeleted=false) {
+    const withDel = includeDeleted ? '' : ' AND deleted = false ';
     if (!userSavedData.id) {
       throw new Error("id must be provided for update");
     }
@@ -83,7 +84,7 @@ class UserSavedDataStorePostgres {
 
     values.push(userSavedData.id);
     sql += updates.join(', ');
-    sql += ` WHERE id = $${count} RETURNING *`;
+    sql += ` WHERE id = $${count} ${withDel} RETURNING *`;
     const res = await pgExec(this.pool, sql, values);
     return res.rows.length > 0 ? new UserSavedData(res.rows[0]) : null;
   }

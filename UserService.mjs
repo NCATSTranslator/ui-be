@@ -40,13 +40,19 @@ class UserService {
     return this.savedDataStore.createUserSavedData(userData);
   }
 
-  async getUserSavesBy(uid, fields, includeDeleted) {
+  async getUserSavesBy(uid, fields, includeDeleted=false) {
     return this.savedDataStore.retrieveUserSavedDataBy(uid, fields, includeDeleted);
   }
 
-  async updateUserSave(saveData) {
-    return this.savedDataStore.updateUserSavedDataPartial(saveData);
+  async updateUserSave(saveData, includeDeleted=false) {
+    return this.savedDataStore.updateUserSavedDataPartial(saveData, includeDeleted);
   }
+
+  async deleteUserSave(save_id) {
+    return this.savedDataStore.deleteUserSavedDataById(save_id);
+  }
+
+
   // Utils
   preferenceArrayToObject(arr)  {
     var retval = {
