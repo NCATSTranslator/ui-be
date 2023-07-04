@@ -41,4 +41,10 @@ class UserSavedData {
     this.time_updated = new Date();
     return this;
   }
+
+  deleteSavedData() {
+    this.deleted = true;
+    this.time_updated = new Date();
+    return this;
+  }
 }
