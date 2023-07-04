@@ -9,13 +9,14 @@ class UserService {
   constructor(userStore, userPreferenceStore, userSavedDataStore) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
-    this.saveDataStore = userSavedDataStore;
+    this.savedDataStore = userSavedDataStore;
   }
 
   async getUserById(uid) {
     return this.userStore.retrieveUserById(uid);
   }
 
+  // Preferences
   async getUserPreferences(uid) {
     let res = await this.preferenceStore.retrieveUserPreferencesById(uid);
     if (!res) {
@@ -26,10 +27,16 @@ class UserService {
   }
 
   async updateUserPreferences(uid, userPreferences) {
-    userPreferences = this.preferenceObjectToArray(userPreferences).map((e) => new UserPreference(e));
-    return this.preferenceStore.updateUserPreferences(uid, userPreferences);
+    let prefArray = this.preferenceObjectToArray(userPreferences).map((e) => new UserPreference(e));
+    return this.preferenceStore.updateUserPreferences(uid, prefArray);
   }
 
+  // Saves
+  async getUserSavesByUid(uid, includeDeleted=false) {
+    return this.savedDataStore.retrieveUserSavedDataByUserId(uid, includeDeleted);
+  }
+
+  // Utils
   preferenceArrayToObject(arr)  {
     var retval = {
       user_id: arr[0].user_id,

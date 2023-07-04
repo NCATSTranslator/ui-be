@@ -80,5 +80,25 @@ function createUserRouter(config, services) {
 
   });
 
+  router.get('/:user_id/saves', async function(req, res, next) {
+    let uid = req.params.user_id;
+    let includeDeleted = req.query.include_deleted === 'true';
+    try {
+      let user = await userService.getUserById(uid);
+      if (!user) {
+        return wutil.sendError(res, 404, `No such user ${uid}`);
+      } else {
+        let result = await userService.getUserSavesByUid(uid, includeDeleted);
+        if (!result || result.length === 0) {
+          return res.status(200).json([]);
+        } else {
+          return res.status(200).json(result);
+        }
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  });
   return router;
 }
