@@ -104,5 +104,20 @@ function createUserRouter(config, services) {
     }
   });
 
+  router.get('/:user_id/saves/:save_id', async function(req, res, next) {
+    let save_id = req.params.save_id;
+    let includeDeleted = req.query.include_deleted === 'true';
+    try {
+      let result = await userService.getUserSavesBy(req.user.id, {id: save_id}, includeDeleted);
+      if (!result) {
+        return wutil.sendError(res, 404, `No saved data found for id ${save_id}`);
+      } else {
+        return res.status(200).json(result[0]);
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  });
   return router;
 }
