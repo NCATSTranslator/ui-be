@@ -53,7 +53,7 @@ function createUserRouter(config, services) {
     let preferences = req.body;
     try {
       if (req.user.id !== preferences.user_id) {
-        return wutil.sendError(res, 422, `User ids in route (${req.user.id}) and payload (${preferences.user_id}) do not match`);
+        return wutil.sendError(res, 422, `User ids in route (${req.user.id}) and payload (${preferences.user_id}) do not match.`);
       } else {
         let result = await userService.updateUserPreferences(req.user.id, preferences);
         if (!result || result.length === 0) {
@@ -61,7 +61,7 @@ function createUserRouter(config, services) {
         } else {
           result = await userService.getUserPreferences(req.user.id);
           if (!result) {
-            return wutil.sendError(res, 400, `Error retrieving preferences after apparently successful update`);
+            return wutil.sendError(res, 500, `Error retrieving preferences after apparently successful update`);
           } else {
             return res.status(200).json(result);
           }
@@ -113,6 +113,36 @@ function createUserRouter(config, services) {
         return wutil.sendError(res, 404, `No saved data found for id ${save_id}`);
       } else {
         return res.status(200).json(result[0]);
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  });
+
+  /* Slight violation of REST in that PUT is supposed to take as input the entire object,
+   * and we out here accepting partial fields. What. evah.
+   */
+  router.put('/:user_id/saves/:save_id', async function(req, res, next) {
+    let save_id = parseInt(req.params.save_id, 10);
+    let includeDeleted = req.query.include_deleted === 'true';
+    try {
+      if (save_id !== req.body.id) {
+        return wutil.sendError(res, 422, `Save ids in route (${save_id}) and payload (${req.body.id}) do not match.`);
+      } else if (req.body.user_id && req.body.user_id !== req.user.id) {
+        return wutil.sendError(res, 422, `User ids in route (${req.user.id}) and payload (${req.body.user_id}) do not match.`);
+      } else {
+        let exists = await userService.getUserSavesBy(req.user.id, {id: save_id}, includeDeleted);
+        if (!exists) {
+          return wutil.sendError(res, 404, `No saved data found for id ${save_id}`);
+        } else {
+          let result = await userService.updateUserSave(req.body);
+          if (!result) {
+            return wutil.sendError(res, 500, `Error saving data`);
+          } else {
+            return res.status(200).json(result);
+          }
+        }
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);

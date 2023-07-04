@@ -80,9 +80,7 @@ class UserSavedDataStorePostgres {
         count++;
       }
     }
-    /*updates.push(`time_updated = $${count}`);
-    values.push(new Date());
-    count++;*/
+
     values.push(userSavedData.id);
     sql += updates.join(', ');
     sql += ` WHERE id = $${count} RETURNING *`;

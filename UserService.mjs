@@ -44,6 +44,9 @@ class UserService {
     return this.savedDataStore.retrieveUserSavedDataBy(uid, fields, includeDeleted);
   }
 
+  async updateUserSave(saveData) {
+    return this.savedDataStore.updateUserSavedDataPartial(saveData);
+  }
   // Utils
   preferenceArrayToObject(arr)  {
     var retval = {
