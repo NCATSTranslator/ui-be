@@ -36,6 +36,9 @@ class UserService {
     return this.savedDataStore.retrieveUserSavedDataByUserId(uid, includeDeleted);
   }
 
+  async saveUserData(userData) {
+    return this.savedDataStore.createUserSavedData(userData);
+  }
   // Utils
   preferenceArrayToObject(arr)  {
     var retval = {
