@@ -1,0 +1,18 @@
+version: '3'
+services:
+  app:
+    image: translator-app:latest
+    environment:
+      APP_ENVIRONMENT: test
+    ports:
+      - "8386:8386"
+    depends_on:
+      - pgdb
+  pgdb:
+    image: postgres:latest
+    environment:
+      POSTGRES_PASSWORD: yourpassword
+    volumes:
+      - ~/translator/pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
