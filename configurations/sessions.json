@@ -1,0 +1,5 @@
+{
+  "token_ttl_sec": 120,
+  "session_max_idle_time_sec": 180,
+  "session_absolute_ttl_sec": 300
+}

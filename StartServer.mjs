@@ -8,6 +8,14 @@ import { TranslatorServicexFEAdapter } from './TranslatorServicexFEAdapter.mjs';
 import { ARSClient } from './ARSClient.mjs';
 import { KGAnnotationClient } from './KGAnnotationClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
+import { AuthService } from './auth/AuthService.mjs';
+import { UserService } from './UserService.mjs';
+
+import { SessionStorePostgres } from './auth/SessionStorePostgres.mjs';
+import { UserStorePostgres } from './users/UserStorePostgres.mjs';
+import { pg } from './postgres_preamble.mjs';
+import { UserPreferenceStorePostgres } from './users/UserPreferenceStorePostgres.mjs';
+import { UserSavedDataStorePostgres } from './users/UserSavedDataStorePostgres.mjs';
 
 // Load the config asap as basically everything depends on it
 const SERVER_CONFIG = await loadConfigFromFile(process.argv.length < 3 ? './configurations/mock.json' : './' + process.argv[2]);
@@ -17,16 +25,57 @@ await loadBiolink(SERVER_CONFIG.biolink.version,
                   SERVER_CONFIG.biolink.prefix_catalog);
 await loadChebi();
 
-// Bootstrap the service -- this is a kludge. Services should offer factory or builder methods.
-const queryClient = new ARSClient(
-  `https://${SERVER_CONFIG.ars_endpoint.host}`,
-  SERVER_CONFIG.ars_endpoint.pull_uri, SERVER_CONFIG.ars_endpoint.post_uri);
-const annotationClient = new KGAnnotationClient(
-  `https://${SERVER_CONFIG.annotation_endpoint.host}`,
-  SERVER_CONFIG.annotation_endpoint.pull_uri,
-  SERVER_CONFIG.annotation_endpoint.timeout_ms);
-const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
-const service = new TranslatorService(queryClient, outputAdapter);
+/*
+if (process.argv.length > 3) {
+  const secrets = await loadConfigFromFile(process.argv[3]);
+  SERVER_CONFIG.secrets = secrets;
+}*/
 
-console.log("alles gut");
-httpserver.startServer(SERVER_CONFIG, service);
+// Bootstrap the translator service.
+// All these bootstraps feel kludgy.
+const TRANSLATOR_SERVICE = (function (config) {
+  const queryClient = new ARSClient(
+    `https://${config.ars_endpoint.host}`,
+    config.ars_endpoint.pull_uri, config.ars_endpoint.post_uri);
+  const annotationClient = new KGAnnotationClient(
+    `https://${config.annotation_endpoint.host}`,
+    config.annotation_endpoint.pull_uri,
+    config.annotation_endpoint.timeout_ms);
+  const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
+  return new TranslatorService(queryClient, outputAdapter);
+})(SERVER_CONFIG);
+
+// Bootstrap the auth service
+const AUTH_SERVICE = (function (config) {
+  const dbPool = new pg.Pool({
+    ...config.storage.pg_local,
+    password: config.secrets.pg_local.password
+  });
+  return new AuthService({
+    tokenTTLSec: config.sessions.token_ttl_sec,
+    sessionAbsoluteTTLSec: config.sessions.session_absolute_ttl_sec,
+    sessionMaxIdleTimeSec: config.sessions.session_max_idle_time_sec
+  },
+  new SessionStorePostgres(dbPool),
+  new UserStorePostgres(dbPool));
+})(SERVER_CONFIG);
+
+// Bootstrap the user service
+const USER_SERVICE = (function (config) {
+  const dbPool = new pg.Pool({
+    ...config.storage.pg_local,
+    password: config.secrets.pg_local.password
+  });
+  return new UserService(
+    new UserStorePostgres(dbPool),
+    new UserPreferenceStorePostgres(dbPool),
+    new UserSavedDataStorePostgres(dbPool)
+  );
+})(SERVER_CONFIG);
+
+console.log(SERVER_CONFIG);
+httpserver.startServer(SERVER_CONFIG, {
+  translatorService: TRANSLATOR_SERVICE,
+  authService: AUTH_SERVICE,
+  userService: USER_SERVICE
+});

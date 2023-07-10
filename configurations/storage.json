@@ -1,0 +1,8 @@
+{
+  "pg_local": {
+    "host": "pgdb",
+    "user": "postgres",
+    "port": "5432",
+    "database": "app_data"
+  }
+}

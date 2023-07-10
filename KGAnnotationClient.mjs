@@ -4,7 +4,7 @@ import { SendRecvJSON, withTimeout } from "./common.mjs";
 
 export { KGAnnotationClient };
 
-class KGAnnotationClient 
+class KGAnnotationClient
 {
   constructor(origin, queryPath, defaultTimeout)
   {
