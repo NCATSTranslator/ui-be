@@ -21,5 +21,12 @@
   "frontend": "configurations/frontend/production.json",
   "max_hops": 3,
   "log_level": "info",
-  "log_format": "common"
+  "log_format": "common",
+  "auth": "configurations/auth.json",
+  "sessions": "configurations/sessions.json",
+  "storage": "configurations/storage.json",
+  "secrets": "configurations/secrets/secrets.json",
+  "mainsite_path": "/main",
+  "demosite_path": "/demo",
+  "session_cookie_name": "session_token"
 }
