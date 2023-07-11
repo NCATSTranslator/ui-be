@@ -20,4 +20,4 @@ services:
       - db_password
 secrets:
   db_password:
-    file: /configurations/secrets/db_password
+    file: ./configurations/secrets/db_password
