@@ -153,7 +153,7 @@ function createUserRouter(config, services) {
   router.delete('/:user_id/saves/:save_id', async function(req, res, next) {
     let save_id = parseInt(req.params.save_id, 10);
     try {
-      let result = await userService.deleteUserSave(save_id);
+      let result = await userService.deleteUserSave(req.user.id, save_id);
       if (!result) {
         return wutil.sendError(res, 400, `No saved data found for id ${save_id}`);
       } else {

@@ -48,8 +48,8 @@ class UserService {
     return this.savedDataStore.updateUserSavedDataPartial(saveData, includeDeleted);
   }
 
-  async deleteUserSave(save_id) {
-    return this.savedDataStore.deleteUserSavedDataById(save_id);
+  async deleteUserSave(uid, save_id) {
+    return this.savedDataStore.deleteUserSavedDataById(uid, save_id);
   }
 
 
