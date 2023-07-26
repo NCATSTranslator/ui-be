@@ -18,6 +18,7 @@
     "infores_catalog": "infores-catalog-mini.json",
     "prefix_catalog": "prefix-catalog.json"
   },
+  "gard": "configurations/gard.json",
   "frontend": "configurations/frontend/ci.json",
   "ara_to_infores_map": "configurations/aras.json",
   "max_hops": 3,

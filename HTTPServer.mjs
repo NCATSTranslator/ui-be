@@ -46,6 +46,10 @@ export function startServer(config, services) {
             `${demopath}/api/creative_result`, `${mainpath}/api/creative_result`],
            validateQueryResultRequest,
            handleResultRequest(config, translatorService, filters));
+  
+  app.get(['/gard/:curie'],
+          validateGardRequest(config),
+          (req, res) => { res.sendFile(path.join(__root, 'build/index.html')) });
 
   app.get(['/config', '/admin/config',
            `${demopath}/admin/config`, `${mainpath}/admin/config`],
@@ -202,6 +206,22 @@ function validateQuerySubmissionRequest(req, res, next) {
   else {
     return wutil.sendError(res, 400, "No disease specificed in request");
   }
+}
+
+function validateGardRequest(config) {
+  return async function(req, res, next) {
+    const curie = req.params.curie;
+    console.log(curie);
+    if (config.gard.curies.includes(curie)) {
+      next();
+    } else {
+      return wutil.sendError(res, 400, `Invalid GARD curie: ${curie}`);
+    }
+  }
+}
+
+function handleGardRequest(req, res, next) {
+  res.sendFile(path.join(__root, 'build/index.html'));
 }
 
 function handleQuerySubmissionRequest(config, service) {
