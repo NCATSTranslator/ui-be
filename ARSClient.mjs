@@ -255,6 +255,27 @@ class ARSClient
     retval.queuing = false;
     return retval;
   }
+
+  // Get all results that have been pre-merged by the ARS
+  async collectMergedResults(pkey)
+  {
+    const baseResult = await this.fetchMessage(pkey);
+    const mergedResults = await this.fetchMessage(baseResult.fields.merged_version);
+    return {
+      pk: pkey,
+      completed: [
+        {
+          agent: mergedResults.fields.name,
+          uuid: mergedResults.pk,
+          status: mergedResults.fields.status,
+          code: mergedResults.fields.code,
+          data: mergedResults.fields.data.message
+        }
+      ],
+      running: [],
+      errored: []
+    };
+  }
 }
 
 /*
