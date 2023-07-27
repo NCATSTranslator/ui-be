@@ -217,7 +217,9 @@ function validateQuerySubmissionRequest(req, res, next) {
 function validateGardRequest(config) {
   return async function(req, res, next) {
     const curie = req.path.split('/').pop();
-    if (config.gard.curies.includes(curie)) {
+    const query = config.gard.filter(q => q.id === curie);
+    if (!cmn.isArrayEmpty(query)) {
+      res.locals.gardQuery = query[0]; 
       next();
     } else {
       return wutil.sendError(res, 400, `Invalid GARD curie: ${curie}`);
@@ -227,7 +229,11 @@ function validateGardRequest(config) {
 
 function handleGardRequest(basePath) {
   return async function(req, res, next) {
-    return res.redirect(301, `${basePath}/results?l=Heart%20Disorder&i=MONDO:0005267&t=0&q=97b1daf8-3f7f-4fda-8bc4-f22273f5dfe2`);
+    const gardQuery = res.locals.gardQuery;
+    const name = gardQuery.name.replaceAll(' ', '%20');
+    const id = gardQuery.id;
+    const uuid = gardQuery.uuid;
+    res.redirect(301, `${basePath}/results?l=${name}&i=${id}&t=0&q=${uuid}`);
   }
 }
 

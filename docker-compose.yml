@@ -3,7 +3,7 @@ services:
   app:
     image: translator-app:latest
     environment:
-      APP_ENVIRONMENT: test
+      APP_ENVIRONMENT: production
     ports:
       - "8386:8386"
     depends_on:
