@@ -23,14 +23,11 @@ export function startServer(config, services) {
   app.use(pinoHttp());
   app.use(express.json());
   app.use(cookieParser());
-
-  app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
 
-  app.all('/demo/*', validateUnauthSession(config, authService));
+  app.all(`${demopath}/*`, validateUnauthSession(config, authService));
   app.all('/main/*', validateAuthSession(config, authService));
   app.use('/api/users', createUserRouter(config, services));
-
   app.post(['/creative_query', '/api/creative_query',
             `${demopath}/api/creative_query`, `${mainpath}/api/creative_query`],
            logQuerySubmissionRequest,
@@ -47,16 +44,15 @@ export function startServer(config, services) {
            validateQueryResultRequest,
            handleResultRequest(config, translatorService, filters));
   
-  app.get(['/gard/:curie'],
+  app.get(/\/demo\/MONDO:\d{7}/,
           validateGardRequest(config),
-          (req, res) => { res.sendFile(path.join(__root, 'build/index.html')) });
+          handleGardRequest(demopath));
 
   app.get(['/config', '/admin/config',
            `${demopath}/admin/config`, `${mainpath}/admin/config`],
           handleConfigRequest(config));
 
   app.get('/oauth2/redir/:provider', handleLogin(config, authService));
-
 
   app.get(['/login'], function (req, res, next) {
     res.sendFile(path.join(__root, 'build', 'login.html'));
@@ -72,8 +68,18 @@ export function startServer(config, services) {
       res.sendFile(path.join(__root, 'build', 'dm2.html'));
   });
 
+  app.get([demopath, mainpath, `${demopath}/*`, `${mainpath}/*`], (req, res, next) => {
+    res.sendFile(path.join(__root, 'build', 'index.html'));
+  });
+
+  app.get('/', (req, res, next) => {
+    res.redirect(301, demopath);
+  });
+
+  app.use(express.static(path.join(__root, 'build')));
+
   app.get('*', (req, res, next) => {
-    res.sendFile(path.join(__root, 'build/index.html'));
+    res.redirect(301, demopath);
   });
 
   app.listen(8386);
@@ -210,8 +216,7 @@ function validateQuerySubmissionRequest(req, res, next) {
 
 function validateGardRequest(config) {
   return async function(req, res, next) {
-    const curie = req.params.curie;
-    console.log(curie);
+    const curie = req.path.split('/').pop();
     if (config.gard.curies.includes(curie)) {
       next();
     } else {
@@ -220,8 +225,10 @@ function validateGardRequest(config) {
   }
 }
 
-function handleGardRequest(req, res, next) {
-  res.sendFile(path.join(__root, 'build/index.html'));
+function handleGardRequest(basePath) {
+  return async function(req, res, next) {
+    return res.redirect(301, `${basePath}/results?l=Heart%20Disorder&i=MONDO:0005267&t=0&q=97b1daf8-3f7f-4fda-8bc4-f22273f5dfe2`);
+  }
 }
 
 function handleQuerySubmissionRequest(config, service) {
