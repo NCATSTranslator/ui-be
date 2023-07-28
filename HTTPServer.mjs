@@ -28,11 +28,19 @@ export function startServer(config, services) {
   app.all(`${demopath}/*`, validateUnauthSession(config, authService));
   app.all('/main/*', validateAuthSession(config, authService));
   app.use('/api/users', createUserRouter(config, services));
+  app.post(`${demopath}/api/creative_query`,
+           validateGardRequest((req) => req.body.curie,
+                               (curie) => config.gard.filter(q => q.id === curie)));
+
   app.post(['/creative_query', '/api/creative_query',
             `${demopath}/api/creative_query`, `${mainpath}/api/creative_query`],
            logQuerySubmissionRequest,
            validateQuerySubmissionRequest,
            handleQuerySubmissionRequest(config, translatorService));
+  
+  app.post([`${demopath}/api/creative_status`, `${demopath}/api/creative_result`],
+           validateGardRequest((req) => req.body.qid,
+                               (uuid) => config.gard.filter(q => q.uuid === uuid)));
 
   app.post(['/creative_status', '/api/creative_status',
             `${demopath}/api/creative_status`, `${mainpath}/api/creative_status`],
@@ -45,7 +53,8 @@ export function startServer(config, services) {
            handleResultRequest(config, translatorService, filters));
   
   app.get(/\/demo\/MONDO:\d{7}/,
-          validateGardRequest(config),
+          validateGardRequest((req) => req.path.split('/').pop(),
+                              (curie) => config.gard.filter(q => q.id === curie)),
           handleGardRequest(demopath));
 
   app.get(['/config', '/admin/config',
@@ -214,15 +223,15 @@ function validateQuerySubmissionRequest(req, res, next) {
   }
 }
 
-function validateGardRequest(config) {
+function validateGardRequest(queryIdGetter, gardQueryGetter) {
   return async function(req, res, next) {
-    const curie = req.path.split('/').pop();
-    const query = config.gard.filter(q => q.id === curie);
+    const id = queryIdGetter(req);
+    const query = gardQueryGetter(id);
     if (!cmn.isArrayEmpty(query)) {
       res.locals.gardQuery = query[0]; 
       next();
     } else {
-      return wutil.sendError(res, 400, `Invalid GARD curie: ${curie}`);
+      return wutil.sendError(res, 400, `Invalid GARD request: ${JSON.stringify(req.body)}`);
     }
   }
 }
