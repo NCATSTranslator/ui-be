@@ -7,6 +7,8 @@ import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
 
 import { createUserRouter } from './routers/UserRouter.mjs';
+import { createAPIController } from './routers/APIController.mjs';
+
 
 import * as wutil from './webutils.mjs';
 import * as cmn from './common.mjs';
@@ -26,11 +28,15 @@ export function startServer(config, services) {
 
   app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
+  config.filters = filters;
 
   app.all('/demo/*', validateUnauthSession(config, authService));
   app.all('/main/*', validateAuthSession(config, authService));
+  app.use('/api/v1', createAPIController(config, services));
   app.use('/api/users', createUserRouter(config, services));
 
+  // The /CREATIVE_* route handling in this file is now obsolete.
+  // Kept in here until we fully migrate off existing app
   app.post(['/creative_query', '/api/creative_query',
             `${demopath}/api/creative_query`, `${mainpath}/api/creative_query`],
            logQuerySubmissionRequest,
@@ -48,11 +54,12 @@ export function startServer(config, services) {
            handleResultRequest(config, translatorService, filters));
 
   app.get(['/config', '/admin/config',
-           `${demopath}/admin/config`, `${mainpath}/admin/config`],
-          handleConfigRequest(config));
+    `${demopath}/admin/config`, `${mainpath}/admin/config`],
+    handleConfigRequest(config));
+
+  // END of obsolete creative_* + config stuff
 
   app.get('/oauth2/redir/:provider', handleLogin(config, authService));
-
 
   app.get(['/login'], function (req, res, next) {
     res.sendFile(path.join(__root, 'build', 'login.html'));
@@ -189,6 +196,14 @@ function validateUnauthSession(config, authService) {
   }
 }
 
+// ALL THE STUFF BELOW IS NOW OBSOLETE!
+
+function handleConfigRequest(config) {
+  return async function(req, res) {
+    return res.status(200).json(config.frontend);
+  }
+}
+
 function logQuerySubmissionRequest(req, res, next) {
   req.log.info({reqBody: req.body});
   next();
@@ -256,11 +271,5 @@ function handleResultRequest(config, service, filters) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
     }
-  }
-}
-
-function handleConfigRequest(config) {
-  return async function(req, res) {
-    return res.status(200).json(config.frontend);
   }
 }
