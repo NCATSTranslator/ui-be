@@ -52,19 +52,15 @@ function createUserRouter(config, services) {
   router.post('/:user_id/preferences', async function(req, res, next) {
     let preferences = req.body;
     try {
-      if (req.user.id !== preferences.user_id) {
-        return wutil.sendError(res, 422, `User ids in route (${req.user.id}) and payload (${preferences.user_id}) do not match.`);
+      let result = await userService.updateUserPreferences(req.user.id, preferences);
+      if (!result || result.length === 0) {
+        return wutil.sendError(res, 400, `Nothing was updated`);
       } else {
-        let result = await userService.updateUserPreferences(req.user.id, preferences);
-        if (!result || result.length === 0) {
-          return wutil.sendError(res, 400, `Nothing was updated`);
+        result = await userService.getUserPreferences(req.user.id);
+        if (!result) {
+          return wutil.sendError(res, 500, `Error retrieving preferences after apparently successful update`);
         } else {
-          result = await userService.getUserPreferences(req.user.id);
-          if (!result) {
-            return wutil.sendError(res, 500, `Error retrieving preferences after apparently successful update`);
-          } else {
-            return res.status(200).json(result);
-          }
+          return res.status(200).json(result);
         }
       }
     } catch (err) {
@@ -127,21 +123,15 @@ function createUserRouter(config, services) {
     let save_id = parseInt(req.params.save_id, 10);
     let includeDeleted = req.query.include_deleted === 'true';
     try {
-      if (save_id !== req.body.id) {
-        return wutil.sendError(res, 422, `Save ids in route (${save_id}) and payload (${req.body.id}) do not match.`);
-      } else if (req.body.user_id && req.body.user_id !== req.user.id) {
-        return wutil.sendError(res, 422, `User ids in route (${req.user.id}) and payload (${req.body.user_id}) do not match.`);
+      let exists = await userService.getUserSavesBy(req.user.id, {id: save_id}, includeDeleted);
+      if (!exists) {
+        return wutil.sendError(res, 404, `No saved data found for id ${save_id}`);
       } else {
-        let exists = await userService.getUserSavesBy(req.user.id, {id: save_id}, includeDeleted);
-        if (!exists) {
-          return wutil.sendError(res, 404, `No saved data found for id ${save_id}`);
+        let result = await userService.updateUserSave(req.body, includeDeleted);
+        if (!result) {
+          return wutil.sendError(res, 500, `Error saving data`);
         } else {
-          let result = await userService.updateUserSave(req.body, includeDeleted);
-          if (!result) {
-            return wutil.sendError(res, 500, `Error saving data`);
-          } else {
-            return res.status(200).json(result);
-          }
+          return res.status(200).json(result);
         }
       }
     } catch (err) {
@@ -153,11 +143,16 @@ function createUserRouter(config, services) {
   router.delete('/:user_id/saves/:save_id', async function(req, res, next) {
     let save_id = parseInt(req.params.save_id, 10);
     try {
-      let result = await userService.deleteUserSave(req.user.id, save_id);
-      if (!result) {
-        return wutil.sendError(res, 400, `No saved data found for id ${save_id}`);
+      let exists = await userService.getUserSavesBy(req.user.id, {id: save_id});
+      if (!exists) {
+        return wutil.sendError(res, 404, `No saved data found for id ${save_id}`);
       } else {
-        return res.status(204).end();
+        let result = await userService.deleteUserSave(save_id);
+        if (!result) {
+          return wutil.sendError(res, 400, `No saved data found for id ${save_id}`);
+        } else {
+          return res.status(204).end();
+        }
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
