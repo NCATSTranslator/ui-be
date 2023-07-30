@@ -6,7 +6,7 @@ import { default as express } from 'express';
 import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
 
-import { createUserRouter } from './routers/UserRouter.mjs';
+import { createUserController } from './routers/UserAPIController.mjs';
 import { createAPIController } from './routers/APIController.mjs';
 
 
@@ -33,7 +33,7 @@ export function startServer(config, services) {
   app.all('/demo/*', validateUnauthSession(config, authService));
   app.all('/main/*', validateAuthSession(config, authService));
   app.use('/api/v1', createAPIController(config, services));
-  app.use('/api/users', createUserRouter(config, services));
+  app.use('/api/users', createUserController(config, services));
 
   // The /CREATIVE_* route handling in this file is now obsolete.
   // Kept in here until we fully migrate off existing app
