@@ -32,8 +32,9 @@ export function startServer(config, services) {
 
   app.all('/demo/*', validateUnauthSession(config, authService));
   app.all('/main/*', validateAuthSession(config, authService));
-  app.use('/api/v1', createAPIController(config, services));
-  app.use('/api/users', createUserController(config, services));
+  app.use('/main/api/v1/pub', createAPIController(config, services));
+  app.use('/demo/api/v1/pub', createAPIController(config, services));
+  app.use('/main/api/v1/pvt/users', createUserController(config, services));
 
   // The /CREATIVE_* route handling in this file is now obsolete.
   // Kept in here until we fully migrate off existing app
@@ -93,13 +94,13 @@ function handleLogin(config, authService) {
       let cookieName = config.session_cookie_name;
       let cookiePath = config.mainsite_path;
       let cookieMaxAge = authService.sessionAbsoluteTTLSec;
-      setSessionCookie(res, cookieName, newSession.token, cookiePath, cookieMaxAge);
+      wutil.setSessionCookie(res, cookieName, newSession.token, cookiePath, cookieMaxAge);
       return res.redirect(302, `${config.mainsite_path}/dummypage.html`);
     }
   }
 }
 
-function setSessionCookie(res, cookieName, cookieVal, cookiePath, maxAgeSec) {
+function setSessionCookie2(res, cookieName, cookieVal, cookiePath, maxAgeSec) {
   console.log(`_+_+_+_+_ set session cookie: [${cookieName}/${maxAgeSec}]: ${cookieVal}`);
   res.cookie(cookieName, cookieVal, {
     maxAge: maxAgeSec * 1000,
@@ -146,12 +147,13 @@ function validateAuthSession(config, authService) {
     } else if (authService.isTokenExpired(session)) {
       console.error(`%% %% %% Token expired, refreshing: ${JSON.stringify(session)}`);
       session = await authService.refreshSessionToken(session);
-      setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+      wutil.setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
     } else {
       // Valid session - update time
       console.error(`%% %% %% session good, udpating time: ${JSON.stringify(session)}`);
       session = await authService.updateSessionTime(session);
     }
+    req.user = user;
     next();
   }
 }
@@ -169,18 +171,18 @@ function validateUnauthSession(config, authService) {
       if (!authService.isTokenSyntacticallyValid(cookieToken)) {
         console.log(">>> >>> >>> did not recv a valid token; creating a new session");
         session = await authService.createNewUnauthSession();
-        setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+        wutil.setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
       } else {
         session = await authService.retrieveSessionByToken(cookieToken);
         if (!session || authService.isSessionExpired(session)) {
           console.log(">>> >>> >>> Sess expired or could not retrieve; creating a new session");
           session = await authService.createNewUnauthSession();
-          setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+          wutil.setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
         } else if (authService.isTokenExpired(session)) {
           // Order matters; check session expiry before checking token expiry
           console.log(">>> >>> >>> Token expired; creating a new TOKEN");
           session = await authService.refreshSessionToken(session);
-          setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+          wutil.setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
         } else {
           // we have a valid existing session
           console.log(">>> >>> >>> Session was valid; updating time");

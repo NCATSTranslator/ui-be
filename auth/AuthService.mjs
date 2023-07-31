@@ -4,7 +4,56 @@ import { Session } from '../models/Session.mjs';
 import { User } from '../models/User.mjs';
 import * as sso from '../SocialSignOn.mjs';
 
-export { AuthService };
+export { AuthService,
+  CookieNotFoundError,
+  SessionNotFoundError,
+  SessionNotUsableError,
+  NoUserForSessionError,
+  UserDeletedError,
+  SessionExpiredError
+};
+
+class CookieNotFoundError extends Error {
+  constructor() {
+      super(`No token submitted`);
+      this.name = 'CookieNotFoundError';
+  }
+}
+
+class SessionNotFoundError extends Error {
+  constructor(token) {
+      super(`No session found for token: ${token}`);
+      this.name = 'SessionNotFoundError';
+  }
+}
+
+class SessionNotUsableError extends Error {
+  constructor(token, session_id) {
+      super(`Session ${session_id} for token ${token} is not usable`);
+      this.name = 'SessionNotUsableError';
+  }
+}
+
+class NoUserForSessionError extends Error {
+  constructor(token, session_id, user_id = null) {
+      super(`No valid user for token ${token} and session id ${session_id} [user id ${user_id}]`);
+      this.name = 'NoUserForSessionError';
+  }
+}
+
+class UserDeletedError extends Error {
+  constructor(user_id = null) {
+      super(`user id ${user_id} is a deleted user`);
+      this.name = 'UserDeletedError';
+  }
+}
+class SessionExpiredError extends Error {
+  constructor(token, session_id) {
+      super(`Session expired for token ${token} with session id ${session_id}`);
+      this.name = 'SessionExpiredError';
+  }
+}
+
 
 class AuthService {
   constructor(sessionParams, sessionStore, userStore) {
@@ -113,4 +162,52 @@ class AuthService {
       return this.createNewAuthSession(user, SSOData);
     }
   }
+
+  async validateAuthSessionToken(token) {
+    let tokenRefreshed = false;
+    if (!token || !this.isTokenSyntacticallyValid(token)) {
+      console.error(`%% %% %% no cookie found`);
+      throw new CookieNotFoundError();
+    }
+    console.error(`%% %% %% we get cookie: ${token}`);
+
+    let session = await this.retrieveSessionByToken(token);
+
+    if (!session) {
+      console.error(`%% %% %% no session found for ${token}`);
+      throw new SessionNotFoundError(cookie);
+    }
+    console.error(`%% %% %% we get session: ${JSON.stringify(session)}`);
+
+    if (!session.user_id || session.force_kill) {
+      console.error(`%% %% %% no user found for ${JSON.stringify(session)} or else force killed`);
+      throw new SessionNotUsableError(token, session.id);
+    }
+    const user = await this.getUserById(session.user_id);
+    if (!user) {
+      console.error(`%% %% %% no user found`);
+      throw new NoUserForSessionError(token, session.id);
+    } else if (user.deleted) {
+      console.error(`%% %% %% User deleted`);
+      throw new UserDeletedError(user.id);
+    } else if (this.isSessionExpired(session)) {
+      console.error(`%% %% %% Session expired: ${JSON.stringify(session)}`);
+      throw new SessionExpiredError(token, session.id);
+    } else if (this.isTokenExpired(session)) {
+      console.error(`%% %% %% Token expired, refreshing: ${JSON.stringify(session)}`);
+      session = await this.refreshSessionToken(session);
+      tokenRefreshed = true;
+    } else {
+      // Valid session - update time
+      console.error(`%% %% %% session good, udpating time: ${JSON.stringify(session)}`);
+      session = await this.updateSessionTime(session);
+    }
+
+    return {
+      user: user,
+      session: session,
+      tokenRefreshed: tokenRefreshed
+    };
+  }
+
 }
