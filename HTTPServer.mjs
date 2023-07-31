@@ -7,7 +7,7 @@ import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
 
 import { createUserController } from './routers/UserAPIController.mjs';
-import { createAPIController } from './routers/APIController.mjs';
+import { createAPIRouter } from './routers/APIRouter.mjs';
 
 
 import * as wutil from './webutils.mjs';
@@ -32,8 +32,8 @@ export function startServer(config, services) {
 
   app.all('/demo/*', validateUnauthSession(config, authService));
   app.all('/main/*', validateAuthSession(config, authService));
-  app.use('/main/api/v1/pub', createAPIController(config, services));
-  app.use('/demo/api/v1/pub', createAPIController(config, services));
+  app.use('/main/api/v1/pub', createAPIRouter(config, services));
+  app.use('/demo/api/v1/pub', createAPIRouter(config, services));
   app.use('/main/api/v1/pvt/users', createUserController(config, services));
 
   // The /CREATIVE_* route handling in this file is now obsolete.

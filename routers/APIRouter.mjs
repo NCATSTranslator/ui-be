@@ -6,9 +6,9 @@ import * as wutil from '../webutils.mjs';
 
 import { createQueryController } from './QueryAPIController.mjs'
 
-export { createAPIController };
+export { createAPIRouter };
 
-function createAPIController(config, services) {
+function createAPIRouter(config, services) {
   var router = express.Router();
   router.all('/', function(req, res, next) {
     return res.status(403).send("Forbidden");
