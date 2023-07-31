@@ -61,6 +61,7 @@ pipeline {
                 script {
                     configFileProvider([
                     configFile(fileId: 'values-ci.yaml', targetLocation: 'values-ncats.yaml'),
+                    configFile(fileId: 'secrets.json', targetLocation: 'secrets.json'),
                     configFile(fileId: 'prepare.sh', targetLocation: 'prepare.sh')
                     ]){
                         sh '''
