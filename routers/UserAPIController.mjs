@@ -78,7 +78,9 @@ function createUserController(config, services) {
 
   router.post('/me/saves', async function(req, res, next) {
     try {
-      let saveData = new UserSavedData(req.body);
+      let data = {...req.body};
+      data.user_id = req.user.id;
+      let saveData = new UserSavedData(data);
       let result = await userService.saveUserData(saveData);
       if (!result) {
         return wutil.sendError(res, 400, `Error saving user data`);
