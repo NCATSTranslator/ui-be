@@ -32,8 +32,9 @@ export function startServer(config, services) {
 
   app.all('/demo/*', validateUnauthSession(config, authService));
   app.all('/main/*', validateAuthSession(config, authService));
-  app.use('/main/api/v1/pub', createAPIRouter(config, services));
-  app.use('/demo/api/v1/pub', createAPIRouter(config, services));
+
+  app.use('/main/api/v1/pub', createAPIRouter(config, services, false));
+  app.use('/demo/api/v1/pub', createAPIRouter(config, services, true));
   app.use('/main/api/v1/pvt/users', createUserController(config, services));
 
   // The /CREATIVE_* route handling in this file is now obsolete.

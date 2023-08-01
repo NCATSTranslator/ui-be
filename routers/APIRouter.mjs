@@ -8,7 +8,7 @@ import { createQueryController } from './QueryAPIController.mjs'
 
 export { createAPIRouter };
 
-function createAPIRouter(config, services) {
+function createAPIRouter(config, services, isDemo) {
   var router = express.Router();
   router.all('/', function(req, res, next) {
     return res.status(403).send("Forbidden");
@@ -18,7 +18,7 @@ function createAPIRouter(config, services) {
     return res.status(200).json(config.frontend);
   });
 
-  router.use('/query', createQueryController(config, services));
+  router.use('/query', createQueryController(config, services, isDemo));
 
   return router;
 }
