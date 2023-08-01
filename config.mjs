@@ -19,6 +19,7 @@ async function loadConfigFromFile(filePath) {
   await loadAndReplace(config, 'sessions');
   await loadAndReplace(config, 'storage');
   await loadAndReplace(config, 'secrets');
+  await loadAndReplace(config, 'demo_diseases');
 
   return config;
 }
