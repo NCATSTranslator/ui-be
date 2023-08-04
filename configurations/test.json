@@ -19,7 +19,6 @@
     "prefix_catalog": "prefix-catalog.json"
   },
   "frontend": "configurations/frontend/test.json",
-  "ara_to_infores_map": "configurations/aras.json",
   "max_hops": 3,
   "log_level": "all",
   "log_format": "common",

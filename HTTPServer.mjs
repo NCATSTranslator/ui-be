@@ -248,9 +248,7 @@ function handleResultRequest(config, service, filters) {
     try {
       let uuid = req.body.qid;
       let svcRes = await service.getResults(uuid, filters);
-      let retval = await service.outputAdapter.queryResultsToFE(svcRes,
-        config.max_hops,
-        config.ara_to_infores_map);
+      let retval = await service.outputAdapter.queryResultsToFE(svcRes, config.max_hops);
       return res.status(200).json(retval);
     } catch (err) {
       wutil.logInternalServerError(req, err);
