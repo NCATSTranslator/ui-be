@@ -67,23 +67,12 @@ export function startServer(config, services) {
   // END of obsolete creative_* + config stuff
 
   app.get('/oauth2/redir/:provider', handleLogin(config, authService));
-
-  app.get(['/login'], function (req, res, next) {
-    res.sendFile(path.join(__root, 'build', 'login.html'));
-  });
-
-  app.get([`${demopath}/dummypage.html`, `${mainpath}/dummypage.html`],
-    function (req, res, next) {
-      res.sendFile(path.join(__root, 'build', 'dummypage.html'));
-  });
-
-  app.get([`${demopath}/dm2.html`, `${mainpath}/dm2.html`],
-    function (req, res, next) {
-      res.sendFile(path.join(__root, 'build', 'dm2.html'));
+  app.get([demopath, mainpath, '/login'], (req, res, next) => {
+    res.sendFile(path.join(__root, 'build/index.html'));
   });
 
   app.get('*', (req, res, next) => {
-    res.sendFile(path.join(__root, 'build/index.html'));
+    res.redirect(302, demopath);
   });
 
   app.listen(8386);
@@ -101,7 +90,7 @@ function handleLogin(config, authService) {
       let cookiePath = config.mainsite_path;
       let cookieMaxAge = authService.sessionAbsoluteTTLSec;
       wutil.setSessionCookie(res, cookieName, newSession.token, cookiePath, cookieMaxAge);
-      return res.redirect(302, `${config.mainsite_path}/dummypage.html`);
+      return res.redirect(302, config.mainsite_path);
     }
   }
 }
