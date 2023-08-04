@@ -1315,6 +1315,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
         });
 
         return {
+          'id': hash([start, end]),
           'subject': start,
           'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
           'paths': ps.sort(isPathLessThan),
