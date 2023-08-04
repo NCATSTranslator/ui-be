@@ -1,0 +1,1 @@
+\copy preferences (pref_name, pref_data_type, description) from '/var/lib/postgresql/data/pref_data.csv' with (format csv, header true, delimiter ',');

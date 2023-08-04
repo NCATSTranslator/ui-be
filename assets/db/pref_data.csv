@@ -1,0 +1,8 @@
+pref_name,pref_data_type,description
+result_sort,string,Sort order for the results list
+result_per_screen,integer,Number of results to display per screen
+graph_visibility,string,Visibility of the graph in the results view by default
+graph_layout,string,Layout of the graph in the results view by default
+path_show_count,string,Number of paths to show in the results view by default
+evidence_sort,string,Sort order for the evidence modal
+evidence_per_screen,integer,Number of evidence to display per screen

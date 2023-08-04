@@ -20,7 +20,6 @@
   },
   "demo_diseases": "configurations/demo-diseases.json",
   "frontend": "configurations/frontend/production.json",
-  "ara_to_infores_map": "configurations/aras.json",
   "max_hops": 3,
   "log_level": "info",
   "log_format": "common",
