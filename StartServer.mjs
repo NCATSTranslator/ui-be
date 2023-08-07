@@ -73,7 +73,10 @@ const USER_SERVICE = (function (config) {
   );
 })(SERVER_CONFIG);
 
-console.log(SERVER_CONFIG);
+let log_config = { ...SERVER_CONFIG};
+log_config.secrets = '[REDACTED]'
+console.log(log_config);
+
 httpserver.startServer(SERVER_CONFIG, {
   translatorService: TRANSLATOR_SERVICE,
   authService: AUTH_SERVICE,
