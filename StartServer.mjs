@@ -48,8 +48,8 @@ const TRANSLATOR_SERVICE = (function (config) {
 // Bootstrap the auth service
 const AUTH_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
-    ...config.storage.pg_local,
-    password: config.secrets.pg_local.password
+    ...config.storage.pg,
+    password: config.secrets.pg.password
   });
   return new AuthService({
     tokenTTLSec: config.sessions.token_ttl_sec,
@@ -63,8 +63,8 @@ const AUTH_SERVICE = (function (config) {
 // Bootstrap the user service
 const USER_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
-    ...config.storage.pg_local,
-    password: config.secrets.pg_local.password
+    ...config.storage.pg,
+    password: config.secrets.pg.password
   });
   return new UserService(
     new UserStorePostgres(dbPool),
