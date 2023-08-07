@@ -1,7 +1,7 @@
 {
   "pg_local": {
     "host": "pgdb",
-    "user": "postgres",
+    "user": "app_data",
     "port": "5432",
     "database": "app_data"
   }
