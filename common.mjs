@@ -307,3 +307,18 @@ export async function withTimeout(fun, ms)
         return timer = setTimeout(rej, ms, new Error(`withTimeout exceeded timeout ${ms} ms.`));
       })]).finally(() => clearTimeout(timer));
 }
+
+export function overwriteObj(orig, overwrite) {
+  for (let key of Object.keys(overwrite)) {
+    if (orig.hasOwnProperty(key)) {
+      if (overwrite[key] instanceof Object
+          && !(overwrite[key] instanceof Array)) {
+        overwriteObj(orig[key], overwrite[key])
+      } else {
+        orig[key] = overwrite[key];
+      }
+    }
+  }
+
+  return orig;
+}

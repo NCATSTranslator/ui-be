@@ -16,9 +16,24 @@ import { UserStorePostgres } from './users/UserStorePostgres.mjs';
 import { pg } from './postgres_preamble.mjs';
 import { UserPreferenceStorePostgres } from './users/UserPreferenceStorePostgres.mjs';
 import { UserSavedDataStorePostgres } from './users/UserSavedDataStorePostgres.mjs';
+import { overwriteObj, readJson } from './common.mjs';
 
 // Load the config asap as basically everything depends on it
-const SERVER_CONFIG = await loadConfigFromFile(process.argv.length < 3 ? './configurations/mock.json' : './' + process.argv[2]);
+
+
+//let SERVER_CONFIG = await loadConfigFromFile(process.argv.length < 3 ? './configurations/mock.json' : './' + process.argv[2]);
+
+let SERVER_CONFIG;
+if (process.argv.length === 3) {
+  SERVER_CONFIG = await loadConfigFromFile(process.argv[2]);
+} else if (process.argv.length ===  4) {
+  SERVER_CONFIG = await loadConfigFromFile(process.argv[2]);
+  let overrides = await readJson(process.argv[3]);
+  SERVER_CONFIG = overwriteObj(SERVER_CONFIG, overrides);
+} else {
+  throw new Error(`Unsupported number of args (${process.argv.length}) at startup. Exiting.`);
+}
+
 await loadBiolink(SERVER_CONFIG.biolink.version,
                   SERVER_CONFIG.biolink.support_deprecated_predicates,
                   SERVER_CONFIG.biolink.infores_catalog,
