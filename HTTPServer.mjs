@@ -68,10 +68,11 @@ export function startServer(config, services) {
 
   app.get('/oauth2/redir/:provider', handleLogin(config, authService));
 
+  /* Also obsolete now
   app.get(['/login'], function (req, res, next) {
     res.sendFile(path.join(__root, 'build', 'login.html'));
   });
-
+  */
   app.get([`${demopath}/dummypage.html`, `${mainpath}/dummypage.html`],
     function (req, res, next) {
       res.sendFile(path.join(__root, 'build', 'dummypage.html'));
