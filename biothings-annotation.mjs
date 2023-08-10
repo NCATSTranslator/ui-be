@@ -39,6 +39,15 @@ export function getDrugIndications(annotation)
     noHandler);
 }
 
+export function getCuries(annotation)
+{
+  return parseAnnotation(
+    annotation,
+    getDiseaseMeshCuries,
+    noHandler,
+    noHandler);
+}
+
 function parseAnnotation(annotation, diseaseHandler, chemicalHandler, geneHandler, fallback = null)  
 {
   annotation = annotation[0];
@@ -68,6 +77,16 @@ function getDiseaseDescription(annotation)
   }
 
   return description;
+}
+
+function getDiseaseMeshCuries(annotation)
+{
+  const curies = cmn.jsonGetFromKpath(annotation, ['mondo', 'xrefs', 'mesh'], null);
+  if (curies !== null) {
+    return curies.map((curie) => { return `MESH:${curie}`; });
+  }
+
+  return null;
 }
 
 function isDisease(annotation)
