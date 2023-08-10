@@ -7,7 +7,10 @@ import { TranslatorService } from '../../TranslatorService.mjs';
 const configRoot = '../../configurations';
 const environments = ['ci', 'test', 'production'];
 const outputAdapter = new TranslatorServicexFEAdapter(null);
-const queries = await cmn.readJson(`${configRoot}/frontend/prerun-queries.json`);
+const queriesPath = process.argv[2];
+const outputPath = process.argv[3];
+const queries = await cmn.readJson(queriesPath);
+console.log(queries);
 
 const preRunQueries = {};
 for (const env of environments) {
@@ -39,7 +42,9 @@ for (const env of environments) {
 
 for (const [env, queries] of Object.entries(preRunQueries)) {
   try {
-    fs.writeFileSync(`${configRoot}/frontend/${env}.json`, JSON.stringify(queries));
+    if (!cmn.isArrayEmpty(queries)) {
+      fs.writeFileSync(`${outputPath}/${env}.json`, JSON.stringify(queries));
+    }
   } catch (err) {
     console.error(err);
     process.exit();

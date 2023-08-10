@@ -1,0 +1,93 @@
+[
+  {
+    "name": "Bethlem Myopathy",
+    "curie": "MONDO:0008029",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Cerebral Arteriopathy With Subcortical Infarcts And Leukoencephalopathy",
+    "curie": "MONDO:0007432",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Hypermobility Type",
+    "curie": "MONDO:0007523",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Vascular Type",
+    "curie": "MONDO:0017314",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Kyphoscoliotic Ehlers-danlos Syndrome",
+    "curie": "MONDO:0034024",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Arthrochalasis Type",
+    "curie": "MONDO:0007525",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Classic Type",
+    "curie": "MONDO:0007522",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Dermatosparaxis Type",
+    "curie": "MONDO:0009161",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome",
+    "curie": "MONDO:0020066",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Hereditary Sensory And Autonomic Neuropathy Type 4",
+    "curie": "MONDO:0009746",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Inclusion body myositis",
+    "curie": "MONDO:0007827",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Ullrich Congenital Muscular Dystrophy",
+    "curie": "MONDO:0000355",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  },
+  {
+    "name": "Fatal familial insomnia",
+    "curie": "MONDO:0010808",
+    "type": "drug",
+    "direction": null,
+    "env": ["production"]
+  }
+]

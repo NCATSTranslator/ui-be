@@ -19,6 +19,11 @@ async function loadConfigFromFile(filePath) {
   await loadAndReplace(config, 'sessions');
   await loadAndReplace(config, 'storage');
   await loadAndReplace(config, 'secrets');
+  await loadAndReplace(config, 'demo_diseases');
+
+  // post-processing
+  // Put the host specified at top-level config into the pg-specific object
+  config.storage.pg.host = config.pg_host;
 
   return config;
 }

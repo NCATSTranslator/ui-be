@@ -6,7 +6,9 @@ import { default as express } from 'express';
 import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
 
-import { createUserRouter } from './routers/UserRouter.mjs';
+import { createUserController } from './routers/UserAPIController.mjs';
+import { createAPIRouter } from './routers/APIRouter.mjs';
+import { validateDemoDiseaseRequest, handleDemoDiseaseRequest } from './DemoDiseaseHandler.mjs';
 
 import * as wutil from './webutils.mjs';
 import * as cmn from './common.mjs';
@@ -16,6 +18,7 @@ export function startServer(config, services) {
   const translatorService = services.translatorService;
   const authService = services.authService;
   const userService = services.userService;
+  const demoDiseases = config.demo_diseases;
   const demopath = config.demosite_path;
   const mainpath = config.mainsite_path;
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
@@ -26,11 +29,21 @@ export function startServer(config, services) {
 
   app.use(express.static('./build'));
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
+  config.filters = filters;
 
   app.all('/demo/*', validateUnauthSession(config, authService));
   app.all('/main/*', validateAuthSession(config, authService));
-  app.use('/api/users', createUserRouter(config, services));
 
+  app.get('/demo/disease/:disease_id',
+    validateDemoDiseaseRequest(true, demoDiseases, 'id', (req) => req.params.disease_id),
+    handleDemoDiseaseRequest(config.demosite_path));
+
+  app.use('/main/api/v1/pub', createAPIRouter(config, services, false));
+  app.use('/demo/api/v1/pub', createAPIRouter(config, services, true));
+  app.use('/main/api/v1/pvt/users', createUserController(config, services));
+
+  // The /CREATIVE_* route handling in this file is now obsolete.
+  // Kept in here until we fully migrate off existing app
   app.post(['/creative_query', '/api/creative_query',
             `${demopath}/api/creative_query`, `${mainpath}/api/creative_query`],
            logQuerySubmissionRequest,
@@ -48,16 +61,18 @@ export function startServer(config, services) {
            handleResultRequest(config, translatorService, filters));
 
   app.get(['/config', '/admin/config',
-           `${demopath}/admin/config`, `${mainpath}/admin/config`],
-          handleConfigRequest(config));
+    `${demopath}/admin/config`, `${mainpath}/admin/config`],
+    handleConfigRequest(config));
+
+  // END of obsolete creative_* + config stuff
 
   app.get('/oauth2/redir/:provider', handleLogin(config, authService));
 
-
+  /* Also obsolete now
   app.get(['/login'], function (req, res, next) {
     res.sendFile(path.join(__root, 'build', 'login.html'));
   });
-
+  */
   app.get([`${demopath}/dummypage.html`, `${mainpath}/dummypage.html`],
     function (req, res, next) {
       res.sendFile(path.join(__root, 'build', 'dummypage.html'));
@@ -86,13 +101,13 @@ function handleLogin(config, authService) {
       let cookieName = config.session_cookie_name;
       let cookiePath = config.mainsite_path;
       let cookieMaxAge = authService.sessionAbsoluteTTLSec;
-      setSessionCookie(res, cookieName, newSession.token, cookiePath, cookieMaxAge);
+      wutil.setSessionCookie(res, cookieName, newSession.token, cookiePath, cookieMaxAge);
       return res.redirect(302, `${config.mainsite_path}/dummypage.html`);
     }
   }
 }
 
-function setSessionCookie(res, cookieName, cookieVal, cookiePath, maxAgeSec) {
+function setSessionCookie2(res, cookieName, cookieVal, cookiePath, maxAgeSec) {
   console.log(`_+_+_+_+_ set session cookie: [${cookieName}/${maxAgeSec}]: ${cookieVal}`);
   res.cookie(cookieName, cookieVal, {
     maxAge: maxAgeSec * 1000,
@@ -139,12 +154,13 @@ function validateAuthSession(config, authService) {
     } else if (authService.isTokenExpired(session)) {
       console.error(`%% %% %% Token expired, refreshing: ${JSON.stringify(session)}`);
       session = await authService.refreshSessionToken(session);
-      setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+      wutil.setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
     } else {
       // Valid session - update time
       console.error(`%% %% %% session good, udpating time: ${JSON.stringify(session)}`);
       session = await authService.updateSessionTime(session);
     }
+    req.user = user;
     next();
   }
 }
@@ -162,18 +178,18 @@ function validateUnauthSession(config, authService) {
       if (!authService.isTokenSyntacticallyValid(cookieToken)) {
         console.log(">>> >>> >>> did not recv a valid token; creating a new session");
         session = await authService.createNewUnauthSession();
-        setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+        wutil.setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
       } else {
         session = await authService.retrieveSessionByToken(cookieToken);
         if (!session || authService.isSessionExpired(session)) {
           console.log(">>> >>> >>> Sess expired or could not retrieve; creating a new session");
           session = await authService.createNewUnauthSession();
-          setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+          wutil.setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
         } else if (authService.isTokenExpired(session)) {
           // Order matters; check session expiry before checking token expiry
           console.log(">>> >>> >>> Token expired; creating a new TOKEN");
           session = await authService.refreshSessionToken(session);
-          setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
+          wutil.setSessionCookie(res, cookieName, session.token, cookiePath, cookieMaxAge);
         } else {
           // we have a valid existing session
           console.log(">>> >>> >>> Session was valid; updating time");
@@ -186,6 +202,14 @@ function validateUnauthSession(config, authService) {
       return wutil.sendInternalServerError(`Auth validation error: ${err}`);
     }
     next();
+  }
+}
+
+// ALL THE STUFF BELOW IS NOW OBSOLETE!
+
+function handleConfigRequest(config) {
+  return async function(req, res) {
+    return res.status(200).json(config.frontend);
   }
 }
 
@@ -254,11 +278,5 @@ function handleResultRequest(config, service, filters) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
     }
-  }
-}
-
-function handleConfigRequest(config) {
-  return async function(req, res) {
-    return res.status(200).json(config.frontend);
   }
 }

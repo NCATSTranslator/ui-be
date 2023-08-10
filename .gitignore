@@ -10,3 +10,4 @@ ui-fe
 junk
 *~
 configurations/secrets
+configurations/local-overrides.json

@@ -18,6 +18,7 @@
     "infores_catalog": "infores-catalog-mini.json",
     "prefix_catalog": "prefix-catalog.json"
   },
+  "demo_diseases": "configurations/demo-diseases.json",
   "frontend": "configurations/frontend/dev.json",
   "max_hops": 3,
   "log_level": "all",
@@ -28,5 +29,6 @@
   "secrets": "configurations/secrets/secrets.json",
   "mainsite_path": "/main",
   "demosite_path": "/demo",
-  "session_cookie_name": "session_token"
+  "session_cookie_name": "session_token",
+  "pg_host": "transltr-dev-rds-ui-postgresql.ceyknq0yekb3.us-east-1.rds.amazonaws.com"
 }
