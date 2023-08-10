@@ -1462,7 +1462,20 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
             }
 
             return [description];
-          })
+          }),
+        aggregateAndTransformAttributes(
+          ['biothings_annotations'],
+          'curies',
+          (annotations) =>
+          {
+            const curies = bta.getCuries(annotations);
+            if (curies === null) {
+              return [];
+            }
+
+            return curies;
+          }
+        )
       ]);
 
     const knodes = await annotationPromise;
