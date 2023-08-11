@@ -730,7 +730,7 @@ function makeTagDescription(name, description = '')
   };
 }
 
-function makeRgraph(rnodes, redges, score, kgraph)
+function makeRgraph(rnodes, redges, kgraph)
 {
   if (!redges)
   {
@@ -753,7 +753,6 @@ function makeRgraph(rnodes, redges, score, kgraph)
       const kedge = redgeToTrapiKedge(redge, kgraph);
       return bl.isBiolinkPredicate(kedgePredicate(kedge));
     });
-  rgraph.score = score;
 
   return rgraph;
 }
@@ -766,7 +765,6 @@ function isRedgeInverted(redge, subject, kgraph)
 
 function analysisToRgraph(analysis, kgraph, auxGraphs)
 {
-  const score = cmn.jsonGet(analysis, 'score', 0);
   let unprocessedEdgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings', []));
   let unprocessedSupportGraphs = [];
   const edgeBindings = new Set();
@@ -817,7 +815,7 @@ function analysisToRgraph(analysis, kgraph, auxGraphs)
     }
   }
 
-  return makeRgraph([...nodeBindings], [...edgeBindings], score, kgraph);
+  return makeRgraph([...nodeBindings], [...edgeBindings], kgraph);
 }
 
 function rnodeToKey(rnode, kgraph)
@@ -1083,9 +1081,9 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
     
     if (!isEmptySummaryFragment(resultSummaryFragment))
     {
-      // Insert the score after the analyses have been merged
+      // Insert the ordering components after the analyses have been merged
       const resultStartKey = rnodeToKey(start, kgraph);
-      resultSummaryFragment.scores[resultStartKey] = [trapiResult['normalized_score']];
+      resultSummaryFragment.scores[resultStartKey] = [cmn.jsonGet(trapiResult, 'ordering_components')];
     }
 
     return resultSummaryFragment;
@@ -1305,7 +1303,6 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
         const start = subgraph[0];
         const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
         const end = subgraph[subgraph.length-1];
-        const startScores = scores[start];
         const tags = {};
         ps.forEach((p) => {
           Object.keys(paths[p].tags).forEach((tag) => {
@@ -1320,7 +1317,8 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
           'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
           'paths': ps.sort(isPathLessThan),
           'object': end,
-          'score': Math.max(...startScores),
+          'score': 0,
+          'scores': scores[start],
           'tags': tags
         }
       });
