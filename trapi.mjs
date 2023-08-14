@@ -1083,7 +1083,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
     {
       // Insert the ordering components after the analyses have been merged
       const resultStartKey = rnodeToKey(start, kgraph);
-      resultSummaryFragment.scores[resultStartKey] = [cmn.jsonGet(trapiResult, 'ordering_components')];
+      resultSummaryFragment.scores[resultStartKey] = [cmn.jsonGet(trapiResult, 'ordering_components', {confidence: 0, novelty: 0, clinical_evidence: 0})];
     }
 
     return resultSummaryFragment;
