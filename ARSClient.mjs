@@ -261,19 +261,34 @@ class ARSClient
   {
     const baseResult = await this.fetchMessage(pkey);
     const mergedResults = await this.fetchMessage(baseResult.fields.merged_version);
+    const code = mergedResults.fields.code;
+    const message = {
+      agent: mergedResults.fields.name,
+      uuid: mergedResults.pk,
+      status: mergedResults.fields.status,
+      code: mergedResults.fields.code,
+    }
+    const completed = [];
+    const running = [];
+    const errored = [];
+    switch (code) {
+      case 200:
+        message.data = mergedResults.fields.data.message;
+        completed.push(message);
+        break;
+      case 202:
+        running.push(message);
+        break;
+      default:
+        errored.push(message);
+        break;
+    }
+
     return {
       pk: pkey,
-      completed: [
-        {
-          agent: mergedResults.fields.name,
-          uuid: mergedResults.pk,
-          status: mergedResults.fields.status,
-          code: mergedResults.fields.code,
-          data: mergedResults.fields.data.message
-        }
-      ],
-      running: [],
-      errored: []
+      completed: completed,
+      running: running,
+      errored: errored
     };
   }
 }
