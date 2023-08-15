@@ -1317,7 +1317,6 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
           'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
           'paths': ps.sort(isPathLessThan),
           'object': end,
-          'score': 0,
           'scores': scores[start],
           'tags': tags
         }
