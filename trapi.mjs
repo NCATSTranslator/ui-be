@@ -1399,7 +1399,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
 
-  const metadataObject = makeMetadataObject(qid, condensedSummaries.map((cs) => { return cs.agents; }).flat());
+  const metadataObject = makeMetadataObject(qid, cmn.distinctArray(condensedSummaries.map((cs) => { return cs.agents; }).flat()));
   try
   {
     // Node annotation

@@ -1,6 +1,6 @@
 'use strict'
 
-import { SendRecvJSON } from "./common.mjs";
+import * as cmn from "./common.mjs";
 // export { ARSClient, aa, m0 ,m1 ,m2 ,m3 ,m4 ,m5 ,m6 ,m7 ,m8 ,m9 ,m10,m11 };
 export { ARSClient }
 
@@ -48,12 +48,12 @@ class ARSClient
       url += '?trace=y';
     }
     //console.log(`fetching ${url}`);
-    return SendRecvJSON(url, 'GET');
+    return cmn.SendRecvJSON(url, 'GET');
   }
 
   async postQuery(query)
   {
-    return SendRecvJSON(this.postURL, 'POST', {}, query)
+    return cmn.SendRecvJSON(this.postURL, 'POST', {}, query)
   }
 
   constructFilterRegexes(filterArray)
@@ -259,29 +259,30 @@ class ARSClient
   // Get all results that have been pre-merged by the ARS
   async collectMergedResults(pkey)
   {
-    const baseResult = await this.fetchMessage(pkey);
-    const mergedResults = await this.fetchMessage(baseResult.fields.merged_version);
-    const code = mergedResults.fields.code;
+    let results = await this.fetchMessage(pkey);
+    const mergedVersionUuid = results.fields.merged_version;
+    if (mergedVersionUuid !== null) {
+      results = await this.fetchMessage(mergedVersionUuid);
+    }
+    const code = results.fields.code;
     const message = {
-      agent: mergedResults.fields.name,
-      uuid: mergedResults.pk,
-      status: mergedResults.fields.status,
-      code: mergedResults.fields.code,
+      agent: results.fields.name,
+      uuid: results.pk,
+      status: results.fields.status,
+      code: results.fields.code
     }
     const completed = [];
     const running = [];
     const errored = [];
-    switch (code) {
-      case 200:
-        message.data = mergedResults.fields.data.message;
-        completed.push(message);
-        break;
-      case 202:
+    if (code !== 200 && code !== 202) {
+      errored.push(message);
+    } else {
+      const completedMessage = cmn.deepCopy(message);
+      completedMessage.data = results.fields.data.message;
+      completed.push(completedMessage);
+      if (code === 202) {
         running.push(message);
-        break;
-      default:
-        errored.push(message);
-        break;
+      }
     }
 
     return {
