@@ -18,8 +18,6 @@ async function loadConfigFromFile(filePath) {
       await loadAndReplace(config, k);
     }
   }
-  console.log(config);
-
   return config;
 }
 
