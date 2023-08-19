@@ -41,50 +41,14 @@ export function startServer(config, services) {
   app.use('/main/api/v1/pub', createAPIRouter(config, services, false));
   app.use('/demo/api/v1/pub', createAPIRouter(config, services, true));
   app.use('/main/api/v1/pvt/users', createUserController(config, services));
-
-  // The /CREATIVE_* route handling in this file is now obsolete.
-  // Kept in here until we fully migrate off existing app
-  app.post(['/creative_query', '/api/creative_query',
-            `${demopath}/api/creative_query`, `${mainpath}/api/creative_query`],
-           logQuerySubmissionRequest,
-           validateQuerySubmissionRequest,
-           handleQuerySubmissionRequest(config, translatorService));
-
-  app.post(['/creative_status', '/api/creative_status',
-            `${demopath}/api/creative_status`, `${mainpath}/api/creative_status`],
-           validateQueryResultRequest,
-           handleStatusRequest(config, translatorService, filters));
-
-  app.post(['/creative_result', '/api/creative_result',
-            `${demopath}/api/creative_result`, `${mainpath}/api/creative_result`],
-           validateQueryResultRequest,
-           handleResultRequest(config, translatorService, filters));
-
-  app.get(['/config', '/admin/config',
-    `${demopath}/admin/config`, `${mainpath}/admin/config`],
-    handleConfigRequest(config));
-
-  // END of obsolete creative_* + config stuff
-
   app.get('/oauth2/redir/:provider', handleLogin(config, authService));
 
-  /* Also obsolete now
-  app.get(['/login'], function (req, res, next) {
-    res.sendFile(path.join(__root, 'build', 'login.html'));
-  });
-  */
-  app.get([`${demopath}/dummypage.html`, `${mainpath}/dummypage.html`],
-    function (req, res, next) {
-      res.sendFile(path.join(__root, 'build', 'dummypage.html'));
-  });
-
-  app.get([`${demopath}/dm2.html`, `${mainpath}/dm2.html`],
-    function (req, res, next) {
-      res.sendFile(path.join(__root, 'build', 'dm2.html'));
+  app.get(['/demo', '/main', '/demo/*', '/main/*', '/login'], (req, res, next) => {
+    res.sendFile(path.join(__root, 'build/index.html'));
   });
 
   app.get('*', (req, res, next) => {
-    res.sendFile(path.join(__root, 'build/index.html'));
+    res.redirect(301, '/main');
   });
 
   app.listen(8386);
@@ -102,7 +66,7 @@ function handleLogin(config, authService) {
       let cookiePath = config.mainsite_path;
       let cookieMaxAge = authService.sessionAbsoluteTTLSec;
       wutil.setSessionCookie(res, cookieName, newSession.token, cookiePath, cookieMaxAge);
-      return res.redirect(302, `${config.mainsite_path}/dummypage.html`);
+      return res.redirect(302, '/main');
     }
   }
 }
@@ -202,81 +166,5 @@ function validateUnauthSession(config, authService) {
       return wutil.sendInternalServerError(`Auth validation error: ${err}`);
     }
     next();
-  }
-}
-
-// ALL THE STUFF BELOW IS NOW OBSOLETE!
-
-function handleConfigRequest(config) {
-  return async function(req, res) {
-    return res.status(200).json(config.frontend);
-  }
-}
-
-function logQuerySubmissionRequest(req, res, next) {
-  req.log.info({reqBody: req.body});
-  next();
-}
-
-function validateQuerySubmissionRequest(req, res, next) {
-  let query = req.body;
-  if (cmn.isObj(query)) {
-    next();
-  }
-  else {
-    return wutil.sendError(res, 400, "No disease specificed in request");
-  }
-}
-
-function handleQuerySubmissionRequest(config, service) {
-  return async function(req, res, next) {
-    try {
-      let query = service.inputToQuery(req.body);
-      req.log.info({query: query});
-      let resp = await service.submitQuery(query);
-      req.log.info({arsqueryresp: resp});
-      return res.status(200).json(service.outputAdapter.querySubmitToFE(resp));
-    } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
-    }
-  }
-}
-
-function validateQueryResultRequest(req, res, next) {
-  let requestObj = req.body;
-  if (cmn.isObj(requestObj)
-    && requestObj.hasOwnProperty('qid')
-    && requestObj.qid.length > 0) {
-    next();
-  } else {
-    return wutil.sendError(res, 400, "No query id specificed in request");
-  }
-}
-
-function handleStatusRequest(config, service, filters) {
-  return async function(req, res, next) {
-    try {
-      let uuid = req.body.qid;
-      let statusRes = await service.getQueryStatus(uuid, filters);
-      return res.status(200).json(service.outputAdapter.queryStatusToFE(statusRes));
-    } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
-    }
-  }
-}
-
-function handleResultRequest(config, service, filters) {
-  return async function(req, res, next) {
-    try {
-      let uuid = req.body.qid;
-      let svcRes = await service.getResults(uuid, filters);
-      let retval = await service.outputAdapter.queryResultsToFE(svcRes, config.max_hops);
-      return res.status(200).json(retval);
-    } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
-    }
   }
 }
