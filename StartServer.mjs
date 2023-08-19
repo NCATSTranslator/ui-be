@@ -1,6 +1,6 @@
 'use strict'
 
-import { loadConfigFromFile }  from './config.mjs';
+import { loadConfigFromFile, postProcessConfig }  from './config.mjs';
 import { loadBiolink } from './biolink-model.mjs';
 import { loadChebi } from './chebi.mjs';
 import { TranslatorService } from './TranslatorService.mjs';
@@ -19,32 +19,24 @@ import { UserSavedDataStorePostgres } from './users/UserSavedDataStorePostgres.m
 import { overwriteObj, readJson } from './common.mjs';
 
 // Load the config asap as basically everything depends on it
-
-
 //let SERVER_CONFIG = await loadConfigFromFile(process.argv.length < 3 ? './configurations/mock.json' : './' + process.argv[2]);
-
 let SERVER_CONFIG;
 if (process.argv.length === 3) {
   SERVER_CONFIG = await loadConfigFromFile(process.argv[2]);
 } else if (process.argv.length ===  4) {
   SERVER_CONFIG = await loadConfigFromFile(process.argv[2]);
-  let overrides = await readJson(process.argv[3]);
+  let overrides = await loadConfigFromFile(process.argv[3]);
   SERVER_CONFIG = overwriteObj(SERVER_CONFIG, overrides);
 } else {
   throw new Error(`Unsupported number of args (${process.argv.length}) at startup. Exiting.`);
 }
+postProcessConfig(SERVER_CONFIG);
 
 await loadBiolink(SERVER_CONFIG.biolink.version,
                   SERVER_CONFIG.biolink.support_deprecated_predicates,
                   SERVER_CONFIG.biolink.infores_catalog,
                   SERVER_CONFIG.biolink.prefix_catalog);
 await loadChebi();
-
-/*
-if (process.argv.length > 3) {
-  const secrets = await loadConfigFromFile(process.argv[3]);
-  SERVER_CONFIG.secrets = secrets;
-}*/
 
 // Bootstrap the translator service.
 // All these bootstraps feel kludgy.
