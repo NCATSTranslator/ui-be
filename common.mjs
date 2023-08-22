@@ -269,16 +269,17 @@ export class ServerError extends ApplicationError
   }
 }
 
-
-export async function SendRecvJSON(url, method='GET', headers={}, body=null) {
+async function sendRecvHTTP(url, method='GET', headers={}, body=null, contentType, bodySerializer) {
   let options = {
       method: method,
       headers: {...headers}
   };
-  options.headers['Content-type'] = 'application/json';
-  if (body) {
-      options.body = JSON.stringify(body);
+  options.headers['Content-type'] = contentType;
+
+  if (body && typeof body === 'object') {
+      options.body = bodySerializer(body);
   }
+
   let resp = await fetch(url, options);
   if (resp.ok) {
       return resp.json();
@@ -286,6 +287,15 @@ export async function SendRecvJSON(url, method='GET', headers={}, body=null) {
       let errmsg = `ERROR: status: ${resp.status}; msg: '${resp.statusText}'`;
       throw new Error(errmsg);
   }
+}
+
+export function sendRecvJSON(url, method='GET', headers={}, body=null) {
+  return sendRecvHTTP(url, method, headers, body, 'application/json', JSON.stringify);
+}
+
+export function sendRecvFormEncoded(url, method='GET', headers={}, body=null) {
+  return sendRecvHTTP(url, method, headers, body, 'application/x-www-form-urlencoded',
+    (data) => new URLSearchParams(data).toString());
 }
 
 // Usage: await sleep(250);
