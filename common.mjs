@@ -289,11 +289,11 @@ async function sendRecvHTTP(url, method='GET', headers={}, body=null, contentTyp
   }
 }
 
-export function sendRecvJSON(url, method='GET', headers={}, body=null) {
+export function SendRecvJSON(url, method='GET', headers={}, body=null) {
   return sendRecvHTTP(url, method, headers, body, 'application/json', JSON.stringify);
 }
 
-export function sendRecvFormEncoded(url, method='GET', headers={}, body=null) {
+export function SendRecvFormEncoded(url, method='GET', headers={}, body=null) {
   return sendRecvHTTP(url, method, headers, body, 'application/x-www-form-urlencoded',
     (data) => new URLSearchParams(data).toString());
 }
