@@ -31,8 +31,11 @@ export function startServer(config, services) {
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
   config.filters = filters;
 
-  app.all('/demo/*', validateUnauthSession(config, authService));
-  app.all('/main/*', validateAuthSession(config, authService));
+  app.all(['/demo', '/demo/*'], validateUnauthSession(config, authService));
+  app.get('/main', validateAuthSession(config, authService), (req, res, next) => {
+      res.sendFile(path.join(__root, 'build/index.html'));
+    });
+  app.all(['/main/*'], validateAuthSession(config, authService));
 
   app.get('/demo/disease/:disease_id',
     validateDemoDiseaseRequest(true, demoDiseases, 'id', (req) => req.params.disease_id),
@@ -90,7 +93,7 @@ function handleLogout(config, authService) {
     if (!session) {
       console.error(`%% %% %% error expiring session for ${cookieToken} when logging out`);
     }
-    console.log(`Logout successful, redirecting to /login`);s
+    console.log(`Logout successful, redirecting to /login`);
     return res.redirect(302, `/login`);
   };
 }
