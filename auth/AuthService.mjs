@@ -163,6 +163,10 @@ class AuthService {
     }
   }
 
+  async expireSessionByToken(token) {
+    return this.sessionStore.expireSessionByToken(token);
+  }
+
   async validateAuthSessionToken(token) {
     let tokenRefreshed = false;
     if (!token || !this.isTokenSyntacticallyValid(token)) {
