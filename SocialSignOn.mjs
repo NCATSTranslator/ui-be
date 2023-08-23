@@ -1,7 +1,7 @@
 'use strict';
 
 import jwt from 'jsonwebtoken';
-import { SendRecvJSON } from './common.mjs';
+import { SendRecvJSON, SendRecvFormEncoded } from './common.mjs';
 export { handleSSORedirect };
 
 async function handleSSORedirect(provider, authcode, config) {
@@ -22,9 +22,40 @@ async function handleSSORedirect(provider, authcode, config) {
         user_data_uri: config.auth.social_providers.facebook.user_data_uri
       });
       break;
+    case 'una': retval = await unaHandler(authcode, {
+        client_id: config.auth.social_providers.una.client_id,
+        client_secret: config.secrets.auth.social_providers.una.client_secret,
+        redirect_uri: config.auth.social_providers.una.redirect_uri,
+        token_uri: config.auth.social_providers.una.token_uri
+    });
+      break;
     default: console.log(`Cannot handle provider: ${provider}`); break;
   }
   return retval;
+}
+
+async function unaHandler(auth_code, client_config) {
+  const body = {
+    client_id: client_config.client_id,
+    client_secret: client_config.client_secret,
+    redirect_uri: client_config.redirect_uri,
+    grant_type: 'authorization_code',
+    code: auth_code
+  };
+  let data = await SendRecvFormEncoded(client_config.token_uri, 'POST', {}, body);
+  data.id_token = parseJWT(data.id_token);
+  console.log(data.id_token);
+  return {
+    provider: 'una',
+    email: data.id_token.payload.email,
+    external_id: data.id_token.payload.sub,
+    name: data.id_token.payload.name,
+    profile_pic_url: data.id_token.payload.picture,
+    access_token: data.access_token,
+    access_token_expires_in: data.expires_in,
+    refresh_token: data.refresh_token,
+    raw_data: data
+  };
 }
 
 async function facebookHandler(auth_code, client_config) {
