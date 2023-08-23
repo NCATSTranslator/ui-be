@@ -15,7 +15,10 @@ function createAPIRouter(config, services, isDemo) {
   })
 
   router.get('/config', function(req, res, next) {
-    return res.status(200).json(config.frontend);
+    return res.status(200).json({
+      cached_queries: config.frontend,
+      social_providers: config.auth.social_providers
+    });
   });
 
   router.use('/query', createQueryController(config, services, isDemo));
