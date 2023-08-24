@@ -31,8 +31,17 @@ export function startServer(config, services) {
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
   config.filters = filters;
 
-  app.all('/demo/*', validateUnauthSession(config, authService));
-  app.all('/main/*', validateAuthSession(config, authService));
+  app.all(['/demo', '/demo/*'], validateUnauthSession(config, authService));
+  app.all(['/main', '/main/*'], validateAuthSession(config, authService));
+
+  app.get('/main',  (req, res, next) => {
+    res.sendFile(path.join(__root, 'build/index.html'));
+  });
+  app.get('/main/logout', handleLogout(config, authService));
+  // logout.html is temp. to test una logout.
+  app.get('/main/logout.html',  (req, res, next) => {
+    res.sendFile(path.join(__root, 'build/logout.html'));
+  });
 
   app.get('/demo/disease/:disease_id',
     validateDemoDiseaseRequest(true, demoDiseases, 'id', (req) => req.params.disease_id),
@@ -41,14 +50,15 @@ export function startServer(config, services) {
   app.use('/main/api/v1/pub', createAPIRouter(config, services, false));
   app.use('/demo/api/v1/pub', createAPIRouter(config, services, true));
   app.use('/main/api/v1/pvt/users', createUserController(config, services));
+
   app.get('/oauth2/redir/:provider', handleLogin(config, authService));
 
-  app.get(['/demo', '/main', '/demo/*', '/main/*', '/login'], (req, res, next) => {
+  app.get(['/demo', '/main', '/demo/*', '/main/*'], (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
 
   app.get('*', (req, res, next) => {
-    res.redirect(301, '/main');
+    res.redirect(302, '/main');
   });
 
   app.listen(8386);
@@ -71,16 +81,28 @@ function handleLogin(config, authService) {
   }
 }
 
-function setSessionCookie2(res, cookieName, cookieVal, cookiePath, maxAgeSec) {
-  console.log(`_+_+_+_+_ set session cookie: [${cookieName}/${maxAgeSec}]: ${cookieVal}`);
-  res.cookie(cookieName, cookieVal, {
-    maxAge: maxAgeSec * 1000,
-    path: cookiePath,
-    httpOnly: true,
-    secure: true,
-    sameSite: 'Lax'
-  });
+function handleLogout(config, authService) {
+  return async function(req, res, next) {
+    let cookieName = config.session_cookie_name;
+    let cookiePath = config.mainsite_path;
+    let cookieToken = req.cookies[cookieName];
+
+    // first, expire the cookie
+    wutil.setSessionCookie(res, cookieName, '', cookiePath, 0);
+    // Second, kill the session internally
+    let session = await authService.retrieveSessionByToken(cookieToken);
+    if (!session) {
+      console.error(`%% %% %% no session found for ${cookieToken} when logging out`);
+    }
+    session = await authService.expireSessionByToken(cookieToken);
+    if (!session) {
+      console.error(`%% %% %% error expiring session for ${cookieToken} when logging out`);
+    }
+    console.log(`Logout successful, redirecting to /login`);
+    return res.redirect(302, `/login`);
+  };
 }
+
 
 function validateAuthSession(config, authService) {
   return async function(req, res, next) {
