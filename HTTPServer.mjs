@@ -32,10 +32,16 @@ export function startServer(config, services) {
   config.filters = filters;
 
   app.all(['/demo', '/demo/*'], validateUnauthSession(config, authService));
-  app.get('/main', validateAuthSession(config, authService), (req, res, next) => {
-      res.sendFile(path.join(__root, 'build/index.html'));
-    });
-  app.all(['/main/*'], validateAuthSession(config, authService));
+  app.all(['/main', '/main/*'], validateAuthSession(config, authService));
+
+  app.get('/main',  (req, res, next) => {
+    res.sendFile(path.join(__root, 'build/index.html'));
+  });
+  app.get('/main/logout', handleLogout(config, authService));
+  // logout.html is temp. to test una logout.
+  app.get('/main/logout.html',  (req, res, next) => {
+    res.sendFile(path.join(__root, 'build/logout.html'));
+  });
 
   app.get('/demo/disease/:disease_id',
     validateDemoDiseaseRequest(true, demoDiseases, 'id', (req) => req.params.disease_id),
@@ -46,14 +52,13 @@ export function startServer(config, services) {
   app.use('/main/api/v1/pvt/users', createUserController(config, services));
 
   app.get('/oauth2/redir/:provider', handleLogin(config, authService));
-  app.get('/main/logout', handleLogout(config, authService));
 
-  app.get(['/demo', '/main', '/demo/*', '/main/*', '/login'], (req, res, next) => {
+  app.get(['/demo', '/main', '/demo/*', '/main/*'], (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
 
   app.get('*', (req, res, next) => {
-    res.redirect(301, '/main');
+    res.redirect(302, '/main');
   });
 
   app.listen(8386);
