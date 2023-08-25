@@ -75,4 +75,14 @@ class SessionStorePostgres extends iSessionStore {
     }
     return retval;
   }
+
+  async expireSessionByToken(token) {
+    let retval = null;
+    let sql = `UPDATE sessions SET force_kill = true WHERE token = $1 RETURNING *`;
+    let res = await pgExec(this.pool, sql, [token]);
+    if (res.rows.length > 0) {
+      retval = new Session(res.rows[0]);
+    }
+    return retval;
+  }
 }
