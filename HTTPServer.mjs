@@ -49,7 +49,7 @@ export function startServer(config, services) {
   app.get('/demo/gene/:gene_id',
     validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.gene_id }),
     handleDemoQueryRequest(config.demosite_path));
-  app.get('/demo/gene/:chemical_id',
+  app.get('/demo/chemical/:chemical_id',
     validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.chemical_id }),
     handleDemoQueryRequest(config.demosite_path));
   
