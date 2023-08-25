@@ -44,7 +44,6 @@ async function unaHandler(auth_code, client_config) {
   };
   let data = await SendRecvFormEncoded(client_config.token_uri, 'POST', {}, body);
   data.id_token = parseJWT(data.id_token);
-  console.log(data.id_token);
   return {
     provider: 'una',
     email: data.id_token.payload.email,

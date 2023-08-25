@@ -358,8 +358,6 @@ describe('jsonSetFromKpath', () =>
       {
         const testObj = new Object();
         const actual = cmn.jsonSetFromKpath(testObj, kpath, newValue);
-        console.log(testObj);
-        console.log(actual);
         assert.strictEqual(testObj, actual);
         assert.strictEqual(cmn.jsonGetFromKpath(testObj, kpath), newValue);
       });

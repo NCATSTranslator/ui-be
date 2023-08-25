@@ -57,9 +57,7 @@ const AUTH_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
     ...config.storage.pg,
     password: config.secrets.pg.password,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    ssl: config.db_conn_config.ssl
   });
   return new AuthService({
     tokenTTLSec: config.sessions.token_ttl_sec,
@@ -75,9 +73,7 @@ const USER_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
     ...config.storage.pg,
     password: config.secrets.pg.password,
-    ssl: {
-      rejectUnauthorized: false
-    }
+    ssl: config.db_conn_config.ssl
   });
   return new UserService(
     new UserStorePostgres(dbPool),
