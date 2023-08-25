@@ -24,7 +24,7 @@ export function startServer(config, services) {
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
   app.use(pinoHttp());
-  app.use(express.json());
+  app.use(express.json({ limit: config.json_payload_limit }));
   app.use(cookieParser());
 
   app.use(express.static('./build'));
