@@ -1,7 +1,7 @@
 {
     "social_providers": {
         "google": {
-            "client_id": "993742507981-9f5sm5tctipak3c4v044gjfd7rmps8jt.apps.googleusercontent.com",
+            "client_id": "371589563837-3gdba6cj7a7egdijcs3pm4irh0q25bk3.apps.googleusercontent.com",
             "redirect_uri": "http://localhost:8386/oauth2/redir/google",
             "token_uri": "https://oauth2.googleapis.com/token"
         },
