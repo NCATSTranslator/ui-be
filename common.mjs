@@ -327,8 +327,9 @@ export function overwriteObj(orig, overwrite) {
       } else {
         orig[key] = overwrite[key];
       }
+    } else {
+      orig[key] = overwrite[key];
     }
   }
-
   return orig;
 }
