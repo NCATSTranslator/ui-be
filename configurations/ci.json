@@ -19,7 +19,6 @@
     "infores_catalog": "infores-catalog-mini.json",
     "prefix_catalog": "prefix-catalog.json"
   },
-  "_load_demo_diseases": "configurations/demo-diseases.json",
   "_load_frontend": "configurations/frontend/ci.json",
   "max_hops": 3,
   "log_level": "all",
