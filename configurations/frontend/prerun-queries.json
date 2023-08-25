@@ -1,37 +1,499 @@
 [
   {
-    "name": "Heart Disease",
-    "curie": "MONDO:0005267",
+    "name": "Diabetes Mellitus",
+    "curie": "MONDO:0005015",
     "type": "drug",
     "direction": null,
     "env": ["ci", "test", "production"]
   },
   {
-    "name": "Type 2 Diabetes",
-    "curie":  "MONDO:0005148",
+    "name": "Breast Cancer",
+    "curie":  "MONDO:0007254",
     "type": "drug",
     "direction": null,
     "env": ["ci", "test", "production"]
   },
   {
-    "name": "Alzheimer's",
+    "name": "Addison's Disease",
+    "curie": "MONDO:0009410",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Hypertensive Heart Disease",
+    "curie": "MONDO:0001302",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Familial Hypercholesterolemia",
+    "curie": "MONDO:0005439",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Chronic Obstructive Pulmonary Disease",
+    "curie": "MONDO:0005002",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Chronic Bronchitis",
+    "curie": "MONDO:0005607",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Pulmonary Emphysema",
+    "curie": "MONDO:0004849",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Asthma",
+    "curie": "MONDO:0004979",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Large Artery Stroke",
+    "curie": "MONDO:0005490",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Alzheimer's Disease",
     "curie": "MONDO:0004975",
     "type": "drug",
     "direction": null,
     "env": ["ci", "test", "production"]
   },
   {
-    "name": "Multiple Sclerosis",
-    "curie": "MONDO:0005301",
+    "name": "Type 2 Diabetes Mellitus",
+    "curie": "MONDO:0005148",
     "type": "drug",
     "direction": null,
     "env": ["ci", "test", "production"]
   },
   {
-    "name": "NGLY1-Deficiency",
-    "curie": "MONDO:0015286",
+    "name": "Cirrhosis of Liver",
+    "curie": "MONDO:0005155",
     "type": "drug",
     "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Nephritis",
+    "curie": "MONDO:0001166",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Cerebral Palsy",
+    "curie": "MONDO:0006497",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Cerebral Palsy",
+    "curie": "MONDO:0006497",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Bethlem Myopathy",
+    "curie": "MONDO:0008029",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Cerebral Arteriopathy With Subcortical Infarcts And Leukoencephalopathy",
+    "curie": "MONDO:0007432",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Hypermobility Type",
+    "curie": "MONDO:0007523",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Vascular Type",
+    "curie": "MONDO:0017314",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Kyphoscoliotic Ehlers-danlos Syndrome",
+    "curie": "MONDO:0034024",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Arthrochalasis Type",
+    "curie": "MONDO:0007525",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Classic Type",
+    "curie": "MONDO:0007522",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome, Dermatosparaxis Type",
+    "curie": "MONDO:0009161",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Ehlers-danlos Syndrome",
+    "curie": "MONDO:0020066",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Hereditary Sensory And Autonomic Neuropathy Type 4",
+    "curie": "MONDO:0009746",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Inclusion Body Myositis",
+    "curie": "MONDO:0007827",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Ullrich Congenital Muscular Dystrophy",
+    "curie": "MONDO:0000355",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Fatal Familial Insomnia",
+    "curie": "MONDO:0010808",
+    "type": "drug",
+    "direction": null,
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "NGLY1",
+    "curie": "NCBIGene:55768",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "NGLY1",
+    "curie": "NCBIGene:55768",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "HTT",
+    "curie": "NCBIGene:3064",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "HTT",
+    "curie": "NCBIGene:3064",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "ADNP",
+    "curie": "NCBIGene:23394",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "ADNP",
+    "curie": "NCBIGene:23394",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "CHAMP1",
+    "curie": "NCBIGene:283489",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "CHAMP1",
+    "curie": "NCBIGene:283489",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "DDX3X",
+    "curie": "NCBIGene:1654",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "DDX3X",
+    "curie": "NCBIGene:1654",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "SCN1A",
+    "curie": "NCBIGene:6323",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "SCN1A",
+    "curie": "NCBIGene:6323",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "TRIO",
+    "curie": "NCBIGene:7204",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "TRIO",
+    "curie": "NCBIGene:7204",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "SMARCA2",
+    "curie": "NCBIGene:6595",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "SMARCA2",
+    "curie": "NCBIGene:6595",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "SLC6A1",
+    "curie": "NCBIGene:6529",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "SLC6A1",
+    "curie": "NCBIGene:6529",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "IRF2BPL",
+    "curie": "NCBIGene:64207",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "IRF2BPL",
+    "curie": "NCBIGene:64207",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "RHOBTB2",
+    "curie": "NCBIGene:23221",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "RHOBTB2",
+    "curie": "NCBIGene:23221",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "DHX30",
+    "curie": "NCBIGene:22907",
+    "type": "chemical",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "DHX30",
+    "curie": "NCBIGene:22907",
+    "type": "chemical",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Pregabalin",
+    "curie": "PUBCHEM.COMPOUND:5486971",
+    "type": "gene",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Pregabalin",
+    "curie": "PUBCHEM.COMPOUND:5486971",
+    "type": "gene",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Rosuvastatin",
+    "curie": "PUBCHEM.COMPOUND:446157",
+    "type": "gene",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Rosuvastatin",
+    "curie": "PUBCHEM.COMPOUND:446157",
+    "type": "gene",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Propranolol",
+    "curie": "PUBCHEM.COMPOUND:4946",
+    "type": "gene",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Propranolol",
+    "curie": "PUBCHEM.COMPOUND:4946",
+    "type": "gene",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Eletriptan",
+    "curie": "PUBCHEM.COMPOUND:77993",
+    "type": "gene",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Eletriptan",
+    "curie": "PUBCHEM.COMPOUND:77993",
+    "type": "gene",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Amlodipine",
+    "curie": "PUBCHEM.COMPOUND:2162",
+    "type": "gene",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Amlodipine",
+    "curie": "PUBCHEM.COMPOUND:2162",
+    "type": "gene",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Benazepril",
+    "curie": "PUBCHEM.COMPOUND:5362124",
+    "type": "gene",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Benazepril",
+    "curie": "PUBCHEM.COMPOUND:5362124",
+    "type": "gene",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Ibrutinib",
+    "curie": "PUBCHEM.COMPOUND:24821094",
+    "type": "gene",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Ibrutinib",
+    "curie": "PUBCHEM.COMPOUND:24821094",
+    "type": "gene",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Rivaroxaban",
+    "curie": "PUBCHEM.COMPOUND:9875401",
+    "type": "gene",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Rivaroxaban",
+    "curie": "PUBCHEM.COMPOUND:9875401",
+    "type": "gene",
+    "direction": "decreased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Risankizumab",
+    "curie": "UNII:90ZX3Q3FR7",
+    "type": "gene",
+    "direction": "increased",
+    "env": ["ci", "test", "production"]
+  },
+  {
+    "name": "Risankizumab",
+    "curie": "UNII:90ZX3Q3FR7",
+    "type": "gene",
+    "direction": "decreased",
     "env": ["ci", "test", "production"]
   }
 ]

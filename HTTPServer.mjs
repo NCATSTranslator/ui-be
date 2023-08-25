@@ -8,7 +8,7 @@ import { default as cookieParser } from 'cookie-parser';
 
 import { createUserController } from './routers/UserAPIController.mjs';
 import { createAPIRouter } from './routers/APIRouter.mjs';
-import { validateDemoDiseaseRequest, handleDemoDiseaseRequest } from './DemoDiseaseHandler.mjs';
+import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
 import * as wutil from './webutils.mjs';
 import * as cmn from './common.mjs';
@@ -18,7 +18,7 @@ export function startServer(config, services) {
   const translatorService = services.translatorService;
   const authService = services.authService;
   const userService = services.userService;
-  const demoDiseases = config.demo_diseases;
+  const demoQueries = config.frontend;
   const demopath = config.demosite_path;
   const mainpath = config.mainsite_path;
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
@@ -44,8 +44,15 @@ export function startServer(config, services) {
   });
 
   app.get('/demo/disease/:disease_id',
-    validateDemoDiseaseRequest(true, demoDiseases, 'id', (req) => req.params.disease_id),
-    handleDemoDiseaseRequest(config.demosite_path));
+    validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.disease_id }),
+    handleDemoQueryRequest(config.demosite_path));
+  app.get('/demo/gene/:gene_id',
+    validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.gene_id }),
+    handleDemoQueryRequest(config.demosite_path));
+  app.get('/demo/gene/:chemical_id',
+    validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.chemical_id }),
+    handleDemoQueryRequest(config.demosite_path));
+  
 
   app.use('/main/api/v1/pub', createAPIRouter(config, services, false));
   app.use('/demo/api/v1/pub', createAPIRouter(config, services, true));
