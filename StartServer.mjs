@@ -56,7 +56,8 @@ const TRANSLATOR_SERVICE = (function (config) {
 const AUTH_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
     ...config.storage.pg,
-    password: config.secrets.pg.password
+    password: config.secrets.pg.password,
+    ssl: config.db_conn_config.ssl
   });
   return new AuthService({
     tokenTTLSec: config.sessions.token_ttl_sec,
@@ -71,7 +72,8 @@ const AUTH_SERVICE = (function (config) {
 const USER_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
     ...config.storage.pg,
-    password: config.secrets.pg.password
+    password: config.secrets.pg.password,
+    ssl: config.db_conn_config.ssl
   });
   return new UserService(
     new UserStorePostgres(dbPool),

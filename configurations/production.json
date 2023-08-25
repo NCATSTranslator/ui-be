@@ -19,6 +19,17 @@
     "infores_catalog": "infores-catalog-mini.json",
     "prefix_catalog": "prefix-catalog.json"
   },
+  "cookie_config": {
+    "session_name": "session_token",
+    "http_only": true,
+    "secure": true,
+    "same_site": "Lax"
+  },
+  "db_conn_config": {
+    "ssl": {
+      "rejectUnauthorized": true 
+    }
+  },
   "_load_frontend": "configurations/frontend/production.json",
   "max_hops": 3,
   "log_level": "info",
@@ -29,6 +40,5 @@
   "_load_secrets": "configurations/secrets/secrets.json",
   "mainsite_path": "/main",
   "demosite_path": "/demo",
-  "session_cookie_name": "session_token",
   "pg_host": "PLACEHOLDER"
 }

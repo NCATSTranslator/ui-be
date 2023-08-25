@@ -158,7 +158,7 @@ function createUserController(config, services) {
 
 function authenticateRequest(config, authService) {
   return async function (req, res, next) {
-    let cookieName = config.session_cookie_name;
+    let cookieName = config.cookie_config.session_name;
     let token = req.cookies[cookieName];
     let cookiePath = config.mainsite_path;
     let cookieMaxAge = authService.sessionAbsoluteTTLSec;
