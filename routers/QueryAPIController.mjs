@@ -3,14 +3,14 @@
 import { default as express } from 'express';
 import * as cmn from '../common.mjs';
 import * as wutil from '../webutils.mjs';
-import { validateDemoDiseaseRequest } from '../DemoDiseaseHandler.mjs';
+import { validateDemoQueryRequest } from '../DemoQueryHandler.mjs';
 
 export { createQueryController };
 
 function createQueryController(config, services, isDemo) {
   let router = express.Router();
   const translatorService = services.translatorService;
-  const diseaseList = config.demo_diseases;
+  const demoQueries = config.frontend;
 
   router.post('/',
     function(req, res, next) {
@@ -29,12 +29,12 @@ function createQueryController(config, services, isDemo) {
   });
 
   router.get('/:qid/status',
-    validateDemoDiseaseRequest(isDemo, diseaseList, 'uuid', (req) => req.params.qid),
+    validateDemoQueryRequest(isDemo, demoQueries, 'uuid', (req) => req.params.qid),
     validateQueryResultRequest,
     handleStatusRequest(config, translatorService, config.filters));
 
   router.get('/:qid/result',
-    validateDemoDiseaseRequest(isDemo, diseaseList, 'uuid', (req) => req.params.qid),
+    validateDemoQueryRequest(isDemo, demoQueries, 'uuid', (req) => req.params.qid),
     validateQueryResultRequest,
     handleResultRequest(config, translatorService, config.filters));
 

@@ -10,7 +10,6 @@ const outputAdapter = new TranslatorServicexFEAdapter(null);
 const queriesPath = process.argv[2];
 const outputPath = process.argv[3];
 const queries = await cmn.readJson(queriesPath);
-console.log(queries);
 
 const preRunQueries = {};
 for (const env of environments) {
@@ -20,6 +19,7 @@ for (const env of environments) {
                                config.ars_endpoint.post_uri);
   const service = new TranslatorService(client, outputAdapter);
   preRunQueries[env] = [];
+  let qc = 0;
   for (const query of queries) {
     if (query.env.includes(env)) {
       try {
@@ -32,6 +32,9 @@ for (const env of environments) {
           "direction": query.direction,
           "uuid": arsResp.pk
         });
+        qc += 1;
+        console.log(`[${env}] ${qc}/${queries.length} queries submitted`);
+        await new Promise(r => setTimeout(r, 1000));
       } catch (err) {
         console.error(err);
         process.exit();
