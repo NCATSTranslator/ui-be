@@ -53,7 +53,7 @@ export function startServer(config, services) {
 
   app.get('/oauth2/redir/:provider', handleLogin(config, authService));
 
-  app.get(['/demo', '/main', '/demo/*', '/main/*'], (req, res, next) => {
+  app.get(['/demo', '/main', '/demo/*', '/main/*', '/login'], (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
 
