@@ -19,8 +19,8 @@ function logInternalServerError(req, err) {
 }
 
 function setSessionCookie(res, cookieConfig, cookieVal, cookiePath, maxAgeSec) {
-  console.log(`_+_+_+_+_ set session cookie: [${cookieConfig.session_name}/${maxAgeSec}]: ${cookieVal}`);
-  res.cookie(cookieConfig.session_name, cookieVal, {
+  console.log(`_+_+_+_+_ set session cookie: [${cookieConfig.name}/${maxAgeSec}]: ${cookieVal}`);
+  res.cookie(cookieConfig.name, cookieVal, {
     maxAge: maxAgeSec * 1000,
     path: cookiePath,
     httpOnly: cookieConfig.http_only,
