@@ -81,7 +81,7 @@ function handleLogin(config, authService) {
     } else {
       let cookiePath = config.mainsite_path;
       let cookieMaxAge = authService.sessionAbsoluteTTLSec;
-      wutil.setSessionCookie(res, config.cookie_config, newSession.token, cookiePath, cookieMaxAge);
+      wutil.setSessionCookie(res, config.session_cookie, newSession.token, cookiePath, cookieMaxAge);
       return res.redirect(302, '/main');
     }
   }
@@ -90,10 +90,10 @@ function handleLogin(config, authService) {
 function handleLogout(config, authService) {
   return async function(req, res, next) {
     let cookiePath = config.mainsite_path;
-    let cookieToken = req.cookies[config.cookie_config.session_name];
+    let cookieToken = req.cookies[config.session_cookie.name];
 
     // first, expire the cookie
-    wutil.setSessionCookie(res, config.cookie_config, '', cookiePath, 0);
+    wutil.setSessionCookie(res, config.session_cookie, '', cookiePath, 0);
     // Second, kill the session internally
     let session = await authService.retrieveSessionByToken(cookieToken);
     if (!session) {
@@ -112,7 +112,7 @@ function handleLogout(config, authService) {
 function validateAuthSession(config, authService) {
   return async function(req, res, next) {
     let cookiePath = config.mainsite_path;
-    let cookieToken = req.cookies[config.cookie_config.session_name];
+    let cookieToken = req.cookies[config.session_cookie.name];
     let cookieMaxAge = authService.sessionAbsoluteTTLSec;
 
     if (!cookieToken || !authService.isTokenSyntacticallyValid(cookieToken)) {
@@ -144,7 +144,7 @@ function validateAuthSession(config, authService) {
     } else if (authService.isTokenExpired(session)) {
       console.error(`%% %% %% Token expired, refreshing: ${JSON.stringify(session)}`);
       session = await authService.refreshSessionToken(session);
-      wutil.setSessionCookie(res, config.cookie_config, session.token, cookiePath, cookieMaxAge);
+      wutil.setSessionCookie(res, config.session_cookie, session.token, cookiePath, cookieMaxAge);
     } else {
       // Valid session - update time
       console.error(`%% %% %% session good, udpating time: ${JSON.stringify(session)}`);
@@ -159,7 +159,7 @@ function validateUnauthSession(config, authService) {
   return async function (req, res, next) {
     let session = null;
     let cookiePath = config.demosite_path;
-    let cookieToken = req.cookies[config.cookie_config.session_name];
+    let cookieToken = req.cookies[config.session_cookie.name];
     let cookieMaxAge = authService.sessionAbsoluteTTLSec;
 
     console.log(`-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==- ${cookieToken}`);
@@ -167,18 +167,18 @@ function validateUnauthSession(config, authService) {
       if (!authService.isTokenSyntacticallyValid(cookieToken)) {
         console.log(">>> >>> >>> did not recv a valid token; creating a new session");
         session = await authService.createNewUnauthSession();
-        wutil.setSessionCookie(res, config.cookie_config, session.token, cookiePath, cookieMaxAge);
+        wutil.setSessionCookie(res, config.session_cookie, session.token, cookiePath, cookieMaxAge);
       } else {
         session = await authService.retrieveSessionByToken(cookieToken);
         if (!session || authService.isSessionExpired(session)) {
           console.log(">>> >>> >>> Sess expired or could not retrieve; creating a new session");
           session = await authService.createNewUnauthSession();
-          wutil.setSessionCookie(res, config.cookie_config, session.token, cookiePath, cookieMaxAge);
+          wutil.setSessionCookie(res, config.session_cookie, session.token, cookiePath, cookieMaxAge);
         } else if (authService.isTokenExpired(session)) {
           // Order matters; check session expiry before checking token expiry
           console.log(">>> >>> >>> Token expired; creating a new TOKEN");
           session = await authService.refreshSessionToken(session);
-          wutil.setSessionCookie(res, config.cookie_config, session.token, cookiePath, cookieMaxAge);
+          wutil.setSessionCookie(res, config.session_cookie, session.token, cookiePath, cookieMaxAge);
         } else {
           // we have a valid existing session
           console.log(">>> >>> >>> Session was valid; updating time");
