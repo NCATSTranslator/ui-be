@@ -218,10 +218,10 @@ function createKGFromNodeIds(nodeIds)
 
 function makeMapping(key, transform, update, fallback)
 {
-  return (obj) =>
+  return (obj, context) =>
   {
     const val = cmn.jsonGet(obj, key, false);
-    return (acc) => { return update((val ? transform(val) : fallback), acc); }
+    return (acc) => { return update((val ? transform(val, context) : fallback), acc); }
   }
 }
 
@@ -411,7 +411,7 @@ function tagAttribute(attributeId, transform)
 {
   return makeMapping(
     'attributes',
-    (attributes) =>
+    (attributes, context) =>
     {
       if (areNoAttributes(attributes))
       {
@@ -422,7 +422,7 @@ function tagAttribute(attributeId, transform)
       {
         if (attributeId === attrId(attribute))
         {
-          return transform(attrValue(attribute));
+          return transform(attrValue(attribute), context);
         }
       }
 
@@ -474,9 +474,9 @@ function getPrimarySource(sources)
 
 function makeSummarizeRules(rules)
 {
-  return (obj) =>
+  return (obj, context) =>
   {
-    return rules.map(rule => { return rule(obj); });
+    return rules.map(rule => { return rule(obj, context); });
   };
 }
 
@@ -757,6 +757,14 @@ function makeRgraph(rnodes, redges, kgraph)
   return rgraph;
 }
 
+function makeRnodeContext(rnode, kgraph)
+{
+  return {
+    'rnode': rnodeToKey(rnode),
+    'knode': () => { return rnodeToTrapiKnode(rnode, kgraph); }
+  };
+}
+
 function isRedgeInverted(redge, subject, kgraph)
 {
   const kedge = redgeToTrapiKedge(redge, kgraph);
@@ -839,8 +847,10 @@ function redgeToKey(redge, kgraph, doInvert = false)
 
 function summarizeRnode(rnode, kgraph, nodeRules)
 {
+  const rnodeKey = rnodeToKey(rnode, kgraph);
   return cmn.makePair(rnodeToKey(rnode, kgraph),
-    nodeRules(rnodeToTrapiKnode(rnode, kgraph)),
+    nodeRules(rnodeToTrapiKnode(rnode, kgraph),
+              makeRnodeContext(rnode, kgraph)),
     'key',
     'transforms');
 }
@@ -1363,15 +1373,6 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
     });
   
   results = Object.values(results).map(objRemoveDuplicates)
-  const endpoints = new Set();
-  results.forEach((result) =>
-    {
-      const ps = cmn.jsonGet(result, 'paths');
-      const subgraph = getPathFromPid(paths, ps[0]);
-      endpoints.add(subgraph[0]);
-      endpoints.add(subgraph[subgraph.length-1]);
-    });
-
   const annotationPromise = annotationClient.annotateGraph(createKGFromNodeIds(Object.keys(nodes)));
   function pushIfEmpty(arr, val)
   {
@@ -1405,11 +1406,40 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
     // Node annotation
     const nodeRules = makeSummarizeRules(
       [
-        tagAttribute(
+        renameAndTransformAttribute(
           'biothings_annotations',
+          ['descriptions'],
           (annotations) =>
           {
-            const fdaApproval = bta.getFdaApproval(annotations);
+            const description = bta.getDescription(annotations);
+            if (description === null) {
+              return [];
+            }
+
+            return [description];
+          }),
+        aggregateAndTransformAttributes(
+          ['biothings_annotations'],
+          'curies',
+          (annotations) =>
+          {
+            const curies = bta.getCuries(annotations);
+            if (curies === null) {
+              return [];
+            }
+
+            return curies;
+          }
+        )
+      ]);
+
+    const resultNodeRules = makeSummarizeRules(
+      [
+        tagAttribute(
+          'biothings_annotations',
+          (annotations, context) =>
+          {
+            const fdaApproval = bta.getFdaApproval(annotations, context);
             if (fdaApproval === null) {
               return false;
             } else if (fdaApproval < 4) {
@@ -1447,42 +1477,34 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
             }
 
             return indications;
-          }),
-        renameAndTransformAttribute(
-          'biothings_annotations',
-          ['descriptions'],
-          (annotations) =>
-          {
-            const description = bta.getDescription(annotations);
-            if (description === null) {
-              return [];
-            }
+          })
+        ]);
 
-            return [description];
-          }),
-        aggregateAndTransformAttributes(
-          ['biothings_annotations'],
-          'curies',
-          (annotations) =>
-          {
-            const curies = bta.getCuries(annotations);
-            if (curies === null) {
-              return [];
-            }
 
-            return curies;
-          }
-        )
-      ]);
+    const resultNodes = new Set();
+    results.forEach((result) =>
+      {
+        const ps = cmn.jsonGet(result, 'paths');
+        ps.forEach((p) =>
+        {
+          const subgraph = getPathFromPid(paths, p);
+          resultNodes.add(subgraph[0]);
+        });
+      });
 
     const knodes = await annotationPromise;
     const kgraph = { 'nodes': knodes };
-    const annotationUpdates = Object.keys(knodes).map((rnode) =>
-      {
-        return summarizeRnode(rnode, kgraph, nodeRules);
-      });
+    const nodeUpdates = Object.keys(knodes).map((rnode) =>
+    {
+      return summarizeRnode(rnode, kgraph, nodeRules);
+    });
 
-    extendSummaryNodes(nodes, annotationUpdates, 'biothings-annotator');
+    const resultNodeUpdates = [...resultNodes].map((rnode) =>
+    {
+      return summarizeRnode(rnode, kgraph, resultNodeRules);
+    });
+
+    extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), 'biothings-annotator');
   }
   catch (err)
   {
