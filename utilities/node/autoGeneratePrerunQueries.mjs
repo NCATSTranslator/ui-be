@@ -5,7 +5,7 @@ import { TranslatorServicexFEAdapter } from '../../TranslatorServicexFEAdapter.m
 import { TranslatorService } from '../../TranslatorService.mjs';
 
 const configRoot = '../../configurations';
-const environments = ['ci', 'test', 'production'];
+const environments = ['dev', 'ci', 'test', 'production'];
 const outputAdapter = new TranslatorServicexFEAdapter(null);
 const queriesPath = process.argv[2];
 const outputPath = process.argv[3];
