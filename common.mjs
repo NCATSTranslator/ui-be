@@ -215,6 +215,20 @@ export function jsonGetFromKpath(obj, kpath, fallback = undefined)
   return currentObj;
 }
 
+export function jsonSearchKpath(obj, kpaths, fallback = undefined)
+{
+  for (const kpath of kpaths)
+  {
+    const v = jsonGetFromKpath(obj, kpath, fallback);
+    if (v !== fallback)
+    {
+      return v;
+    }
+  }
+
+  return fallback;
+}
+
 export function jsonSetFromKpath(obj, kpath, v)
 {
   if (isArrayEmpty(kpath))

@@ -81,9 +81,14 @@ function getDiseaseDescription(annotation)
 
 function getDiseaseMeshCuries(annotation)
 {
-  const curies = cmn.jsonGetFromKpath(annotation, ['mondo', 'xrefs', 'mesh'], null);
-  if (curies !== null) {
-    return curies.map((curie) => { return `MESH:${curie}`; });
+  const paths = [
+    ['mondo', 'xrefs', 'mesh'],
+    ['disease_ontology', 'xrefs', 'mesh']
+  ];
+
+  const curie = cmn.jsonSearchKpath(annotation, paths, null);
+  if (curie !== null) {
+    return [`MESH:${curie}`];
   }
 
   return null;
@@ -141,7 +146,10 @@ function getChemicalDrugIndications(annotation)
 
 function isChemical(annotation)
 {
-  return annotation.chebi !== undefined || annotation.chembl !== undefined;
+  return annotation.chebi !== undefined ||
+         annotation.chembl !== undefined ||
+         annotation.drugbank !== undefined ||
+         annotation.pubchem !== undefined;
 }
 
 function getGeneDescription(annotation)
