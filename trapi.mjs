@@ -815,13 +815,13 @@ function determineAnswerTag(type, answerTags, queryType)
     highestFdaApproval = Math.max(...fdaTags.map((tag) => { return parseInt(tag.split(':')[1]); }));
   }
 
-  if (highestFdaApproval === 0) return ['rc:other', 'Other'];
+  if (highestFdaApproval === 0) return ['cc:other', 'Other'];
 
-  if (isDrug(type, highestFdaApproval)) return ['rc:drug', 'Drug'];
+  if (isDrug(type, highestFdaApproval)) return ['cc:drug', 'Drug'];
 
-  if (isClinicalPhase(highestFdaApproval)) return [`rc:phase${highestFdaApproval}`, `Phase ${highestFdaApproval} Drug`];
+  if (isClinicalPhase(highestFdaApproval)) return [`cc:phase${highestFdaApproval}`, `Phase ${highestFdaApproval} Drug`];
 
-  return [`rc:other`, `Other`];
+  return [`cc:other`, `Other`];
 }
 
 function makeRgraph(rnodes, redges, kgraph)
