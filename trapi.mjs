@@ -801,12 +801,8 @@ function determineAnswerTag(type, answerTags, queryType)
     return fdaLevel > 0 && fdaLevel < 4;
   }
 
-  if (!isValidQuery(queryType)) {
+  if (!isValidQuery(queryType) || isGeneChemicalQuery(queryType)) {
     return [false, false];
-  }
-
-  if (isGeneChemicalQuery(queryType)) {
-    return [`rc:${type}`, type];
   }
 
   const fdaTags = Object.keys(answerTags).filter((tag) => { return tag.startsWith('fda'); });
@@ -1581,14 +1577,15 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
     const knodes = await annotationPromise;
     const kgraph = { 'nodes': knodes };
+    const annotationContext = {queryType: queryType};
     const nodeUpdates = Object.keys(knodes).map((rnode) =>
     {
-      return summarizeRnode(rnode, kgraph, nodeRules, {queryType: queryType});
+      return summarizeRnode(rnode, kgraph, nodeRules, annotationContext);
     });
 
     const resultNodeUpdates = [...resultNodes].map((rnode) =>
     {
-      return summarizeRnode(rnode, kgraph, resultNodeRules);
+      return summarizeRnode(rnode, kgraph, resultNodeRules, annotationContext);
     });
 
     extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), 'biothings-annotator');
@@ -1625,7 +1622,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
         objRemoveDuplicates(path);
 
         // Determine if drug is indicated for disease
-        if (!isGeneChemicalQuery(queryType)) {
+        if (isChemicalDiseaseQuery(queryType)) {
           const start = nodes[path.subgraph[0]];
           if (start.indications !== undefined) {
             const startIndications = new Set(start.indications);
