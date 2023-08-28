@@ -851,14 +851,6 @@ function makeRgraph(rnodes, redges, kgraph)
   return rgraph;
 }
 
-function makeRnodeContext(rnode, kgraph)
-{
-  return {
-    'rnode': rnodeToKey(rnode),
-    'knode': () => { return rnodeToTrapiKnode(rnode, kgraph); }
-  };
-}
-
 function isRedgeInverted(redge, subject, kgraph)
 {
   const kedge = redgeToTrapiKedge(redge, kgraph);
@@ -939,12 +931,11 @@ function redgeToKey(redge, kgraph, doInvert = false)
   return pathToKey([ksubject, predicate, kobject]);
 }
 
-function summarizeRnode(rnode, kgraph, nodeRules)
+function summarizeRnode(rnode, kgraph, nodeRules, context)
 {
   const rnodeKey = rnodeToKey(rnode, kgraph);
   return cmn.makePair(rnodeToKey(rnode, kgraph),
-    nodeRules(rnodeToTrapiKnode(rnode, kgraph),
-              makeRnodeContext(rnode, kgraph)),
+    nodeRules(rnodeToTrapiKnode(rnode, kgraph), context),
     'key',
     'transforms');
 }
@@ -1530,9 +1521,9 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       [
         tagAttribute(
           'biothings_annotations',
-          (annotations, context) =>
+          (annotations) =>
           {
-            const fdaApproval = bta.getFdaApproval(annotations, context);
+            const fdaApproval = bta.getFdaApproval(annotations);
             if (fdaApproval === null) {
               return false;
             } else if (fdaApproval < 4) {
@@ -1550,8 +1541,10 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
           }),
         tagAttribute(
           'biothings_annotations',
-          (annotations) =>
+          (annotations, context) =>
           {
+            if (isGeneChemicalQuery(context.queryType)) return [];
+
             const chebiRoles = bta.getChebiRoles(annotations);
             if (chebiRoles === null)
             {
@@ -1590,7 +1583,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     const kgraph = { 'nodes': knodes };
     const nodeUpdates = Object.keys(knodes).map((rnode) =>
     {
-      return summarizeRnode(rnode, kgraph, nodeRules);
+      return summarizeRnode(rnode, kgraph, nodeRules, {queryType: queryType});
     });
 
     const resultNodeUpdates = [...resultNodes].map((rnode) =>
@@ -1632,23 +1625,25 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
         objRemoveDuplicates(path);
 
         // Determine if drug is indicated for disease
-        const start = nodes[path.subgraph[0]];
-        if (start.indications !== undefined) {
-          const startIndications = new Set(start.indications);
-          const end = nodes[path.subgraph[path.subgraph.length-1]];
-          const endMeshIds = end.curies.filter((curie) => { return curie.startsWith('MESH:'); });
-          let indicatedFor = false;
-          for (let i = 0; i < endMeshIds.length; i++) {
-            if (startIndications.has(endMeshIds[i])) {
-              indicatedFor = true;
-              break;
+        if (!isGeneChemicalQuery(queryType)) {
+          const start = nodes[path.subgraph[0]];
+          if (start.indications !== undefined) {
+            const startIndications = new Set(start.indications);
+            const end = nodes[path.subgraph[path.subgraph.length-1]];
+            const endMeshIds = end.curies.filter((curie) => { return curie.startsWith('MESH:'); });
+            let indicatedFor = false;
+            for (let i = 0; i < endMeshIds.length; i++) {
+              if (startIndications.has(endMeshIds[i])) {
+                indicatedFor = true;
+                break;
+              }
             }
-          }
 
-          if (indicatedFor) {
-            start.tags['di:ind'] = makeTagDescription('Indicated for Disease');
-          } else {
-            start.tags['di:not'] = makeTagDescription('Not Indicated for Disease');
+            if (indicatedFor) {
+              start.tags['di:ind'] = makeTagDescription('Indicated for Disease');
+            } else {
+              start.tags['di:not'] = makeTagDescription('Not Indicated for Disease');
+            }
           }
 
           cmn.jsonDelete(start, 'indications');
