@@ -37,7 +37,7 @@ export function startServer(config, services) {
   app.get('/main',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
-  app.get('/main/logout', handleLogout(config, authService));
+  app.post('/main/logout', handleLogout(config, authService));
   // logout.html is temp. to test una logout.
   app.get('/main/logout.html',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/logout.html'));
@@ -52,7 +52,7 @@ export function startServer(config, services) {
   app.get('/demo/chemical/:chemical_id',
     validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.chemical_id }),
     handleDemoQueryRequest(config.demosite_path));
-  
+
 
   app.use('/main/api/v1/pub', createAPIRouter(config, services, false));
   app.use('/demo/api/v1/pub', createAPIRouter(config, services, true));
