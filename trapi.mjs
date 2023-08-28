@@ -793,17 +793,12 @@ function determineAnswerTag(type, answerTags, queryType)
 {
   function isDrug(type, fdaLevel)
   {
-    return fdaLevel === 4 &&
-           (type === 'Drug' ||
-            type === 'ChemicalEntity' ||
-            type === 'Protein');
+    return fdaLevel === 4 || type === 'Drug';
   }
 
-  function isClinicalPhase(type, fdaLevel)
+  function isClinicalPhase(fdaLevel)
   {
-    return fdaLevel > 0 &&
-           (type === 'ChemicalEntity' ||
-            type === 'Protein');
+    return fdaLevel > 0 && fdaLevel < 4;
   }
 
   if (!isValidQuery(queryType)) {
@@ -824,7 +819,7 @@ function determineAnswerTag(type, answerTags, queryType)
 
   if (isDrug(type, highestFdaApproval)) return ['rc:drug', 'Drug'];
 
-  if (isClinicalPhase(type, highestFdaApproval)) return [`rc:phase${highestFdaApproval}`, `Phase ${highestFdaApproval} Drug`];
+  if (isClinicalPhase(highestFdaApproval)) return [`rc:phase${highestFdaApproval}`, `Phase ${highestFdaApproval} Drug`];
 
   return [`rc:other`, `Other`];
 }
