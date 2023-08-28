@@ -185,6 +185,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
         })
     ]);
   
+  const queryType = answerToQueryType(answers[0]);
   function agentToName(agent)
   {
     return bl.inforesToProvenance(agent).name;
@@ -197,6 +198,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
       nodeRules,
       edgeRules,
       maxHops),
+    queryType,
     agentToName,
     annotationClient);
 }
@@ -214,6 +216,63 @@ function createKGFromNodeIds(nodeIds)
     }
   };
   return retval;
+}
+
+const QUERY_TYPE = {
+  CHEMICAL_GENE: 0,
+  CHEMICAL_DISEASE: 1,
+  GENE_CHEMICAL: 2
+}
+
+function isChemicalGeneQuery(queryType)
+{
+  return queryType === QUERY_TYPE.CHEMICAL_GENE;
+}
+
+function isChemicalDiseaseQuery(queryType)
+{
+  return queryType === QUERY_TYPE.CHEMICAL_DISEASE;
+}
+
+function isGeneChemicalQuery(queryType)
+{
+  return queryType === QUERY_TYPE.GENE_CHEMICAL;
+}
+
+function isValidQuery(queryType)
+{
+  return Object.values(QUERY_TYPE).includes(queryType);
+}
+
+function answerToQueryType(answer)
+{
+  const qg = cmn.jsonGetFromKpath(answer, ['message', 'query_graph'], false);
+  if (!qg)
+  {
+    return false;
+  }
+
+  const [subjectKey, objectKey] = getPathDirection(qg);
+
+  const subCategory = cmn.jsonGetFromKpath(qg, ['nodes', subjectKey, 'categories'], false)[0];
+  const objCategory = cmn.jsonGetFromKpath(qg, ['nodes', objectKey, 'categories'], false)[0];
+  if (subCategory === bl.tagBiolink('ChemicalEntity') && 
+      objCategory === bl.tagBiolink('Gene'))
+  {
+    return QUERY_TYPE.CHEMICAL_GENE;
+  }
+  else if (subCategory === bl.tagBiolink('ChemicalEntity') &&
+           objCategory === bl.tagBiolink('Disease'))
+  {
+    return QUERY_TYPE.CHEMICAL_DISEASE;
+  }
+  else if (subCategory === bl.tagBiolink('Gene') &&
+           objCategory === bl.tagBiolink('ChemicalEntity'))
+  {
+    return QUERY_TYPE.GENE_CHEMICAL;
+  }
+
+  return false;
 }
 
 function makeMapping(key, transform, update, fallback)
@@ -730,6 +789,46 @@ function makeTagDescription(name, description = '')
   };
 }
 
+function determineAnswerTag(type, answerTags, queryType)
+{
+  function isDrug(type, fdaLevel)
+  {
+    return fdaLevel === 4 &&
+           (type === 'Drug' ||
+            type === 'ChemicalEntity' ||
+            type === 'Protein');
+  }
+
+  function isClinicalPhase(type, fdaLevel)
+  {
+    return fdaLevel > 0 &&
+           (type === 'ChemicalEntity' ||
+            type === 'Protein');
+  }
+
+  if (!isValidQuery(queryType)) {
+    return [false, false];
+  }
+
+  if (isGeneChemicalQuery(queryType)) {
+    return `rc:${type}`;
+  }
+
+  const fdaTags = Object.keys(answerTags).filter((tag) => { return tag.startsWith('fda'); });
+  let highestFdaApproval = 0;
+  if (!cmn.isArrayEmpty(fdaTags)) {
+    highestFdaApproval = Math.max(...fdaTags.map((tag) => { return parseInt(tag.split(':')[1]); }));
+  }
+
+  if (highestFdaApproval === 0) return ['rc:other', 'Other'];
+
+  if (isDrug(type, highestFdaApproval)) return ['rc:drug', 'Drug'];
+
+  if (isClinicalPhase(type, highestFdaApproval)) return [`rc:phase${highestFdaApproval}`, `Phase ${highestFdaApproval} Drug`];
+
+  return [`rc:other`, `Other`];
+}
+
 function makeRgraph(rnodes, redges, kgraph)
 {
   if (!redges)
@@ -992,6 +1091,17 @@ function mergeSummaryFragments(f1, f2)
   return f1;
 }
 
+function getPathDirection(qgraph)
+{
+  const startIsObject = cmn.jsonGetFromKpath(qgraph, ['nodes', subjectKey, 'ids'], false);
+  if (startIsObject)
+  {
+    return [objectKey, subjectKey];
+  }
+
+  return [subjectKey, objectKey];
+}
+
 function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHops)
 {
   function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey)
@@ -1099,18 +1209,6 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
     return resultSummaryFragment;
   }
 
-  function getPathDirection(qgraph)
-  {
-    const qgraphNodes = cmn.jsonGet(qgraph, 'nodes');
-    const startIsObject = cmn.jsonGetFromKpath(qgraphNodes, [subjectKey, 'ids'], false);
-    if (startIsObject)
-    {
-      return [objectKey, subjectKey];
-    }
-
-    return [subjectKey, objectKey];
-  }
-
   const summaryFragments = [];
   answers.forEach((answer) => {
     const trapiMessage = answer.message;
@@ -1132,7 +1230,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
   return summaryFragments;
 }
 
-async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, annotationClient)
+async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, agentToName, annotationClient)
 {
   function fragmentPathsToResultsAndPaths(fragmentPaths)
   {
@@ -1446,9 +1544,10 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
               const tags = [];
               if (fdaApproval > 0) {
                 tags.push(makeTag(`fda:${fdaApproval}`, `Clinical Trial Phase ${fdaApproval}`));
+              } else {
+                tags.push(makeTag('fda:0', 'Not FDA Approved'));
               }
               
-              tags.push(makeTag('fda:0', 'Not FDA Approved'));
               return tags;
             } else {
               return makeTag(`fda:${fdaApproval}`, `FDA Approved`);
@@ -1576,12 +1675,16 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, agentToName, a
               const type = cmn.isArrayEmpty(node.types) ?
                            'Named Thing' :
                             bl.sanitizeBiolinkItem(node.types[0]);
-              const description = makeTagDescription(type);
               if (i === 0) {
-                tags[`rc:${type}`] = description;
+                const [answerTag, answerDescription] = determineAnswerTag(type, node.tags, queryType);
+                if (!answerTag) {
+                  continue;
+                }
+
+                tags[answerTag] = makeTagDescription(answerDescription);
               }
 
-              tags[`pc:${type}`] = description;
+              tags[`pc:${type}`] = makeTagDescription(type);
             }
           }
         }
