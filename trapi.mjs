@@ -806,7 +806,7 @@ function determineAnswerTag(type, answerTags, queryType)
   }
 
   if (isGeneChemicalQuery(queryType)) {
-    return `rc:${type}`;
+    return [`rc:${type}`, type];
   }
 
   const fdaTags = Object.keys(answerTags).filter((tag) => { return tag.startsWith('fda'); });
