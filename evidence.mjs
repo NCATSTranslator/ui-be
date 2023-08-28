@@ -99,9 +99,9 @@ export function idToTypeAndUrl(id)
   {
     return ['NCT', nctidToUrl(id)];
   }
-  else if (hasTag(id, 'DOI'))
+  else if (hasTag(id, 'doi'))
   {
-    return ['DOI', doiidToUrl(id)];
+    return ['doi', doiidToUrl(id)];
   }
   else if (hasTag(id, 'isbn'))
   {
