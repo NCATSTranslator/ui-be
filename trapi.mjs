@@ -1664,11 +1664,9 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
                             bl.sanitizeBiolinkItem(node.types[0]);
               if (i === 0) {
                 const [answerTag, answerDescription] = determineAnswerTag(type, node.tags, queryType);
-                if (!answerTag) {
-                  continue;
+                if (answerTag) {
+                  tags[answerTag] = makeTagDescription(answerDescription);
                 }
-
-                tags[answerTag] = makeTagDescription(answerDescription);
               }
 
               tags[`pc:${type}`] = makeTagDescription(type);
