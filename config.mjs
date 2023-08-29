@@ -2,7 +2,8 @@
 
 import * as cmn from './common.mjs';
 
-export { loadConfigFromFile };
+export { loadConfigFromFile, postProcessConfig };
+
 
 async function loadConfigFromFile(filePath) {
   console.log(filePath);
@@ -12,14 +13,29 @@ async function loadConfigFromFile(filePath) {
     config['document-root'] = process.cwd();
   }
 
-  await loadAndReplace(config, 'canonicalization_priority');
-  await loadAndReplace(config, 'frontend');
-  await loadAndReplace(config, 'ara_to_infores_map');
-
+  for (let k of Object.keys(config)) {
+    if (k.match(/^_load_/)) {
+      await loadAndReplace(config, k);
+    }
+  }
   return config;
 }
 
+// Hack city
+function postProcessConfig(config) {
+  // Put the host specified at top-level config into the pg-specific object
+  config.storage.pg.host = config.pg_host;
+}
+
 async function loadAndReplace(config, prop)
+{
+  if (config[prop])
+  {
+    config[prop.replace(/^_load_/, '')] = await cmn.readJson(config[prop]);
+  }
+}
+
+async function loadAndReplace2(config, prop)
 {
   if (config[prop])
   {

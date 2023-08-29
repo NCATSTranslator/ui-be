@@ -9,3 +9,5 @@ ui-fe
 *.log
 junk
 *~
+configurations/secrets
+configurations/local-overrides.json

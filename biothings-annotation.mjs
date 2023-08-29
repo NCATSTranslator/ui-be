@@ -39,6 +39,15 @@ export function getDrugIndications(annotation)
     noHandler);
 }
 
+export function getCuries(annotation)
+{
+  return parseAnnotation(
+    annotation,
+    getDiseaseMeshCuries,
+    noHandler,
+    noHandler);
+}
+
 function parseAnnotation(annotation, diseaseHandler, chemicalHandler, geneHandler, fallback = null)  
 {
   annotation = annotation[0];
@@ -68,6 +77,21 @@ function getDiseaseDescription(annotation)
   }
 
   return description;
+}
+
+function getDiseaseMeshCuries(annotation)
+{
+  const paths = [
+    ['mondo', 'xrefs', 'mesh'],
+    ['disease_ontology', 'xrefs', 'mesh']
+  ];
+
+  const curie = cmn.jsonSearchKpath(annotation, paths, null);
+  if (curie !== null) {
+    return [`MESH:${curie}`];
+  }
+
+  return null;
 }
 
 function isDisease(annotation)
@@ -113,7 +137,7 @@ function getChemicalDrugIndications(annotation)
   indicationObjs.forEach((obj) => {
     const id = cmn.jsonGet(obj, 'mesh_id', false);
     if (id) {
-      indications.push(`MESH:${id}`);
+      indications.push(id);
     }
   });
 
@@ -122,7 +146,10 @@ function getChemicalDrugIndications(annotation)
 
 function isChemical(annotation)
 {
-  return annotation.chebi !== undefined || annotation.chembl !== undefined;
+  return annotation.chebi !== undefined ||
+         annotation.chembl !== undefined ||
+         annotation.drugbank !== undefined ||
+         annotation.pubchem !== undefined;
 }
 
 function getGeneDescription(annotation)

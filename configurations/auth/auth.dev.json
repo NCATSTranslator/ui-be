@@ -1,0 +1,20 @@
+{
+    "social_providers": {
+        "google": {
+            "client_id": "242366018153-v91c1h9phelludb713urn249eoqu7n90.apps.googleusercontent.com",
+            "redirect_uri": "http://transltr-bma-ui-dev.ncats.io/oauth2/redir/google",
+            "token_uri": "https://oauth2.googleapis.com/token"
+        },
+        "facebook": {
+            "client_id": "115637941549409",
+            "redirect_uri": "http://localhost:8386/oauth2/redir/facebook",
+            "token_uri": "https://graph.facebook.com/v17.0/oauth/access_token",
+            "user_data_uri": "https://graph.facebook.com/me"
+        },
+        "una": {
+            "client_id": "transltr-dev",
+            "redirect_uri": "http://transltr-bma-ui-dev.ncats.io/oauth2/redir/una",
+            "token_uri": "https://a-ci.ncats.io/_api/auth/transltr/oidc/token"
+        }
+    }
+}

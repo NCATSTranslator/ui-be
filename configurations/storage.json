@@ -1,0 +1,8 @@
+{
+  "pg": {
+    "host": "PLACEHOLDER",
+    "user": "app_data",
+    "port": "5432",
+    "database": "app_data"
+  }
+}

@@ -215,6 +215,20 @@ export function jsonGetFromKpath(obj, kpath, fallback = undefined)
   return currentObj;
 }
 
+export function jsonSearchKpath(obj, kpaths, fallback = undefined)
+{
+  for (const kpath of kpaths)
+  {
+    const v = jsonGetFromKpath(obj, kpath, fallback);
+    if (v !== fallback)
+    {
+      return v;
+    }
+  }
+
+  return fallback;
+}
+
 export function jsonSetFromKpath(obj, kpath, v)
 {
   if (isArrayEmpty(kpath))
@@ -269,16 +283,17 @@ export class ServerError extends ApplicationError
   }
 }
 
-
-export async function SendRecvJSON(url, method='GET', headers={}, body=null) {
+async function sendRecvHTTP(url, method='GET', headers={}, body=null, contentType, bodySerializer) {
   let options = {
       method: method,
       headers: {...headers}
   };
-  options.headers['Content-type'] = 'application/json';
-  if (body) {
-      options.body = JSON.stringify(body);
+  options.headers['Content-type'] = contentType;
+
+  if (body && typeof body === 'object') {
+      options.body = bodySerializer(body);
   }
+
   let resp = await fetch(url, options);
   if (resp.ok) {
       return resp.json();
@@ -286,6 +301,15 @@ export async function SendRecvJSON(url, method='GET', headers={}, body=null) {
       let errmsg = `ERROR: status: ${resp.status}; msg: '${resp.statusText}'`;
       throw new Error(errmsg);
   }
+}
+
+export function SendRecvJSON(url, method='GET', headers={}, body=null) {
+  return sendRecvHTTP(url, method, headers, body, 'application/json', JSON.stringify);
+}
+
+export function SendRecvFormEncoded(url, method='GET', headers={}, body=null) {
+  return sendRecvHTTP(url, method, headers, body, 'application/x-www-form-urlencoded',
+    (data) => new URLSearchParams(data).toString());
 }
 
 // Usage: await sleep(250);
@@ -306,4 +330,20 @@ export async function withTimeout(fun, ms)
       {
         return timer = setTimeout(rej, ms, new Error(`withTimeout exceeded timeout ${ms} ms.`));
       })]).finally(() => clearTimeout(timer));
+}
+
+export function overwriteObj(orig, overwrite) {
+  for (let key of Object.keys(overwrite)) {
+    if (orig.hasOwnProperty(key)) {
+      if (overwrite[key] instanceof Object
+          && !(overwrite[key] instanceof Array)) {
+        overwriteObj(orig[key], overwrite[key])
+      } else {
+        orig[key] = overwrite[key];
+      }
+    } else {
+      orig[key] = overwrite[key];
+    }
+  }
+  return orig;
 }

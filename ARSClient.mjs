@@ -1,11 +1,7 @@
 'use strict'
 
-import { SendRecvJSON } from "./common.mjs";
-// export { ARSClient, aa, m0 ,m1 ,m2 ,m3 ,m4 ,m5 ,m6 ,m7 ,m8 ,m9 ,m10,m11 };
+import * as cmn from "./common.mjs";
 export { ARSClient }
-
-// 6d7ce863-e4d3-4cf8-8a38-3b7191d17964
-// 26394fad-bfd9-4e32-bb90-ef9d5044f593
 
 /* Data format:
 {
@@ -38,6 +34,9 @@ class ARSClient
     this.origin = origin;
     this.getURL = `${origin}${getPath}`;
     this.postURL = `${origin}${postPath}`;
+    // Yes, 422 means the message is complete and valid. Specifically it means that there was some error in the scoring process.
+    this.completeCodes = [200, 206, 422]; 
+    this.runningCodes = [202];
   }
 
   async fetchMessage(uuid, doTrace=false)
@@ -48,12 +47,27 @@ class ARSClient
       url += '?trace=y';
     }
     //console.log(`fetching ${url}`);
-    return SendRecvJSON(url, 'GET');
+    return cmn.SendRecvJSON(url, 'GET');
   }
 
   async postQuery(query)
   {
-    return SendRecvJSON(this.postURL, 'POST', {}, query)
+    return cmn.SendRecvJSON(this.postURL, 'POST', {}, query)
+  }
+
+  isComplete(code)
+  {
+    return this.completeCodes.includes(code);
+  }
+
+  isRunning(code)
+  {
+    return this.runningCodes.includes(code);
+  }
+
+  isErrored(code)
+  {
+    return !(this.isComplete(code) || this.isRunning(code));
   }
 
   constructFilterRegexes(filterArray)
@@ -184,23 +198,22 @@ class ARSClient
     // Divide results up by status
     for (const c of filteredChildren)
     {
-      switch (c.code)
-      {
-        case 200: completed[c.actor.agent] = extractFields(c);
-          break;
-        case 202: running.push(extractFields(c));
-          break;
-        default:
-          try
-          {
-            errored.push(extractFields(c));
-          } catch (err)
-          {
-            console.error(`Error extracting fields from ARS error response: '${err}'`);
-            errored.push(c);
-          }
+      if (this.isComplete(c.code)) {
+        completed[c.actor.agent] = extractFields(c);
+      } else if (this.isRunning(c.code)) {
+        running.push(extractFields(c));
+      } else {
+        try
+        {
+          errored.push(extractFields(c));
+        } catch (err)
+        {
+          console.error(`Error extracting fields from ARS error response: '${err}'`);
+          errored.push(c);
+        }
       }
     }
+
     if (!fetchCompleted)
     {
       retval = {
@@ -253,21 +266,44 @@ class ARSClient
     retval.queuing = false;
     return retval;
   }
-}
 
-/*
-testing stuff
-var aa = new ARSClient('https://ars-prod.transltr.io', '/ars/api/messages', '/ars/api/submit');
-var m0 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0002251"],"categories":["biolink:Disease"]}}}}}';
-var m1 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0004952"],"categories":["biolink:Disease"]}}}}}';
-var m2 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0004975"],"categories":["biolink:Disease"]}}}}}';
-var m3 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0005002"],"categories":["biolink:Disease"]}}}}}';
-var m4 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0005147"],"categories":["biolink:Disease"]}}}}}';
-var m5 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0005148"],"categories":["biolink:Disease"]}}}}}';
-var m6 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0005155"],"categories":["biolink:Disease"]}}}}}';
-var m7 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0005377"],"categories":["biolink:Disease"]}}}}}';
-var m8 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0005812"],"categories":["biolink:Disease"]}}}}}';
-var m9 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0007947"],"categories":["biolink:Disease"]}}}}}';
-var m10 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0008170"],"categories":["biolink:Disease"]}}}}}';
-var m11 = '{"message":{"query_graph":{"edges":{"treats":{"knowledge_type":"inferred","predicates":["biolink:treats"],"subject":"drug","object":"disease"}},"nodes":{"drug":{"categories":["biolink:ChemicalEntity"]},"disease":{"ids":["MONDO:0010200"],"categories":["biolink:Disease"]}}}}}';
-*/
+  // Get all results that have been pre-merged by the ARS
+  async collectMergedResults(pkey)
+  {
+    // Get the top level message from the ARS
+    let results = await this.fetchMessage(pkey);
+    const mergedVersionUuid = results.fields.merged_version;
+    // If we don't have any merged versions yet, the data in the top level message
+    // is the data we want
+    if (mergedVersionUuid !== null) {
+      results = await this.fetchMessage(mergedVersionUuid);
+    }
+    const code = results.fields.code;
+    const message = {
+      agent: results.fields.name,
+      uuid: results.pk,
+      status: results.fields.status,
+      code: results.fields.code
+    }
+    const completed = [];
+    const running = [];
+    const errored = [];
+    if (this.isErrored(code)) {
+      errored.push(message);
+    } else {
+      const completedMessage = cmn.deepCopy(message);
+      completedMessage.data = results.fields.data.message;
+      completed.push(completedMessage);
+      if (this.isRunning(code)) {
+        running.push(message);
+      }
+    }
+
+    return {
+      pk: pkey,
+      completed: completed,
+      running: running,
+      errored: errored
+    };
+  }
+}
