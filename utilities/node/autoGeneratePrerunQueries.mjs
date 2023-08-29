@@ -6,6 +6,7 @@ import { TranslatorService } from '../../TranslatorService.mjs';
 
 const configRoot = '../../configurations';
 const environments = ['dev', 'ci', 'test', 'production'];
+const arsWaitTime = 60; // seconds
 const outputAdapter = new TranslatorServicexFEAdapter(null);
 const queriesPath = process.argv[2];
 const outputPath = process.argv[3];
@@ -34,22 +35,24 @@ for (const env of environments) {
         });
         qc += 1;
         console.log(`[${env}] ${qc}/${queries.length} queries submitted`);
-        await new Promise(r => setTimeout(r, 1000));
+        console.log(`Sleeping for ${arsWaitTime} seconds...`)
+        await new Promise(r => setTimeout(r, arsWaitTime * 1000));
       } catch (err) {
+        preRunQueries[env] = [];
         console.error(err);
-        process.exit();
+        break;
       }
     }
   }
-}
 
-for (const [env, queries] of Object.entries(preRunQueries)) {
-  try {
-    if (!cmn.isArrayEmpty(queries)) {
-      fs.writeFileSync(`${outputPath}/${env}.json`, JSON.stringify(queries));
+  const envPath = `${outputPath}/${env}.json`;
+  console.log(`[${env}] writing to ${envPath}`);
+  for (const queries of Object.values(preRunQueries[env])) {
+    try {
+      fs.writeFileSync(envPath, JSON.stringify(queries));
+    } catch (err) {
+      console.error(err);
+      process.exit();
     }
-  } catch (err) {
-    console.error(err);
-    process.exit();
   }
 }
