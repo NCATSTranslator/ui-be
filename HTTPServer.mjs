@@ -31,6 +31,7 @@ export function startServer(config, services) {
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
   config.filters = filters;
 
+  app.get('/health'), (req, res, next) => { res.send('OK'); };
   app.all(['/demo', '/demo/*'], validateUnauthSession(config, authService));
   app.all(['/main', '/main/*'], validateAuthSession(config, authService));
 
