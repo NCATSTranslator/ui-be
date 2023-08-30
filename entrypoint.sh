@@ -32,7 +32,7 @@ esac
 
 # If a cmdline arg is provided, override the env var-sourced
 # configuration file.
-if [ $# -eq 1 ]; then
+if [ $# -ge 1 ]; then
     echo "Overriding env var with supplied file"
     config_file="$1"
 fi
