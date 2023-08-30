@@ -48,7 +48,7 @@ class TranslatorService
   {
     try
     {
-      let res = await this.queryClient.collectAllResults(queryId, filters);
+      let res = await this.queryClient.collectMergedResults(queryId, filters);
       return res;
     }
     catch (err)

@@ -155,6 +155,7 @@ class ARSClient
    * - The blacklists are applied to the list of agents matching the whitelists
    *
    */
+  // DEPRECATED - use collectMergedResults instead
   async collectAllResults(pkey, filters={}, fetchCompleted=false)
   {
     function extractFields(childMsg)
@@ -273,6 +274,7 @@ class ARSClient
     // Get the top level message from the ARS
     let results = await this.fetchMessage(pkey);
     const mergedVersionUuid = results.fields.merged_version;
+    const mergedVersionList = results.fields.merged_versions_list;
     // If we don't have any merged versions yet, the data in the top level message
     // is the data we want
     if (mergedVersionUuid !== null) {
@@ -288,15 +290,22 @@ class ARSClient
     const completed = [];
     const running = [];
     const errored = [];
-    if (this.isErrored(code)) {
-      errored.push(message);
-    } else {
-      const completedMessage = cmn.deepCopy(message);
-      completedMessage.data = results.fields.data.message;
-      completed.push(completedMessage);
-      if (this.isRunning(code)) {
-        running.push(message);
+    if (this.isComplete(code)) {
+      message.data = results.fields.data.message;
+      completed.push(message);
+      // Determine the ARAs that are responding in this message
+      if (cmn.isArray(mergedVersionList)) {
+        mergedVersionList.forEach(mergedVersion => {
+          const [uuid, agent] = mergedVersion;
+          completed.push({
+            agent: agent
+          });
+        });
       }
+    } else if (this.isRunning(code)) {
+      running.push(message);
+    } else {
+      errored.push(message);
     }
 
     return {
