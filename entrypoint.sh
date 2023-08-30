@@ -33,15 +33,15 @@ esac
 # If a cmdline arg is provided, override the env var-sourced
 # configuration file.
 if [ $# -ge 1 ]; then
-    echo "Overriding env var with supplied file"
+    echo "Overriding env var-driven config file with explicitly supplied file"
     config_file="$1"
 fi
 
-override_file=""
 if [ $# -eq 2 ]; then
-    echo "Using override file $2"
-    override_file="$2"
+    echo "Using additional override file $2"
+    node StartServer.mjs "$config_file" "$override_file"
+else
+    node StartServer.mjs "$config_file" 
 fi
 
-echo "using file $config_file"
-node StartServer.mjs "$config_file" "$override_file"
+
