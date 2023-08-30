@@ -37,6 +37,11 @@ if [ $# -eq 1 ]; then
     config_file="$1"
 fi
 
-echo "using file $config_file"
-node StartServer.mjs "$config_file"
+override_file=""
+if [ $# -eq 2 ]; then
+    echo "Using override file $2"
+    override_file="$2"
+fi
 
+echo "using file $config_file"
+node StartServer.mjs "$config_file" "$override_file"
