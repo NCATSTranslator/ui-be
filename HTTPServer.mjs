@@ -69,7 +69,6 @@ export function startServer(config, services) {
   });
 
   app.get('*', (req, res, next) => {
-    console.log('GDP WHAT');
     res.redirect(302, '/main');
   });
 
