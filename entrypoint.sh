@@ -39,7 +39,7 @@ fi
 
 if [ $# -eq 2 ]; then
     echo "Using additional override file $2"
-    node StartServer.mjs "$config_file" "$override_file"
+    node StartServer.mjs "$config_file" "$2"
 else
     node StartServer.mjs "$config_file" 
 fi
