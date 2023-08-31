@@ -1512,8 +1512,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
             }
 
             return curies;
-          }
-        )
+          })
       ]);
 
     const resultNodeRules = makeSummarizeRules(
