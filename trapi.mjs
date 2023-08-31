@@ -1575,7 +1575,6 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       });
 
     const knodes = await annotationPromise;
-    console.log(JSON.stringify(knodes,null,2));
     const kgraph = { 'nodes': knodes };
     const annotationContext = {queryType: queryType};
     const nodeUpdates = Object.keys(knodes).map((rnode) =>
