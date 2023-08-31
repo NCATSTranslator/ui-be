@@ -42,29 +42,8 @@
     "env": ["dev", "ci", "test", "production"]
   },
   {
-    "name": "Chronic Bronchitis",
-    "curie": "MONDO:0005607",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
-    "name": "Pulmonary Emphysema",
-    "curie": "MONDO:0004849",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
     "name": "Asthma",
     "curie": "MONDO:0004979",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
-    "name": "Large Artery Stroke",
-    "curie": "MONDO:0005490",
     "type": "drug",
     "direction": null,
     "env": ["dev", "ci", "test", "production"]
@@ -84,27 +63,6 @@
     "env": ["dev", "ci", "test", "production"]
   },
   {
-    "name": "Cirrhosis of Liver",
-    "curie": "MONDO:0005155",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
-    "name": "Nephritis",
-    "curie": "MONDO:0001166",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
-    "name": "Cerebral Palsy",
-    "curie": "MONDO:0006497",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
     "name": "Cerebral Palsy",
     "curie": "MONDO:0006497",
     "type": "drug",
@@ -114,13 +72,6 @@
   {
     "name": "Bethlem Myopathy",
     "curie": "MONDO:0008029",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
-    "name": "Cerebral Arteriopathy With Subcortical Infarcts And Leukoencephalopathy",
-    "curie": "MONDO:0007432",
     "type": "drug",
     "direction": null,
     "env": ["dev", "ci", "test", "production"]
@@ -140,43 +91,8 @@
     "env": ["dev", "ci", "test", "production"]
   },
   {
-    "name": "Kyphoscoliotic Ehlers-danlos Syndrome",
-    "curie": "MONDO:0034024",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
-    "name": "Ehlers-danlos Syndrome, Arthrochalasis Type",
-    "curie": "MONDO:0007525",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
-    "name": "Ehlers-danlos Syndrome, Classic Type",
-    "curie": "MONDO:0007522",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
-    "name": "Ehlers-danlos Syndrome, Dermatosparaxis Type",
-    "curie": "MONDO:0009161",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
     "name": "Ehlers-danlos Syndrome",
     "curie": "MONDO:0020066",
-    "type": "drug",
-    "direction": null,
-    "env": ["dev", "ci", "test", "production"]
-  },
-  {
-    "name": "Hereditary Sensory And Autonomic Neuropathy Type 4",
-    "curie": "MONDO:0009746",
     "type": "drug",
     "direction": null,
     "env": ["dev", "ci", "test", "production"]
