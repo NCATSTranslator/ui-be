@@ -1185,7 +1185,10 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
     {
       // Insert the ordering components after the analyses have been merged
       const resultStartKey = rnodeToKey(start, kgraph);
-      resultSummaryFragment.scores[resultStartKey] = [cmn.jsonGet(trapiResult, 'ordering_components', {confidence: 0, novelty: 0, clinical_evidence: 0})];
+      const scoringComponents = cmn.jsonGet(trapiResult, 'ordering_components', {confidence: 0, novelty: 0, clinical_evidence: 0});
+      const normalizedScore = cmn.jsonGet(trapiResult, 'normalized_score', 0);
+      scoringComponents['normalized_score'] = normalizedScore;
+      resultSummaryFragment.scores[resultStartKey] = [scoringComponents];
     }
 
     return resultSummaryFragment;
@@ -1509,8 +1512,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
             }
 
             return curies;
-          }
-        )
+          })
       ]);
 
     const resultNodeRules = makeSummarizeRules(

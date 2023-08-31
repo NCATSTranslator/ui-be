@@ -17,7 +17,7 @@ export function getDescription(annotation)
   return parseAnnotation(
     annotation,
     getDiseaseDescription,
-    noHandler,
+    getChemicalDescription,
     getGeneDescription);
 }
 
@@ -97,6 +97,12 @@ function getDiseaseMeshCuries(annotation)
 function isDisease(annotation)
 {
   return annotation.disease_ontology !== undefined;
+}
+
+function getChemicalDescription(annotation)
+{
+  const description = cmn.jsonGetFromKpath(annotation, ['unii', 'ncit_description'], null);
+  return description;
 }
 
 function getChemicalChebiRoles(annotation)
