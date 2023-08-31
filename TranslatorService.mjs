@@ -42,13 +42,13 @@ class TranslatorService
       console.error(`Error posting query: '${err}' [${JSON.stringify(query)}]`);
       throw new Error(err);
     }
-
   }
+
   async getQueryStatus(queryId, filters={})
   {
     try
     {
-      let res = await this.queryClient.collectAllResults(queryId, filters);
+      let res = await this.queryClient.collectMergedResults(queryId, true);
       return res;
     }
     catch (err)

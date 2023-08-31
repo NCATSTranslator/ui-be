@@ -31,13 +31,17 @@ export function startServer(config, services) {
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config
   config.filters = filters;
 
+  app.get('/health', (req, res, next) => {
+    res.send('OK');
+  });
+
   app.all(['/demo', '/demo/*'], validateUnauthSession(config, authService));
   app.all(['/main', '/main/*'], validateAuthSession(config, authService));
 
   app.get('/main',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
-  app.post('/main/logout', handleLogout(config, authService));
+  app.get('/main/logout', handleLogout(config, authService));
   // logout.html is temp. to test una logout.
   app.get('/main/logout.html',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/logout.html'));
@@ -104,7 +108,7 @@ function handleLogout(config, authService) {
       console.error(`%% %% %% error expiring session for ${cookieToken} when logging out`);
     }
     console.log(`Logout successful, redirecting to /login`);
-    return res.redirect(302, `/login`);
+    return res.redirect(302, `/demo`);
   };
 }
 
