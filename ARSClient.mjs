@@ -152,19 +152,7 @@ class ARSClient
     let completed = [];
     let running = [];
     let errored = [];
-    if (!cmn.isArray(mergedVersionList) || mergedVersionList.length === 0) {
-      const status = arsSummary.fields.status;
-      const message = {
-        uuid: pkey,
-        agent: arsSummary.fields.agent
-      };
-
-      if (status === 'Running') {
-        running.push(message);
-      } else {
-        errored.push(message);
-      }
-    } else {
+    if (cmn.isArray(mergedVersionList) && mergedVersionList.length > 0) {
       const statusPromises = mergedVersionList.map((mergedEntry) => {
         const [uuid, agent] = mergedEntry;
         return this.fetchMessage(uuid, true);
@@ -183,12 +171,9 @@ class ARSClient
           };
 
           // We have to inject codes until the ARS is fixed
-          if (message.status === 'Done') {
+          if (message.status === 'Done' || message.status === 'Running') {
             status.code = 200;
             completed.push(status);
-          } else if (message.status === 'Running') {
-            status.code = 202;
-            running.push(status);
           } else {
             status.code = 500;
             errored.push(status);
@@ -212,6 +197,20 @@ class ARSClient
           agent: agent
         });
       }
+    }
+
+    const status = arsSummary.fields.status;
+    const message = {
+      uuid: pkey,
+      agent: arsSummary.fields.agent
+    };
+
+    if (status === 'Done') {
+      completed.push(message);
+    } else if (status === 'Running') {
+      running.push(message);
+    } else {
+      errored.push(message);
     }
 
     return {
