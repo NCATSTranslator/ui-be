@@ -10,6 +10,12 @@
             "redirect_uri": "http://localhost:8386/oauth2/redir/facebook",
             "token_uri": "https://graph.facebook.com/v17.0/oauth/access_token",
             "user_data_uri": "https://graph.facebook.com/me"
+        },
+        "una": {
+            "client_id": "transltr",
+            "redirect_uri": "https://ui.transltr.io/oauth2/redir/una",
+            "token_uri": "https://PLACEHOLDER/_api/auth/transltr/oidc/token",
+            "auth_uri": "https://PLACEHOLDER/_api/auth/transltr/authorize"
         }
     }
 }
