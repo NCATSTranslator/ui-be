@@ -15,7 +15,8 @@
             "client_id": "transltr",
             "redirect_uri": "https://ui.test.transltr.io/oauth2/redir/una",
             "token_uri": "https://a-qa.ncats.io/_api/auth/transltr/oidc/token",
-            "auth_uri": "https://a-qa.ncats.io/_api/auth/transltr/authorize"
+            "auth_uri": "https://a-qa.ncats.io/_api/auth/transltr/authorize",
+            "scope": "openid profile email company provider identity_provider"
         }
     }
 }

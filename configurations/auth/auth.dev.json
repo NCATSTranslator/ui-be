@@ -15,7 +15,8 @@
             "client_id": "transltr-dev",
             "redirect_uri": "http://transltr-bma-ui-dev.ncats.io/oauth2/redir/una",
             "token_uri": "https://a-ci.ncats.io/_api/auth/transltr/oidc/token",
-            "auth_uri": "https://a-ci.ncats.io/_api/auth/transltr/authorize"
+            "auth_uri": "https://a-ci.ncats.io/_api/auth/transltr/authorize",
+            "scope": "openid profile email company provider identity_provider"
         }
     }
 }

@@ -15,7 +15,8 @@
             "client_id": "transltr-local",
             "redirect_uri": "http://localhost:8386/oauth2/redir/una",
             "token_uri": "https://a-ci.ncats.io/_api/auth/transltr/oidc/token",
-            "auth_uri": "https://a-ci.ncats.io/_api/auth/transltr/authorize"
+            "auth_uri": "https://a-ci.ncats.io/_api/auth/transltr/authorize",
+            "scope": "openid profile email company provider identity_provider"
         }
     }
 }
