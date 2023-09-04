@@ -266,7 +266,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "9347e075-2133-4913-a32a-4a388ab39042",
+        "uuid": "85858d40-0090-4344-bc0a-89d33fb1942b",
         "id": "NCBIGene:283489"
     },
     {
@@ -275,7 +275,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "37bd8a26-3d12-4d9d-8050-afd944d88b21",
+        "uuid": "c7be56d5-5b98-4afb-aa50-eb9bc5abc4ed",
         "id": "NCBIGene:283489"
     },
     {
@@ -284,7 +284,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "7032e208-f758-4a5e-a079-a74041f3ed79",
+        "uuid": "d5de705e-a4b1-4b86-b729-41c4f14d1306",
         "id": "NCBIGene:1654"
     },
     {
@@ -293,7 +293,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "be4d9e9a-1909-4788-8eb3-e320670ae07e",
+        "uuid": "8129858d-f5da-4fb2-95cf-dab5216bc83e",
         "id": "NCBIGene:1654"
     },
     {
@@ -302,7 +302,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "609efbd1-1639-46f0-9365-ea0d526459b5",
+        "uuid": "ecabfcbc-c6a0-4cf7-af62-e106fdf1731f",
         "id": "NCBIGene:6323"
     },
     {
@@ -311,7 +311,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "05b79348-5a46-457b-85a5-dc852e315dc5",
+        "uuid": "d7e4a37d-e3e0-4d2d-aa49-5d58499e5309",
         "id": "NCBIGene:6323"
     },
     {
@@ -320,7 +320,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "706309c9-372f-41c4-affd-3ce9717ae05d",
+        "uuid": "c89c9f0f-442e-4c3c-aedb-1d4c42e00192",
         "id": "NCBIGene:7204"
     },
     {
@@ -329,7 +329,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "52c8106f-eb05-4559-b3d4-a07277bc5d64",
+        "uuid": "be82f4a3-a6df-47b5-b7b9-a61e4f7acedc",
         "id": "NCBIGene:7204"
     },
     {
@@ -338,7 +338,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "078c5e51-b4e0-4711-b008-5ad82f4a3e5f",
+        "uuid": "94f56a67-99ea-4a0e-883d-979f83a499c4",
         "id": "NCBIGene:6595"
     },
     {
@@ -347,7 +347,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "5943a6d5-918d-486d-831d-43e475dee26a",
+        "uuid": "c381eb03-485c-4092-9cb0-65c0cd9598fe",
         "id": "NCBIGene:6595"
     },
     {
@@ -356,7 +356,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "1291cfc2-a58a-460e-abdc-72823651e04a",
+        "uuid": "c0fe8424-f13c-418c-8829-aa71bc1a4329",
         "id": "NCBIGene:6529"
     },
     {
@@ -365,7 +365,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "4b292991-107c-452e-ad17-1d7d6776f750",
+        "uuid": "3840c6ef-3a97-4e20-a794-1f3fe4c6b64a",
         "id": "NCBIGene:6529"
     },
     {
@@ -374,7 +374,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "549feb95-4016-4f2a-8412-b2b1337b3803",
+        "uuid": "d30eb397-319d-475e-8ea9-e9977304c74c",
         "id": "NCBIGene:64207"
     },
     {
@@ -383,7 +383,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "26a972f8-ad8c-4192-9fed-5732dac28eb5",
+        "uuid": "66821260-2ac7-4d4b-95b3-bd76654d4872",
         "id": "NCBIGene:64207"
     },
     {
@@ -392,7 +392,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "97a9bbe8-bc6d-4126-83d1-c30f7c61bdb3",
+        "uuid": "71fb4777-7fe1-41d2-bfb5-4cb5bdad8b50",
         "id": "NCBIGene:23221"
     },
     {
@@ -401,7 +401,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "2c8ae513-34c8-4aeb-b467-b3103b5a9381",
+        "uuid": "1d560000-804f-435d-8fc0-145490bab29a",
         "id": "NCBIGene:23221"
     },
     {
@@ -410,7 +410,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "d76f8799-3841-4d3d-b59b-e0c3536dce8b",
+        "uuid": "e14fd8c3-76ab-4879-89c0-c405a4832753",
         "id": "NCBIGene:22907"
     },
     {
@@ -419,7 +419,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "21f9f10d-b95f-4b19-a5e4-9b1d03f5d3f5",
+        "uuid": "d97db543-85a2-4f1e-9358-4656ecd6398a",
         "id": "NCBIGene:22907"
     },
     {
@@ -428,7 +428,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "9e0e623f-f9ce-48c6-9c93-4711b131d6f5",
+        "uuid": "b85f01df-700d-4b79-b555-2e2408131237",
         "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -437,7 +437,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "3a346ad4-806a-482a-a3c3-eabb05a4032d",
+        "uuid": "2bf6a713-51cd-4baf-aac5-d58904e4199f",
         "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -446,7 +446,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "a79878cd-845a-4f44-b7df-6f4ca92ad1d4",
+        "uuid": "cea1e2ed-1c08-4e18-b72d-79ed742fbbdc",
         "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -455,7 +455,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "b81e2670-a63f-4ad1-a8e6-a8d36ef0574f",
+        "uuid": "6bdc01d5-0255-4e92-b9a5-5b8228c02657",
         "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -464,7 +464,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "3de6e516-45e6-4cba-9f50-21cda801b13c",
+        "uuid": "5934c7ae-66d3-4afc-b1b5-b6d436cf5585",
         "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -473,7 +473,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "54aa78aa-58c3-4f34-abc3-6e45f7a5fb1c",
+        "uuid": "0dd92ef2-ae39-45bd-ac50-55b73a57b9a2",
         "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -482,7 +482,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "c5d4474f-d95b-4fe6-bd85-7317e23e8202",
+        "uuid": "82a0ff66-b5c5-410e-aa25-ee4a6ab386d4",
         "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -491,7 +491,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "3559df91-8c94-4812-b4ce-1fa9c64bef5a",
+        "uuid": "e393900c-cfd4-42f2-8bea-f363402330cd",
         "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -500,7 +500,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "b34cb01a-66a1-4a23-b53c-d8faf4406300",
+        "uuid": "57d6ed62-c8f9-47c2-96a4-083c52cf7a9a",
         "id": "PUBCHEM.COMPOUND:2162"
     },
     {
@@ -509,7 +509,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "c9d1ec06-7f98-44a3-8561-8f4c0c6eef57",
+        "uuid": "c2e01ce5-4093-442d-a754-d49b08638e94",
         "id": "PUBCHEM.COMPOUND:2162"
     },
     {
@@ -518,7 +518,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "5c58360d-695b-404a-b3b2-c87eb7eef9dc",
+        "uuid": "5c12b921-6136-452d-be1e-49afee37c2fb",
         "id": "PUBCHEM.COMPOUND:5362124"
     },
     {
@@ -527,7 +527,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "a393d6a4-75a1-4c2c-ae00-3f39c50918e2",
+        "uuid": "f7721af7-3725-474d-8556-f1f6635458c8",
         "id": "PUBCHEM.COMPOUND:5362124"
     },
     {
@@ -536,7 +536,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "380dec7e-85f2-4acf-994c-883d1426c306",
+        "uuid": "841f57d7-4a48-495d-a6d9-0502d1a13ef2",
         "id": "PUBCHEM.COMPOUND:24821094"
     },
     {
@@ -545,7 +545,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "64797006-fcbc-4c3e-bc3e-5ddef7c79477",
+        "uuid": "91e9320d-f08e-4f2e-bca1-feb4518ebe34",
         "id": "PUBCHEM.COMPOUND:24821094"
     },
     {
@@ -554,7 +554,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "142801e7-1929-478a-a4a2-221e94ab4295",
+        "uuid": "a46d671f-4600-4f93-8be7-4f64cf2c03bc",
         "id": "PUBCHEM.COMPOUND:9875401"
     },
     {
@@ -563,7 +563,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "39711ed5-191d-44da-8856-a8dd73acd595",
+        "uuid": "b88dfa4d-7036-4d74-aff2-65aa6c91fd1a",
         "id": "PUBCHEM.COMPOUND:9875401"
     },
     {
@@ -572,7 +572,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "ba185f36-9dbd-4d0b-a7bd-199960e0cf55",
+        "uuid": "9f82e9ab-1eb7-4d61-be4a-12b90ce87889",
         "id": "UNII:90ZX3Q3FR7"
     },
     {
@@ -581,7 +581,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "77662044-301c-45c3-9c23-a5ecd5a01dba",
+        "uuid": "ba4fd18e-54dd-4954-8956-4cc4915e8342",
         "id": "UNII:90ZX3Q3FR7"
     }
 ]
