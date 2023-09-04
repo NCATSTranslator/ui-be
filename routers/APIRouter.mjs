@@ -16,7 +16,7 @@ function createAPIRouter(config, services, isDemo) {
 
   router.get('/config', function(req, res, next) {
     return res.status(200).json({
-      cached_queries: config.frontend,
+      cached_queries: config.frontend.filter(e => e.allow_outbound),
       social_providers: config.auth.social_providers
     });
   });
