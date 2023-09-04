@@ -1,1 +1,587 @@
-[{"name":"Diabetes Mellitus","id":"MONDO:0005015","type":"drug","direction":null,"uuid":"077f68ca-c490-4e3a-bf93-8d5fee104cb6"},{"name":"Breast Cancer","id":"MONDO:0007254","type":"drug","direction":null,"uuid":"b560de16-5a1e-4cfd-9243-78185cbefbb7"},{"name":"Addison's Disease","id":"MONDO:0009410","type":"drug","direction":null,"uuid":"27cadf93-7a71-4afe-aafd-3221e5d28c95"},{"name":"Hypertensive Heart Disease","id":"MONDO:0001302","type":"drug","direction":null,"uuid":"9daf6b98-88ae-451b-bf9d-45cebfc9e316"},{"name":"Familial Hypercholesterolemia","id":"MONDO:0005439","type":"drug","direction":null,"uuid":"8405bf80-fab0-4f6e-b240-524ddceaee0a"},{"name":"Chronic Obstructive Pulmonary Disease","id":"MONDO:0005002","type":"drug","direction":null,"uuid":"5489026e-61c5-43a9-8070-68f35c6df348"},{"name":"Chronic Bronchitis","id":"MONDO:0005607","type":"drug","direction":null,"uuid":"9349b2f9-ecf2-413a-a8bc-2cc486aab86e"},{"name":"Pulmonary Emphysema","id":"MONDO:0004849","type":"drug","direction":null,"uuid":"96e76896-76c0-436d-838c-8aeefbbd8f0f"},{"name":"Asthma","id":"MONDO:0004979","type":"drug","direction":null,"uuid":"d096b5d7-b605-4a8d-a438-1815f318b09a"},{"name":"Large Artery Stroke","id":"MONDO:0005490","type":"drug","direction":null,"uuid":"d36d565b-f361-405b-9b35-0ee7fbcd63a9"},{"name":"Alzheimer's Disease","id":"MONDO:0004975","type":"drug","direction":null,"uuid":"f36a8e27-a3fa-4892-886a-7397ebe38780"},{"name":"Type 2 Diabetes Mellitus","id":"MONDO:0005148","type":"drug","direction":null,"uuid":"c419dfc7-147e-42c3-9030-c2d2b85ec359"},{"name":"Cirrhosis of Liver","id":"MONDO:0005155","type":"drug","direction":null,"uuid":"0aa39e9c-4943-4b37-833e-4438cf8fba1f"},{"name":"Nephritis","id":"MONDO:0001166","type":"drug","direction":null,"uuid":"77dad318-0c5d-4fcb-a42a-1633b4902d81"},{"name":"Cerebral Palsy","id":"MONDO:0006497","type":"drug","direction":null,"uuid":"7d583be7-de85-4fd9-976b-b49bf4c463a4"},{"name":"Cerebral Palsy","id":"MONDO:0006497","type":"drug","direction":null,"uuid":"f582512b-c86d-4aec-96f7-3e9e27871669"},{"name":"Bethlem Myopathy","id":"MONDO:0008029","type":"drug","direction":null,"uuid":"96882b25-264c-426f-a443-905f51c7bfd8"},{"name":"Cerebral Arteriopathy With Subcortical Infarcts And Leukoencephalopathy","id":"MONDO:0007432","type":"drug","direction":null,"uuid":"f4a9b098-df22-45f3-beb5-5d07f2839a7b"},{"name":"Ehlers-danlos Syndrome, Hypermobility Type","id":"MONDO:0007523","type":"drug","direction":null,"uuid":"85f07efc-282d-43e3-9cc6-7763c033a7ec"},{"name":"Ehlers-danlos Syndrome, Vascular Type","id":"MONDO:0017314","type":"drug","direction":null,"uuid":"c67f1c71-4755-4b89-a7ed-e2a155e96bf9"},{"name":"Kyphoscoliotic Ehlers-danlos Syndrome","id":"MONDO:0034024","type":"drug","direction":null,"uuid":"4779e2dd-aeb2-4537-8ad6-4895344ff186"},{"name":"Ehlers-danlos Syndrome, Arthrochalasis Type","id":"MONDO:0007525","type":"drug","direction":null,"uuid":"0eed3269-da7e-4e7a-9683-8775a328fc87"},{"name":"Ehlers-danlos Syndrome, Classic Type","id":"MONDO:0007522","type":"drug","direction":null,"uuid":"57e6685a-5961-4a63-bb71-3055e3b0897e"},{"name":"Ehlers-danlos Syndrome, Dermatosparaxis Type","id":"MONDO:0009161","type":"drug","direction":null,"uuid":"5feb6bfb-62f2-4fb5-8ace-87532662ac9e"},{"name":"Ehlers-danlos Syndrome","id":"MONDO:0020066","type":"drug","direction":null,"uuid":"f09a8e1e-ddc2-4de2-9d93-ff1a114b9cb7"},{"name":"Hereditary Sensory And Autonomic Neuropathy Type 4","id":"MONDO:0009746","type":"drug","direction":null,"uuid":"23b310ce-7076-4d04-b9b5-a881f565c5c2"},{"name":"Inclusion Body Myositis","id":"MONDO:0007827","type":"drug","direction":null,"uuid":"c3c62412-5da9-4df1-ad37-9616e3e7c9fd"},{"name":"Ullrich Congenital Muscular Dystrophy","id":"MONDO:0000355","type":"drug","direction":null,"uuid":"3be2e6a9-fa9b-4d9c-8d3b-deafb4f59858"},{"name":"Fatal Familial Insomnia","id":"MONDO:0010808","type":"drug","direction":null,"uuid":"f10cd1a7-9817-4067-b603-eb920bd0fe45"},{"name":"NGLY1","id":"NCBIGene:55768","type":"chemical","direction":"increased","uuid":"4a7324ea-f8a3-44cd-b1c1-ca627e4f06e8"},{"name":"NGLY1","id":"NCBIGene:55768","type":"chemical","direction":"decreased","uuid":"c98e338a-6096-4440-826a-43eb220fc55d"},{"name":"HTT","id":"NCBIGene:3064","type":"chemical","direction":"increased","uuid":"47e86f73-eec0-4ea2-bd5c-6aa219bac830"},{"name":"HTT","id":"NCBIGene:3064","type":"chemical","direction":"decreased","uuid":"4d500cf4-3ec1-4d7e-b3ad-bf2a9d59d859"},{"name":"ADNP","id":"NCBIGene:23394","type":"chemical","direction":"increased","uuid":"544ab30a-cc4e-45c9-aac0-c3d73d8b6108"},{"name":"ADNP","id":"NCBIGene:23394","type":"chemical","direction":"decreased","uuid":"b786176e-5a1b-4eb2-ab6e-454d63b62583"},{"name":"CHAMP1","id":"NCBIGene:283489","type":"chemical","direction":"increased","uuid":"1300481a-1588-4a59-8698-d80882190d1f"},{"name":"CHAMP1","id":"NCBIGene:283489","type":"chemical","direction":"decreased","uuid":"c83d9911-5373-4ffc-b377-8a8f33dc9cda"},{"name":"DDX3X","id":"NCBIGene:1654","type":"chemical","direction":"increased","uuid":"46377b62-fb95-49f5-96fe-10f4c7198507"},{"name":"DDX3X","id":"NCBIGene:1654","type":"chemical","direction":"decreased","uuid":"60ad3b7d-ea59-4c57-8c77-c1224c6a9754"},{"name":"SCN1A","id":"NCBIGene:6323","type":"chemical","direction":"increased","uuid":"cea97cd1-d765-43a8-8833-3f66246c59d3"},{"name":"SCN1A","id":"NCBIGene:6323","type":"chemical","direction":"decreased","uuid":"10666b66-e45e-49fb-ba49-9dc01d65ee82"},{"name":"TRIO","id":"NCBIGene:7204","type":"chemical","direction":"increased","uuid":"4ad013bb-c6cd-486b-9c08-bdf708044105"},{"name":"TRIO","id":"NCBIGene:7204","type":"chemical","direction":"decreased","uuid":"8241c8ef-53a1-467a-b826-f6c6f8139614"},{"name":"SMARCA2","id":"NCBIGene:6595","type":"chemical","direction":"increased","uuid":"1a2ae4be-a166-4495-9b64-611839a4f0ff"},{"name":"SMARCA2","id":"NCBIGene:6595","type":"chemical","direction":"decreased","uuid":"d945c0fe-02ea-4a95-8ed2-f41685d84d6e"},{"name":"SLC6A1","id":"NCBIGene:6529","type":"chemical","direction":"increased","uuid":"be63691d-e38e-41f1-b912-371c2dd61173"},{"name":"SLC6A1","id":"NCBIGene:6529","type":"chemical","direction":"decreased","uuid":"b9410b05-a96e-41f3-a59e-79fe7cc8bb67"},{"name":"IRF2BPL","id":"NCBIGene:64207","type":"chemical","direction":"increased","uuid":"f6aa2809-7b0a-487c-add4-96def3f20cff"},{"name":"IRF2BPL","id":"NCBIGene:64207","type":"chemical","direction":"decreased","uuid":"edd5b2b6-4971-420b-a5ed-751b91cb0a08"},{"name":"RHOBTB2","id":"NCBIGene:23221","type":"chemical","direction":"increased","uuid":"e9e111f8-a99d-43f2-8554-aeb7825d1d6e"},{"name":"RHOBTB2","id":"NCBIGene:23221","type":"chemical","direction":"decreased","uuid":"6eb1b4ff-af40-47a0-857e-9e4435a15012"},{"name":"DHX30","id":"NCBIGene:22907","type":"chemical","direction":"increased","uuid":"24727a2c-78cf-4a38-86ed-4e5e2efe169c"},{"name":"DHX30","id":"NCBIGene:22907","type":"chemical","direction":"decreased","uuid":"0d377aaa-9fbc-406a-9ee4-33f09f935d57"},{"name":"Pregabalin","id":"PUBCHEM.COMPOUND:5486971","type":"gene","direction":"increased","uuid":"ef6afef4-0f97-41ab-b98e-62de8a7aeceb"},{"name":"Pregabalin","id":"PUBCHEM.COMPOUND:5486971","type":"gene","direction":"decreased","uuid":"fedf47fb-a746-401f-aba3-991e07b3a6c3"},{"name":"Rosuvastatin","id":"PUBCHEM.COMPOUND:446157","type":"gene","direction":"increased","uuid":"937ce995-0c50-4c75-a437-dd3612c44344"},{"name":"Rosuvastatin","id":"PUBCHEM.COMPOUND:446157","type":"gene","direction":"decreased","uuid":"a8086331-11fb-4dad-924c-1362847874d3"},{"name":"Propranolol","id":"PUBCHEM.COMPOUND:4946","type":"gene","direction":"increased","uuid":"7ad333fc-4495-4fb8-983d-a0d85898a1f6"},{"name":"Propranolol","id":"PUBCHEM.COMPOUND:4946","type":"gene","direction":"decreased","uuid":"c2eae145-6658-4155-82c5-8df766edb0c6"},{"name":"Eletriptan","id":"PUBCHEM.COMPOUND:77993","type":"gene","direction":"increased","uuid":"82f5717b-d5c5-4294-9bf0-8bb250265fec"},{"name":"Eletriptan","id":"PUBCHEM.COMPOUND:77993","type":"gene","direction":"decreased","uuid":"771a8d79-4727-47c7-a404-181110f0569d"},{"name":"Amlodipine","id":"PUBCHEM.COMPOUND:2162","type":"gene","direction":"increased","uuid":"ec90b27f-d3f7-4dc3-9065-60ed9540dbbe"},{"name":"Amlodipine","id":"PUBCHEM.COMPOUND:2162","type":"gene","direction":"decreased","uuid":"0697150c-34b7-43bb-a2e9-d65bbd438b06"},{"name":"Benazepril","id":"PUBCHEM.COMPOUND:5362124","type":"gene","direction":"increased","uuid":"45060c2d-defe-4cb9-bc7e-ad7c664662de"},{"name":"Benazepril","id":"PUBCHEM.COMPOUND:5362124","type":"gene","direction":"decreased","uuid":"26f0027e-58c0-4ee6-a11a-af014ac8fdef"},{"name":"Ibrutinib","id":"PUBCHEM.COMPOUND:24821094","type":"gene","direction":"increased","uuid":"9ed7406e-c4b2-40b6-87da-e3d708e876b5"},{"name":"Ibrutinib","id":"PUBCHEM.COMPOUND:24821094","type":"gene","direction":"decreased","uuid":"323578c7-26fc-4238-b814-357de4152cf3"},{"name":"Rivaroxaban","id":"PUBCHEM.COMPOUND:9875401","type":"gene","direction":"increased","uuid":"0020b61e-cc63-41e6-ae7c-4343679e0d6d"},{"name":"Rivaroxaban","id":"PUBCHEM.COMPOUND:9875401","type":"gene","direction":"decreased","uuid":"03a8deea-7094-475e-a36e-b81bc046889f"},{"name":"Risankizumab","id":"UNII:90ZX3Q3FR7","type":"gene","direction":"increased","uuid":"9e71990b-76a3-4905-8512-b2fc9cdca733"},{"name":"Risankizumab","id":"UNII:90ZX3Q3FR7","type":"gene","direction":"decreased","uuid":"852e758c-5158-4980-b034-525d83fd1908"}]
+[
+    {
+        "name": "Diabetes Mellitus",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "5c5d747f-010a-489f-a16d-b57fff96718b",
+        "id": "MONDO:0005015"
+    },
+    {
+        "name": "Breast Cancer",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "2bc1a723-915e-4285-a052-5d3328436d26",
+        "id": "MONDO:0007254"
+    },
+    {
+        "name": "Addison Disease",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "ff94fd25-74ee-4222-92e1-116d6ea8dff9",
+        "id": "MONDO:0009410"
+    },
+    {
+        "name": "Hypertensive Heart Disease",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "209e6a3e-7169-4215-b657-c12eee2f9cb3",
+        "id": "MONDO:0001302"
+    },
+    {
+        "name": "Familial Hypercholesterolemia ",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "88865e11-c704-4d98-a1c4-f0077c1555e7",
+        "id": "MONDO:0005439"
+    },
+    {
+        "name": "Chronic Obstructive Pulmonary Disease",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "9cd67544-592e-46ce-8c9e-e64ac07ab73f",
+        "id": "MONDO:0005002"
+    },
+    {
+        "name": "Asthma ",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "f8a40d81-d565-401c-9e97-495d96d6ff67",
+        "id": "MONDO:0004979"
+    },
+    {
+        "name": "Alzheimer's Disease ",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "fc47ce90-7918-4da2-bb43-9ce5d242b349",
+        "id": "MONDO:0004975"
+    },
+    {
+        "name": "Type 2 Diabetes Mellitus",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "a5bed16a-cbad-4829-ba54-caa6d9bcca6b",
+        "id": "MONDO:0005148"
+    },
+    {
+        "name": "Cerebral Palsy",
+        "type": "drug",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "e6654a7e-a034-4633-9b3f-a2556f62d10f",
+        "id": "MONDO:0006497"
+    },
+    {
+        "name": "Bethlem Myopathy",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "67913b83-c064-46dc-ab97-37bf7e99fc5f",
+        "id": "MONDO:0008029"
+    },
+    {
+        "name": "Ehlers-Danlos Syndrome, Hypermobility Type",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "abbe9043-46fd-4714-bd97-7e4df45c3cf6",
+        "id": "MONDO:0007523"
+    },
+    {
+        "name": "Ehlers-Danlos Syndrome, Vascular Type",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "7d891e44-6f7b-4eb7-8d48-9d39a0c6cd56",
+        "id": "MONDO:0017314"
+    },
+    {
+        "name": "Ehlers-Danlos Syndrome",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "29c7ecdb-b55c-4708-995b-1a89354ac058",
+        "id": "MONDO:0020066"
+    },
+    {
+        "name": "Inclusion Body Myositis",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "bf4a334a-98e9-4a0d-a262-5869b0569ae4",
+        "id": "MONDO:0007827"
+    },
+    {
+        "name": "Ullrich Congenital Muscular Dystrophy",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "9da2757e-52f1-4fe3-89f9-c38f9c473abc",
+        "id": "MONDO:0000355"
+    },
+    {
+        "name": "Fatal Familial Insomnia",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": true,
+        "direction": null,
+        "uuid": "75c540a0-5e8a-4517-be0c-52c9f47dfb16",
+        "id": "MONDO:0010808"
+    },
+    {
+        "name": "Cerebral Arteriopathy with Subcortical Infarcts and Leukoencephalopathy",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": false,
+        "direction": null,
+        "uuid": "e71ea75b-a586-4c64-b573-f1da063b9af9",
+        "id": "MONDO:0007432"
+    },
+    {
+        "name": "Hereditary Sensory and Autonomic Neuropathy Type 4",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": false,
+        "direction": null,
+        "uuid": "4a7ab3eb-3e85-4bd6-8d67-b9fc97db33eb",
+        "id": "MONDO:0009746"
+    },
+    {
+        "name": "Kyphoscoliotic Ehlers-Danlos Syndrome",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": false,
+        "direction": null,
+        "uuid": "583f0111-3735-4bb5-a7da-f3a1a35c968c",
+        "id": "MONDO:0034024"
+    },
+    {
+        "name": "Ehlers-Danlos Syndrome, Arthrochalasis Type",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": false,
+        "direction": null,
+        "uuid": "314c4463-8578-4847-a3ca-e1e3de088c14",
+        "id": "MONDO:0007525"
+    },
+    {
+        "name": "Ehlers-Danlos Syndrome, Classic Type",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": false,
+        "direction": null,
+        "uuid": "d72c152f-8978-4415-8fef-3a432bb82864",
+        "id": "MONDO:0007522"
+    },
+    {
+        "name": "Ehlers-Danlos Syndrome, Dermatosparaxis Type",
+        "type": "drug",
+        "allow_inbound": true,
+        "allow_outbound": false,
+        "direction": null,
+        "uuid": "85141fe7-9b9c-4196-80f9-3af6c0c9e69f",
+        "id": "MONDO:0009161"
+    },
+    {
+        "name": "NGLY1",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "60c30218-1134-47e4-a340-23077f9eef0b",
+        "id": "NCBIGene:55768"
+    },
+    {
+        "name": "NGLY1",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "f4f8b644-bc5d-41ad-ae05-fa2ad0b15be0",
+        "id": "NCBIGene:55768"
+    },
+    {
+        "name": "HTT",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "7f41d452-acd4-421d-9f87-1ad7696b117c",
+        "id": "NCBIGene:3064"
+    },
+    {
+        "name": "HTT",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "7b7154b2-8130-495b-ba18-ad502e940bd4",
+        "id": "NCBIGene:3064"
+    },
+    {
+        "name": "ADNP",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "f05662e0-63c8-4f16-842e-e46e2db9b93c",
+        "id": "NCBIGene:23394"
+    },
+    {
+        "name": "ADNP",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "616ceafc-029b-440c-b807-7794f85b86bf",
+        "id": "NCBIGene:23394"
+    },
+    {
+        "name": "CHAMP1",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "679e5a07-947e-4ffa-bb24-36b8d7f98b5f",
+        "id": "NCBIGene:283489"
+    },
+    {
+        "name": "CHAMP1",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "ee19eb20-54a9-4a69-9079-3a93c9144f19",
+        "id": "NCBIGene:283489"
+    },
+    {
+        "name": "DDX3X",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "f0b9c162-14d7-49fa-9d7b-2fe92618e9cb",
+        "id": "NCBIGene:1654"
+    },
+    {
+        "name": "DDX3X",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "d8e98df1-c049-4bba-beb0-7a73fc73b25d",
+        "id": "NCBIGene:1654"
+    },
+    {
+        "name": "SCN1A",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "13ba33fc-4585-4bd3-986e-acf7241dcfc4",
+        "id": "NCBIGene:6323"
+    },
+    {
+        "name": "SCN1A",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "f65abe3b-da1b-407c-a0b1-8a91d9580d53",
+        "id": "NCBIGene:6323"
+    },
+    {
+        "name": "TRIO",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "c1e20593-11cc-45c1-b011-e456b90f75d1",
+        "id": "NCBIGene:7204"
+    },
+    {
+        "name": "TRIO",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "014203f4-00e9-4882-9a06-797695da3310",
+        "id": "NCBIGene:7204"
+    },
+    {
+        "name": "SMARCA2",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "88d14310-e55a-4d0b-8907-eddd9195aa5e",
+        "id": "NCBIGene:6595"
+    },
+    {
+        "name": "SMARCA2",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "a8dc2df8-0536-4fe9-b935-e4f0f7226f0a",
+        "id": "NCBIGene:6595"
+    },
+    {
+        "name": "SLC6A1",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "e49e89d2-51ee-46c3-b47a-fdbe41e95bd7",
+        "id": "NCBIGene:6529"
+    },
+    {
+        "name": "SLC6A1",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "d8012dda-d7ab-48be-a758-0f2196402496",
+        "id": "NCBIGene:6529"
+    },
+    {
+        "name": "IRF2BPL",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "96cbc26e-7aa9-4b30-be2f-ae319f7571a5",
+        "id": "NCBIGene:64207"
+    },
+    {
+        "name": "IRF2BPL",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "c4ca4648-f28a-4d2d-8d88-685f8544b10e",
+        "id": "NCBIGene:64207"
+    },
+    {
+        "name": "RHOBTB2",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "9c3e6341-34c3-4809-9d80-e3d60c670c3d",
+        "id": "NCBIGene:23221"
+    },
+    {
+        "name": "RHOBTB2",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "4f00dff8-0519-4db7-be51-19388ee2ac58",
+        "id": "NCBIGene:23221"
+    },
+    {
+        "name": "DHX30",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "cad054ed-3366-4b0c-ac9e-6c4d946b0a20",
+        "id": "NCBIGene:22907"
+    },
+    {
+        "name": "DHX30",
+        "type": "chemical",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "4af954ec-a4f5-4b57-b445-f23fb1fcf19b",
+        "id": "NCBIGene:22907"
+    },
+    {
+        "name": "Pregabalin",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "552ffb88-0b39-4424-9bf0-6f0fb878d967",
+        "id": "PUBCHEM.COMPOUND:5486971"
+    },
+    {
+        "name": "Pregabalin",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "901a1ba0-ae6a-4871-8e5b-b72257c27d56",
+        "id": "PUBCHEM.COMPOUND:5486971"
+    },
+    {
+        "name": "Rosuvastatin",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "32a36ecc-630c-4669-b7bd-0754e87c05a8",
+        "id": "PUBCHEM.COMPOUND:446157"
+    },
+    {
+        "name": "Rosuvastatin",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "ffc8884f-97a4-42c2-bbca-571ba120e00b",
+        "id": "PUBCHEM.COMPOUND:446157"
+    },
+    {
+        "name": "Propranolol",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "84f36777-557e-4c98-bdef-1ba4ee983540",
+        "id": "PUBCHEM.COMPOUND:4946"
+    },
+    {
+        "name": "Propranolol",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "f8aa9a22-f5d9-43a8-82f8-c0f8a5533a86",
+        "id": "PUBCHEM.COMPOUND:4946"
+    },
+    {
+        "name": "Eletriptan",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "47e4bbbe-7060-441e-bc4d-31535c7d3dad",
+        "id": "PUBCHEM.COMPOUND:77993"
+    },
+    {
+        "name": "Eletriptan",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "d8e81038-06b5-452e-ad72-e69ef5f0ffb9",
+        "id": "PUBCHEM.COMPOUND:77993"
+    },
+    {
+        "name": "Amlodipine",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "5b6c47ed-c750-4806-97e6-1f77eaec7295",
+        "id": "PUBCHEM.COMPOUND:2162"
+    },
+    {
+        "name": "Amlodipine",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "b3f48962-4703-4fb9-b8a4-1d3e9ca6344f",
+        "id": "PUBCHEM.COMPOUND:2162"
+    },
+    {
+        "name": "Benazepril",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "41ce6f8f-5a68-4da8-9a65-34166ed3ba7b",
+        "id": "PUBCHEM.COMPOUND:5362124"
+    },
+    {
+        "name": "Benazepril",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "6ed2dba8-7f90-47a7-8202-de5568bc9b88",
+        "id": "PUBCHEM.COMPOUND:5362124"
+    },
+    {
+        "name": "Ibrutinib",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "5f5d0db0-a87b-4bf6-9c76-f6487df8c96a",
+        "id": "PUBCHEM.COMPOUND:24821094"
+    },
+    {
+        "name": "Ibrutinib",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "766e1840-6fab-4576-8b3e-e8aa4fc1a2ad",
+        "id": "PUBCHEM.COMPOUND:24821094"
+    },
+    {
+        "name": "Rivaroxaban",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "1289f3bb-26b0-4d2a-91f7-9579b5f27a9c",
+        "id": "PUBCHEM.COMPOUND:9875401"
+    },
+    {
+        "name": "Rivaroxaban",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "e59b530b-57fa-4489-a730-69245d28d549",
+        "id": "PUBCHEM.COMPOUND:9875401"
+    },
+    {
+        "name": "Risankizumab",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "increased",
+        "uuid": "63f66ff1-be4f-49c3-b500-b71dc9e5c0e2",
+        "id": "UNII:90ZX3Q3FR7"
+    },
+    {
+        "name": "Risankizumab",
+        "type": "gene",
+        "allow_inbound": false,
+        "allow_outbound": true,
+        "direction": "decreased",
+        "uuid": "35c93fdd-ab81-4af8-bbf4-1b4ac8c610d6",
+        "id": "UNII:90ZX3Q3FR7"
+    }
+]
