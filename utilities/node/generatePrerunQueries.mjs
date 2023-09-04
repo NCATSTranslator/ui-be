@@ -20,7 +20,7 @@ function parseLine(line) {
     if (type === 'drug') {
         return [{
             name: fields[1],
-            id: fields[2],
+            curie: fields[2],
             type: type,
             allow_inbound: allowInbound,
             allow_outbound: allowOutbound,
@@ -31,7 +31,7 @@ function parseLine(line) {
         const directions = fields[5].split(',').map(d => d.trim());
         return directions.map(direction => ({
             name: fields[1],
-            id: fields[2],
+            curie: fields[2],
             type: type,
             allow_inbound: allowInbound,
             allow_outbound: allowOutbound,
@@ -89,6 +89,11 @@ async function main() {
   console.log(JSON.stringify(queryList, null, 4));
   console.log(envs);
 
+  /*
+  queryList = queryList.slice(0, 2);
+  console.log(JSON.stringify(queryList, null, 4));
+  */
+
   // Begin actual work
   const configRoot = '../../configurations';
   const outputAdapter = new TranslatorServicexFEAdapter(null);
@@ -103,13 +108,13 @@ async function main() {
     preRunQueries[env] = [];
     let qc = 0;
     for (const query of queryList) {
-      const qElem = {...query};
-      qElem.curie = qElem.id;
-      delete qElem.id;
       try {
-        const arsQuery = service.inputToQuery(qElem);
+        const arsQuery = service.inputToQuery(query);
         const arsResp = await service.submitQuery(arsQuery);
+        const qElem = {...query};
         qElem.uuid = arsResp.pk;
+        qElem.id = query.curie;
+        delete qElem.curie;
         preRunQueries[env].push(qElem);
         qc += 1;
         console.log(`[${env}] ${qc}/${queryList.length} queries submitted`);
