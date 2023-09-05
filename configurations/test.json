@@ -27,7 +27,7 @@
   },
   "db_conn": {
     "ssl": {
-      "rejectUnauthorized": true 
+      "rejectUnauthorized": false 
     }
   },
   "_load_frontend": "configurations/frontend/test.json",
