@@ -115,13 +115,14 @@ async function main() {
         qElem.uuid = arsResp.pk;
         qElem.id = query.curie;
         delete qElem.curie;
+
         preRunQueries[env].push(qElem);
         qc += 1;
-        console.log(`[${env}] ${qc}/${queryList.length} queries submitted`);
-        await new Promise(r => setTimeout(r, 1000));
+        console.log(`[${env}] ${qc}/${queryList.length} queries submitted [${qElem.id} -- ${qElem.uuid}]`);
+        await new Promise(r => setTimeout(r, 60000));
       } catch (err) {
         console.error(err);
-        process.exit();
+        //process.exit();
       }
     }
   }

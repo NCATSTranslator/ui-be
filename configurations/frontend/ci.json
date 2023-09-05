@@ -5,7 +5,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "6812d717-4696-4486-8c32-e47c82b11423",
+        "uuid": "7ba5413e-8be0-4ff7-8c61-3d0f01ce8c12",
         "id": "MONDO:0005015"
     },
     {
@@ -14,7 +14,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "a2b5afac-64d8-4759-8ec3-3fb1cf2d0bee",
+        "uuid": "15355291-be1c-46d8-8bff-105f74056a4f",
         "id": "MONDO:0007254"
     },
     {
@@ -23,7 +23,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "1cb4b55e-637f-4269-8aa4-d1a94d48832f",
+        "uuid": "7c2ed516-59f1-4f80-a02d-7cc3d13aa5a6",
         "id": "MONDO:0009410"
     },
     {
@@ -32,7 +32,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "b011b55b-7bd5-4ec4-a00b-5d66f79fd06d",
+        "uuid": "a049c1c2-c5dd-4f56-816c-317016ea0665",
         "id": "MONDO:0001302"
     },
     {
@@ -41,7 +41,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "f9b217c6-1221-467c-80e0-26133eae4586",
+        "uuid": "b4ef458a-c56c-44bf-9b5e-67ac65439e3c",
         "id": "MONDO:0005439"
     },
     {
@@ -50,7 +50,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "571ecb77-b15e-4bb6-9c06-8c921c2647e3",
+        "uuid": "fc3a7c77-81ef-41ab-b6c1-b3d0d0c4491f",
         "id": "MONDO:0005002"
     },
     {
@@ -59,7 +59,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "0b4c129d-3f74-466d-9f90-fe0aabb8a8c4",
+        "uuid": "132027be-46bb-4bd5-88a5-f9f36546ef2e",
         "id": "MONDO:0004979"
     },
     {
@@ -68,7 +68,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "a18af8fb-8ef4-4b71-9091-ddeef79826bc",
+        "uuid": "48c1f9ea-85ce-4569-8550-1480359dbcd5",
         "id": "MONDO:0004975"
     },
     {
@@ -77,7 +77,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "50330444-a640-4aea-b953-0325d85dabc4",
+        "uuid": "0c41d268-ba6e-485c-81dd-85fe53385ab4",
         "id": "MONDO:0005148"
     },
     {
@@ -86,7 +86,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "115883ff-2866-4178-a1ca-cfcd6e8d46d0",
+        "uuid": "fbe8e3e5-3241-490d-93d1-48a924482813",
         "id": "MONDO:0006497"
     },
     {
@@ -95,7 +95,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "728e7ae4-ee81-4cfa-ad96-4dff6158064a",
+        "uuid": "cc1a8036-3491-445c-ba5e-e32ba71142c3",
         "id": "MONDO:0008029"
     },
     {
@@ -104,7 +104,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "18a3279e-8409-43b2-be04-7c5ef0ea8908",
+        "uuid": "fdce3db5-e810-40a6-b55b-9144850ebe8b",
         "id": "MONDO:0007523"
     },
     {
@@ -113,7 +113,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "c5d9325b-7c9f-43ac-84c5-56ef871fd0d6",
+        "uuid": "03469c2e-6fa4-4b2e-b732-c5944dafa0f6",
         "id": "MONDO:0017314"
     },
     {
@@ -122,7 +122,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "25b36154-fd0a-4acc-9530-26892728df9f",
+        "uuid": "2f8e66d0-cdbd-4b9e-ae7a-8836ab5f25eb",
         "id": "MONDO:0020066"
     },
     {
@@ -131,7 +131,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "3a1aaa6e-4321-4fec-b446-929f134946db",
+        "uuid": "58433cc6-65b2-40bb-bed7-c7f3bc95cf09",
         "id": "MONDO:0007827"
     },
     {
@@ -140,7 +140,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "03605b1e-b062-4540-889a-bbc11ab42866",
+        "uuid": "a3b0bba4-ef35-4dc5-95b1-7d722207a405",
         "id": "MONDO:0000355"
     },
     {
@@ -149,7 +149,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "5e4e8934-0744-498e-b2e8-9a76e6f27a6e",
+        "uuid": "cd73e4da-bbd3-401d-8a69-501bb119e40c",
         "id": "MONDO:0010808"
     },
     {
@@ -158,7 +158,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "3b8d1bb8-0598-4730-aeed-f9f68ad47e7f",
+        "uuid": "8fe47f80-9cd9-4825-b5f1-8c4dea894b5c",
         "id": "MONDO:0007432"
     },
     {
@@ -167,7 +167,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "86ac83d8-fcb4-42ac-88b8-84bc31fa2b98",
+        "uuid": "1b968e24-866c-4a52-bec4-603c9c56093f",
         "id": "MONDO:0009746"
     },
     {
@@ -176,7 +176,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "30fc15d9-32eb-435d-8df9-fd25564e0f24",
+        "uuid": "8ec4b20a-8bf0-4886-be11-6192bd22c8b2",
         "id": "MONDO:0034024"
     },
     {
@@ -185,7 +185,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "78375193-cbb2-4bc3-b449-c56d3b3af412",
+        "uuid": "619fc536-7a68-4767-a07d-3d42b09016c3",
         "id": "MONDO:0007525"
     },
     {
@@ -194,7 +194,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "72bd7444-3643-484b-9713-dad8aec38b6b",
+        "uuid": "9112e2ac-a0d5-4514-a08d-a408a4e0597f",
         "id": "MONDO:0007522"
     },
     {
@@ -203,7 +203,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "c27375f3-2046-4d13-83ba-fee9cb168577",
+        "uuid": "b01f49fa-7146-4fdc-aea3-571e67790db0",
         "id": "MONDO:0009161"
     },
     {
@@ -212,7 +212,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "666fd48e-7592-48ee-8f8e-fe42b6be7563",
+        "uuid": "9a79c8a4-e393-47b9-9da9-c8027d0c11ed",
         "id": "NCBIGene:55768"
     },
     {
@@ -221,7 +221,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "a6409670-3b9f-4647-8469-7ef4c1a6c17a",
+        "uuid": "27e7ed43-06c4-4412-b968-8bf54a314e3a",
         "id": "NCBIGene:55768"
     },
     {
@@ -230,7 +230,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "14e27f27-13c9-4a1d-90c0-8844db1ba36d",
+        "uuid": "b460c4f0-64cf-47e3-b105-cbaae25bf68c",
         "id": "NCBIGene:3064"
     },
     {
@@ -239,7 +239,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "23d02602-ddf3-4cf3-80fd-23de1313cfcc",
+        "uuid": "7888de92-b084-40ca-834b-aaf6d2a7bb3b",
         "id": "NCBIGene:3064"
     },
     {
@@ -248,7 +248,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "c1f9837d-43f0-49e4-a604-0e72e342b196",
+        "uuid": "1c9d3f9f-0799-4b9f-8b28-4ff430b1cbbf",
         "id": "NCBIGene:23394"
     },
     {
@@ -257,7 +257,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "97a0bc3f-4caa-4464-848a-de296f169a51",
+        "uuid": "c3106828-06a6-45c4-bdfb-89f0b1ae34f6",
         "id": "NCBIGene:23394"
     },
     {
@@ -266,7 +266,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "0fc29faf-1078-4fe2-8af3-e22ef688377b",
+        "uuid": "1fa8676b-9cfd-4b1b-8521-0d3de381f661",
         "id": "NCBIGene:283489"
     },
     {
@@ -275,7 +275,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "f8b270e1-d23f-4bfc-984e-b0175e1c30a1",
+        "uuid": "b92d0aee-67cb-4a45-8082-d221b7198061",
         "id": "NCBIGene:283489"
     },
     {
@@ -284,7 +284,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "92f2b319-6338-45f4-b3fb-309759399639",
+        "uuid": "ba45cb3f-af2b-4060-9b46-c097769cce21",
         "id": "NCBIGene:1654"
     },
     {
@@ -293,7 +293,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "e3bd2d4c-cfe7-4aff-b059-921e9cdc25ac",
+        "uuid": "8a7a768d-b73d-41f4-afc3-28e161729f37",
         "id": "NCBIGene:1654"
     },
     {
@@ -302,7 +302,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "fa520f23-4ed6-4ef5-aec2-7bab3c69a177",
+        "uuid": "be14a331-7109-4386-9430-657b9a39f35f",
         "id": "NCBIGene:6323"
     },
     {
@@ -311,7 +311,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "787fb1ba-4d4a-4178-aee3-13d7e7d5f6f6",
+        "uuid": "eadb519a-cecf-44fe-8b8c-b084ede2daef",
         "id": "NCBIGene:6323"
     },
     {
@@ -320,7 +320,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "5881869e-667d-4755-8aeb-38c1d963da94",
+        "uuid": "c47b22a5-2a5a-47ef-8be9-9d95251cb2c0",
         "id": "NCBIGene:7204"
     },
     {
@@ -329,7 +329,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "a72e330f-dce4-42ef-8ee3-c549de48d42b",
+        "uuid": "063be97e-8935-4bb2-a815-f912cee4af4c",
         "id": "NCBIGene:7204"
     },
     {
@@ -338,7 +338,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "2948a9ba-1b66-4aea-bb8a-029b5c452538",
+        "uuid": "ff4310d5-67c9-4953-afe0-33ee18d0afe5",
         "id": "NCBIGene:6595"
     },
     {
@@ -347,7 +347,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "c315861a-fcef-48f6-8bdc-6a922e26c072",
+        "uuid": "9ebd8812-2be7-4595-bb7d-24df6c2658a3",
         "id": "NCBIGene:6595"
     },
     {
@@ -356,7 +356,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "8dd95abb-46c6-4f66-9c2a-906a0008b78d",
+        "uuid": "a14f9cfb-4782-4443-8f86-7d400b5c02c8",
         "id": "NCBIGene:6529"
     },
     {
@@ -365,7 +365,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "a38de6b1-d921-4773-989c-95f313ac8815",
+        "uuid": "337299fc-eba5-4589-8a8a-e32816f5faf3",
         "id": "NCBIGene:6529"
     },
     {
@@ -374,7 +374,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "e85fdbf6-3e1e-4ffe-a8cf-58b0eb0c0681",
+        "uuid": "07954389-811d-410e-80c3-ded751d5cf83",
         "id": "NCBIGene:64207"
     },
     {
@@ -383,7 +383,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "43ebb715-308c-49c3-aaa2-d5e40faf4573",
+        "uuid": "de860129-e992-4922-8740-f0dfca20cb11",
         "id": "NCBIGene:64207"
     },
     {
@@ -392,7 +392,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "5ef26c10-5610-42eb-82cf-c4dffc0e055d",
+        "uuid": "5dddd3d0-b616-4444-bdd1-3d85b0dd8af1",
         "id": "NCBIGene:23221"
     },
     {
@@ -401,7 +401,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "0801384e-7566-4c30-b2a4-0180d540c494",
+        "uuid": "71304cc2-f089-49da-ba2b-710f2e06b85a",
         "id": "NCBIGene:23221"
     },
     {
@@ -410,7 +410,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "fd670627-5ee8-46c5-9127-efd979e96c44",
+        "uuid": "d730ac8a-d092-4a70-bb16-a2c77e4f888e",
         "id": "NCBIGene:22907"
     },
     {
@@ -419,7 +419,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "15a2f0e7-2923-44b5-b83f-6c1693db64cb",
+        "uuid": "5db03d6f-6104-4e0d-a360-5e74888b66f0",
         "id": "NCBIGene:22907"
     },
     {
@@ -428,7 +428,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "ab24516a-35e4-46f4-a924-3539a9ff5384",
+        "uuid": "df8c8e9f-f464-469b-8c71-08ce06402beb",
         "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -437,7 +437,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "f688fa13-ec46-4730-bafe-f5ee2ba8c76d",
+        "uuid": "233bc26d-2b6f-4a58-90d7-1aa8e41e2cb7",
         "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -446,7 +446,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "a50d567a-af54-43b7-84d8-b54328a5787d",
+        "uuid": "9b5a17ac-6ce2-498c-a81b-dd2d151e8a9d",
         "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -455,7 +455,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "433cd13c-310e-4c8e-9db6-3b668003ed64",
+        "uuid": "685c1ff8-7a87-4c0e-a77c-63f7382a5ee1",
         "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -464,7 +464,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "c85ae52c-9d20-4ffb-bf08-8abfbffcbba8",
+        "uuid": "b189f4b3-ec7c-4067-a13a-b3c096a25c97",
         "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -473,7 +473,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "07d2f50b-e089-4d3a-bf14-b01cb1e7d7a0",
+        "uuid": "8b66b78e-0d7f-4c74-8db2-e04c6a9f29ac",
         "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -482,7 +482,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "b80a7031-10b3-4a4f-a6af-1784d3fbc11c",
+        "uuid": "1ede75b3-6682-40bd-aab4-cb056ee08e34",
         "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -491,7 +491,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "a79dff79-2bac-4402-b527-6329731b8cf0",
+        "uuid": "86065b0e-5154-45ea-9e0f-d4bcb377e86e",
         "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -500,7 +500,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "94a17c9c-2234-4b43-8bc0-1e370e9c5100",
+        "uuid": "68a23ce4-5283-47be-bbc2-66ca73834e54",
         "id": "PUBCHEM.COMPOUND:2162"
     },
     {
@@ -509,7 +509,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "c59530b7-956a-4028-a284-8572b6bbff97",
+        "uuid": "adea1fff-d965-413e-a675-906ff353d003",
         "id": "PUBCHEM.COMPOUND:2162"
     },
     {
@@ -518,7 +518,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "405a7594-590a-4591-b764-5810a038c23a",
+        "uuid": "ffa9e6e0-717c-4202-966e-2af0b4977b7f",
         "id": "PUBCHEM.COMPOUND:5362124"
     },
     {
@@ -527,7 +527,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "906e619f-cc8e-4761-bf3f-0d4d6709f14f",
+        "uuid": "e84ee293-7757-4781-a650-12a7fdebddc0",
         "id": "PUBCHEM.COMPOUND:5362124"
     },
     {
@@ -536,7 +536,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "d86af880-a2a3-41fc-b8f4-db4094623b20",
+        "uuid": "66dfa9f8-99e8-4833-9bad-87f1e5d50119",
         "id": "PUBCHEM.COMPOUND:24821094"
     },
     {
@@ -545,7 +545,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "466d6e5c-5ae5-4be8-9f61-c4d956cd5633",
+        "uuid": "5ad0ed2b-d848-4fe0-b017-2d92d0533275",
         "id": "PUBCHEM.COMPOUND:24821094"
     },
     {
@@ -554,7 +554,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "78b392ee-0f9c-4121-88c1-efe760fb96e0",
+        "uuid": "57cee3d2-f6ed-42fe-a3bf-f6a3b1d0b131",
         "id": "PUBCHEM.COMPOUND:9875401"
     },
     {
@@ -563,7 +563,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "31a809f8-7d23-47bb-96da-97f5ca07b977",
+        "uuid": "fcac7219-e530-4ad2-8162-2c6db5840348",
         "id": "PUBCHEM.COMPOUND:9875401"
     },
     {
@@ -572,7 +572,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "736bd042-5eac-4818-846c-ef8aed9d7012",
+        "uuid": "cc205639-d3ce-49b8-b089-6c28c007e87e",
         "id": "UNII:90ZX3Q3FR7"
     },
     {
@@ -581,7 +581,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "ed44a83f-a72e-4c25-97cf-b7a469fa414f",
+        "uuid": "d3b94138-3531-4d70-91ca-d1aeb6c168e0",
         "id": "UNII:90ZX3Q3FR7"
     }
 ]
