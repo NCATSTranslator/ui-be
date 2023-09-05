@@ -16,6 +16,7 @@
             "redirect_uri": "https://ui.ci.transltr.io/oauth2/redir/una",
             "token_uri": "https://a-ci.ncats.io/_api/auth/transltr/oidc/token",
             "auth_uri": "https://a-ci.ncats.io/_api/auth/transltr/authorize",
+            "logout_uri": "https://a-ci.ncats.io/_api/auth/transltr/session/end",
             "scope": "openid profile email company provider identity_provider"
         }
     }

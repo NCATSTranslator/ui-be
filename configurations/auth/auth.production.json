@@ -14,8 +14,9 @@
         "una": {
             "client_id": "transltr",
             "redirect_uri": "https://ui.transltr.io/oauth2/redir/una",
-            "token_uri": "https://PLACEHOLDER/_api/auth/transltr/oidc/token",
-            "auth_uri": "https://PLACEHOLDER/_api/auth/transltr/authorize",
+            "token_uri": "https://auth.ncats.nih.gov/_api/v2/auth/transltr/oidc/token",
+            "auth_uri": "https://auth.ncats.nih.gov/_api/v2/auth/transltr/authorize",
+            "logout_uri": "https://auth.ncats.nih.gov/_api/v2/auth/transltr/session/end",
             "scope": "openid profile email company provider identity_provider"
         }
     }
