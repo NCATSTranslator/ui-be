@@ -55,6 +55,21 @@ class ARSClient
     return cmn.SendRecvJSON(this.postURL, 'POST', {}, query)
   }
 
+  isComplete(code)
+  {
+    return this.completeCodes.includes(code);
+  }
+
+  isRunning(code)
+  {
+    return this.runningCodes.includes(code);
+  }
+
+  isErrored(code)
+  {
+    return !(this.isComplete(code) || this.isRunning(code));
+  }
+
   constructFilterRegexes(filterArray)
   {
     return filterArray.map(e =>
@@ -140,6 +155,118 @@ class ARSClient
    * - The blacklists are applied to the list of agents matching the whitelists
    *
    */
+
+  async collectAllResults(pkey, filters={}, fetchCompleted=false)
+  {
+    function extractFields(childMsg)
+    {
+      return {
+        agent: childMsg.actor.agent,
+        uuid: childMsg.message,
+        status: childMsg.status,
+        code: childMsg.code
+      }
+    }
+
+    /* Fetch all results, divvy up by status, narrow down the ones that completed
+     * to ones that match the specified filters (if any), and return full message
+     * data for only those (and only if requested)
+     */
+    let retval = {};
+    let baseResult = await this.fetchMessage(pkey, true);
+
+    /* Special case: if the ARS starts queueing requests, it will return status: running
+     * and an empty children array. Catch this special case and exit early.
+     */
+    if (baseResult.children.length === 0 && baseResult.status === "Running")
+    {
+      return {
+        pk: pkey,
+        queuing: true,
+        completed: [],
+        running: [],
+        errored: []
+      };
+    }
+
+    let allChildrenAgents = baseResult.children.map(e => e.actor.agent);
+    let filteredChildrenAgents = this.applyFilters(allChildrenAgents, filters);
+    let filteredChildren = baseResult.children.filter(e => filteredChildrenAgents.includes(e.actor.agent));
+    // use a hash vs an array for completed results to make it easier to correlate fetched data
+    let completed = {};
+    let running = [];
+    let errored = [];
+    // Divide results up by status
+    for (const c of filteredChildren)
+    {
+      if (this.isComplete(c.code)) {
+        completed[c.actor.agent] = extractFields(c);
+      } else if (this.isRunning(c.code)) {
+        running.push(extractFields(c));
+      } else {
+        try
+        {
+          errored.push(extractFields(c));
+        } catch (err)
+        {
+          console.error(`Error extracting fields from ARS error response: '${err}'`);
+          errored.push(c);
+        }
+      }
+    }
+
+    if (!fetchCompleted)
+    {
+      retval = {
+        pk: pkey,
+        completed: Object.values(completed),
+        running: running,
+        errored: errored
+      };
+    }
+    else
+    {
+      let agents = Object.keys(completed);
+      // Get uuids corresp. to these agents, fetch their results in parallel
+      let toFetch = agents.map(e => completed[e].uuid);
+      const promises = toFetch.map(async (e) =>
+        {
+          console.log(`kicking off fetch for ${e}`);
+          return this.fetchMessage(e)
+        });
+      let finalCompleted = [];
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled#parameters
+      await Promise.allSettled(promises).then(results =>
+        {
+          results.forEach(item =>
+            {
+              if (item.status === 'fulfilled')
+              {
+                let agent = item.value.fields.name;
+                let elem = completed[agent];
+                elem.data = item.value.fields.data.message;
+                finalCompleted.push(elem);
+                console.log(`settled ${agent}`);
+              }
+              else
+              {
+                //
+                console.error('Unexpected case of being unable to fetch a result for an agent that reported code=200');
+                errored.push(item.value); // No idea what might be in this object
+              }
+            });
+          console.log('done settling promises');
+          retval = {
+            pk: pkey,
+            completed: finalCompleted,
+            running: running,
+            errored: errored
+          };
+        });
+    }
+    retval.queuing = false;
+    return retval;
+  }
 
   // Get all results that have been pre-merged by the ARS
   async collectMergedResults(pkey, statusCheck = false)

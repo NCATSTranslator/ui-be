@@ -50,19 +50,22 @@ class TranslatorServicexFEAdapter
   {
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
-    let mergedResult = msg.completed[0];
-    if (Array.isArray(mergedResult.data.results) && mergedResult.data.results.length > 0)
-    {
-      mergedResult = {
-        agent: mergedResult.agent,
-        message: mergedResult.data
-      }
-    }
+    let data = msg.completed.filter(e =>
+      {
+        return Array.isArray(e.data.results) && e.data.results.length > 0;
+      }).map(e =>
+        {
+          return {
+            agent: e.agent,
+            message: e.data
+          }
+        });
 
+    
     return {
       status: determineStatus(msg),
       data: await trapi.creativeAnswersToSummary(msg.pk,
-        [mergedResult],
+        data,
         maxHops,
         this.annotationClient)
     };
