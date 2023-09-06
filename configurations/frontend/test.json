@@ -5,7 +5,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "9dadac50-0d8e-4493-b519-6aa3be8a178a",
+        "uuid": "b8c64107-e71f-4dc6-86e7-b37ad56787aa",
         "id": "MONDO:0005015"
     },
     {
@@ -14,7 +14,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "c7ffcd40-6f06-4eaf-866c-9e2b8c47b99f",
+        "uuid": "73538a94-43ee-4905-b142-f1edd1d74ac8",
         "id": "MONDO:0007254"
     },
     {
@@ -23,7 +23,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "b725e458-89d5-4e0c-87c1-f537fe32a16e",
+        "uuid": "e5ec35f9-0e83-411b-b7af-1c60200114f1",
         "id": "MONDO:0009410"
     },
     {
@@ -32,7 +32,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "e515928a-ef5e-474d-81ec-e96e65b35cd2",
+        "uuid": "81799691-4b92-45db-a331-304db5e5d440",
         "id": "MONDO:0001302"
     },
     {
@@ -41,7 +41,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "6ce29974-c3a3-45f9-9fe8-ad08a7b77b66",
+        "uuid": "1413a7dd-02bc-4e55-bdba-c33c56176b86",
         "id": "MONDO:0005439"
     },
     {
@@ -50,26 +50,8 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "ba7075d0-dec1-40fb-8aa5-7049596c2f01",
+        "uuid": "b96e0be4-9f1f-43ac-ba90-0d6b286ba141",
         "id": "MONDO:0005002"
-    },
-    {
-        "name": "Asthma ",
-        "type": "drug",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": null,
-        "uuid": "2b7fe589-ec3d-4594-be21-6a31a908c4b7",
-        "id": "MONDO:0004979"
-    },
-    {
-        "name": "Alzheimer's Disease ",
-        "type": "drug",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": null,
-        "uuid": "73812157-4246-4733-a01e-e8b25715487c",
-        "id": "MONDO:0004975"
     },
     {
         "name": "Type 2 Diabetes Mellitus",
@@ -77,17 +59,8 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "16eee4d8-f07b-4384-8a9f-3bf1e90b4d2d",
+        "uuid": "fc24b607-c483-455e-82a4-50cd66157678",
         "id": "MONDO:0005148"
-    },
-    {
-        "name": "Cerebral Palsy",
-        "type": "drug",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": null,
-        "uuid": "ab12c05a-abe0-460d-a0bb-b54654bc73d4",
-        "id": "MONDO:0006497"
     },
     {
         "name": "Bethlem Myopathy",
@@ -95,7 +68,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "17105703-e4ee-492c-9cf1-4b754670a29d",
+        "uuid": "f51c9b3c-e06b-4b5e-94d8-57f6e3491050",
         "id": "MONDO:0008029"
     },
     {
@@ -104,7 +77,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "28795adb-003b-4739-b634-b3368e202f47",
+        "uuid": "dc4818a3-9d65-42b1-b317-99b6c168dc6e",
         "id": "MONDO:0007523"
     },
     {
@@ -113,7 +86,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "390b810b-b5b8-4ca9-a469-c32610da37fd",
+        "uuid": "2e6701c6-a773-41aa-9bbf-f2be7b9edd8d",
         "id": "MONDO:0017314"
     },
     {
@@ -122,7 +95,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "e10b2de5-a367-4f80-969e-914a3a1b97a5",
+        "uuid": "54b035ca-a303-4a46-8afd-501c456108c7",
         "id": "MONDO:0020066"
     },
     {
@@ -131,7 +104,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "72cf4d5c-8bd6-4473-929e-fa6a75633c45",
+        "uuid": "82a8c890-4f62-4116-afa3-128603d26a70",
         "id": "MONDO:0007827"
     },
     {
@@ -140,7 +113,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "cdabbef6-7592-40ca-a020-173f157e9234",
+        "uuid": "71104872-4d94-4680-8ad0-b0cd35cb5da1",
         "id": "MONDO:0000355"
     },
     {
@@ -149,7 +122,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "f07a400d-b654-4230-9f10-6072355a4726",
+        "uuid": "32593a33-13e8-4c22-8fc2-a059f746f031",
         "id": "MONDO:0010808"
     },
     {
@@ -158,7 +131,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "11cf07b3-7947-4d12-85dd-4609c03796a8",
+        "uuid": "f6659d6d-03d8-4eef-b9dd-ead19db29cf0",
         "id": "MONDO:0007432"
     },
     {
@@ -167,7 +140,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "92044b12-f464-458b-8c90-69ef504da801",
+        "uuid": "cdfd37cd-a6d3-4fd5-a970-ca4975aadd4a",
         "id": "MONDO:0009746"
     },
     {
@@ -176,7 +149,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "ae9c03d8-7730-4f4f-a10d-4966b3e66c38",
+        "uuid": "fff01705-3373-4c2f-962b-08d5f13ee215",
         "id": "MONDO:0034024"
     },
     {
@@ -185,7 +158,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "321ac5aa-8972-476b-bfed-f1b708a44f55",
+        "uuid": "f6bdbe96-de43-45cc-adc1-872425d2297b",
         "id": "MONDO:0007525"
     },
     {
@@ -194,7 +167,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "4bef6ff6-fbc9-451e-ba79-15615609c785",
+        "uuid": "53e28c16-9e86-498d-b9c4-31efc92f4cc7",
         "id": "MONDO:0007522"
     },
     {
@@ -203,7 +176,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "55e280d2-27cf-4637-981f-ddab271dac8a",
+        "uuid": "96485139-881a-4d86-a8d5-1d3d7a451c76",
         "id": "MONDO:0009161"
     },
     {
@@ -212,7 +185,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "cafcd5d2-6d31-48d0-8c4a-b1c7523d8f72",
+        "uuid": "9b325d73-8c3d-4d58-a842-de7e2618b757",
         "id": "NCBIGene:55768"
     },
     {
@@ -221,34 +194,16 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "2d116e92-c05f-4d0f-aa5f-e2a7ad823940",
+        "uuid": "f4226284-4832-45e5-86ef-73dbf818d20f",
         "id": "NCBIGene:55768"
     },
     {
-        "name": "HTT",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "48f7957c-4186-48bb-8aaf-d020b6dc6d5a",
-        "id": "NCBIGene:3064"
-    },
-    {
-        "name": "HTT",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "a2551f6a-c658-405d-ac26-bd355be13605",
-        "id": "NCBIGene:3064"
-    },
-    {
         "name": "ADNP",
         "type": "chemical",
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "57790cf5-9afc-471f-a654-7ac7866efa81",
+        "uuid": "f2aadd4f-21d2-49a3-a2a7-aa62a132938e",
         "id": "NCBIGene:23394"
     },
     {
@@ -257,7 +212,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "026f1b77-c214-4d33-81df-c5cf8c967129",
+        "uuid": "f1482c97-f1b8-4560-a7e7-ccdd51021b7b",
         "id": "NCBIGene:23394"
     },
     {
@@ -266,7 +221,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "6d0632d4-54fa-4b63-9921-19a900b5cd45",
+        "uuid": "0dd1b842-b222-4bd2-b27b-f3607781314b",
         "id": "NCBIGene:283489"
     },
     {
@@ -275,34 +230,16 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "58cbb740-dc13-41c5-acc2-30e38761cc12",
+        "uuid": "043c5417-c9dd-4397-9656-981c9bca5b1c",
         "id": "NCBIGene:283489"
     },
     {
-        "name": "DDX3X",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "06180fb7-4ef3-4371-8b3b-d77af7e252ab",
-        "id": "NCBIGene:1654"
-    },
-    {
-        "name": "DDX3X",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "358c5e20-51dc-4ee5-9a7d-00e1ed6242b7",
-        "id": "NCBIGene:1654"
-    },
-    {
         "name": "SCN1A",
         "type": "chemical",
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "c50409e1-ccc4-4b4d-a232-a21976b826c1",
+        "uuid": "6d6a19f9-2749-439c-8cf9-e83ee7bd0f71",
         "id": "NCBIGene:6323"
     },
     {
@@ -311,52 +248,16 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "d4eabadf-bbee-46bf-9020-3a7a73c43c0d",
+        "uuid": "f59a2cda-4ad0-4596-8266-f3f4364a68a9",
         "id": "NCBIGene:6323"
     },
     {
-        "name": "TRIO",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "f4f0da38-eacd-4905-93ac-7be5f03e70a6",
-        "id": "NCBIGene:7204"
-    },
-    {
-        "name": "TRIO",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "5bebbcb8-bdc5-457d-877d-3023c0c91faf",
-        "id": "NCBIGene:7204"
-    },
-    {
-        "name": "SMARCA2",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "870b2989-1092-4b74-8714-677d24677b12",
-        "id": "NCBIGene:6595"
-    },
-    {
-        "name": "SMARCA2",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "59c2b5ff-072d-487e-8de2-bcf9d80d8e36",
-        "id": "NCBIGene:6595"
-    },
-    {
         "name": "SLC6A1",
         "type": "chemical",
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "604e4862-c315-4fbe-9a41-71c2d8317d28",
+        "uuid": "cf1421c7-f56f-4bf0-98c0-a8eb68afc624",
         "id": "NCBIGene:6529"
     },
     {
@@ -365,70 +266,16 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "d5f582ec-b8e5-4173-8a3b-6034536a6c33",
+        "uuid": "ba499d6d-092e-4846-9c26-0eb223c12c7c",
         "id": "NCBIGene:6529"
     },
     {
-        "name": "IRF2BPL",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "af7f34d6-d4af-4e33-8afc-c7e9d29b1138",
-        "id": "NCBIGene:64207"
-    },
-    {
-        "name": "IRF2BPL",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "99f96541-6880-4bd2-a8fe-24c4b2ad7fd6",
-        "id": "NCBIGene:64207"
-    },
-    {
-        "name": "RHOBTB2",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "b1b1f2b7-8718-410c-a4ea-95ef982bdfc1",
-        "id": "NCBIGene:23221"
-    },
-    {
-        "name": "RHOBTB2",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "21d6d125-ed28-40d3-90eb-bba513f4bcc3",
-        "id": "NCBIGene:23221"
-    },
-    {
-        "name": "DHX30",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "acff5f4d-5d55-424f-a18b-9f069e31d350",
-        "id": "NCBIGene:22907"
-    },
-    {
-        "name": "DHX30",
-        "type": "chemical",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "3dc77805-c8c0-4751-9974-5420bdca7b76",
-        "id": "NCBIGene:22907"
-    },
-    {
         "name": "Pregabalin",
         "type": "gene",
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "5e150e78-4b8e-42d1-b2c9-7fdd42534af6",
+        "uuid": "96e69d9f-a127-4409-b62f-136547c01d37",
         "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -437,7 +284,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "479cf294-60fb-465c-b2c7-250e79973004",
+        "uuid": "e7ea819d-ecf3-4c61-8596-96092aadab8b",
         "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -446,7 +293,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "e11ef4df-afe0-4889-b1db-039d5b28143b",
+        "uuid": "cfc7a6d4-e028-4017-bb20-2e8721816a87",
         "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -455,7 +302,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "9f7e6c94-48b2-4db4-856e-969014e6de66",
+        "uuid": "1f76c116-8025-4067-a322-817f75c935ac",
         "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -464,7 +311,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "5f6a595c-59df-4347-beba-3d28d2c27511",
+        "uuid": "db9ec174-f3e4-463b-9e16-3bed623ccfa1",
         "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -473,7 +320,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "8f48a82c-8b3e-42f7-b350-3e0f0e8f09dd",
+        "uuid": "d179e7dc-87cc-4ad5-872a-7abd7ef6f1b1",
         "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -482,7 +329,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "a40ca0dd-968c-4bb3-9766-139326505658",
+        "uuid": "15f4f813-f047-4c32-9aef-7f2d8a2a4d92",
         "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -491,7 +338,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "12164348-21b7-4cee-9a54-183055db3955",
+        "uuid": "cbba68c9-53f8-43c1-b78f-200b339dfcb0",
         "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -500,7 +347,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "b9a1a9af-3c27-4f30-b085-f471732fca56",
+        "uuid": "a2bf29b0-db06-4e2a-9151-03e43663d7ed",
         "id": "PUBCHEM.COMPOUND:2162"
     },
     {
@@ -509,79 +356,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "08f7eaca-7681-4d20-9669-16759d278acd",
+        "uuid": "c5b9db38-833e-4f71-80c4-3f9aa8fe29ea",
         "id": "PUBCHEM.COMPOUND:2162"
-    },
-    {
-        "name": "Benazepril",
-        "type": "gene",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "a4d4923b-5bbc-4939-8b40-9743407b156f",
-        "id": "PUBCHEM.COMPOUND:5362124"
-    },
-    {
-        "name": "Benazepril",
-        "type": "gene",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "8ef94fc0-3995-4853-b03c-b321843c5ca8",
-        "id": "PUBCHEM.COMPOUND:5362124"
-    },
-    {
-        "name": "Ibrutinib",
-        "type": "gene",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "29f39a88-e76a-4f33-b7f5-35346f3ae2b8",
-        "id": "PUBCHEM.COMPOUND:24821094"
-    },
-    {
-        "name": "Ibrutinib",
-        "type": "gene",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "e5e68560-b6d5-40f4-9f6c-fe868efc318d",
-        "id": "PUBCHEM.COMPOUND:24821094"
-    },
-    {
-        "name": "Rivaroxaban",
-        "type": "gene",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "76634dcf-76ad-4657-a5c3-bd9b115ea33a",
-        "id": "PUBCHEM.COMPOUND:9875401"
-    },
-    {
-        "name": "Rivaroxaban",
-        "type": "gene",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "40f18a49-1f3e-422f-b2b4-929c2e5c00c8",
-        "id": "PUBCHEM.COMPOUND:9875401"
-    },
-    {
-        "name": "Risankizumab",
-        "type": "gene",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "increased",
-        "uuid": "8b841bee-25ea-45bf-acb3-6a70f6bc4d96",
-        "id": "UNII:90ZX3Q3FR7"
-    },
-    {
-        "name": "Risankizumab",
-        "type": "gene",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": "decreased",
-        "uuid": "56d060f5-1928-4061-82cc-9dcd92ab1e7e",
-        "id": "UNII:90ZX3Q3FR7"
     }
 ]
