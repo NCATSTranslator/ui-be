@@ -51,8 +51,8 @@ function initializeQueryList(filePath, startIndex) {
   for (let i = startIndex; i < lines.length; i++) {
       results.push(...parseLine(lines[i]));
   }
-
-  return results;
+  // at least one reason should exist to prerun the query
+  return results.filter(e => e.allow_inbound || e.allow_outbound);
 }
 
 async function main() {
