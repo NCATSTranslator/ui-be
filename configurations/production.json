@@ -9,8 +9,8 @@
     "pull_uri": "/ars/api/messages"
   },
   "annotation_endpoint": {
-    "host": "molepro-trapi.transltr.io",
-    "pull_uri": "/molepro/trapi/v1.3/query",
+    "host": "biothings.ncats.io",
+    "pull_uri": "/annotator/",
     "timeout_ms": 60000
   },
   "biolink": {
