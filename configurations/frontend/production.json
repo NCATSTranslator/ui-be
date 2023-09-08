@@ -68,7 +68,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "ec649dcb-f3d7-4701-b548-382208ed2478",
+        "uuid": "feb1a230-8c13-4c74-b038-92f31f969d60",
         "id": "MONDO:0007523"
     },
     {
@@ -77,7 +77,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "7e3c255c-207b-4f54-b467-46f595206834",
+        "uuid": "d6d1ab17-e779-437c-a6ce-423556724d76",
         "id": "MONDO:0017314"
     },
     {
