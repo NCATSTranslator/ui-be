@@ -1,20 +1,11 @@
 [
     {
-        "name": "Diabetes Mellitus",
-        "type": "drug",
-        "allow_inbound": false,
-        "allow_outbound": true,
-        "direction": null,
-        "uuid": "b8c64107-e71f-4dc6-86e7-b37ad56787aa",
-        "id": "MONDO:0005015"
-    },
-    {
         "name": "Breast Cancer",
         "type": "drug",
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "73538a94-43ee-4905-b142-f1edd1d74ac8",
+        "uuid": "a6d28087-f193-441c-ade3-26b04fdd0dd1",
         "id": "MONDO:0007254"
     },
     {
@@ -23,7 +14,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "e5ec35f9-0e83-411b-b7af-1c60200114f1",
+        "uuid": "5d4e2e08-8b53-49d1-9a91-8bbda60d2493",
         "id": "MONDO:0009410"
     },
     {
@@ -32,7 +23,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "81799691-4b92-45db-a331-304db5e5d440",
+        "uuid": "f508837e-c39e-4eda-b226-3a31c3b19c6c",
         "id": "MONDO:0001302"
     },
     {
@@ -41,7 +32,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "1413a7dd-02bc-4e55-bdba-c33c56176b86",
+        "uuid": "f3799e9e-d4f2-4624-b281-a26c3e10b86f",
         "id": "MONDO:0005439"
     },
     {
@@ -50,17 +41,17 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "b96e0be4-9f1f-43ac-ba90-0d6b286ba141",
+        "uuid": "916a7b2a-3259-4ed1-b069-85e383675dad",
         "id": "MONDO:0005002"
     },
     {
-        "name": "Type 2 Diabetes Mellitus",
+        "name": "Type 1 Diabetes Mellitus",
         "type": "drug",
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "fc24b607-c483-455e-82a4-50cd66157678",
-        "id": "MONDO:0005148"
+        "uuid": "fd98f902-e26b-4fd8-bac4-49d0c904a222",
+        "id": "MONDO:0005147"
     },
     {
         "name": "Bethlem Myopathy",
@@ -68,7 +59,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "f51c9b3c-e06b-4b5e-94d8-57f6e3491050",
+        "uuid": "02e27d51-1ff7-4c4f-aa73-27bcc9c7d919",
         "id": "MONDO:0008029"
     },
     {
@@ -77,7 +68,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "dc4818a3-9d65-42b1-b317-99b6c168dc6e",
+        "uuid": "7a86caa9-2bf7-4a6b-8470-6fe99cb23f57",
         "id": "MONDO:0007523"
     },
     {
@@ -86,7 +77,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "2e6701c6-a773-41aa-9bbf-f2be7b9edd8d",
+        "uuid": "fcb0c16f-2634-4c9e-824e-008e1d96dc10",
         "id": "MONDO:0017314"
     },
     {
@@ -95,7 +86,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "54b035ca-a303-4a46-8afd-501c456108c7",
+        "uuid": "1f264926-8037-4262-ad6b-a5005f91295f",
         "id": "MONDO:0020066"
     },
     {
@@ -104,7 +95,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "82a8c890-4f62-4116-afa3-128603d26a70",
+        "uuid": "f662624d-88da-48f1-af10-058e49e8a708",
         "id": "MONDO:0007827"
     },
     {
@@ -113,7 +104,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "71104872-4d94-4680-8ad0-b0cd35cb5da1",
+        "uuid": "ec3c8f8d-3f89-47b1-a244-8e62b4ed4e39",
         "id": "MONDO:0000355"
     },
     {
@@ -122,7 +113,7 @@
         "allow_inbound": true,
         "allow_outbound": true,
         "direction": null,
-        "uuid": "32593a33-13e8-4c22-8fc2-a059f746f031",
+        "uuid": "ac0a1c9c-1831-46f4-a356-ecd1edbd32f1",
         "id": "MONDO:0010808"
     },
     {
@@ -131,7 +122,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "f6659d6d-03d8-4eef-b9dd-ead19db29cf0",
+        "uuid": "17cfa994-b87a-498c-8333-7b3abcaf086c",
         "id": "MONDO:0007432"
     },
     {
@@ -140,7 +131,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "cdfd37cd-a6d3-4fd5-a970-ca4975aadd4a",
+        "uuid": "a792486d-6364-43e0-84cf-189689f1b792",
         "id": "MONDO:0009746"
     },
     {
@@ -149,7 +140,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "fff01705-3373-4c2f-962b-08d5f13ee215",
+        "uuid": "ecbff630-724f-4154-9ad4-7f05efd4b88c",
         "id": "MONDO:0034024"
     },
     {
@@ -158,7 +149,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "f6bdbe96-de43-45cc-adc1-872425d2297b",
+        "uuid": "58344180-bdbe-4fdd-8cd8-fd9cda5ea580",
         "id": "MONDO:0007525"
     },
     {
@@ -167,7 +158,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "53e28c16-9e86-498d-b9c4-31efc92f4cc7",
+        "uuid": "858b62a2-9277-4a50-85f0-43b63f05bc9e",
         "id": "MONDO:0007522"
     },
     {
@@ -176,7 +167,7 @@
         "allow_inbound": true,
         "allow_outbound": false,
         "direction": null,
-        "uuid": "96485139-881a-4d86-a8d5-1d3d7a451c76",
+        "uuid": "d5b6f9d0-f128-4f3e-a75f-61b6923dcc00",
         "id": "MONDO:0009161"
     },
     {
@@ -185,7 +176,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "9b325d73-8c3d-4d58-a842-de7e2618b757",
+        "uuid": "7c7b719b-65db-4d04-ac9c-d5dba19508c9",
         "id": "NCBIGene:55768"
     },
     {
@@ -194,7 +185,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "f4226284-4832-45e5-86ef-73dbf818d20f",
+        "uuid": "efa1cf10-b63f-4130-a059-70e77968d619",
         "id": "NCBIGene:55768"
     },
     {
@@ -203,7 +194,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "f2aadd4f-21d2-49a3-a2a7-aa62a132938e",
+        "uuid": "de3bd68a-bcc9-41ae-a1c8-f4131e84ca2b",
         "id": "NCBIGene:23394"
     },
     {
@@ -212,7 +203,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "f1482c97-f1b8-4560-a7e7-ccdd51021b7b",
+        "uuid": "5b1fa788-59a0-47f1-82a4-d26152bee3f4",
         "id": "NCBIGene:23394"
     },
     {
@@ -221,7 +212,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "0dd1b842-b222-4bd2-b27b-f3607781314b",
+        "uuid": "196a5733-3a2d-44c3-8ab4-36e5f589bfe3",
         "id": "NCBIGene:283489"
     },
     {
@@ -230,7 +221,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "043c5417-c9dd-4397-9656-981c9bca5b1c",
+        "uuid": "21cd1292-0ff6-462b-9b45-ecd989139269",
         "id": "NCBIGene:283489"
     },
     {
@@ -239,7 +230,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "6d6a19f9-2749-439c-8cf9-e83ee7bd0f71",
+        "uuid": "b74a8a64-3f31-493f-9607-017e7031e6b3",
         "id": "NCBIGene:6323"
     },
     {
@@ -248,7 +239,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "f59a2cda-4ad0-4596-8266-f3f4364a68a9",
+        "uuid": "a246b64e-1242-4e83-9121-f42f9b145d01",
         "id": "NCBIGene:6323"
     },
     {
@@ -257,7 +248,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "cf1421c7-f56f-4bf0-98c0-a8eb68afc624",
+        "uuid": "4438a61f-3567-4f22-baa8-d45798e4975d",
         "id": "NCBIGene:6529"
     },
     {
@@ -266,7 +257,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "ba499d6d-092e-4846-9c26-0eb223c12c7c",
+        "uuid": "65e0c262-883e-4344-a4e7-9afb1908277b",
         "id": "NCBIGene:6529"
     },
     {
@@ -275,7 +266,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "96e69d9f-a127-4409-b62f-136547c01d37",
+        "uuid": "fcc234b3-5b31-4038-aade-45d753f9b566",
         "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -284,7 +275,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "e7ea819d-ecf3-4c61-8596-96092aadab8b",
+        "uuid": "573e32d1-0be5-42c1-b6b0-0ade3fe0b8e5",
         "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -293,7 +284,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "cfc7a6d4-e028-4017-bb20-2e8721816a87",
+        "uuid": "6a3cdfdc-6b7c-47e9-966e-71c5d1bc8c4a",
         "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -302,7 +293,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "1f76c116-8025-4067-a322-817f75c935ac",
+        "uuid": "186d21f6-5005-475d-ad1f-ba4173ed7211",
         "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -311,7 +302,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "db9ec174-f3e4-463b-9e16-3bed623ccfa1",
+        "uuid": "cdcdfd2d-41ae-4326-a941-927d516891c2",
         "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -320,7 +311,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "d179e7dc-87cc-4ad5-872a-7abd7ef6f1b1",
+        "uuid": "d246eb57-3152-49b9-8f51-d208653726f9",
         "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -329,7 +320,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "15f4f813-f047-4c32-9aef-7f2d8a2a4d92",
+        "uuid": "fd138c96-6a95-437e-acc5-4e383829c3c2",
         "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -338,7 +329,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "cbba68c9-53f8-43c1-b78f-200b339dfcb0",
+        "uuid": "43e33c9f-53cc-440e-825d-753bc84da0c7",
         "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -347,7 +338,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "increased",
-        "uuid": "a2bf29b0-db06-4e2a-9151-03e43663d7ed",
+        "uuid": "c804ac19-c2d7-495f-b5d4-9f95edc7e4ca",
         "id": "PUBCHEM.COMPOUND:2162"
     },
     {
@@ -356,7 +347,7 @@
         "allow_inbound": false,
         "allow_outbound": true,
         "direction": "decreased",
-        "uuid": "c5b9db38-833e-4f71-80c4-3f9aa8fe29ea",
+        "uuid": "f0822bc2-4ec3-4ece-9c6a-0a70080041ec",
         "id": "PUBCHEM.COMPOUND:2162"
     }
 ]
