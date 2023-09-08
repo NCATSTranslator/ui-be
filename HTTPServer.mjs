@@ -11,16 +11,11 @@ import { createAPIRouter } from './routers/APIRouter.mjs';
 import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
 import * as wutil from './webutils.mjs';
-import * as cmn from './common.mjs';
 
 export function startServer(config, services) {
   console.log("Der Anfang ist das Ende und das Ende ist der Anfang");
-  const translatorService = services.translatorService;
   const authService = services.authService;
-  const userService = services.userService;
   const demoQueries = config.frontend.filter(e => e.allow_inbound);
-  const demopath = config.demosite_path;
-  const mainpath = config.mainsite_path;
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
   app.use(pinoHttp());
