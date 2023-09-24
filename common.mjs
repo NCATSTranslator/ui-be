@@ -1,6 +1,8 @@
 'use strict'
 
 import * as fs from 'fs';
+import { validate as isUuid } from 'uuid';
+import { join } from 'path';
 
 export const mimeJson = 'application/json';
 
@@ -346,4 +348,25 @@ export function overwriteObj(orig, overwrite) {
     }
   }
   return orig;
+}
+
+export async function loadQueryData(directory, prefix) {
+  const files = await fs.promises.readdir(directory);
+  const hash = {};
+
+  // Filter files by prefix and process each file
+  const fileReadPromises = files.filter(file => file.startsWith(prefix)).map(async file => {
+    const path = join(directory, file);
+    const content = await readJson(path);
+
+    // Extract the UUID from the filename and validate it
+    const uuidMatch = file.match(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/);
+    if (uuidMatch && isUuid(uuidMatch[0])) {
+      hash[uuidMatch[0]] = content;
+    }
+  });
+
+  // Wait for all files to be read
+  await Promise.all(fileReadPromises);
+  return hash;
 }
