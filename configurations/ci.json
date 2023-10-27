@@ -30,6 +30,7 @@
       "rejectUnauthorized": false 
     }
   },
+  "google_analytics_id": null,
   "_load_frontend": "configurations/frontend/ci.json",
   "max_hops": 3,
   "log_level": "all",
