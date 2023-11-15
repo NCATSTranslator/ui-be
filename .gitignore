@@ -11,3 +11,4 @@ junk
 *~
 configurations/secrets
 configurations/local-overrides.json
+utilities/node/etc
