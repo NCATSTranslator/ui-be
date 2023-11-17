@@ -1529,9 +1529,6 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       // Remove duplicates from publications
       objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
 
-      // Remove any publications that are not valid
-      cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(ev.isValidId); });
-
       // Convert all infores to provenance
       cmn.jsonUpdate(edge, 'provenance', (provenance) =>
         {
