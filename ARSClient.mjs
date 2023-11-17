@@ -27,6 +27,14 @@ export { ARSClient }
 }
 
 */
+
+class ARSError extends Error {
+  constructor(message, upstreamError) {
+    super(message);
+    this.upstreamError = upstreamError;
+  }
+}
+
 class ARSClient
 {
   constructor(origin, getPath, postPath)

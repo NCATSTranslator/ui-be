@@ -87,7 +87,7 @@ function handleStatusRequest(config, service, filters) {
       return res.status(200).json(service.outputAdapter.queryStatusToFE(statusRes));
     } catch (err) {
       wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
+      return wutil.sendInternalServerError(res, err);
     }
   }
 }
@@ -103,7 +103,7 @@ function handleResultRequest(config, service, filters) {
       return res.status(200).json(retval);
     } catch (err) {
       wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
+      return wutil.sendInternalServerError(res, err);
     }
   }
 }
