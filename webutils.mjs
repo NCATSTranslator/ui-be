@@ -12,7 +12,7 @@ function sendError(res, errorCode, trace) {
 }
 
 function sendInternalServerError(res, trace=null) {
-  sendError(res, 200, trace);
+  sendError(res, 500, trace);
 }
 
 function logInternalServerError(req, err) {
