@@ -795,11 +795,12 @@ function redgeToKey(redge, kgraph, doInvert = false) {
   const ksubject = kedgeSubject(kedge);
   const predicate = edgeToQualifiedPredicate(kedge, doInvert);
   const kobject = kedgeObject(kedge);
+  const knowledgeLevel = bl.inforesToProvenance(getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0]).knowledge_level;
   if (doInvert) {
-    return pathToKey([kobject, predicate, ksubject]);
+    return pathToKey([kobject, predicate, ksubject, knowledgeLevel]);
   }
 
-  return pathToKey([ksubject, predicate, kobject]);
+  return pathToKey([ksubject, predicate, kobject, knowledgeLevel]);
 }
 
 function summarizeRnode(rnode, kgraph, nodeRules, context) {
@@ -1192,8 +1193,9 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       const invertedPredicate = edgeToQualifiedPredicate(edge, true);
       const subject = cmn.jsonGet(edge, 'subject');
       const object = cmn.jsonGet(edge, 'object');
+      const knowledgeLevel = cmn.jsonGet(edge, 'knowledge_level');
 
-      const invertedEdgeKey = pathToKey([object, invertedPredicate, subject]);
+      const invertedEdgeKey = pathToKey([object, invertedPredicate, subject, knowledgeLevel]);
       let invertedEdge = cmn.deepCopy(edge);
       cmn.jsonMultiSet(invertedEdge,
                       [['subject', object],
@@ -1317,13 +1319,16 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     // Remove any duplicates on all edge attributes
     objRemoveDuplicates(edge);
 
-      // Remove duplicates from publications
-      objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
+    // Remove duplicates from publications
+    objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
 
     // Convert all infores to provenance
     cmn.jsonUpdate(edge, 'provenance', (provenance) => {
       return provenance.map(bl.inforesToProvenance).filter(cmn.identity);
     });
+
+    // Populate knowledge level
+    edge.knowledge_level = edge.provenance[0].knowledge_level;
   });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
