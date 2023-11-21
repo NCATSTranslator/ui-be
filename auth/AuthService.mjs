@@ -76,7 +76,7 @@ class AuthService {
        console.log(`authservice: new unauth session: ${JSON.stringify(res)}`);
        return res;
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return res;
     }
   }
@@ -92,7 +92,7 @@ class AuthService {
       console.log(`authservice: new auth session: ${JSON.stringify(res)}`);
       return res;
    } catch (err) {
-     console.log(err);
+     console.error(err);
      return res;
    }
 
@@ -103,7 +103,7 @@ class AuthService {
       res = this.sessionStore.retrieveSessionByToken(token);
       return res;
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return res;
     }
   }
@@ -113,7 +113,7 @@ class AuthService {
       sessionData.updateSessionTime();
       return this.sessionStore.updateSession(sessionData);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return false;
     }
   }
@@ -124,7 +124,7 @@ class AuthService {
       sessionData.updateSessionTime()
       return this.sessionStore.updateSession(sessionData);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return false;
     }
   }

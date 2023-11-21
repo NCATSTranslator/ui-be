@@ -29,7 +29,7 @@ async function handleSSORedirect(provider, authcode, config) {
         token_uri: config.auth.social_providers.una.token_uri
     });
       break;
-    default: console.log(`Cannot handle provider: ${provider}`); break;
+    default: console.error(`Cannot handle provider: ${provider}`); break;
   }
   return retval;
 }
