@@ -3,10 +3,10 @@
 export { sendError, sendInternalServerError, logInternalServerError, setSessionCookie };
 
 function sendError(res, errorCode, trace) {
-  console.log(trace);
+  console.error(trace);
   const response = {
     'status': 'error',
-    'data': trace 
+    'data': trace
   }
   res.status(errorCode).json(response);
 }
