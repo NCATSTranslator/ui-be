@@ -165,33 +165,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
       getProperty('object'),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
-      aggregateAndTransformAttributes(
-        [
-          bl.tagBiolink('supporting_document'),
-          bl.tagBiolink('Publication'),
-          bl.tagBiolink('publications'),
-          bl.tagBiolink('publication') // Remove me when this is fixed in the ARA/KPs
-        ],
-        'publications',
-        (evidence, context) => {
-          if (!cmn.isArray(evidence)) {
-            // Split on ',' OR (|) '|'
-            evidence = evidence.split(/,|\|/);
-          }
-
-          const validEvidence = [];
-          const normalEvidence = evidence.map(ev.normalize);
-          normalEvidence.forEach((e) => {
-            if (ev.isValidId(e)) {
-              validEvidence.push(e);
-            } else {
-              const agentErrors = cmn.jsonSetDefaultAndGet(context.errors, context.agent, []);
-              agentErrors.push(`Invalid evidence id: ${e}`);
-            }
-          });
-
-          return validEvidence;
-        })
+      getPublications(),
     ]);
   
   const queryType = answerToQueryType(answers[0]);
@@ -499,6 +473,51 @@ function tagAttribute(attributeId, transform)
       return obj
     },
     null);
+}
+
+function getPublications() {
+  const publicationIds = [
+      bl.tagBiolink('supporting_document'),
+      bl.tagBiolink('Publication'),
+      bl.tagBiolink('publications'),
+      bl.tagBiolink('publication') // Remove me when this is fixed in the ARA/KPs
+  ];
+
+  return makeMapping(
+    'attributes',
+    (obj, key, context) => {
+      const attributes = obj[key];
+      if (areNoAttributes(attributes)) {
+        return {};
+      }
+
+      const result = {};
+      const knowledgeSource = context.knowledgeSource;
+      attributes.forEach(attribute => {
+        const v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
+        if (!result[knowledgeSource]) {
+          result[knowledgeSource] = [];
+        }
+
+        result[knowledgeSource].push(...v);
+      });
+
+      return result;
+    },
+    (vs, obj) =>
+    {
+      const currentPublications = cmn.jsonSetDefaultAndGet(obj, 'publications', {});
+      Object.keys(vs).forEach((ks) => {
+        if (!currentPublications[ks]) {
+          currentPublications[ks] = [];
+        }
+
+        currentPublications[ks].push(...vs[ks]);
+      });
+
+      return obj;
+    },
+    {});
 }
 
 function getPrimarySource(sources) {
@@ -1168,7 +1187,12 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           [agent],
           normalizePaths(rgraphPaths, kgraph),
           rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules, analysisContext); }),
-          rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules, analysisContext); }),
+          rgraph.edges.map(redge => {
+            const kedge = redgeToTrapiKedge(redge, kgraph);
+            const edgeContext = cmn.deepCopy(analysisContext); 
+            edgeContext.knowledgeSource = bl.inforesToProvenance(getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0]).knowledge_level;
+            return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
+          }),
           {},
           {});
       } catch (e) {
@@ -1325,9 +1349,10 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     }
 
     const snippets = cmn.jsonGet(edge, 'snippets');
-    const publicationIds = cmn.jsonGet(edge, 'publications', []);
-    publicationIds.forEach((id) =>
-      {
+    const pubs = cmn.jsonGet(edge, 'publications', {});
+    Object.keys(pubs).forEach((ks) => {
+      const publicationIds = cmn.jsonGet(pubs, ks, []);
+      publicationIds.forEach((id) => {
         const [type, url] = ev.idToTypeAndUrl(id);
         let publicationObj = false;
         for (const snippet of snippets)
@@ -1349,6 +1374,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
         cmn.jsonSet(publications, id, makePublicationObject(type, url, null, null));
       });
+    });
   }
 
   function edgesToEdgesAndPublications(edges)
@@ -1500,8 +1526,8 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       // Remove any duplicates on all edge attributes
       objRemoveDuplicates(edge);
 
-      // Remove any publications that are not valid
-      cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(ev.isValidId); });
+      // Remove duplicates from publications
+      objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
 
       // Convert all infores to provenance
       cmn.jsonUpdate(edge, 'provenance', (provenance) =>
