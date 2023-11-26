@@ -327,6 +327,8 @@ class ARSClient {
   }
 }
 
+/* Testing stuff: ignore!
+
 var pk = '28a96d16-5f01-4e45-b688-f6949cd15c6f';
 var c = new ARSClient('https://ars-prod.transltr.io', '/ars/api/messages', '/ars/api/submit');
 var filters = {whitelistRx: /^ara-/};
@@ -344,3 +346,4 @@ async function doit(pk) {
   console.log(res.meta);
 };
 export { c, res, doit};
+*/
