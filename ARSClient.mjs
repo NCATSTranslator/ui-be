@@ -238,7 +238,7 @@ class ARSClient {
           errored: errored
         };
       });
-      meta.childrenMs = new Date() - start;
+      meta.childrenProcessingMs = new Date() - start;
     }
     retval.queuing = false;
     retval.meta = meta;
