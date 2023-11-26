@@ -239,7 +239,7 @@ class ARSClient {
           errored: errored
         };
       });
-      meta.childrenFetchMs = new Date() - start;
+      meta.childrenMs = new Date() - start;
     }
     retval.queuing = false;
     retval.meta = meta;
