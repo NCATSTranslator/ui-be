@@ -40,7 +40,6 @@ class ARSClient {
     this.origin = origin;
     this.getURL = `${origin}${getPath}`;
     this.postURL = `${origin}${postPath}`;
-//    this.reportPerf = reportPerf;
     // Yes, 422 means the message is complete and valid. Specifically it means that there was some error in the scoring process.
     this.completeCodes = completeCodes;
     this.runningCodes = runningCodes;
