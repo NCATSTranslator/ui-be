@@ -2,16 +2,17 @@
 
 export { sendError, sendInternalServerError, logInternalServerError, setSessionCookie };
 
-function sendError(res, errorCode, message) {
+function sendError(res, errorCode, trace) {
+  console.error(trace);
   const response = {
     'status': 'error',
-    'data': message
+    'data': trace
   }
   res.status(errorCode).json(response);
 }
 
-function sendInternalServerError(res) {
-  sendError(res, 500, 'Internal Server Error');
+function sendInternalServerError(res, trace=null) {
+  sendError(res, 500, trace);
 }
 
 function logInternalServerError(req, err) {

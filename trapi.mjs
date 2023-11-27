@@ -158,31 +158,14 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
 
   const edgeRules = makeSummarizeRules(
     [
-      transformProperty('predicate', bl.sanitizeBiolinkItem),
-      aggregateAndTransformProperty('sources', ['provenance'], getPrimarySource),
-      getProperty('qualifiers'),
+      transformProperty('predicate', (obj, key) => bl.sanitizeBiolinkItem(cmn.jsonGet(obj, key))),
+      aggregateAndTransformProperty('sources', ['provenance'], (obj, key) => getPrimarySource(cmn.jsonGet(obj, key))),
+      transformProperty('qualifiers', (obj, key) => cmn.jsonGet(obj, key, false)),
       getProperty('subject'),
       getProperty('object'),
       aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
       aggregateAttributes(['bts:sentence'], 'snippets'),
-      aggregateAndTransformAttributes(
-        [
-          bl.tagBiolink('supporting_document'),
-          bl.tagBiolink('Publication'),
-          bl.tagBiolink('publications'),
-          bl.tagBiolink('publication') // Remove me when this is fixed in the ARA/KPs
-        ],
-        'publications',
-        (evidence) =>
-        {
-          if (cmn.isArray(evidence))
-          {
-            return evidence.map(ev.normalize);
-          }
-
-          // Split on ',' OR (|) '|'
-          return evidence.split(/,|\|/).map(ev.normalize);
-        })
+      getPublications(),
     ]);
   
   const queryType = answerToQueryType(answers[0]);
@@ -191,16 +174,14 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
     return bl.inforesToProvenance(agent).name;
   }
 
+  const [sfs, errors] = creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHops);
   return summaryFragmentsToSummary(
     qid,
-    creativeAnswersToSummaryFragments(
-      answers,
-      nodeRules,
-      edgeRules,
-      maxHops),
+    sfs,
     queryType,
     agentToName,
-    annotationClient);
+    annotationClient,
+    errors);
 }
 
 function createKGFromNodeIds(nodeIds)
@@ -275,12 +256,18 @@ function answerToQueryType(answer)
   return false;
 }
 
-function makeMapping(key, transform, update, fallback)
-{
-  return (obj, context) =>
-  {
-    const val = cmn.jsonGet(obj, key, false);
-    return (acc) => { return update((val ? transform(val, context) : fallback), acc); }
+function makeMapping(key, transform, update, fallback) {
+  return (obj, context) => {
+    return (acc) => {
+      try {
+        const v = transform(obj, key, context);
+        return update(v, acc);
+      } catch (e) {
+        const agentErrors = cmn.jsonSetDefaultAndGet(context.errors, context.agent, []);
+        agentErrors.push(e.message);
+        return update(fallback, acc);
+      }
+    }
   }
 }
 
@@ -323,29 +310,7 @@ function transformProperty(key, transform)
 
 function renameProperty(key, kpath)
 {
-  return renameAndTransformProperty(key, kpath, cmn.identity);
-}
-
-function getPropertyWhen(key, kpath, doUpdate)
-{
-  return makeMapping(
-    key,
-    cmn.identity,
-    (v, obj) =>
-    {
-      const cv = cmn.jsonGet(obj, key, false);
-      if (update(v))
-      {
-        return cmn.jsonSet(obj, key, v);
-      }
-      else if (cv)
-      {
-        return obj;
-      }
-
-      return cmn.jsonSet(obj, key, null);
-    },
-    null);
+  return renameAndTransformProperty(key, kpath, (obj, key) => cmn.jsonGet(obj, key), null);
 }
 
 function getProperty(key)
@@ -357,7 +322,7 @@ function aggregatePropertyWhen(key, kpath, doUpdate)
 {
   return makeMapping(
     key,
-    cmn.identity,
+    (obj, key) => cmn.jsonGet(obj, key),
     (v, obj) => { return aggregatePropertyUpdateWhen(v, obj, kpath, doUpdate); },
     []);
 }
@@ -395,8 +360,9 @@ function renameAndTransformAttribute(attributeId, kpath, transform)
 {
   return makeMapping(
     'attributes',
-    (attributes) =>
+    (obj, key) =>
     {
+      const attributes = cmn.jsonGet(obj, key, null);
       if (areNoAttributes(attributes))
       {
         return null;
@@ -425,27 +391,23 @@ function renameAndTransformAttribute(attributeId, kpath, transform)
     null);
 }
 
-function renameAttribute(attributeId, kpath)
-{
-  return renameAndTransformAttribute(attributeId, kpath, cmn.identity);
-}
-
 function aggregateAndTransformAttributes(attributeIds, tgtKey, transform)
 {
   return makeMapping(
     'attributes',
-    (attributes) =>
+    (obj, key, context) =>
     {
-      const result = [];
+      const attributes = cmn.jsonGet(obj, key, null);
       if (areNoAttributes(attributes))
       {
-        return result;
+        return [];
       }
 
+      const result = [];
       attributes.forEach(attribute =>
         {
           const v = (attributeIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
-          result.push(...transform(v));
+          result.push(...transform(v, context));
         });
 
       return result;
@@ -470,8 +432,9 @@ function tagAttribute(attributeId, transform)
 {
   return makeMapping(
     'attributes',
-    (attributes, context) =>
+    (obj, key, context) =>
     {
+      const attributes = obj[key];
       if (areNoAttributes(attributes))
       {
         return [];
@@ -512,23 +475,64 @@ function tagAttribute(attributeId, transform)
     null);
 }
 
-function getPrimarySource(sources)
-{
-  for (let source of sources)
-  {
+function getPublications() {
+  const publicationIds = [
+      bl.tagBiolink('supporting_document'),
+      bl.tagBiolink('Publication'),
+      bl.tagBiolink('publications'),
+      bl.tagBiolink('publication') // Remove me when this is fixed in the ARA/KPs
+  ];
+
+  return makeMapping(
+    'attributes',
+    (obj, key, context) => {
+      const attributes = obj[key];
+      if (areNoAttributes(attributes)) {
+        return {};
+      }
+
+      const result = {};
+      const knowledgeSource = context.knowledgeSource;
+      attributes.forEach(attribute => {
+        const v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
+        if (!result[knowledgeSource]) {
+          result[knowledgeSource] = [];
+        }
+
+        result[knowledgeSource].push(...v);
+      });
+
+      return result;
+    },
+    (vs, obj) =>
+    {
+      const currentPublications = cmn.jsonSetDefaultAndGet(obj, 'publications', {});
+      Object.keys(vs).forEach((ks) => {
+        if (!currentPublications[ks]) {
+          currentPublications[ks] = [];
+        }
+
+        currentPublications[ks].push(...vs[ks]);
+      });
+
+      return obj;
+    },
+    {});
+}
+
+function getPrimarySource(sources) {
+  for (let source of sources) {
     const id = cmn.jsonGet(source, 'resource_id', false);
     const role = cmn.jsonGet(source, 'resource_role', false);
-    if (!role || !id)
-    {
+    if (!role || !id) {
       continue;
     }
-    else if (role === 'primary_knowledge_source')
-    {
+    else if (role === 'primary_knowledge_source') {
       return [id];
     }
   }
 
-  return [];
+  throw new Error('No primary knowledge source found');
 }
 
 function makeSummarizeRules(rules)
@@ -559,7 +563,7 @@ function getBindingId(bindings, key)
   const nodeBinding = cmn.jsonGet(bindings, key, false);
   if (!nodeBinding)
   {
-    return false;
+    throw new NodeBindingNotFoundError(nodeBinding);
   }
 
   return cmn.jsonGet(nodeBinding[0], 'id');
@@ -868,7 +872,7 @@ function analysisToRgraph(analysis, kgraph, auxGraphs)
       const kedge = redgeToTrapiKedge(eb, kgraph);
       if (!kedge)
       {
-        return false;
+        throw new EdgeBindingNotFoundError(eb);
       }
 
       nodeBindings.add(kedgeSubject(kedge));
@@ -936,10 +940,10 @@ function summarizeRnode(rnode, kgraph, nodeRules, context)
     'transforms');
 }
 
-function summarizeRedge(redge, kgraph, edgeRules)
+function summarizeRedge(redge, kgraph, edgeRules, context)
 {
   return cmn.makePair(redgeToKey(redge, kgraph),
-    edgeRules(redgeToTrapiKedge(redge, kgraph)),
+    edgeRules(redgeToTrapiKedge(redge, kgraph), context),
     'key',
     'transforms');
 }
@@ -1005,7 +1009,7 @@ function rgraphFold(proc, init, acc)
   return res;
 }
 
-function makeSummaryFragment(agents, paths, nodes, edges, scores)
+function makeSummaryFragment(agents, paths, nodes, edges, scores, errors)
 {
   const summaryFragment = {};
   summaryFragment.agents = agents;
@@ -1013,12 +1017,21 @@ function makeSummaryFragment(agents, paths, nodes, edges, scores)
   summaryFragment.nodes = nodes;
   summaryFragment.edges = edges;
   summaryFragment.scores = scores;
+  summaryFragment.errors = errors;
   return summaryFragment;
 }
 
 function emptySummaryFragment()
 {
-  return makeSummaryFragment([], [], [], [], {});
+  return makeSummaryFragment([], [], [], [], {}, {});
+}
+
+function errorSummaryFragment(agent, error)
+{
+  const summaryFragment = emptySummaryFragment();
+  summaryFragment.agents = [agent];
+  summaryFragment.errors[agent] = [error];
+  return summaryFragment;
 }
 
 function isEmptySummaryFragment(summaryFragment)
@@ -1053,6 +1066,11 @@ function condensedSummaryScores(condensedSummary)
   return condensedSummary.scores;
 }
 
+function condensedSummaryErrors(condensedSummary)
+{
+  return condensedSummary.errors;
+}
+
 function pathToKey(path)
 {
   return hash(path);
@@ -1068,6 +1086,12 @@ function mergeSummaryFragments(f1, f2)
   {
     const currentScores = cmn.jsonSetDefaultAndGet(f1.scores, k, []);
     currentScores.push(...f2.scores[k]);
+  });
+
+  Object.keys(f2.errors).forEach((k) =>
+  {
+    const currentErrors = cmn.jsonSetDefaultAndGet(f1.errors, k, []);
+    currentErrors.push(...f2.errors[k]);
   });
 
   return f1;
@@ -1086,7 +1110,7 @@ function getPathDirection(qgraph)
 
 function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHops)
 {
-  function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey)
+  function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey, errors)
   {
     function analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end)
     {
@@ -1115,86 +1139,107 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           });
       }
 
-      const rgraph = analysisToRgraph(analysis, kgraph, auxGraphs);
-      if (!rgraph)
-      {
-        return emptySummaryFragment();
+      const agent = cmn.jsonGet(analysis, 'resource_id', false);
+      if (!agent) {
+        return errorSummaryFragment('Unknown', 'Expected analysis to have resource_id');
       }
 
-      const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
-      const maxPathLength = (2 * maxHops) + 1;
-      const rgraphPaths = rgraphFold((path) =>
-        {
-          const currentRnode = path[path.length-1];
-          if (maxPathLength < path.length)
+      try {
+        const rgraph = analysisToRgraph(analysis, kgraph, auxGraphs);
+        const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
+        const maxPathLength = (2 * maxHops) + 1;
+        const rgraphPaths = rgraphFold((path) =>
           {
-            return cmn.makePair([], []);
-          }
-          else if (currentRnode === end)
-          {
-            return cmn.makePair([], [path]);
-          }
-          else
-          {
-            let validPaths = [];
-            rnodeToOutEdges(currentRnode).forEach((edge) =>
-              {
-                const target = edge.target
-                if (!path.includes(target))
+            const currentRnode = path[path.length-1];
+            if (maxPathLength < path.length)
+            {
+              return cmn.makePair([], []);
+            }
+            else if (currentRnode === end)
+            {
+              return cmn.makePair([], [path]);
+            }
+            else
+            {
+              let validPaths = [];
+              rnodeToOutEdges(currentRnode).forEach((edge) =>
                 {
-                  let newPath = [...path, edge.redge, edge.target];
-                  validPaths.push(newPath);
-                }
-              });
+                  const target = edge.target
+                  if (!path.includes(target))
+                  {
+                    let newPath = [...path, edge.redge, edge.target];
+                    validPaths.push(newPath);
+                  }
+                });
 
-            return cmn.makePair(validPaths, []);
-          }
+              return cmn.makePair(validPaths, []);
+            }
+          },
+          [[start]],
+          []);
+
+        const analysisContext = {
+          agent: agent,
+          errors: errors 
+        };
+
+        return makeSummaryFragment(
+          [agent],
+          normalizePaths(rgraphPaths, kgraph),
+          rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules, analysisContext); }),
+          rgraph.edges.map(redge => {
+            const kedge = redgeToTrapiKedge(redge, kgraph);
+            const edgeContext = cmn.deepCopy(analysisContext); 
+            edgeContext.knowledgeSource = bl.inforesToProvenance(getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0]).knowledge_level;
+            return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
+          }),
+          {},
+          {});
+      } catch (e) {
+        if (e instanceof EdgeBindingNotFoundError) {
+          return errorSummaryFragment(agent, e.message);
+        }
+        
+        return errorSummaryFragment(agent, 'Unknown error with building RGraph');
+      }
+    }
+
+    try {
+      const resultNodeBindings = cmn.jsonGet(trapiResult, 'node_bindings');
+      const start = getBindingId(resultNodeBindings, startKey);
+      const end = getBindingId(resultNodeBindings, endKey);
+      const analyses = cmn.jsonGet(trapiResult, 'analyses');
+      const resultSummaryFragment = analyses.reduce(
+        (rsf, analysis) =>
+        {
+          return mergeSummaryFragments(
+            rsf,
+            analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
         },
-        [[start]],
-        []);
-
-      return makeSummaryFragment(
-        [cmn.jsonGet(analysis, 'resource_id', false)],
-        normalizePaths(rgraphPaths, kgraph),
-        rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules); }),
-        rgraph.edges.map(redge => { return summarizeRedge(redge, kgraph, edgeRules); }),
-        {} 
-      );
-    }
-
-    const resultNodeBindings = trapiResult['node_bindings'];
-    const start = getBindingId(resultNodeBindings, startKey);
-    const end = getBindingId(resultNodeBindings, endKey);
-
-    if (!start || !end)
-    {
-      return emptySummaryFragment();
-    }
-
-    const analyses = cmn.jsonGet(trapiResult, 'analyses', [])
-    const resultSummaryFragment = analyses.reduce(
-      (rsf, analysis) =>
-      {
-        return mergeSummaryFragments(
-          rsf,
-          analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
-      },
-      emptySummaryFragment()); 
+        emptySummaryFragment()); 
     
-    if (!isEmptySummaryFragment(resultSummaryFragment))
-    {
-      // Insert the ordering components after the analyses have been merged
-      const resultStartKey = rnodeToKey(start, kgraph);
-      const scoringComponents = cmn.jsonGet(trapiResult, 'ordering_components', {confidence: 0, novelty: 0, clinical_evidence: 0});
-      const normalizedScore = cmn.jsonGet(trapiResult, 'normalized_score', 0);
-      scoringComponents['normalized_score'] = normalizedScore;
-      resultSummaryFragment.scores[resultStartKey] = [scoringComponents];
-    }
+      if (!isEmptySummaryFragment(resultSummaryFragment))
+      {
+        // Insert the ordering components after the analyses have been merged
+        const resultStartKey = rnodeToKey(start, kgraph);
+        const scoringComponents = cmn.jsonGet(trapiResult, 'ordering_components', {confidence: 0, novelty: 0, clinical_evidence: 0});
+        const normalizedScore = cmn.jsonGet(trapiResult, 'normalized_score', 0);
+        scoringComponents['normalized_score'] = normalizedScore;
+        resultSummaryFragment.scores[resultStartKey] = [scoringComponents];
+      }
 
-    return resultSummaryFragment;
+      return resultSummaryFragment;
+    } catch (e) {
+      if (e instanceof NodeBindingNotFoundError) {
+        return errorSummaryFragment('Unknown', e.message);
+      }
+
+      return errorSummaryFragment('Unknown', 'Unknown error while building result summary fragment');
+    }
   }
 
   const summaryFragments = [];
+  const errors = {};
   answers.forEach((answer) => {
     const trapiMessage = answer.message;
     const trapiResults = cmn.jsonGet(trapiMessage, 'results', []);
@@ -1204,7 +1249,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
 
     trapiResults.forEach((result) =>
     {
-      const sf = trapiResultToSummaryFragment(result, kgraph, auxGraphs, startKey, endKey);
+      const sf = trapiResultToSummaryFragment(result, kgraph, auxGraphs, startKey, endKey, errors);
       if (!isEmptySummaryFragment(sf))
       {
         summaryFragments.push(sf);
@@ -1212,10 +1257,10 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
     });
   });
 
-  return summaryFragments;
+  return [summaryFragments, errors];
 }
 
-async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, agentToName, annotationClient)
+async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, agentToName, annotationClient, errors)
 {
   function fragmentPathsToResultsAndPaths(fragmentPaths)
   {
@@ -1265,7 +1310,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
         update.transforms.forEach((transform) =>
           {
             transform(obj);
-            obj.aras.concat(agents);
+            obj.aras.push(...agents);
           });
       });
   }
@@ -1289,6 +1334,13 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       });
   }
 
+  function extendSummaryErrors(errors, newErrors) {
+    Object.keys(newErrors).forEach((agent) => {
+      const currentErrors = cmn.jsonSetDefaultAndGet(errors, agent, []);
+      currentErrors.push(...newErrors[agent]);
+    });
+  }
+
   function extendSummaryPublications(publications, edge)
   {
     function makePublicationObject(type, url, snippet, pubdate)
@@ -1297,9 +1349,10 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     }
 
     const snippets = cmn.jsonGet(edge, 'snippets');
-    const publicationIds = cmn.jsonGet(edge, 'publications', []);
-    publicationIds.forEach((id) =>
-      {
+    const pubs = cmn.jsonGet(edge, 'publications', {});
+    Object.keys(pubs).forEach((ks) => {
+      const publicationIds = cmn.jsonGet(pubs, ks, []);
+      publicationIds.forEach((id) => {
         const [type, url] = ev.idToTypeAndUrl(id);
         let publicationObj = false;
         for (const snippet of snippets)
@@ -1321,6 +1374,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
         cmn.jsonSet(publications, id, makePublicationObject(type, url, null, null));
       });
+    });
   }
 
   function edgesToEdgesAndPublications(edges)
@@ -1453,6 +1507,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       extendSummaryNodes(nodes, condensedSummaryNodes(cs), agents);
       extendSummaryEdges(edges, condensedSummaryEdges(cs), agents);
       extendSummaryScores(scores, condensedSummaryScores(cs));
+      extendSummaryErrors(errors, condensedSummaryErrors(cs));
     });
   
   results = Object.values(results).map(objRemoveDuplicates)
@@ -1471,8 +1526,8 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       // Remove any duplicates on all edge attributes
       objRemoveDuplicates(edge);
 
-      // Remove any publications that are not valid
-      cmn.jsonUpdate(edge, 'publications', (publications) => { return publications.filter(ev.isValidId); });
+      // Remove duplicates from publications
+      objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
 
       // Convert all infores to provenance
       cmn.jsonUpdate(edge, 'provenance', (provenance) =>
@@ -1579,7 +1634,12 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
     const knodes = await annotationPromise;
     const kgraph = { 'nodes': knodes };
-    const annotationContext = {queryType: queryType};
+    const annotationContext = {
+      agent: 'biothings-annotator',
+      queryType: queryType,
+      errors: {}
+    };
+
     const nodeUpdates = Object.keys(knodes).map((rnode) =>
     {
       return summarizeRnode(rnode, kgraph, nodeRules, annotationContext);
@@ -1591,6 +1651,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     });
 
     extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), 'biothings-annotator');
+    extendSummaryErrors(errors, annotationContext.errors);
   }
   catch (err)
   {
@@ -1694,7 +1755,24 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       'nodes': nodes,
       'edges': edges,
       'publications': publications,
-      'tags': tags
+      'tags': tags,
+      'errors': errors
     };
+  }
+}
+
+class NodeBindingNotFoundError extends Error
+{
+  constructor(edgeBinding)
+  {
+    super(`Node binding not found for ${JSON.stringify(edgeBinding)}`);
+  }
+}
+
+class EdgeBindingNotFoundError extends Error
+{
+  constructor(edgeBinding)
+  {
+    super(`Edge binding not found for ${JSON.stringify(edgeBinding)}`);
   }
 }

@@ -1,5 +1,6 @@
 'use strict';
 
+import * as cmn from './common.mjs';
 import * as arsmsg from './ARSMessages.mjs';
 import * as trapi from './trapi.mjs';
 
@@ -11,6 +12,17 @@ export { TranslatorService };
  * - getQueryStatus(queryId)
  * - getResults(queryId, [filters])
  */
+
+class QueryClientError extends Error {
+  constructor(message, qid, clientOp, upstreamError) {
+    super(message);
+    this.name = 'QueryClientError';
+    this.qid = qid;
+    this.op = clientOp;
+    this.upstreamError = upstreamError;
+  }
+}
+
 class TranslatorService
 {
   constructor(queryClient, outputAdapter)
@@ -35,12 +47,11 @@ class TranslatorService
       }
       else
       {
-        throw new Error(`ARS rejected query with response: ${JSON.stringify(res)}`);
+        throw new QueryClientError(`Upstream service rejected query with response: ${JSON.stringify(res)}`, null, 'query', null);
       }
     } catch (err)
     {
-      console.error(`Error posting query: '${err}' [${JSON.stringify(query)}]`);
-      throw new Error(err);
+      throw new QueryClientError(`Error posting query`, null, 'query', err);
     }
   }
 
@@ -53,8 +64,7 @@ class TranslatorService
     }
     catch (err)
     {
-      console.error(`Error querying status for ${queryId}: '${err}'`);
-      throw new Error(err);
+      throw new QueryClientError(`Error querying status for ${queryId}`, queryId, 'status', err);
     }
   }
 
@@ -68,7 +78,7 @@ class TranslatorService
     catch (err)
     {
       console.error(`Error retrieving results for ${queryId}: '${err}'`);
-      throw new Error(err);
+      throw new QueryClientError(`Error retrieving results for ${queryId}`, queryId, 'result', err);
     }
   }
 }

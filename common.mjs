@@ -262,26 +262,13 @@ export function jsonUpdate(obj, key, update)
   return jsonSet(obj, key, update(jsonGet(obj, key)));
 }
 
-export class ApplicationError extends Error
+export class ServerError extends Error
 {
   constructor(message, httpCode) {
     super(message);
     this.name = this.constructor.name;
+    this.msg = message;
     this.httpCode = httpCode;
-  }
-}
-
-export class ClientError extends ApplicationError
-{
-  constructor(message) {
-    super(message, 400);
-  }
-}
-
-export class ServerError extends ApplicationError
-{
-  constructor(message) {
-    super(message, 500);
   }
 }
 
@@ -300,8 +287,7 @@ async function sendRecvHTTP(url, method='GET', headers={}, body=null, contentTyp
   if (resp.ok) {
       return resp.json();
   } else {
-      let errmsg = `ERROR: status: ${resp.status}; msg: '${resp.statusText}'`;
-      throw new Error(errmsg);
+      throw new ServerError(resp.statusText, resp.status);
   }
 }
 

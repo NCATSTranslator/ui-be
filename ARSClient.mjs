@@ -27,16 +27,24 @@ export { ARSClient }
 }
 
 */
+
+class ARSError extends Error {
+  constructor(message, upstreamError) {
+    super(message);
+    this.upstreamError = upstreamError;
+  }
+}
+
 class ARSClient
 {
-  constructor(origin, getPath, postPath)
+  constructor(origin, getPath, postPath, completeCodes=[200,206,422], runningCodes=[202])
   {
     this.origin = origin;
     this.getURL = `${origin}${getPath}`;
     this.postURL = `${origin}${postPath}`;
     // Yes, 422 means the message is complete and valid. Specifically it means that there was some error in the scoring process.
-    this.completeCodes = [200, 206, 422]; 
-    this.runningCodes = [202];
+    this.completeCodes = completeCodes;
+    this.runningCodes = runningCodes;
   }
 
   async fetchMessage(uuid, doTrace=false)
