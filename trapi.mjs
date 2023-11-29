@@ -1527,7 +1527,10 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       objRemoveDuplicates(edge);
 
       // Remove duplicates from publications
-      objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
+      const edgePublications = cmn.jsonGet(edge, 'publications', {});
+      Object.keys(edgePublications).forEach((kl) => {
+        edgePublications[kl] = [...new Set(edgePublications[kl])]
+      });
 
       // Convert all infores to provenance
       cmn.jsonUpdate(edge, 'provenance', (provenance) =>
