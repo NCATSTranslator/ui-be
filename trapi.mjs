@@ -714,7 +714,7 @@ function determineAnswerTag(type, answerTags, queryType) {
   return [`cc:other`, `Other`];
 }
 
-function makeRgraph(rnodes, redges, kgraph) {
+function makeRgraph(rnodes, redges, edgeMappings, kgraph) {
   if (!redges) {
     return false;
   }
@@ -732,6 +732,7 @@ function makeRgraph(rnodes, redges, kgraph) {
     const kedge = redgeToTrapiKedge(redge, kgraph);
     return bl.isBiolinkPredicate(kedgePredicate(kedge));
   });
+  rgraph.edgeMappings = edgeMappings;
 
   return rgraph;
 }
@@ -742,11 +743,17 @@ function isRedgeInverted(redge, subject, kgraph) {
 }
 
 function analysisToRgraph(analysis, kgraph, auxGraphs) {
-  let unprocessedEdgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings', []));
+  const edgeBindingData = new Map();
+  let unprocessedEdgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings', [])).map((eb) => {
+    edgeBindingData[eb] = { partOf: ['root'] };
+    return eb;
+  });
+
   let unprocessedSupportGraphs = [];
-  const edgeBindings = new Set();
   const nodeBindings = new Set();
   const supportGraphs = new Set();
+  // Invariant: edges and subgraphs will only ever be processed once. This is very important
+  //            for how the following code works. 
   while (!cmn.isArrayEmpty(unprocessedEdgeBindings) || !cmn.isArrayEmpty(unprocessedSupportGraphs)) {
     while (!cmn.isArrayEmpty(unprocessedEdgeBindings)) {
       const eb = unprocessedEdgeBindings.pop();
@@ -758,32 +765,38 @@ function analysisToRgraph(analysis, kgraph, auxGraphs) {
       nodeBindings.add(kedgeSubject(kedge));
       nodeBindings.add(kedgeObject(kedge));
       const edgeSupportGraphs = kedgeSupportGraphs(kedge);
+      edgeBindingData[eb].support = edgeSupportGraphs;
       edgeSupportGraphs.forEach((sg) => {
         if (!supportGraphs.has(sg)) {
           unprocessedSupportGraphs.push(sg);
         }
       });
-
-      edgeBindings.add(eb);
     };
 
     while (!cmn.isArrayEmpty(unprocessedSupportGraphs)) {
       const gid = unprocessedSupportGraphs.pop();
       const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
-      if (auxGraph) {
-        const sgEdgeBindings = cmn.jsonGet(auxGraph, 'edges', []);
-        sgEdgeBindings.forEach((eb) => {
-          if (!edgeBindings.has(eb)) {
-            unprocessedEdgeBindings.push(eb);
-          }
-        }); 
+      if (!auxGraph) {
+        throw new AuxGraphNotFoundError(gid);
       }
+
+      const sgEdgeBindings = cmn.jsonGet(auxGraph, 'edges', []);
+      sgEdgeBindings.forEach((eb) => {
+        if (!edgeBindingData[eb]) {
+          edgeBindingData[eb] = { partOf: [gid] };
+          unprocessedEdgeBindings.push(eb);
+        } else {
+          // We do not want to process the same edge twice, but we need to include this
+          // graph as a graph where this edge occurs. 
+          edgeBindingData[eb].partOf.push(gid);
+        }
+      }); 
 
       supportGraphs.add(gid);
     }
   }
 
-  return makeRgraph([...nodeBindings], [...edgeBindings], kgraph);
+  return makeRgraph([...nodeBindings], [...Object.keys(edgeBindingData)], edgeBindingData, kgraph);
 }
 
 function rnodeToKey(rnode, kgraph) {
@@ -883,7 +896,14 @@ function makeSummaryFragment(agents, paths, nodes, edges, scores, errors) {
 }
 
 function emptySummaryFragment() {
-  return makeSummaryFragment([], [], [], [], {}, {});
+  return makeSummaryFragment(
+    [], // agents
+    [], // paths
+    [], // nodes
+    {base: {}, updates: []}, //edges
+    {}, // scores
+    {}  // errors
+  );
 }
 
 function errorSummaryFragment(agent, error) {
@@ -896,7 +916,8 @@ function errorSummaryFragment(agent, error) {
 function isEmptySummaryFragment(summaryFragment) {
   return cmn.isArrayEmpty(summaryFragment.paths) &&
          cmn.isArrayEmpty(summaryFragment.nodes) &&
-         cmn.isArrayEmpty(summaryFragment.edges);
+         cmn.isObjEmpty(summaryFragment.edges.base) &&
+         cmn.isArrayEmpty(summaryFragment.edges.updates);
 } 
 
 function condensedSummaryAgents(condensedSummary) {
@@ -923,25 +944,39 @@ function condensedSummaryErrors(condensedSummary) {
   return condensedSummary.errors;
 }
 
+function makeEdgeBase() {
+  return {
+    aras: [],
+    support: []
+  };
+}
+
+function isInvalidEdge(edge) {
+  return !edge.subject || !edge.object || !edge.predicate;
+}
+
 function pathToKey(path) {
   return hash(path);
+}
+
+function mergeFragmentObjects(obj1, obj2) {
+  Object.keys(obj2).forEach((k) => {
+    const current = cmn.jsonSetDefaultAndGet(obj1, k, []);
+    current.push(...obj2[k]);
+  });
 }
 
 function mergeSummaryFragments(f1, f2) {
   f1.agents.push(...f2.agents);
   f1.paths.push(...f2.paths);
   f1.nodes.push(...f2.nodes);
-  f1.edges.push(...f2.edges);
-  Object.keys(f2.scores).forEach((k) => {
-    const currentScores = cmn.jsonSetDefaultAndGet(f1.scores, k, []);
-    currentScores.push(...f2.scores[k]);
+  f1.edges.updates.push(...f2.edges.updates);
+  Object.keys(f2.edges.base).forEach((ek) => {
+    const currentEdge = cmn.jsonSetDefaultAndGet(f1.edges.base, ek, makeEdgeBase());
+    mergeFragmentObjects(currentEdge, f2.edges.base[ek]);
   });
-
-  Object.keys(f2.errors).forEach((k) => {
-    const currentErrors = cmn.jsonSetDefaultAndGet(f1.errors, k, []);
-    currentErrors.push(...f2.errors[k]);
-  });
-
+  mergeFragmentObjects(f1.scores, f2.scores);
+  mergeFragmentObjects(f1.errors, f2.errors);
   return f1;
 }
 
@@ -957,10 +992,11 @@ function getPathDirection(qgraph) {
 function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHops) {
   function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey, errors) {
     function analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end) {
-      function normalizePaths(rgraphPaths, kgraph) {
+      function finalizePaths(rgraphPaths, edgeMappings, kgraph) {
         function N(n) { return rnodeToKey(n, kgraph); }
         function E(e, o) { return redgeToKey(e, kgraph, isRedgeInverted(e, o, kgraph)); }
-        return rgraphPaths.map(path => {
+        const normalizedMappings = {};
+        const normalizedPaths = rgraphPaths.map(path => {
           let normalizedPath = [];
           const pathLength = path.length - 1;
           if (pathLength < 0) {
@@ -970,12 +1006,49 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           for (let i = 0; i < pathLength; i+=2) {
             const node = path[i];
             const edge = path[i+1];
-            normalizedPath.push(N(node), E(edge, node));
+            const normalizedEdge = E(edge, node);
+            normalizedMappings[normalizedEdge] = edgeMappings[edge];
+            normalizedPath.push(N(node), normalizedEdge);
           }
 
           normalizedPath.push(N(path[pathLength]));
           return normalizedPath;
         });
+
+        const pathToSupportGraph = {};
+        // For every path find which graphs the path appears in. A path appears in a graph iff all
+        // edges in the path appear in the graph.
+        for (const path of normalizedPaths) {
+          let gids = normalizedMappings[path[1]].partOf;
+          for (let i = 3; i < path.length; i+=2) {
+            gids = gids.filter((gid) => normalizedMappings[path[i]].partOf.includes(gid));
+          }
+
+          pathToSupportGraph[pathToKey(path)] = gids;
+        }
+
+        const edgeBases = {}
+        // Determine which paths support which edges
+        for (const edge of Object.keys(normalizedMappings)) {
+          const edgeSupportGraphs = normalizedMappings[edge].support;
+          const edgePaths = [];
+          for (const path of Object.keys(pathToSupportGraph)) {
+            for (const pgid of pathToSupportGraph[path]) {
+              if (edgeSupportGraphs.includes(pgid)) {
+                edgePaths.push(path);
+                break;
+              }
+            }
+          }
+
+          if (!edgeBases[edge]) {
+            edgeBases[edge] = makeEdgeBase();
+          }
+
+          edgeBases[edge].support.push(...edgePaths);
+        }
+
+        return [normalizedPaths, edgeBases];
       }
 
       const agent = cmn.jsonGet(analysis, 'resource_id', false);
@@ -1011,6 +1084,8 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           [[start]],
           []);
 
+        const [normalizedPaths, edgesBase] = finalizePaths(rgraphPaths, rgraph.edgeMappings, kgraph);
+
         const analysisContext = {
           agent: agent,
           errors: errors 
@@ -1018,18 +1093,22 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
 
         return makeSummaryFragment(
           [agent],
-          normalizePaths(rgraphPaths, kgraph),
+          normalizedPaths,
           rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules, analysisContext); }),
-          rgraph.edges.map(redge => {
-            const kedge = redgeToTrapiKedge(redge, kgraph);
-            const edgeContext = cmn.deepCopy(analysisContext); 
-            edgeContext.knowledgeSource = bl.inforesToProvenance(getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0]).knowledge_level;
-            return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
-          }),
+          {
+            base: edgesBase,
+            updates: rgraph.edges.map(redge => {
+                      const kedge = redgeToTrapiKedge(redge, kgraph);
+                      const edgeContext = cmn.deepCopy(analysisContext); 
+                      edgeContext.knowledgeSource = bl.inforesToProvenance(getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0]).knowledge_level;
+                      return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
+                    })
+          },
           {},
           {});
-      } catch (e) {
-        if (e instanceof EdgeBindingNotFoundError) {
+      } catch (err) {
+        console.error(err);
+        if (err instanceof EdgeBindingNotFoundError) {
           return errorSummaryFragment(agent, e.message);
         }
         
@@ -1125,7 +1204,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
   function extendSummaryObj(objs, updates, agents) {
     updates.forEach((update) => {
-      let obj = cmn.jsonSetDefaultAndGet(objs, update.key, {'aras': []});
+      let obj = cmn.jsonSetDefaultAndGet(objs, update.key, makeEdgeBase());
       update.transforms.forEach((transform) => {
         transform(obj);
         obj.aras.push(...agents);
@@ -1298,10 +1377,19 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
   condensedSummaries.forEach((cs) => {
     const agents = condensedSummaryAgents(cs);
     const [newResults, newPaths] = fragmentPathsToResultsAndPaths(condensedSummaryPaths(cs));
+    const summaryEdges = condensedSummaryEdges(cs);
+
     extendSummaryResults(results, newResults);
     extendSummaryPaths(paths, newPaths, agents);
     extendSummaryNodes(nodes, condensedSummaryNodes(cs), agents);
-    extendSummaryEdges(edges, condensedSummaryEdges(cs), agents);
+    Object.keys(summaryEdges.base).forEach((k) => {
+      const edge = cmn.jsonSetDefaultAndGet(edges, k, makeEdgeBase());
+      Object.keys(summaryEdges.base[k]).forEach((attr) => {
+        edge[attr].push(...summaryEdges.base[k][attr]);
+      })
+    });
+
+    extendSummaryEdges(edges, summaryEdges.updates, agents);
     extendSummaryScores(scores, condensedSummaryScores(cs));
     extendSummaryErrors(errors, condensedSummaryErrors(cs));
   });
@@ -1315,7 +1403,15 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
   };
 
   // Edge post-processing
-  Object.values(edges).forEach((edge) => {
+  Object.keys(edges).forEach((ek) => {
+    const edge = edges[ek];
+    // Remove any edges that have a missing subject, object, or predicate
+    if (isInvalidEdge(edge)) {
+      console.error(`Found invalid edge ${ek}`);
+      delete edges[ek];
+      return;
+    }
+
     // Remove any duplicates on all edge attributes
     objRemoveDuplicates(edge);
 
@@ -1553,5 +1649,11 @@ class NodeBindingNotFoundError extends Error {
 class EdgeBindingNotFoundError extends Error {
   constructor(edgeBinding) {
     super(`Edge binding not found for ${JSON.stringify(edgeBinding)}`);
+  }
+}
+
+class AuxGraphNotFoundError extends Error {
+  constructor(auxGraph) {
+    super(`Auxiliary graph not found for ${auxGraph}`);
   }
 }
