@@ -40,7 +40,7 @@ class TranslatorService
   {
     try
     {
-      let res = await this.queryClient.postQuery(query);
+      let [meta, res] = await this.queryClient.postQuery(query);
       if (arsmsg.isAcceptedQuery(res))
       {
         return res;

@@ -9,7 +9,7 @@ services:
     depends_on:
       - pgdb
   pgdb:
-    image: postgres:latest
+    image: postgres:15.5
     environment:
       POSTGRES_PASSWORD_FILE: /run/secrets/db_password
     volumes:
