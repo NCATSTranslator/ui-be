@@ -29,12 +29,10 @@ function createQueryController(config, services, isDemo) {
   });
 
   router.get('/:qid/status',
-    validateDemoQueryRequest(isDemo, demoQueries, 'uuid', (req) => req.params.qid),
     validateQueryResultRequest,
     handleStatusRequest(config, translatorService, config.filters));
 
   router.get('/:qid/result',
-    validateDemoQueryRequest(isDemo, demoQueries, 'uuid', (req) => req.params.qid),
     validateQueryResultRequest,
     handleResultRequest(config, translatorService, config.filters));
 
