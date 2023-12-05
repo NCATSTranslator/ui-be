@@ -272,6 +272,63 @@ export class ServerError extends Error
   }
 }
 
+export class HTTPError extends Error {
+  constructor(message, httpData) {
+    super(message);
+    this.status = httpData.status;
+    this.method = httpData.method;
+    this.url = httpData.url;
+    this.headers = httpData.headers;
+    this.body = httpData.body;
+  }
+}
+
+export async function sendRecvJSON2(url, method='GET', headers={}, body=null) {
+  return sendRecvHTTP2(url, method, headers, body, 'application/json', {
+    encode: JSON.stringify,
+    decode: JSON.parse
+  });
+}
+
+
+export async function sendRecvHTTP2(url, method='GET', headers={}, body=null,
+  contentType, codec) {
+    let options = {
+      method: method,
+      headers: {...headers}
+  };
+  options.headers['Content-type'] = contentType;
+
+  if (body) {
+    options.body = codec.encode(body);
+  }
+
+  let startTime = new Date();
+  let resp = await fetch(url, options);
+  const fetchMs = new Date() - startTime;
+  let parseMs = 0;
+  if (resp.ok) {
+    startTime = new Date();
+    body = codec.decode(await resp.text());
+    parseMs = new Date() - startTime;
+    return [{
+        fetchMs: fetchMs,
+        parseMs: parseMs,
+        status: resp.status,
+        headers: resp.headers
+      }, body];
+  } else {
+    throw new HTTPError(
+      `HTTP Error ${resp.status}: ${method} ${url}`, {
+        method: method,
+        headers: resp.headers,
+        url: url,
+        status: resp.status,
+        body: await resp.text()
+      });
+  }
+}
+
 async function sendRecvHTTP(url, method='GET', headers={}, body=null, contentType, bodySerializer) {
   let options = {
       method: method,
