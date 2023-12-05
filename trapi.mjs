@@ -512,7 +512,7 @@ function getPublications() {
           currentPublications[ks] = [];
         }
 
-        currentPublications[ks].push(...vs[ks]);
+        currentPublications[ks].push(...(vs[ks].map(ev.normalize)));
       });
 
       return obj;
