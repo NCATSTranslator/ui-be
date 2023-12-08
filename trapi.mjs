@@ -496,7 +496,8 @@ function getPublications() {
       const knowledgeLevel = provenance.knowledge_level; 
       const knowledgeSource = provenance.name;
       attributes.forEach(attribute => {
-        const v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
+        let v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
+        v = cmn.isArray(v) ? v : [v];
         if (!result[knowledgeLevel]) {
           result[knowledgeLevel] = [];
         }
