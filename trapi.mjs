@@ -492,14 +492,22 @@ function getPublications() {
       }
 
       const result = {};
-      const knowledgeSource = context.knowledgeSource;
+      const provenance = bl.inforesToProvenance(context.primarySource);
+      const knowledgeLevel = provenance.knowledge_level; 
+      const knowledgeSource = provenance.name;
       attributes.forEach(attribute => {
-        const v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
-        if (!result[knowledgeSource]) {
-          result[knowledgeSource] = [];
+        let v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
+        v = cmn.isArray(v) ? v : [v];
+        if (!result[knowledgeLevel]) {
+          result[knowledgeLevel] = [];
         }
 
-        result[knowledgeSource].push(...v);
+        result[knowledgeLevel].push(...(v.map((pubId => {
+          return {
+            'id': pubId,
+            'source': knowledgeSource
+          };
+        }))));
       });
 
       return result;
@@ -507,12 +515,12 @@ function getPublications() {
     (vs, obj) =>
     {
       const currentPublications = cmn.jsonSetDefaultAndGet(obj, 'publications', {});
-      Object.keys(vs).forEach((ks) => {
-        if (!currentPublications[ks]) {
-          currentPublications[ks] = [];
+      Object.keys(vs).forEach((knowledgeLevel) => {
+        if (!currentPublications[knowledgeLevel]) {
+          currentPublications[knowledgeLevel] = [];
         }
 
-        currentPublications[ks].push(...vs[ks]);
+        currentPublications[knowledgeLevel].push(...vs[knowledgeLevel]);
       });
 
       return obj;
@@ -1190,7 +1198,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           rgraph.edges.map(redge => {
             const kedge = redgeToTrapiKedge(redge, kgraph);
             const edgeContext = cmn.deepCopy(analysisContext); 
-            edgeContext.knowledgeSource = bl.inforesToProvenance(getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0]).knowledge_level;
+            edgeContext.primarySource = getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0];
             return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
           }),
           {},
@@ -1343,16 +1351,23 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
   function extendSummaryPublications(publications, edge)
   {
-    function makePublicationObject(type, url, snippet, pubdate)
+    function makePublicationObject(type, url, snippet, pubdate, source)
     {
-      return {'type': type, 'url': url, 'snippet': snippet, 'pubdate': pubdate};
+      return {
+        'type': type,
+        'url': url,
+        'snippet': snippet,
+        'pubdate': pubdate,
+        'source': source
+      };
     }
 
     const snippets = cmn.jsonGet(edge, 'snippets');
     const pubs = cmn.jsonGet(edge, 'publications', {});
     Object.keys(pubs).forEach((ks) => {
-      const publicationIds = cmn.jsonGet(pubs, ks, []);
-      publicationIds.forEach((id) => {
+      const publicationData = cmn.jsonGet(pubs, ks, []);
+      publicationData.forEach((pub) => {
+        const id = pub.id;
         const [type, url] = ev.idToTypeAndUrl(id);
         let publicationObj = false;
         for (const snippet of snippets)
@@ -1368,11 +1383,11 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
         {
           const snippet = cmn.jsonGet(publicationObj, 'sentence', null);
           const pubdate = cmn.jsonGet(publicationObj, 'publication date', null);
-          cmn.jsonSet(publications, id, makePublicationObject(type, url, snippet, pubdate));
+          cmn.jsonSet(publications, id, makePublicationObject(type, url, snippet, pubdate, pub.source));
           return;
         }
 
-        cmn.jsonSet(publications, id, makePublicationObject(type, url, null, null));
+        cmn.jsonSet(publications, id, makePublicationObject(type, url, null, null, pub.source));
       });
     });
   }
@@ -1400,6 +1415,12 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     Object.values(edges).forEach((edge) =>
       {
         extendSummaryPublications(publications, edge);
+        const edgePublications = cmn.jsonGet(edge, 'publications', {})
+        Object.keys(edgePublications).forEach((knowledgeLevel) => {
+          edgePublications[knowledgeLevel] = edgePublications[knowledgeLevel].map((pub) => {
+            return pub.id;
+          });
+        });
         delete edge['snippets'];
         addInverseEdge(edges, edge);
         cmn.jsonSet(edge, 'predicate', edgeToQualifiedPredicate(edge));
@@ -1650,7 +1671,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       return summarizeRnode(rnode, kgraph, resultNodeRules, annotationContext);
     });
 
-    extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), 'biothings-annotator');
+    extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), ['biothings-annotator']);
     extendSummaryErrors(errors, annotationContext.errors);
   }
   catch (err)
