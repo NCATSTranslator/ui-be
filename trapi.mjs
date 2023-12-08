@@ -520,7 +520,7 @@ function getPublications() {
           currentPublications[knowledgeLevel] = [];
         }
 
-        currentPublications[knowledgeLevel].push(...vs[knowledgeLevel]);
+        currentPublications[knowledgeLevel].push(...(vs[knowledgeLevel].map(ev.normalize)));
       });
 
       return obj;
