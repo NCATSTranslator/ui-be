@@ -158,6 +158,7 @@ class ARSClient {
      */
     let retval = {};
     let [meta, baseResult] = await this.fetchMessage(pkey, true);
+    meta.timestamp = baseResult.timestamp || null;
 
     /* Special case: if the ARS starts queueing requests, it will return status: running
      * and an empty children array. Catch this special case and exit early.
