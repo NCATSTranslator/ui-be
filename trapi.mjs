@@ -1670,7 +1670,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       return summarizeRnode(rnode, kgraph, resultNodeRules, annotationContext);
     });
 
-    extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), 'biothings-annotator');
+    extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), ['biothings-annotator']);
     extendSummaryErrors(errors, annotationContext.errors);
   }
   catch (err)
