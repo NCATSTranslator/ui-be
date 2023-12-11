@@ -504,8 +504,8 @@ function getPublications() {
 
         result[knowledgeLevel].push(...(v.map((pubId => {
           return {
-            'id': pubId,
-            'source': knowledgeSource
+            id: pubId,
+            source: knowledgeSource
           };
         }))));
       });
@@ -520,7 +520,11 @@ function getPublications() {
           currentPublications[knowledgeLevel] = [];
         }
 
-        currentPublications[knowledgeLevel].push(...(vs[knowledgeLevel].map(ev.normalize)));
+        vs[knowledgeLevel].forEach((pubObj) => {
+          pubObj.id = ev.normalize(pubObj.id);
+        });
+
+        currentPublications[knowledgeLevel].push(...(vs[knowledgeLevel]));
       });
 
       return obj;
