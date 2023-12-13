@@ -494,7 +494,6 @@ function getPublications() {
       const result = {};
       const provenance = bl.inforesToProvenance(context.primarySource);
       const knowledgeLevel = provenance.knowledge_level; 
-      const knowledgeSource = provenance.name;
       attributes.forEach(attribute => {
         let v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
         v = cmn.isArray(v) ? v : [v];
@@ -505,7 +504,7 @@ function getPublications() {
         result[knowledgeLevel].push(...(v.map((pubId => {
           return {
             id: pubId,
-            source: knowledgeSource
+            source: provenance
           };
         }))));
       });
