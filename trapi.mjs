@@ -1318,8 +1318,8 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     return [edges, publications];
   }
 
-  function resultsToResultsAndTags(results, paths, nodes, scores) {
-    function isPathLessThan(pid1, pid2) {
+  function resultsToResultsAndTags(results, paths, nodes, scores, errors) {
+    function isPidLessThan(pid1, pid2) {
       const path1 = getPathFromPid(paths, pid1);
       const path2 = getPathFromPid(paths, pid2);
       const p1Len = path1.length;
@@ -1344,31 +1344,58 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       return 1;
     }
 
+    function isRootPath(pid) {
+      const path = getPathFromPid(paths, pid);
+      return getPathFromPid(paths, pid).length === 3;
+    }
+
     const usedTags = {};
-    const expandedResults = results.map((result) => {
-      const ps = cmn.jsonGet(result, 'paths');
-      const subgraph = getPathFromPid(paths, ps[0]);
+    const expandedResults = [];
+    for (const result of results) {
+      const pids = cmn.jsonGet(result, 'paths');
+      const rootPids = pids.filter(isRootPath);
+      // Bail if there are no root paths
+      if (rootPids.length === 0) {
+        let aras = new Set();
+        for (const pid of pids) {
+          for (const ara of paths[pid].aras) {
+            aras.add(ara);
+          }
+        }
+
+        aras = [...aras];
+        const errorString = "No root paths found";
+        console.error(`${aras.join(', ')}: ${errorString}`)
+        for (const ara of aras) {
+          const araErrors = cmn.jsonSetDefaultAndGet(errors, ara, []);
+          araErrors.push(errorString);
+        }
+
+        continue;
+      } 
+
+      const subgraph = getPathFromPid(paths, rootPids[0]);
       const start = subgraph[0];
       const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
       const end = subgraph[subgraph.length-1];
       const tags = {};
-      ps.forEach((p) => {
-        Object.keys(paths[p].tags).forEach((tag) => {
-          usedTags[tag] = paths[p].tags[tag];
+      pids.forEach((pid) => {
+        Object.keys(paths[pid].tags).forEach((tag) => {
+          usedTags[tag] = paths[pid].tags[tag];
           tags[tag] = null;
         });
       });
 
-      return {
+      expandedResults.push({
         'id': hash([start, end]),
         'subject': start,
         'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
-        'paths': ps.sort(isPathLessThan),
+        'paths': rootPids.sort(isPidLessThan),
         'object': end,
         'scores': scores[start],
         'tags': tags
-      }
-    });
+      });
+    }
 
     return [expandedResults, usedTags];
   }
@@ -1647,7 +1674,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       path.tags = tags;
     });
 
-    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores);
+    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores, errors);
     return {
       'meta': metadataObject,
       'results': results,
