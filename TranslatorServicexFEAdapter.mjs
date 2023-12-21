@@ -41,7 +41,8 @@ class TranslatorServicexFEAdapter
       status: determineStatus(msg),
       data: {
         qid: msg.pk,
-        aras: msg.completed.map(e => e.agent)
+        aras: msg.completed.map(e => e.agent),
+        timestamp: msg.meta.timestamp
       }
     };
   }
@@ -61,13 +62,12 @@ class TranslatorServicexFEAdapter
           }
         });
 
+    const summary = await trapi.creativeAnswersToSummary(msg.pk, data, maxHops, this.annotationClient);
+    summary.meta.timestamp = msg.meta.timestamp;
     
     return {
       status: determineStatus(msg),
-      data: await trapi.creativeAnswersToSummary(msg.pk,
-        data,
-        maxHops,
-        this.annotationClient)
+      data: summary
     };
   }
 }

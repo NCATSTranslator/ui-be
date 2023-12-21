@@ -1,7 +1,7 @@
 'use strict'
 
 import * as cmn from "./common.mjs";
-export { ARSClient }
+export { ARSClient };
 
 /* Data format:
 {
@@ -35,10 +35,8 @@ class ARSError extends Error {
   }
 }
 
-class ARSClient
-{
-  constructor(origin, getPath, postPath, completeCodes=[200,206,422], runningCodes=[202])
-  {
+class ARSClient {
+  constructor(origin, getPath, postPath, completeCodes=[200,206], runningCodes=[202]) {
     this.origin = origin;
     this.getURL = `${origin}${getPath}`;
     this.postURL = `${origin}${postPath}`;
@@ -47,50 +45,38 @@ class ARSClient
     this.runningCodes = runningCodes;
   }
 
-  async fetchMessage(uuid, doTrace=false)
-  {
+  async fetchMessage(uuid, doTrace=false) {
     let url = `${this.getURL}/${uuid}`;
-    if (doTrace)
-    {
+    if (doTrace) {
       url += '?trace=y';
     }
-
-    return cmn.SendRecvJSON(url, 'GET');
+    return cmn.sendRecvJSON2(url, 'GET');
   }
 
-  async postQuery(query)
-  {
-    return cmn.SendRecvJSON(this.postURL, 'POST', {}, query)
+  async postQuery(query) {
+    return cmn.sendRecvJSON2(this.postURL, 'POST', {}, query)
   }
 
-  isComplete(code)
-  {
+  isComplete(code) {
     return this.completeCodes.includes(code);
   }
 
-  isRunning(code)
-  {
+  isRunning(code) {
     return this.runningCodes.includes(code);
   }
 
-  isErrored(code)
-  {
+  isErrored(code) {
     return !(this.isComplete(code) || this.isRunning(code));
   }
 
-  constructFilterRegexes(filterArray)
-  {
-    return filterArray.map(e =>
-      {
-        if (typeof e === 'string')
-        {
-          return new RegExp(e);
-        }
-        else
-        {
-          return e;
-        }
-      });
+  constructFilterRegexes(filterArray) {
+    return filterArray.map(e => {
+      if (typeof e === 'string') {
+        return new RegExp(e);
+      } else {
+        return e;
+      }
+    });
   }
 
   /* Given a list of agents, return a list that contains only those agents satisfying the filter conditions.
@@ -99,24 +85,18 @@ class ARSClient
    * If both blacklist and whitelist filters are specified, an intermediate result is built applying whitelist filters,
    * and then blacklist filters are applied to that intermediate result.
    */
-  applyFilters(agentList, filters)
-  {
+  applyFilters(agentList, filters) {
     let retval = [...agentList];
     let hasWhiteList = false;
-    if (filters.hasOwnProperty('whitelist'))
-    {
+    if (filters.hasOwnProperty('whitelist')) {
       retval = retval.filter(e => filters.whitelist.includes(e));
       hasWhiteList = true;
     }
-    if (filters.hasOwnProperty('whitelistRx'))
-    {
+    if (filters.hasOwnProperty('whitelistRx')) {
       const whiteRxRes = agentList.filter(e => filters.whitelistRx.test(e));
-      if (hasWhiteList)
-      {
+      if (hasWhiteList) {
         retval = retval.concat(whiteRxRes)
-      }
-      else
-      {
+      } else {
         retval = whiteRxRes;
       }
     }
@@ -127,12 +107,10 @@ class ARSClient
      */
     retval = [...new Set(retval)];
 
-    if (filters.hasOwnProperty('blacklist'))
-    {
+    if (filters.hasOwnProperty('blacklist')) {
       retval = retval.filter(e => !filters.blacklist.includes(e));
     }
-    if (filters.hasOwnProperty('blacklistRx'))
-    {
+    if (filters.hasOwnProperty('blacklistRx')) {
       retval = retval.filter(e => !filters.blacklistRx.test(e));
     }
     return retval;
@@ -164,10 +142,8 @@ class ARSClient
    *
    */
 
-  async collectAllResults(pkey, filters={}, fetchCompleted=false)
-  {
-    function extractFields(childMsg)
-    {
+  async collectAllResults(pkey, filters={}, fetchCompleted=false) {
+    function extractFields(childMsg) {
       return {
         agent: childMsg.actor.agent,
         uuid: childMsg.message,
@@ -181,14 +157,15 @@ class ARSClient
      * data for only those (and only if requested)
      */
     let retval = {};
-    let baseResult = await this.fetchMessage(pkey, true);
+    let [meta, baseResult] = await this.fetchMessage(pkey, true);
+    meta.timestamp = baseResult.timestamp || null;
 
     /* Special case: if the ARS starts queueing requests, it will return status: running
      * and an empty children array. Catch this special case and exit early.
      */
-    if (baseResult.children.length === 0 && baseResult.status === "Running")
-    {
+    if (baseResult.children.length === 0 && baseResult.status === "Running") {
       return {
+        meta: meta,
         pk: pkey,
         queuing: true,
         completed: [],
@@ -205,80 +182,73 @@ class ARSClient
     let running = [];
     let errored = [];
     // Divide results up by status
-    for (const c of filteredChildren)
-    {
+    for (const c of filteredChildren) {
       if (this.isComplete(c.code)) {
         completed[c.actor.agent] = extractFields(c);
       } else if (this.isRunning(c.code)) {
         running.push(extractFields(c));
       } else {
-        try
-        {
+        try {
           errored.push(extractFields(c));
-        } catch (err)
-        {
+        } catch (err) {
           console.error(`Error extracting fields from ARS error response: '${err}'`);
           errored.push(c);
         }
       }
     }
 
-    if (!fetchCompleted)
-    {
+    if (!fetchCompleted) {
       retval = {
         pk: pkey,
         completed: Object.values(completed),
         running: running,
         errored: errored
       };
-    }
-    else
-    {
+    } else {
       let agents = Object.keys(completed);
       // Get uuids corresp. to these agents, fetch their results in parallel
       let toFetch = agents.map(e => completed[e].uuid);
-      const promises = toFetch.map(async (e) =>
-        {
-          console.log(`kicking off fetch for ${e}`);
-          return this.fetchMessage(e)
-        });
+      let start = new Date();
+      const promises = toFetch.map(async (e) => {
+        console.log(`kicking off fetch for ${e}`);
+        return this.fetchMessage(e);
+      });
       let finalCompleted = [];
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled#parameters
-      await Promise.allSettled(promises).then(results =>
-        {
-          results.forEach(item =>
-            {
-              if (item.status === 'fulfilled')
-              {
-                let agent = item.value.fields.name;
-                let elem = completed[agent];
-                elem.data = item.value.fields.data.message;
-                finalCompleted.push(elem);
-                console.log(`settled ${agent}`);
-              }
-              else
-              {
-                //
-                console.error('Unexpected case of being unable to fetch a result for an agent that reported code=200');
-                errored.push(item.value); // No idea what might be in this object
-              }
-            });
-          console.log('done settling promises');
-          retval = {
-            pk: pkey,
-            completed: finalCompleted,
-            running: running,
-            errored: errored
-          };
+      await Promise.allSettled(promises).then(results => {
+        results.forEach(item => {
+          if (item.status === 'fulfilled') {
+            let itemData = item.value[1];
+            let agent = itemData.fields.name;
+            let elem = completed[agent];
+            elem.data = itemData.fields.data.message;
+            elem.meta = item.value[0];
+            finalCompleted.push(elem);
+            console.log(`settled ${agent}`);
+          } else {
+            //
+            console.error('Unexpected case of being unable to fetch a result for an agent that reported code=200');
+            errored.push(item.value); // No idea what might be in this object
+          }
         });
+        console.log('done settling promises');
+        retval = {
+          pk: pkey,
+          completed: finalCompleted,
+          running: running,
+          errored: errored
+        };
+      });
+      meta.childrenProcessingMs = new Date() - start;
     }
     retval.queuing = false;
+    retval.meta = meta;
     return retval;
   }
 
   // Get all results that have been pre-merged by the ARS
-  async collectMergedResults(pkey, statusCheck = false)
-  {
+  // *=* TODO: Need to update w/ new metadata-having interface!
+  async collectMergedResults(pkey, statusCheck = false) {
     // Get the top level message from the ARS
     const arsSummary = await this.fetchMessage(pkey);
     const mergedVersionList = arsSummary.fields.merged_versions_list;
@@ -356,3 +326,24 @@ class ARSClient
     };
   }
 }
+
+/* Testing stuff: ignore!
+
+var pk = '28a96d16-5f01-4e45-b688-f6949cd15c6f';
+var c = new ARSClient('https://ars-prod.transltr.io', '/ars/api/messages', '/ars/api/submit');
+var filters = {whitelistRx: /^ara-/};
+var res = await c.collectAllResults(pk, filters, true);
+
+res.completed.forEach(x => {
+  console.log(`${x.agent}: ${x.data && x.data.results? x.data.results.length : 'null'}; meta: ${JSON.stringify(x.meta)}`);
+});
+
+async function doit(pk) {
+  res = await c.collectAllResults(pk, filters, true);
+  res.completed.forEach(x => {
+    console.log(`${x.agent}: ${x.data && x.data.results? x.data.results.length : 'null'}; meta: ${JSON.stringify(x.meta)}`);
+  });
+  console.log(res.meta);
+};
+export { c, res, doit};
+*/
