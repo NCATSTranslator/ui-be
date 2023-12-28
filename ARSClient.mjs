@@ -221,7 +221,11 @@ class ARSClient {
             let itemData = item.value[1];
             let agent = itemData.fields.name;
             let elem = completed[agent];
-            elem.data = itemData.fields.data.message;
+            elem.data = {};
+            if (itemData.fields.data && itemData.fields.data.message) {
+              elem.data = itemData.fields.data.message;
+            }
+
             elem.meta = item.value[0];
             finalCompleted.push(elem);
             console.log(`settled ${agent}`);
