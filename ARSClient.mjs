@@ -40,6 +40,7 @@ class ARSClient {
     this.origin = origin;
     this.getURL = `${origin}${getPath}`;
     this.postURL = `${origin}${postPath}`;
+    this.saveURL = `${origin}/ars/api/retain`
     // Yes, 422 means the message is complete and valid. Specifically it means that there was some error in the scoring process.
     this.completeCodes = completeCodes;
     this.runningCodes = runningCodes;
@@ -53,6 +54,12 @@ class ARSClient {
     return cmn.sendRecvJSON2(url, 'GET');
   }
 
+  async saveResults(pk) {
+    let url = `${this.saveURL}/${pk}`;
+    let [meta, data] = cmn.sendRecvJSON2(url, 'POST', {});
+    // ...
+
+  }
   async postQuery(query) {
     return cmn.sendRecvJSON2(this.postURL, 'POST', {}, query)
   }
@@ -210,7 +217,7 @@ class ARSClient {
       let toFetch = agents.map(e => completed[e].uuid);
       let start = new Date();
       const promises = toFetch.map(async (e) => {
-        console.log(`kicking off fetch for ${e}`);
+        //// console.log(`kicking off fetch for ${e}`);
         return this.fetchMessage(e);
       });
       let finalCompleted = [];
@@ -228,14 +235,14 @@ class ARSClient {
 
             elem.meta = item.value[0];
             finalCompleted.push(elem);
-            console.log(`settled ${agent}`);
+            //// console.log(`settled ${agent}`);
           } else {
             //
             console.error('Unexpected case of being unable to fetch a result for an agent that reported code=200');
             errored.push(item.value); // No idea what might be in this object
           }
         });
-        console.log('done settling promises');
+        //// console.log('done settling promises');
         retval = {
           pk: pkey,
           completed: finalCompleted,
