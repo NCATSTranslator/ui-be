@@ -10,6 +10,10 @@ import { TranslatorService } from '../../TranslatorService.mjs';
 // Determine the program name
 const programName = path.basename(process.argv[1]);
 const permittedEnvs = ['dev', 'test', 'ci', 'production'];
+const LOG_LEVEL_INFO = 'info';
+const LOG_LEVEL_WARN = 'warning';
+const LOG_LEVEL_ERROR = 'error';
+
 const cli = meow(`
     Usage
       $ node ${programName} --input-file <input-file> --submission-delay <delay> --poll-delay <delay>
@@ -17,7 +21,7 @@ const cli = meow(`
     Options
       --input-file, -i  Path to the input file
       --config, -c  Path to the config file
-      --submission-delay, -s  Delay in seconds between submitting the same query again after a complete run
+      --submission-delay, -s  Delay in seconds between submitting the initial query
       --poll-delay, -p  Delay between polling the ARS for a given PK
       --env, -e Environment ${permittedEnvs}
       --max-iter, -n  Max num. times to loop on each query (do not specify for infinite)
@@ -45,7 +49,14 @@ const cli = meow(`
       submissionDelay: {
           type: 'number',
           shortFlag: 's',
-          isRequired: true
+          isRequired: true,
+          default: 40
+      },
+      pollDelay: {
+        type: 'number',
+        shortFlag: 'p',
+        isRequired: true,
+        default: 10
       },
       env: {
         type: 'string',
@@ -69,36 +80,59 @@ const cli = meow(`
 });
 
 console.log(cli.flags);
-//throw new Error('bye');
-/*
-console.log(`Input File: ${cli.flags.inputFile}`);
-console.log(`Submission Delay: ${cli.flags.submissionDelay} seconds`);
-console.log(`Poll Delay: ${cli.flags.pollDelay} seconds`);
-*/
 
-let service;
 let input;
 let client;
-const filters = {whitelistRx: /^ara-/};
 
+class MyARSClient {
+  constructor(service, baseClient) {
+    this.service = service;
+    this.baseClient = baseClient;
+    this.filters = {whitelistRx: /^ara-/};
+  }
+
+  async postQuery(qdata) {
+    let query = this.service.inputToQuery(qdata);
+    let resp;
+    try {
+      resp = await this.service.submitQuery(query);
+      //throw new Error({this: 'went south'});
+    } catch (err) {
+      err.qdata = qdata;
+      err.querygraph = query;
+      throw err;
+    }
+    return resp.pk;
+  }
+
+  async getResults(pk) {
+    let res;
+    try {
+      res = await this.baseClient.collectAllResults(pk, this.filters, true);
+      //throw new Error({we: "got problems"});
+    } catch (err) {
+      err.pk = pk;
+      throw err;
+    }
+    return res;
+  }
+}
 await (async function (opts) {
   const configRoot = '../../configurations';
   const outputAdapter = new TranslatorServicexFEAdapter(null);
   const config = await cmn.readJson(`${configRoot}/${opts.env}.json`);
-  client = new ARSClient(`https://${config.ars_endpoint.host}`,
+  let baseClient = new ARSClient(`https://${config.ars_endpoint.host}`,
                               config.ars_endpoint.pull_uri,
                               config.ars_endpoint.post_uri, [200, 206]);
-  service = new TranslatorService(client, outputAdapter);
+  let service = new TranslatorService(baseClient, outputAdapter);
   console.log(service);
 
   input = await cmn.readJson(opts.inputFile);
   console.log(input);
+  client = new MyARSClient(service, baseClient);
 })(cli.flags);
 
-function summarizeResponse(queryData, responseData) {
-  const pk = responseData.pk;
-  const queuing = responseData.queuing; // TODO
-
+function summarizeResponse(queryData, responseData,       logger, env) {
 
   function summarize_query_data(qdata) {
     return {
@@ -110,18 +144,22 @@ function summarizeResponse(queryData, responseData) {
     //return `${qdata.name}-${qdata.curie}-${qdata.type}` + (qdata.direction ? `-${qdata.direction}` : '');
   }
   function summarize_completed(res) {
-    const len = res.length;
     let retval = res.map((e) => {
-      //return `${e.agent}:${e.data.results.length}`
-      return { agent: e.agent, nres: e.data.results.length,
-        uuid: e.uuid, fetch_ms: e.meta.fetchMs, parse_ms: e.meta.parseMs};
+      if (e?.data?.results && Array.isArray(e.data.results)) {
+        return { agent: e.agent, nres: e.data.results.length,
+          uuid: e.uuid, fetch_ms: e.meta.fetchMs, parse_ms: e.meta.parseMs};
+        } else {
+          console.log('hello??');
+          logger(LOG_LEVEL_ERROR, env, `Error summarizing completed response from ${e.agent} for ${e.uuid}`,
+            {agent: e.agent, data: e.data, fetch_ms: e.meta.fetchMs, parse_ms: e.meta.parseMs});
+          return { agent: e.agent, nres: 0,
+            uuid: e.uuid, fetch_ms: e.meta.fetchMs, parse_ms: e.meta.parseMs};
+        }
     });
-    //return `${len}=${retval.join(';')}`
     return retval;
   }
 
   function summarize_non_completed(res) {
-    const len = res.length;
     let retval = res.map((e) => {
       return { agent: e.agent, status: e.code, uuid: e.uuid};
     });
@@ -137,6 +175,13 @@ function summarizeResponse(queryData, responseData) {
     return retval;
   }
 
+  if (!responseData || !responseData.hasOwnProperty('pk')) {
+    console.log('HOLY SHIT NO PK');
+    console.log(responseData);
+    logger(LOG_LEVEL_ERROR, env, `NO PK found: ${JSON.stringify(responseData)}`, responseData);
+    console.log("WOW");
+  }
+
   const completed_summary = summarize_completed(responseData.completed);
   const errored_summary = summarize_non_completed(responseData.errored);
   const running_summary = summarize_non_completed(responseData.running);
@@ -144,6 +189,7 @@ function summarizeResponse(queryData, responseData) {
   const perf_summary = summarize_perf(responseData);
   const retval = {
     pk: responseData.pk,
+    queuing: responseData.queuing,
     ...qdata_summary,
     n_completed: completed_summary.length,
     n_running: running_summary.length,
@@ -160,107 +206,109 @@ function checkTerminated(res) {
   return !res.queuing && res.running.length === 0;
 }
 
-async function initiateQuery(translatorService, qdata) {
-  let query = translatorService.inputToQuery(qdata);
-  let resp = await translatorService.submitQuery(query);
-  console.log(resp);
-  /* We'll assume that query submission mostly works and NOT track perf for it
-   * to avoid complicating this program even more */
-  let pk = resp.pk;
-  return pk;
-}
+async function biggy(client, qdata, logger, pk, params) {
 
-async function biggy0(service, client, filters, qdata, logger, pk,
-  submissionDelay, startTime, maxMinutes, iter, maxIter) {
-
-  //  if (iter !== -1 && iter >= maxIter) return;
-
-  let resp = await client.collectAllResults(pk, filters, true);
-  let respSummary = summarizeResponse(qdata, resp);
-  let terminated = checkTerminated(resp);
-  let timeExceeded = ((new Date() - startTime) / 1000) / 60 > maxMinutes;
-  let keepLooping = maxIter === -1 || iter < maxIter;
-  let displayIter = iter + 1;
-  let msg;
-
-  if (terminated) {
-    if (keepLooping) {
-      // RESTART
-      msg = 'Query terminated successfully. Restarting.';
-      logger(respSummary, terminated, startTime, maxMinutes, displayIter, maxIter, msg);
-      let pk = await initiateQuery(service, qdata);
-      setTimeout(biggy, submissionDelay * 1000, service, client, filters, qdata, logger, pk,
-        submissionDelay, new Date(), maxMinutes, iter + 1, maxIter);
-    } else {
-      msg = 'Query terminated successfully. Exiting.';
-      logger(respSummary, terminated, startTime, maxMinutes, displayIter, maxIter, msg);
-      // DONE!
-    }
-  } else {
-    if (keepLooping && timeExceeded) {
-      // RESTART
-      msg = `Query did not complete within ${maxMinutes} min. Restarting.`;
-      logger(respSummary, terminated, startTime, maxMinutes, displayIter, maxIter, msg);
-      let pk = await initiateQuery(service, qdata);
-      setTimeout(biggy, submissionDelay * 1000, service, client, filters, qdata, logger, pk,
-        submissionDelay, new Date(), maxMinutes, iter + 1, maxIter);
-    } else if (keepLooping && !timeExceeded) {
-      msg = 'Query progressing...';
-      logger(respSummary, terminated, startTime, maxMinutes, displayIter, maxIter, msg);
-      setTimeout(biggy, submissionDelay * 1000, service, client, filters, qdata, logger, pk,
-        submissionDelay, startTime, maxMinutes, iter, maxIter);
-    } else {
-      msg = `Query did not complete within ${maxMinutes} min. Exiting.`;
-      logger(respSummary, terminated, startTime, maxMinutes, displayIter, maxIter, msg);
-      // DONE!
+  if (!pk) {
+    //console.log('null pk detected -- submitting query');
+    params.startTime = new Date();
+    try {
+      pk = await client.postQuery(qdata);
+    } catch (err) {
+      console.error(`Oh crap - error submitting query: ${JSON.stringify(err)}`);
+      logger(LOG_LEVEL_ERROR, params.env, JSON.stringify(err));
+      setTimeout(biggy, params.submissionDelay * 1000, client, qdata, logger, null, params);
+      return;
     }
   }
-}
 
+  let {pollDelay, startTime, maxMinutes, maxIter, env, submissionDelay, iter} = params;
 
-async function biggy(service, client, filters, qdata, logger, pk,
-  submissionDelay, startTime, maxMinutes, iter, maxIter) {
+  let resp;
+  try {
+    //console.log(pk);
+    resp = await client.getResults(pk);
+  } catch (err) {
+    console.error(`Oh crap - error getting results: ${JSON.stringify(err)}`);
+    /* Arguably the right thing to do here is still respect whether or not the time out
+     * has occurred when resubmitting, but I'm not willing to deal with the complications
+     * that this would cause in this function's code. */
+    logger(LOG_LEVEL_ERROR, params.env, JSON.stringify(err));
+    setTimeout(biggy, submissionDelay * 1000, client, qdata, logger, pk, params);
+    return;
+  }
 
-  let resp = await client.collectAllResults(pk, filters, true);
-  let respSummary = summarizeResponse(qdata, resp);
+  let respSummary;
+  try {
+    respSummary = summarizeResponse(qdata, resp, logger, env);
+  } catch (err) {
+    console.error(`YO: ${err}`);
+    // Rare but possible case of a completely unexpected exception when parsing responses
+    // Restart the query - not many good options here
+    logger(LOG_LEVEL_ERROR, env, `Error creating summary for ${pk}: ${JSON.stringify(err)}.`, err);
+    params.startTime = new Date();
+    setTimeout(biggy, submissionDelay * 1000, client, qdata, logger, null, params);
+    return;
+  }
   let terminated = checkTerminated(resp);
   let timeExceeded = ((new Date() - startTime) / 1000) / 60 > maxMinutes;
   let displayIter = iter + 1;
   let msg;
+  let level;
+  let infoStr = `${pk} ${qdata.name} - ${qdata.type} - dir:${qdata.direction} [${qdata.curie}]`;
 
   if (!terminated && !timeExceeded) {
-    msg = 'Query progressing...';
-    logger(respSummary, terminated, startTime, maxMinutes, displayIter, maxIter, msg);
-    setTimeout(biggy, submissionDelay * 1000, service, client, filters, qdata, logger, pk,
-      submissionDelay, startTime, maxMinutes, iter, maxIter);
+    if (respSummary.queuing) {
+      msg = 'Query was queued';
+      level = LOG_LEVEL_WARN;
+    } else {
+      msg = 'Query progressing'
+      level = LOG_LEVEL_INFO;
+    }
+    msg = `${msg}: ${infoStr}`;
+    logger(level, env, msg, respSummary, startTime, maxMinutes, displayIter, maxIter);
+    setTimeout(biggy, pollDelay * 1000, client, qdata, logger, pk, params);
   } else {
-    msg = timeExceeded ? `Query did not complete within ${maxMinutes} min.`
-      : `Query terminated successfully.`;
-    logger(respSummary, terminated, startTime, maxMinutes, displayIter, maxIter, msg);
-    iter += 1;
-    if (maxIter === -1 || iter < maxIter) {
-      let pk = await initiateQuery(service, qdata);
-      setTimeout(biggy, submissionDelay * 1000, service, client, filters, qdata, logger, pk,
-        submissionDelay, new Date(), maxMinutes, iter, maxIter);
+    if (timeExceeded) {
+      msg = `Query did not complete within ${maxMinutes} min.`;
+      level = LOG_LEVEL_WARN;
+    } else {
+      msg = 'Query terminated successfully';
+      level = LOG_LEVEL_INFO;
+    }
+    msg = `${msg}: ${infoStr}`;
+    logger(level, env, msg, respSummary, startTime, maxMinutes, displayIter, maxIter);
+    params.iter += 1;
+    if (maxIter === -1 || params.iter < maxIter) {
+      params.startTime = new Date();
+      pk = null;
+      console.log("legit restart");
+      setTimeout(biggy, submissionDelay * 1000, client, qdata, logger, pk, params);
     } else {
       // DO NOTHING; DIE
     }
   }
 }
 
-function jsonLogger(respSummary, terminated, startTime, maxMinutes, iter, maxIter, msg) {
-  respSummary.start_time = startTime;
-  respSummary.log_time = new Date();
-  respSummary.elapsed_sec = Math.round((respSummary.log_time - respSummary.start_time) / 1000);
-  respSummary.max_minutes = maxMinutes;
-  respSummary.iter = iter;
-  respSummary.maxIter = maxIter;
+
+function jsonLogger(logLevel, env, msg, respSummary={}, startTime=null, maxMinutes=null,
+  iter=null, maxIter=null) {
+  respSummary.status = logLevel;
+  respSummary.env = env;
   respSummary.msg = msg;
+
+  if (logLevel === 'info') {
+    respSummary.start_time = startTime;
+    respSummary.log_time = new Date();
+    respSummary.elapsed_sec = Math.round((respSummary.log_time - respSummary.start_time) / 1000);
+    respSummary.max_minutes = maxMinutes;
+    respSummary.iter = iter;
+    respSummary.max_iter = maxIter;
+  }
   console.log(JSON.stringify(respSummary));
 }
 
 
-function textLogger(respSummary, terminated, startTime, maxMinutes, iter, maxIter, msg) {
+function textLogger(respSummary, env, startTime, maxMinutes, iter, maxIter, msg) {
   console.log("-=-=-=-");
   let elapsedSec = (new Date() - startTime) / 1000;
   let min = Math.floor(elapsedSec / 60);
@@ -270,27 +318,34 @@ function textLogger(respSummary, terminated, startTime, maxMinutes, iter, maxIte
   Time spent: ${min}m${sec}s/${maxMinutes} min.
   Iteration: ${iter}/${maxIter}
   Message: ${msg}
+  Env: ${env}
   Details: ${JSON.stringify(respSummary, null, 2)}
   `);
 }
-/*
-let resp = await client.collectAllResults('438c0ab7-78bf-4a25-af41-7c0c32495681', filters, true);
-console.log(summarizeResponse(input[0], resp));
-*/
 
-input.forEach(async (e) => {
-  let query =service.inputToQuery(e);
-  console.log(`${JSON.stringify(query)}`);
-  let pk = await initiateQuery(service, e);
-  console.log(pk);
-  biggy(service, client, filters, e, jsonLogger, pk,
-    cli.flags.submissionDelay, new Date(), cli.flags.maxMinutes, 0, cli.flags.maxIter);
-  /*let resp = await client.collectAllResults('28a96d16-5f01-4e45-b688-f6949cd15c6f', filters, true);
-  //console.log(resp);
-  console.log(summarizeResponse(e, resp));
-  */
-});
+// Begin program
+
+let params = {
+  pollDelay: cli.flags.pollDelay,
+  maxMinutes: cli.flags.maxMinutes,
+  maxIter: cli.flags.maxIter,
+  env: cli.flags.env,
+  submissionDelay: cli.flags.submissionDelay
+}
+
+for (let i = 0; i < input.length; i++) {
+  // Make sure each function gets an independent copy of the params so that
+  // updating startTime and iter doesn't update it for all running copies
+  biggy(client, input[i], jsonLogger, null, {...params,
+    startTime: new Date(), iter: 0});
+  console.log(`starting big sleep ${i}`);
+  await cmn.sleep(cli.flags.submissionDelay * 1000);
+  console.log(`ending big sleep ${i}`);
+}
 /*
-let data = await service.getResults('28a96d16-5f01-4e45-b688-f6949cd15c6f', filters, true);
-summarizeResponse(data);
-*/
+input.forEach(async (qdata) => {
+  params.startTime = new Date();
+  params.iter = 0;
+  biggy(client, qdata, jsonLogger, null, params);
+  await cmn.sleep(cli.flags.submissionDelay * 1000);
+});*/
