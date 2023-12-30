@@ -8,6 +8,9 @@ services:
       - "8386:8386"
     depends_on:
       - pgdb
+    volumes:
+      - ~/translator/app-logs/:/logs
+      
   pgdb:
     image: postgres:15.5
     environment:
