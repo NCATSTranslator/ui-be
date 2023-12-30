@@ -2,7 +2,8 @@ FROM node:18
 WORKDIR /app
 
 # Assumes parent script has cloned ui-fe repo and checked out right branch
-# This script assumes no git actions
+# This script assumes no git actions, but relies on the node container having:
+# wget, tar, apt-get, and make
 COPY . ./
 RUN npm install \
   && cd ui-fe \
@@ -20,15 +21,11 @@ RUN npm install \
   && tar xvfz v2.2.1.tar.gz \
   && cd fluent-bit-2.2.1/build \
   && apt-get update \
-  && apt-get --yes install cmake \
-  && apt-get --yes install bison \
-  && apt-get --yes install flex \
+  && apt-get --yes install cmake bison flex \
   && cmake ../ \
   && make && make install \
   && make clean \
-  && apt-get --yes remove flex \
-  && apt-get --yes remove bison \
-  && apt-get --yes remove cmake \
+  && apt-get --yes remove flex bison cmake \
   && apt-get --yes autoremove \
   && rm -rf /fluent-bit
 
