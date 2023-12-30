@@ -15,20 +15,21 @@ RUN npm install \
   && cd .. \
   && rm -rf ui-fe \
   && rm -rf /root/.cache/* \
-  && mkdir /fluent-bit && cd /fluent-bit \
+  && mkdir /fluent-bit && cd /fluent-bit  \
   && wget https://github.com/fluent/fluent-bit/archive/refs/tags/v2.2.1.tar.gz \
   && tar xvfz v2.2.1.tar.gz \
-  && cd v2.2.1/build \
-  && apt-get install flex \
-  && apt-get install bison \
-  && apt-get install cmake \
+  && cd fluent-bit-2.2.1/build \
+  && apt-get update \
+  && apt-get --yes install cmake \
+  && apt-get --yes install bison \
+  && apt-get --yes install flex \
   && cmake ../ \
   && make && make install \
   && make clean \
-  && yes | apt-get remove flex \
-  && yes | apt-get remove bison \
-  && yes | apt-get remove cmake \
-  && yes | apt-get autoremove \
+  && apt-get --yes remove flex \
+  && apt-get --yes remove bison \
+  && apt-get --yes remove cmake \
+  && apt-get --yes autoremove \
   && rm -rf /fluent-bit
 
 EXPOSE 8386
