@@ -254,7 +254,9 @@ class ARSClient {
   // *=* TODO: Need to update w/ new metadata-having interface!
   async collectMergedResults(pkey, statusCheck = false) {
     // Get the top level message from the ARS
-    const arsSummary = await this.fetchMessage(pkey);
+    const [meta, arsSummary] = await this.fetchMessage(pkey);
+    meta.timestamp = arsSummary.fields.timestamp || null;
+
     const mergedVersionList = arsSummary.fields.merged_versions_list;
     // If we don't have any merged versions yet, the data in the top level message
     // is the data we want
@@ -272,7 +274,7 @@ class ARSClient {
         for (const promise of promises) {
           if (promise.status !== 'fulfilled') continue;
 
-          const message = promise.value;
+          const message = promise.value[1];
           const status = {
             agent: mergedVersionList[i][1],
             uuid: message.message,
@@ -293,8 +295,9 @@ class ARSClient {
 
       completed = completed.slice(completed.length-1,);
       if (!statusCheck) {
-        const results = await this.fetchMessage(completed[0].uuid);
+        const [meta, results] = await this.fetchMessage(completed[0].uuid);
         completed[0].data = results.fields.data.message;
+        completed[0].meta = meta;
       }
 
       for (const mergedVersion of mergedVersionList) {
@@ -326,7 +329,8 @@ class ARSClient {
       pk: pkey,
       completed: completed,
       running: running,
-      errored: errored
+      errored: errored,
+      meta: meta
     };
   }
 }

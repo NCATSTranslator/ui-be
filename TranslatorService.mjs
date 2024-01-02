@@ -59,7 +59,7 @@ class TranslatorService
   {
     try
     {
-      let res = await this.queryClient.collectAllResults(queryId, filters);
+      let res = await this.queryClient.collectMergedResults(queryId, true);
       return res;
     }
     catch (err)
@@ -72,7 +72,7 @@ class TranslatorService
   {
     try
     {
-      let res = await this.queryClient.collectAllResults(queryId, filters, true);
+      let res = await this.queryClient.collectMergedResults(queryId);
       return res;
     }
     catch (err)

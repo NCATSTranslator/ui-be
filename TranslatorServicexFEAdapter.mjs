@@ -8,35 +8,28 @@ import * as trapi from './trapi.mjs';
 export { TranslatorServicexFEAdapter };
 // msg: ARS client message with trace=y
 
-function determineStatus(msg)
-{
-  if (msg.queuing)
-  {
+function determineStatus(msg) {
+  if (msg.queuing) {
     return "running";
   }
-  else
-  {
+  else {
     return msg.running.length > 0 ? "running" : "success";
   }
 }
 
-class TranslatorServicexFEAdapter
-{
-  constructor (annotationClient)
-  {
+class TranslatorServicexFEAdapter {
+  constructor (annotationClient) {
     this.annotationClient = annotationClient;
   }
 
-  querySubmitToFE(msg)
-  {
+  querySubmitToFE(msg) {
     return {
       status: 'success',
       data: arsmsg.msgId(msg)
     }
   }
 
-  queryStatusToFE(msg)
-  {
+  queryStatusToFE(msg) {
     return {
       status: determineStatus(msg),
       data: {
@@ -47,24 +40,24 @@ class TranslatorServicexFEAdapter
     };
   }
 
-  async queryResultsToFE(msg, maxHops)
-  {
+  async queryResultsToFE(msg, maxHops) {
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
-    let data = msg.completed.filter(e =>
-      {
-        return Array.isArray(e.data.results) && e.data.results.length > 0;
-      }).map(e =>
-        {
-          return {
-            agent: e.agent,
-            message: e.data
-          }
-        });
+    let mergedResult = msg.completed[0];
+    if (Array.isArray(mergedResult.data.results) && mergedResult.data.results.length > 0) {
+      mergedResult = {
+        agent: mergedResult.agent,
+        message: mergedResult.data
+      }
+    }
 
-    const summary = await trapi.creativeAnswersToSummary(msg.pk, data, maxHops, this.annotationClient);
+    const summary = await trapi.creativeAnswersToSummary(
+      msg.pk,
+      [mergedResult],
+      maxHops,
+      this.annotationClient);
     summary.meta.timestamp = msg.meta.timestamp;
-    
+
     return {
       status: determineStatus(msg),
       data: summary
