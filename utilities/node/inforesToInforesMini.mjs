@@ -26,7 +26,7 @@ inforesEntries.forEach((inforesEntry) => {
   {
     inforesMini[inforesEntry.id] = {
       name: inforesEntry.name || inforesEntry.id,
-      url: inforesEntry.xref ? inforesEntry.xref[0] : null,
+      url: (inforesEntry.xref && inforesEntry.xref.length > 0) ? inforesEntry.xref[0] : null,
       knowledge_level: cleanupKnowledgeLevel(inforesEntry['knowledge level'])
     };
   }
