@@ -431,7 +431,6 @@ function getPublications() {
       const result = {};
       const provenance = bl.inforesToProvenance(context.primarySource);
       const knowledgeLevel = provenance.knowledge_level; 
-      const knowledgeSource = provenance.name;
       attributes.forEach(attribute => {
         let v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
         v = cmn.isArray(v) ? v : [v];
@@ -441,8 +440,8 @@ function getPublications() {
 
         result[knowledgeLevel].push(...(v.map((pubId => {
           return {
-            'id': pubId,
-            'source': knowledgeSource
+            id: pubId,
+            source: provenance
           };
         }))));
       });
@@ -457,7 +456,11 @@ function getPublications() {
           currentPublications[knowledgeLevel] = [];
         }
 
-        currentPublications[knowledgeLevel].push(...vs[knowledgeLevel]);
+        vs[knowledgeLevel].forEach((pubObj) => {
+          pubObj.id = ev.normalize(pubObj.id);
+        });
+
+        currentPublications[knowledgeLevel].push(...(vs[knowledgeLevel]));
       });
 
       return obj;
