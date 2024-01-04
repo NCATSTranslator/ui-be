@@ -22,11 +22,11 @@ const inforesCatalog = await cmn.readJson(filePath);
 const inforesEntries = inforesCatalog.information_resources;
 const inforesMini = {};
 inforesEntries.forEach((inforesEntry) => {
-  if (inforesEntry.id && inforesEntry.name && inforesEntry.xref && inforesEntry.xref.length > 0)
+  if (inforesEntry.id)
   {
     inforesMini[inforesEntry.id] = {
-      name: inforesEntry.name,
-      url: inforesEntry.xref[0],
+      name: inforesEntry.name || inforesEntry.id,
+      url: inforesEntry.xref ? inforesEntry.xref[0] : null,
       knowledge_level: cleanupKnowledgeLevel(inforesEntry['knowledge level'])
     };
   }
