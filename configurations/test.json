@@ -14,8 +14,8 @@
     "timeout_ms": 60000
   },
   "biolink": {
-    "version": "3.1.2",
-    "support_deprecated_predicates": true,
+    "version": "3.6.0",
+    "support_deprecated_predicates": false,
     "infores_catalog": "infores-catalog-mini.json",
     "prefix_catalog": "prefix-catalog.json"
   },
@@ -27,7 +27,7 @@
   },
   "db_conn": {
     "ssl": {
-      "rejectUnauthorized": false 
+      "rejectUnauthorized": false
     }
   },
   "google_analytics_id": "G-T9HTSPVNW9",
