@@ -6,7 +6,8 @@
   "ars_endpoint": {
     "host": "ars.test.transltr.io",
     "post_uri": "/ars/api/submit",
-    "pull_uri": "/ars/api/messages"
+    "pull_uri": "/ars/api/messages",
+    "use_ars_merging": true
   },
   "annotation_endpoint": {
     "host": "biothings.test.transltr.io",
@@ -27,7 +28,7 @@
   },
   "db_conn": {
     "ssl": {
-      "rejectUnauthorized": false 
+      "rejectUnauthorized": false
     }
   },
   "google_analytics_id": "G-T9HTSPVNW9",
