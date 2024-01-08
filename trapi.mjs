@@ -1475,7 +1475,12 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     });
 
     // Populate knowledge level
-    edge.knowledge_level = (edge?.provenance[0]?.knowledge_level) ? edge.provenance[0].knowledge_level : 'unknown';
+    if(edge?.provenance[0] === undefined) {
+      edge.knowledge_level = 'unknown';
+      edge.provenance = {};
+    } else {
+      edge.knowledge_level = edge.provenance[0].knowledge_level;
+    }
   });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
