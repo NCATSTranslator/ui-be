@@ -6,7 +6,8 @@
   "ars_endpoint": {
     "host": "ars.test.transltr.io",
     "post_uri": "/ars/api/submit",
-    "pull_uri": "/ars/api/messages"
+    "pull_uri": "/ars/api/messages",
+    "protocol": "https"
   },
   "annotation_endpoint": {
     "host": "biothings.test.transltr.io",
