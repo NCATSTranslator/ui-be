@@ -43,17 +43,18 @@ class TranslatorServicexFEAdapter {
   async queryResultsToFE(msg, maxHops) {
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
-    let mergedResult = msg.completed[0];
-    if (Array.isArray(mergedResult.data.results) && mergedResult.data.results.length > 0) {
-      mergedResult = {
-        agent: mergedResult.agent,
-        message: mergedResult.data
+    const data = msg.completed.filter(e => {
+      return !!e.data;
+    }).map(e => {
+      return {
+        agent: e.agent,
+        message: e.data
       }
-    }
+    });
 
     const summary = await trapi.creativeAnswersToSummary(
       msg.pk,
-      [mergedResult],
+      data,
       maxHops,
       this.annotationClient);
     summary.meta.timestamp = msg.meta.timestamp;
