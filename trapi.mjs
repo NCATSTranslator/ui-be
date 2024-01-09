@@ -167,7 +167,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
       aggregateAttributes(['bts:sentence'], 'snippets'),
       getPublications(),
     ]);
-  
+
   const queryType = answerToQueryType(answers[0]);
   function agentToName(agent)
   {
@@ -237,7 +237,7 @@ function answerToQueryType(answer)
 
   const subCategory = cmn.jsonGetFromKpath(qg, ['nodes', subjectKey, 'categories'], false)[0];
   const objCategory = cmn.jsonGetFromKpath(qg, ['nodes', objectKey, 'categories'], false)[0];
-  if (subCategory === bl.tagBiolink('ChemicalEntity') && 
+  if (subCategory === bl.tagBiolink('ChemicalEntity') &&
       objCategory === bl.tagBiolink('Gene'))
   {
     return QUERY_TYPE.CHEMICAL_GENE;
@@ -493,7 +493,7 @@ function getPublications() {
 
       const result = {};
       const provenance = bl.inforesToProvenance(context.primarySource);
-      const knowledgeLevel = provenance.knowledge_level; 
+      const knowledgeLevel = provenance.knowledge_level;
       attributes.forEach(attribute => {
         let v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
         v = cmn.isArray(v) ? v : [v];
@@ -913,7 +913,7 @@ function analysisToRgraph(analysis, kgraph, auxGraphs)
           {
             unprocessedEdgeBindings.push(eb);
           }
-        }); 
+        });
       }
 
       supportGraphs.add(gid);
@@ -1050,7 +1050,7 @@ function isEmptySummaryFragment(summaryFragment)
   return cmn.isArrayEmpty(summaryFragment.paths) &&
          cmn.isArrayEmpty(summaryFragment.nodes) &&
          cmn.isArrayEmpty(summaryFragment.edges);
-} 
+}
 
 function condensedSummaryAgents(condensedSummary)
 {
@@ -1191,7 +1191,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
 
         const analysisContext = {
           agent: agent,
-          errors: errors 
+          errors: errors
         };
 
         return makeSummaryFragment(
@@ -1200,7 +1200,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules, analysisContext); }),
           rgraph.edges.map(redge => {
             const kedge = redgeToTrapiKedge(redge, kgraph);
-            const edgeContext = cmn.deepCopy(analysisContext); 
+            const edgeContext = cmn.deepCopy(analysisContext);
             edgeContext.primarySource = getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0];
             return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
           }),
@@ -1210,7 +1210,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
         if (e instanceof EdgeBindingNotFoundError) {
           return errorSummaryFragment(agent, e.message);
         }
-        
+
         return errorSummaryFragment(agent, 'Unknown error with building RGraph');
       }
     }
@@ -1227,8 +1227,8 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
             rsf,
             analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
         },
-        emptySummaryFragment()); 
-    
+        emptySummaryFragment());
+
       if (!isEmptySummaryFragment(resultSummaryFragment))
       {
         // Insert the ordering components after the analyses have been merged
@@ -1253,7 +1253,11 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
   const errors = {};
   answers.forEach((answer) => {
     const trapiMessage = answer.message;
-    const trapiResults = cmn.jsonGet(trapiMessage, 'results', []);
+    const trapiResults = cmn.jsonGet(trapiMessage, 'results', false);
+    if (!trapiResults) {
+      return;
+    }
+
     const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
     const auxGraphs = cmn.jsonGet(trapiMessage, 'auxiliary_graphs', {});
     const [startKey, endKey] = getPathDirection(cmn.jsonGet(trapiMessage, 'query_graph'));
@@ -1533,7 +1537,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       extendSummaryScores(scores, condensedSummaryScores(cs));
       extendSummaryErrors(errors, condensedSummaryErrors(cs));
     });
-  
+
   results = Object.values(results).map(objRemoveDuplicates)
   const annotationPromise = annotationClient.annotateGraph(createKGFromNodeIds(Object.keys(nodes)));
   function pushIfEmpty(arr, val)
@@ -1610,7 +1614,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
               } else {
                 tags.push(makeTag('fda:0', 'Not FDA Approved'));
               }
-              
+
               return tags;
             } else {
               return makeTag(`fda:${fdaApproval}`, `FDA Approved`);

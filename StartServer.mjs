@@ -42,8 +42,10 @@ await loadChebi();
 // All these bootstraps feel kludgy.
 const TRANSLATOR_SERVICE = (function (config) {
   const queryClient = new ARSClient(
-    `https://${config.ars_endpoint.host}`,
-    config.ars_endpoint.pull_uri, config.ars_endpoint.post_uri);
+    `${config.ars_endpoint.protocol}://${config.ars_endpoint.host}`,
+    config.ars_endpoint.pull_uri,
+    config.ars_endpoint.post_uri,
+    config.ars_endpoint.use_ars_merging);
   const annotationClient = new KGAnnotationClient(
     `https://${config.annotation_endpoint.host}`,
     config.annotation_endpoint.pull_uri,

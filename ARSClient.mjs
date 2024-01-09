@@ -36,16 +36,36 @@ class ARSError extends Error {
 }
 
 class ARSClient {
-  constructor(origin, getPath, postPath, completeCodes=[200,206], runningCodes=[202]) {
+  constructor(origin, getPath, postPath, useARSMerging, completeCodes=[200,206], runningCodes=[202]) {
     this.origin = origin;
     this.getURL = `${origin}${getPath}`;
     this.postURL = `${origin}${postPath}`;
-    // Yes, 422 means the message is complete and valid. Specifically it means that there was some error in the scoring process.
     this.completeCodes = completeCodes;
     this.runningCodes = runningCodes;
+    this.useARSMerging = useARSMerging;
   }
 
-  async fetchMessage(uuid, doTrace=false) {
+  async postQuery(query) {
+    return cmn.sendRecvJSON2(this.postURL, 'POST', {}, query)
+  }
+
+  async getQueryStatus(pkey, filters) {
+    if (this.useARSMerging) {
+      return await this._collectMergedResults(pkey, true);
+    }
+
+    return await this._collectChildResults(pkey, filters);
+  }
+
+  async getQueryResults(pkey, filters) {
+    if (this.useARSMerging) {
+      return await this._collectMergedResults(pkey);
+    }
+
+    return await this._collectChildResults(pkey, filters, true);
+  }
+
+  async _fetchMessage(uuid, doTrace=false) {
     let url = `${this.getURL}/${uuid}`;
     if (doTrace) {
       url += '?trace=y';
@@ -53,30 +73,12 @@ class ARSClient {
     return cmn.sendRecvJSON2(url, 'GET');
   }
 
-  async postQuery(query) {
-    return cmn.sendRecvJSON2(this.postURL, 'POST', {}, query)
-  }
-
-  isComplete(code) {
+  _isComplete(code) {
     return this.completeCodes.includes(code);
   }
 
-  isRunning(code) {
+  _isRunning(code) {
     return this.runningCodes.includes(code);
-  }
-
-  isErrored(code) {
-    return !(this.isComplete(code) || this.isRunning(code));
-  }
-
-  constructFilterRegexes(filterArray) {
-    return filterArray.map(e => {
-      if (typeof e === 'string') {
-        return new RegExp(e);
-      } else {
-        return e;
-      }
-    });
   }
 
   /* Given a list of agents, return a list that contains only those agents satisfying the filter conditions.
@@ -85,7 +87,7 @@ class ARSClient {
    * If both blacklist and whitelist filters are specified, an intermediate result is built applying whitelist filters,
    * and then blacklist filters are applied to that intermediate result.
    */
-  applyFilters(agentList, filters) {
+  _applyFilters(agentList, filters) {
     let retval = [...agentList];
     let hasWhiteList = false;
     if (filters.hasOwnProperty('whitelist')) {
@@ -115,6 +117,7 @@ class ARSClient {
     }
     return retval;
   }
+
   /*
    * pkey: must be the UUID received upon submitting a query
    * fetchCompleted: if true, will fetch data for ARAs that have completed
@@ -142,7 +145,7 @@ class ARSClient {
    *
    */
 
-  async collectAllResults(pkey, filters={}, fetchCompleted=false) {
+  async _collectChildResults(pkey, filters={}, fetchCompleted=false) {
     function extractFields(childMsg) {
       return {
         agent: childMsg.actor.agent,
@@ -157,7 +160,7 @@ class ARSClient {
      * data for only those (and only if requested)
      */
     let retval = {};
-    let [meta, baseResult] = await this.fetchMessage(pkey, true);
+    let [meta, baseResult] = await this._fetchMessage(pkey, true);
     meta.timestamp = baseResult.timestamp || null;
 
     /* Special case: if the ARS starts queueing requests, it will return status: running
@@ -175,7 +178,7 @@ class ARSClient {
     }
 
     let allChildrenAgents = baseResult.children.map(e => e.actor.agent);
-    let filteredChildrenAgents = this.applyFilters(allChildrenAgents, filters);
+    let filteredChildrenAgents = this._applyFilters(allChildrenAgents, filters);
     let filteredChildren = baseResult.children.filter(e => filteredChildrenAgents.includes(e.actor.agent));
     // use a hash vs an array for completed results to make it easier to correlate fetched data
     let completed = {};
@@ -183,9 +186,9 @@ class ARSClient {
     let errored = [];
     // Divide results up by status
     for (const c of filteredChildren) {
-      if (this.isComplete(c.code)) {
+      if (this._isComplete(c.code)) {
         completed[c.actor.agent] = extractFields(c);
-      } else if (this.isRunning(c.code)) {
+      } else if (this._isRunning(c.code)) {
         running.push(extractFields(c));
       } else {
         try {
@@ -211,7 +214,7 @@ class ARSClient {
       let start = new Date();
       const promises = toFetch.map(async (e) => {
         console.log(`kicking off fetch for ${e}`);
-        return this.fetchMessage(e);
+        return this._fetchMessage(e);
       });
       let finalCompleted = [];
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled#parameters
@@ -250,21 +253,21 @@ class ARSClient {
     return retval;
   }
 
-  // Get all results that have been pre-merged by the ARS
-  // *=* TODO: Need to update w/ new metadata-having interface!
-  async collectMergedResults(pkey, statusCheck = false) {
-    // Get the top level message from the ARS
-    const arsSummary = await this.fetchMessage(pkey);
+  async _collectMergedResults(pkey, statusCheck = false) {
+    // Get the top level message from the ARS. This contains the list of currently
+    // merged PKs.
+    const [meta, arsSummary] = await this._fetchMessage(pkey);
+    meta.timestamp = arsSummary.fields.timestamp || null;
     const mergedVersionList = arsSummary.fields.merged_versions_list;
-    // If we don't have any merged versions yet, the data in the top level message
-    // is the data we want
     let completed = [];
     let running = [];
     let errored = [];
     if (cmn.isArray(mergedVersionList) && mergedVersionList.length > 0) {
+      // Fetch all the merged version statuses to get the most recent version
+      // that is also complete.
       const statusPromises = mergedVersionList.map((mergedEntry) => {
         const [uuid, agent] = mergedEntry;
-        return this.fetchMessage(uuid, true);
+        return this._fetchMessage(uuid, true);
       });
 
       await Promise.allSettled(statusPromises).then((promises) => {
@@ -272,17 +275,21 @@ class ARSClient {
         for (const promise of promises) {
           if (promise.status !== 'fulfilled') continue;
 
-          const message = promise.value;
+          const message = promise.value[1]; // We do not care about status metadata
           const status = {
             agent: mergedVersionList[i][1],
             uuid: message.message,
             status: message.status
           };
 
-          // We have to inject codes until the ARS is fixed
-          if (message.status === 'Done' || message.status === 'Running') {
+          // We have to inject the status codes because we expect them but the ARS does not
+          // provide them
+          if (message.status === 'Done') {
             status.code = 200;
             completed.push(status);
+          } else if (message.status === 'Running') {
+            status.code = 202;
+            running.push(status);
           } else {
             status.code = 500;
             errored.push(status);
@@ -291,27 +298,34 @@ class ARSClient {
         }
       });
 
-      completed = completed.slice(completed.length-1,);
-      if (!statusCheck) {
-        const results = await this.fetchMessage(completed[0].uuid);
-        completed[0].data = results.fields.data.message;
+      const mostRecentCompleted = completed[completed.length-1] || null;
+      const pastCompleted = completed.slice(0, completed.length-1);
+      if (!statusCheck && mostRecentCompleted !== null) {
+        // Finally get the actual result of the most recent complete merged version
+        const [meta, results] = await this._fetchMessage(mostRecentCompleted.uuid);
+        mostRecentCompleted.data = results.fields.data.message;
+        mostRecentCompleted.meta = meta;
       }
 
-      for (const mergedVersion of mergedVersionList) {
-        const [uuid, agent] = mergedVersion;
-        if (uuid === completed[0].uuid) break;
+      // Bookkeeping so the FE can keep track of which ARAs have completed
+      completed = pastCompleted.map((versionStatus) => {
+        return {
+          uuid: versionStatus.uuid,
+          agent: versionStatus.agent,
+          data: []
+        };
+      });
 
-        completed.push({
-          uuid: uuid,
-          agent: agent
-        });
+      if (mostRecentCompleted !== null) {
+        completed.unshift(mostRecentCompleted);
       }
     }
 
     const status = arsSummary.fields.status;
     const message = {
       uuid: pkey,
-      agent: arsSummary.fields.agent
+      agent: arsSummary.fields.name,
+      data: []
     };
 
     if (status === 'Done') {
@@ -326,28 +340,8 @@ class ARSClient {
       pk: pkey,
       completed: completed,
       running: running,
-      errored: errored
+      errored: errored,
+      meta: meta
     };
   }
 }
-
-/* Testing stuff: ignore!
-
-var pk = '28a96d16-5f01-4e45-b688-f6949cd15c6f';
-var c = new ARSClient('https://ars-prod.transltr.io', '/ars/api/messages', '/ars/api/submit');
-var filters = {whitelistRx: /^ara-/};
-var res = await c.collectAllResults(pk, filters, true);
-
-res.completed.forEach(x => {
-  console.log(`${x.agent}: ${x.data && x.data.results? x.data.results.length : 'null'}; meta: ${JSON.stringify(x.meta)}`);
-});
-
-async function doit(pk) {
-  res = await c.collectAllResults(pk, filters, true);
-  res.completed.forEach(x => {
-    console.log(`${x.agent}: ${x.data && x.data.results? x.data.results.length : 'null'}; meta: ${JSON.stringify(x.meta)}`);
-  });
-  console.log(res.meta);
-};
-export { c, res, doit};
-*/
