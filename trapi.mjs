@@ -483,7 +483,7 @@ function getSupportingText() {
   const objectTokenId = bl.tagBiolink('object_location_in_text');
 
   function parseTokenIndex(token) {
-    return token.split('|').map(t => parseInt(t.trim()));
+    return token.split('|').map(t => (parseInt(t.trim())+1));
   }
 
   return makeMapping(
