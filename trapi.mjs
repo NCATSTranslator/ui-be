@@ -1321,7 +1321,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     return [edges, publications];
   }
 
-  function resultsToResultsAndTags(results, paths, nodes, edges, scores, errors) {
+  function resultsToResultsAndTags(results, paths, nodes, scores, errors) {
     function isPidLessThan(pid1, pid2) {
       const path1 = getPathFromPid(paths, pid1);
       const path2 = getPathFromPid(paths, pid2);
@@ -1347,46 +1347,16 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       return 1;
     }
 
-    function isOneHop(pid) {
+    function isRootPath(pid) {
       const path = getPathFromPid(paths, pid);
       return getPathFromPid(paths, pid).length === 3;
-    }
-
-    function isRoot(pid) {
-      const path = getPathFromPid(paths, pid);
-      const edge = edges[path[1]];
-      return edge.knowledge_level === 'inferred' || edge.knowledge_level === 'trusted';
-    }
-
-    function soEqual(pidA, pidB) {
-      const pathA = getPathFromPid(paths, pidA);
-      const pathB = getPathFromPid(paths, pidB);
-      return pathA[0] === pathB[0] && pathA[2] === pathB[2];
     }
 
     const usedTags = {};
     const expandedResults = [];
     for (const result of results) {
       const pids = cmn.jsonGet(result, 'paths');
-      const oneHops = pids.filter(isOneHop);
-      const rootPids = [];
-      for (const pid of oneHops) {
-        if (isRoot(pid)) {
-          rootPids.push(pid);
-          continue;
-        }
-
-        // Not a root PID, find the corresponding root PID and
-        // add the PID to the root PIDs edge as support
-        for (const rpid of oneHops) {
-          if (isRoot(rpid) && soEqual(rpid, pid)) {
-            const rPath = getPathFromPid(paths, rpid);
-            edges[rPath[1]].support.unshift(pid);
-            break;
-          }
-        }
-      }
-
+      const rootPids = pids.filter(isRootPath);
       // Bail if there are no root paths
       if (rootPids.length === 0) {
         let aras = new Set();
@@ -1712,7 +1682,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       path.tags = tags;
     });
 
-    [results, tags] = resultsToResultsAndTags(results, paths, nodes, edges, scores, errors);
+    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores, errors);
     return {
       'meta': metadataObject,
       'results': results,
