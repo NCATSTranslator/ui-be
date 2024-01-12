@@ -151,7 +151,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
       aggregateAttributes(['bts:sentence'], 'snippets'),
       getPublications(),
     ]);
-  
+
   const queryType = answerToQueryType(answers[0]);
   function agentToName(agent) {
     return bl.inforesToProvenance(agent).name;
@@ -214,7 +214,7 @@ function answerToQueryType(answer) {
 
   const subCategory = cmn.jsonGetFromKpath(qg, ['nodes', subjectKey, 'categories'], false)[0];
   const objCategory = cmn.jsonGetFromKpath(qg, ['nodes', objectKey, 'categories'], false)[0];
-  if (subCategory === bl.tagBiolink('ChemicalEntity') && 
+  if (subCategory === bl.tagBiolink('ChemicalEntity') &&
       objCategory === bl.tagBiolink('Gene')) {
     return QUERY_TYPE.CHEMICAL_GENE;
   }
@@ -430,7 +430,7 @@ function getPublications() {
 
       const result = {};
       const provenance = bl.inforesToProvenance(context.primarySource);
-      const knowledgeLevel = provenance.knowledge_level; 
+      const knowledgeLevel = provenance.knowledge_level;
       attributes.forEach(attribute => {
         let v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
         v = cmn.isArray(v) ? v : [v];
@@ -764,7 +764,7 @@ function analysisToRgraph(analysis, kgraph, auxGraphs) {
   const nodeBindings = new Set();
   const supportGraphs = new Set();
   // Invariant: edges and subgraphs will only ever be processed once. This is very important
-  //            for how the following code works. 
+  //            for how the following code works.
   while (!cmn.isArrayEmpty(unprocessedEdgeBindings) || !cmn.isArrayEmpty(unprocessedSupportGraphs)) {
     while (!cmn.isArrayEmpty(unprocessedEdgeBindings)) {
       const eb = unprocessedEdgeBindings.pop();
@@ -798,10 +798,10 @@ function analysisToRgraph(analysis, kgraph, auxGraphs) {
           unprocessedEdgeBindings.push(eb);
         } else {
           // We do not want to process the same edge twice, but we need to include this
-          // graph as a graph where this edge occurs. 
+          // graph as a graph where this edge occurs.
           edgeBindingData[eb].partOf.push(gid);
         }
-      }); 
+      });
 
       supportGraphs.add(gid);
     }
@@ -929,7 +929,7 @@ function isEmptySummaryFragment(summaryFragment) {
          cmn.isArrayEmpty(summaryFragment.nodes) &&
          cmn.isObjEmpty(summaryFragment.edges.base) &&
          cmn.isArrayEmpty(summaryFragment.edges.updates);
-} 
+}
 
 function condensedSummaryAgents(condensedSummary) {
   return condensedSummary.agents;
@@ -1099,7 +1099,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
 
         const analysisContext = {
           agent: agent,
-          errors: errors 
+          errors: errors
         };
 
         return makeSummaryFragment(
@@ -1110,7 +1110,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
             base: edgesBase,
             updates: rgraph.edges.map(redge => {
                       const kedge = redgeToTrapiKedge(redge, kgraph);
-                      const edgeContext = cmn.deepCopy(analysisContext); 
+                      const edgeContext = cmn.deepCopy(analysisContext);
                       edgeContext.primarySource = getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0];
                       return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
                     })
@@ -1122,7 +1122,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
         if (err instanceof EdgeBindingNotFoundError) {
           return errorSummaryFragment(agent, e.message);
         }
-        
+
         return errorSummaryFragment(agent, 'Unknown error with building RGraph');
       }
     }
@@ -1138,8 +1138,8 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
             rsf,
             analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
         },
-        emptySummaryFragment()); 
-    
+        emptySummaryFragment());
+
       if (!isEmptySummaryFragment(resultSummaryFragment)) {
         // Insert the ordering components after the analyses have been merged
         const resultStartKey = rnodeToKey(start, kgraph);
@@ -1375,7 +1375,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
         }
 
         continue;
-      } 
+      }
 
       const subgraph = getPathFromPid(paths, rootPids[0]);
       const start = subgraph[0];
@@ -1444,7 +1444,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     extendSummaryScores(scores, condensedSummaryScores(cs));
     extendSummaryErrors(errors, condensedSummaryErrors(cs));
   });
-  
+
   results = Object.values(results).map(objRemoveDuplicates)
   const annotationPromise = annotationClient.annotateGraph(createKGFromNodeIds(Object.keys(nodes)));
   function pushIfEmpty(arr, val) {
@@ -1532,7 +1532,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
               } else {
                 tags.push(makeTag('fda:0', 'Not FDA Approved'));
               }
-              
+
               return tags;
             } else {
               return makeTag(`fda:${fdaApproval}`, `FDA Approved`);
