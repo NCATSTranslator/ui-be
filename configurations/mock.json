@@ -2,10 +2,46 @@
   "document_root": false,
   "port": 8386,
   "response_timeout": 300,
-  "ars_endpoint": false,
-  "biolink_version": "3.1.2",
+  "json_payload_limit": "1mb",
+  "ars_endpoint": {
+    "host": "localhost:8090",
+    "post_uri": "/ars/api/submit",
+    "pull_uri": "/ars/api/messages",
+    "protocol": "http",
+    "use_ars_merging": true
+  },
+  "annotation_endpoint": {
+    "host": "biothings.ncats.io",
+    "pull_uri": "/annotator/",
+    "timeout_ms": 60000
+  },
+  "biolink": {
+    "version": "3.6.0",
+    "support_deprecated_predicates": false,
+    "infores_catalog": "infores-catalog-mini.json",
+    "prefix_catalog": "prefix-catalog.json"
+  },
+  "session_cookie": {
+    "name": "session_token",
+    "http_only": true,
+    "secure": true,
+    "same_site": "Lax"
+  },
+  "db_conn": {
+    "ssl": {
+      "rejectUnauthorized": false
+    }
+  },
+  "google_analytics_id": "G-MQ5SCJJ6Q3",
+  "_load_frontend": "configurations/frontend/production.json",
   "max_hops": 3,
-  "log_level": "all",
+  "log_level": "info",
   "log_format": "common",
-  "canonicalization_priority": "configurations/canon-priority.json"
+  "_load_auth": "configurations/auth/auth.production.json",
+  "_load_sessions": "configurations/sessions.json",
+  "_load_storage": "configurations/storage.json",
+  "_load_secrets": "configurations/secrets/secrets.json",
+  "mainsite_path": "/main",
+  "demosite_path": "/demo",
+  "pg_host": "transltr-prod-rds-ui-postgresql.ceyknq0yekb3.us-east-1.rds.amazonaws.com"
 }

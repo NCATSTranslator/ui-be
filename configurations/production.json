@@ -6,7 +6,9 @@
   "ars_endpoint": {
     "host": "ars-prod.transltr.io",
     "post_uri": "/ars/api/submit",
-    "pull_uri": "/ars/api/messages"
+    "pull_uri": "/ars/api/messages",
+    "protocol": "https",
+    "use_ars_merging": false
   },
   "annotation_endpoint": {
     "host": "biothings.ncats.io",
@@ -14,8 +16,8 @@
     "timeout_ms": 60000
   },
   "biolink": {
-    "version": "3.1.2",
-    "support_deprecated_predicates": true,
+    "version": "3.6.0",
+    "support_deprecated_predicates": false,
     "infores_catalog": "infores-catalog-mini.json",
     "prefix_catalog": "prefix-catalog.json"
   },

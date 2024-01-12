@@ -167,7 +167,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
       aggregateAttributes(['bts:sentence'], 'snippets'),
       getPublications(),
     ]);
-  
+
   const queryType = answerToQueryType(answers[0]);
   function agentToName(agent)
   {
@@ -237,7 +237,7 @@ function answerToQueryType(answer)
 
   const subCategory = cmn.jsonGetFromKpath(qg, ['nodes', subjectKey, 'categories'], false)[0];
   const objCategory = cmn.jsonGetFromKpath(qg, ['nodes', objectKey, 'categories'], false)[0];
-  if (subCategory === bl.tagBiolink('ChemicalEntity') && 
+  if (subCategory === bl.tagBiolink('ChemicalEntity') &&
       objCategory === bl.tagBiolink('Gene'))
   {
     return QUERY_TYPE.CHEMICAL_GENE;
@@ -492,14 +492,21 @@ function getPublications() {
       }
 
       const result = {};
-      const knowledgeSource = context.knowledgeSource;
+      const provenance = bl.inforesToProvenance(context.primarySource);
+      const knowledgeLevel = provenance.knowledge_level;
       attributes.forEach(attribute => {
-        const v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
-        if (!result[knowledgeSource]) {
-          result[knowledgeSource] = [];
+        let v = (publicationIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
+        v = cmn.isArray(v) ? v : [v];
+        if (!result[knowledgeLevel]) {
+          result[knowledgeLevel] = [];
         }
 
-        result[knowledgeSource].push(...v);
+        result[knowledgeLevel].push(...(v.map((pubId => {
+          return {
+            id: pubId,
+            source: provenance
+          };
+        }))));
       });
 
       return result;
@@ -507,12 +514,16 @@ function getPublications() {
     (vs, obj) =>
     {
       const currentPublications = cmn.jsonSetDefaultAndGet(obj, 'publications', {});
-      Object.keys(vs).forEach((ks) => {
-        if (!currentPublications[ks]) {
-          currentPublications[ks] = [];
+      Object.keys(vs).forEach((knowledgeLevel) => {
+        if (!currentPublications[knowledgeLevel]) {
+          currentPublications[knowledgeLevel] = [];
         }
 
-        currentPublications[ks].push(...vs[ks]);
+        vs[knowledgeLevel].forEach((pubObj) => {
+          pubObj.id = ev.normalize(pubObj.id);
+        });
+
+        currentPublications[knowledgeLevel].push(...(vs[knowledgeLevel]));
       });
 
       return obj;
@@ -902,7 +913,7 @@ function analysisToRgraph(analysis, kgraph, auxGraphs)
           {
             unprocessedEdgeBindings.push(eb);
           }
-        }); 
+        });
       }
 
       supportGraphs.add(gid);
@@ -1039,7 +1050,7 @@ function isEmptySummaryFragment(summaryFragment)
   return cmn.isArrayEmpty(summaryFragment.paths) &&
          cmn.isArrayEmpty(summaryFragment.nodes) &&
          cmn.isArrayEmpty(summaryFragment.edges);
-} 
+}
 
 function condensedSummaryAgents(condensedSummary)
 {
@@ -1180,7 +1191,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
 
         const analysisContext = {
           agent: agent,
-          errors: errors 
+          errors: errors
         };
 
         return makeSummaryFragment(
@@ -1189,8 +1200,8 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules, analysisContext); }),
           rgraph.edges.map(redge => {
             const kedge = redgeToTrapiKedge(redge, kgraph);
-            const edgeContext = cmn.deepCopy(analysisContext); 
-            edgeContext.knowledgeSource = bl.inforesToProvenance(getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0]).knowledge_level;
+            const edgeContext = cmn.deepCopy(analysisContext);
+            edgeContext.primarySource = getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0];
             return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
           }),
           {},
@@ -1199,7 +1210,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
         if (e instanceof EdgeBindingNotFoundError) {
           return errorSummaryFragment(agent, e.message);
         }
-        
+
         return errorSummaryFragment(agent, 'Unknown error with building RGraph');
       }
     }
@@ -1216,8 +1227,8 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
             rsf,
             analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
         },
-        emptySummaryFragment()); 
-    
+        emptySummaryFragment());
+
       if (!isEmptySummaryFragment(resultSummaryFragment))
       {
         // Insert the ordering components after the analyses have been merged
@@ -1242,7 +1253,11 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
   const errors = {};
   answers.forEach((answer) => {
     const trapiMessage = answer.message;
-    const trapiResults = cmn.jsonGet(trapiMessage, 'results', []);
+    const trapiResults = cmn.jsonGet(trapiMessage, 'results', false);
+    if (!trapiResults) {
+      return;
+    }
+
     const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
     const auxGraphs = cmn.jsonGet(trapiMessage, 'auxiliary_graphs', {});
     const [startKey, endKey] = getPathDirection(cmn.jsonGet(trapiMessage, 'query_graph'));
@@ -1343,16 +1358,23 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
   function extendSummaryPublications(publications, edge)
   {
-    function makePublicationObject(type, url, snippet, pubdate)
+    function makePublicationObject(type, url, snippet, pubdate, source)
     {
-      return {'type': type, 'url': url, 'snippet': snippet, 'pubdate': pubdate};
+      return {
+        'type': type,
+        'url': url,
+        'snippet': snippet,
+        'pubdate': pubdate,
+        'source': source
+      };
     }
 
     const snippets = cmn.jsonGet(edge, 'snippets');
     const pubs = cmn.jsonGet(edge, 'publications', {});
     Object.keys(pubs).forEach((ks) => {
-      const publicationIds = cmn.jsonGet(pubs, ks, []);
-      publicationIds.forEach((id) => {
+      const publicationData = cmn.jsonGet(pubs, ks, []);
+      publicationData.forEach((pub) => {
+        const id = pub.id;
         const [type, url] = ev.idToTypeAndUrl(id);
         let publicationObj = false;
         for (const snippet of snippets)
@@ -1368,11 +1390,11 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
         {
           const snippet = cmn.jsonGet(publicationObj, 'sentence', null);
           const pubdate = cmn.jsonGet(publicationObj, 'publication date', null);
-          cmn.jsonSet(publications, id, makePublicationObject(type, url, snippet, pubdate));
+          cmn.jsonSet(publications, id, makePublicationObject(type, url, snippet, pubdate, pub.source));
           return;
         }
 
-        cmn.jsonSet(publications, id, makePublicationObject(type, url, null, null));
+        cmn.jsonSet(publications, id, makePublicationObject(type, url, null, null, pub.source));
       });
     });
   }
@@ -1400,6 +1422,12 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     Object.values(edges).forEach((edge) =>
       {
         extendSummaryPublications(publications, edge);
+        const edgePublications = cmn.jsonGet(edge, 'publications', {})
+        Object.keys(edgePublications).forEach((knowledgeLevel) => {
+          edgePublications[knowledgeLevel] = edgePublications[knowledgeLevel].map((pub) => {
+            return pub.id;
+          });
+        });
         delete edge['snippets'];
         addInverseEdge(edges, edge);
         cmn.jsonSet(edge, 'predicate', edgeToQualifiedPredicate(edge));
@@ -1509,7 +1537,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       extendSummaryScores(scores, condensedSummaryScores(cs));
       extendSummaryErrors(errors, condensedSummaryErrors(cs));
     });
-  
+
   results = Object.values(results).map(objRemoveDuplicates)
   const annotationPromise = annotationClient.annotateGraph(createKGFromNodeIds(Object.keys(nodes)));
   function pushIfEmpty(arr, val)
@@ -1586,7 +1614,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
               } else {
                 tags.push(makeTag('fda:0', 'Not FDA Approved'));
               }
-              
+
               return tags;
             } else {
               return makeTag(`fda:${fdaApproval}`, `FDA Approved`);
@@ -1650,7 +1678,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       return summarizeRnode(rnode, kgraph, resultNodeRules, annotationContext);
     });
 
-    extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), 'biothings-annotator');
+    extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), ['biothings-annotator']);
     extendSummaryErrors(errors, annotationContext.errors);
   }
   catch (err)

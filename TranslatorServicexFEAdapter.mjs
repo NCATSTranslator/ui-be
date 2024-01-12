@@ -8,66 +8,60 @@ import * as trapi from './trapi.mjs';
 export { TranslatorServicexFEAdapter };
 // msg: ARS client message with trace=y
 
-function determineStatus(msg)
-{
-  if (msg.queuing)
-  {
+function determineStatus(msg) {
+  if (msg.queuing) {
     return "running";
   }
-  else
-  {
+  else {
     return msg.running.length > 0 ? "running" : "success";
   }
 }
 
-class TranslatorServicexFEAdapter
-{
-  constructor (annotationClient)
-  {
+class TranslatorServicexFEAdapter {
+  constructor (annotationClient) {
     this.annotationClient = annotationClient;
   }
 
-  querySubmitToFE(msg)
-  {
+  querySubmitToFE(msg) {
     return {
       status: 'success',
       data: arsmsg.msgId(msg)
     }
   }
 
-  queryStatusToFE(msg)
-  {
+  queryStatusToFE(msg) {
     return {
       status: determineStatus(msg),
       data: {
         qid: msg.pk,
-        aras: msg.completed.map(e => e.agent)
+        aras: msg.completed.map(e => e.agent),
+        timestamp: msg.meta.timestamp
       }
     };
   }
 
-  async queryResultsToFE(msg, maxHops)
-  {
+  async queryResultsToFE(msg, maxHops) {
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
-    let data = msg.completed.filter(e =>
-      {
-        return Array.isArray(e.data.results) && e.data.results.length > 0;
-      }).map(e =>
-        {
-          return {
-            agent: e.agent,
-            message: e.data
-          }
-        });
+    const data = msg.completed.filter(e => {
+      return !!e.data;
+    }).map(e => {
+      return {
+        agent: e.agent,
+        message: e.data
+      }
+    });
 
-    
+    const summary = await trapi.creativeAnswersToSummary(
+      msg.pk,
+      data,
+      maxHops,
+      this.annotationClient);
+    summary.meta.timestamp = msg.meta.timestamp;
+
     return {
       status: determineStatus(msg),
-      data: await trapi.creativeAnswersToSummary(msg.pk,
-        data,
-        maxHops,
-        this.annotationClient)
+      data: summary
     };
   }
 }
