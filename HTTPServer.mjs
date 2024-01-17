@@ -30,8 +30,8 @@ export function startServer(config, services) {
     res.send('OK');
   });
 
-  app.all(['/demo', '/demo/:path'], validateUnauthSession(config, authService));
-  app.all(['/main', '/main/:path'], validateAuthSession(config, authService));
+  app.all(['/demo', '/demo/*'], validateUnauthSession(config, authService));
+  app.all(['/main', '/main/*'], validateAuthSession(config, authService));
 
   app.get('/main',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
@@ -111,8 +111,9 @@ function handleLogout(config, authService) {
 function validateAuthSession(config, authService) {
   function handleUnauthSession(req, res) {
     let redirectPath = '/login';
-    if (req.params.path && req.params.path === 'results') {
-      redirectPath = `/demo/${req.params.path}?${new URLSearchParams(req.query).toString()}`;
+    // This is a little gross because we have to know the route on the FE.
+    if (req.path === '/main/results') {
+      redirectPath = `/demo/results?${new URLSearchParams(req.query).toString()}`;
     }
 
     res.redirect(302, redirectPath);
