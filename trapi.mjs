@@ -1109,11 +1109,11 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           {
             base: edgesBase,
             updates: rgraph.edges.map(redge => {
-                      const kedge = redgeToTrapiKedge(redge, kgraph);
-                      const edgeContext = cmn.deepCopy(analysisContext);
-                      edgeContext.primarySource = getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0];
-                      return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
-                    })
+                       const kedge = redgeToTrapiKedge(redge, kgraph);
+                       const edgeContext = cmn.deepCopy(analysisContext);
+                       edgeContext.primarySource = getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0];
+                       return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
+            })
           },
           {},
           {});
@@ -1163,7 +1163,11 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
   const errors = {};
   answers.forEach((answer) => {
     const trapiMessage = answer.message;
-    const trapiResults = cmn.jsonGet(trapiMessage, 'results', []);
+    const trapiResults = cmn.jsonGet(trapiMessage, 'results', false);
+    if (!trapiResults) {
+      return;
+    }
+
     const kgraph = cmn.jsonGet(trapiMessage, 'knowledge_graph');
     const auxGraphs = cmn.jsonGet(trapiMessage, 'auxiliary_graphs', {});
     const [startKey, endKey] = getPathDirection(cmn.jsonGet(trapiMessage, 'query_graph'));
