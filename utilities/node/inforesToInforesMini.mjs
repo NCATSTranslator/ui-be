@@ -6,7 +6,7 @@ function cleanupKnowledgeLevel(rawKL) {
   if (rawKL === 'curated') {
     return 'trusted';
   } else if (rawKL === 'correlation' ||
-             rawKL === 'predicated' ||
+             rawKL === 'predicted' ||
              rawKL === 'prediction' ||
              rawKL === 'observation') {
     return 'inferred';

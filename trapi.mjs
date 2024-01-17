@@ -9,15 +9,12 @@ import * as bta from './biothings-annotation.mjs';
 const subjectKey = 'sn';
 const objectKey = 'on';
 
-export function makeMetadataObject(qid, agents)
-{
-  if (qid === undefined || !cmn.isString(qid))
-  {
+export function makeMetadataObject(qid, agents) {
+  if (qid === undefined || !cmn.isString(qid)) {
     throw new TypeError(`Expected argument qid to be of type string, got: ${qid}`);
   }
 
-  if (agents === undefined || !cmn.isArray(agents))
-  {
+  if (agents === undefined || !cmn.isArray(agents)) {
     throw new TypeError(`Expected argument agents to be type array, got: ${agents}`);
   }
 
@@ -27,16 +24,12 @@ export function makeMetadataObject(qid, agents)
   };
 }
 
-export function queryToCreativeQuery(query)
-{
-  function buildCreativeQgraph(subject, object, predicate, direction)
-  {
-    function nodeToQgNode(node)
-    {
+export function queryToCreativeQuery(query) {
+  function buildCreativeQgraph(subject, object, predicate, direction) {
+    function nodeToQgNode(node) {
       const qgNode = {};
       qgNode['categories'] = [bl.tagBiolink(node.category)];
-      if (node.id)
-      {
+      if (node.id) {
         qgNode['ids'] = [node.id];
       }
 
@@ -54,8 +47,7 @@ export function queryToCreativeQuery(query)
       'knowledge_type': 'inferred',
     };
 
-    if (direction)
-    {
+    if (direction) {
       qgEdge['qualifier_constraints'] = [
         {
           'qualifier_set': [
@@ -78,8 +70,7 @@ export function queryToCreativeQuery(query)
     }
   }
 
-  function diseaseToTrapiQgraph(disease)
-  {
+  function diseaseToTrapiQgraph(disease) {
     return buildCreativeQgraph(
       {'category': 'ChemicalEntity'},
       {'category': 'Disease', 'id': disease},
@@ -87,8 +78,7 @@ export function queryToCreativeQuery(query)
       null);
   }
 
-  function geneToTrapiQgraph(gene, direction)
-  {
+  function geneToTrapiQgraph(gene, direction) {
     return buildCreativeQgraph(
       {'category': 'ChemicalEntity'},
       {'category': 'Gene', 'id': gene},
@@ -96,8 +86,7 @@ export function queryToCreativeQuery(query)
       direction);
   }
 
-  function chemicalToTrapiQgraph(chemical, direction)
-  {
+  function chemicalToTrapiQgraph(chemical, direction) {
     return buildCreativeQgraph(
       {'category': 'ChemicalEntity', 'id': chemical},
       {'category': 'Gene'},
@@ -105,24 +94,20 @@ export function queryToCreativeQuery(query)
       direction);
   }
 
-  if (!cmn.isObj(query))
-  {
+  if (!cmn.isObj(query)) {
     throw new TypeError(`Expected query to be type object, got: ${query}`);
   }
 
   const validKeys = ['type', 'curie', 'direction'];
-  for (const key of validKeys)
-  {
-    if (!cmn.jsonHasKey(query, key))
-    {
+  for (const key of validKeys) {
+    if (!cmn.jsonHasKey(query, key)) {
       throw new ReferenceError(`Expected query to have key ${key}, got: ${query}`);
     }
   }
 
   let qg = null;
   const queryType = cmn.jsonGet(query, 'type');
-  switch (queryType)
-  {
+  switch (queryType) {
     case 'drug':
       qg = diseaseToTrapiQgraph(cmn.jsonGet(query, 'curie'));
       break;
@@ -143,8 +128,7 @@ export function queryToCreativeQuery(query)
   };
 }
 
-export function creativeAnswersToSummary (qid, answers, maxHops, annotationClient)
-{
+export function creativeAnswersToSummary (qid, answers, maxHops, annotationClient) {
   const nodeRules = makeSummarizeRules(
     [
       aggregateProperty('name', ['names']),
@@ -169,8 +153,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
     ]);
 
   const queryType = answerToQueryType(answers[0]);
-  function agentToName(agent)
-  {
+  function agentToName(agent) {
     return bl.inforesToProvenance(agent).name;
   }
 
@@ -184,8 +167,7 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
     errors);
 }
 
-function createKGFromNodeIds(nodeIds)
-{
+function createKGFromNodeIds(nodeIds) {
   const nodes = {};
   nodeIds.forEach(e => { nodes[e] = {}; });
   const retval = {
@@ -205,28 +187,23 @@ const QUERY_TYPE = {
   GENE_CHEMICAL: 2
 }
 
-function isChemicalGeneQuery(queryType)
-{
+function isChemicalGeneQuery(queryType) {
   return queryType === QUERY_TYPE.CHEMICAL_GENE;
 }
 
-function isChemicalDiseaseQuery(queryType)
-{
+function isChemicalDiseaseQuery(queryType) {
   return queryType === QUERY_TYPE.CHEMICAL_DISEASE;
 }
 
-function isGeneChemicalQuery(queryType)
-{
+function isGeneChemicalQuery(queryType) {
   return queryType === QUERY_TYPE.GENE_CHEMICAL;
 }
 
-function isValidQuery(queryType)
-{
+function isValidQuery(queryType) {
   return Object.values(QUERY_TYPE).includes(queryType);
 }
 
-function answerToQueryType(answer)
-{
+function answerToQueryType(answer) {
   const qg = cmn.jsonGetFromKpath(answer, ['message', 'query_graph'], false);
   if (!qg)
   {
@@ -238,18 +215,15 @@ function answerToQueryType(answer)
   const subCategory = cmn.jsonGetFromKpath(qg, ['nodes', subjectKey, 'categories'], false)[0];
   const objCategory = cmn.jsonGetFromKpath(qg, ['nodes', objectKey, 'categories'], false)[0];
   if (subCategory === bl.tagBiolink('ChemicalEntity') &&
-      objCategory === bl.tagBiolink('Gene'))
-  {
+      objCategory === bl.tagBiolink('Gene')) {
     return QUERY_TYPE.CHEMICAL_GENE;
   }
   else if (subCategory === bl.tagBiolink('ChemicalEntity') &&
-           objCategory === bl.tagBiolink('Disease'))
-  {
+           objCategory === bl.tagBiolink('Disease')) {
     return QUERY_TYPE.CHEMICAL_DISEASE;
   }
   else if (subCategory === bl.tagBiolink('Gene') &&
-           objCategory === bl.tagBiolink('ChemicalEntity'))
-  {
+           objCategory === bl.tagBiolink('ChemicalEntity')) {
     return QUERY_TYPE.GENE_CHEMICAL;
   }
 
@@ -271,31 +245,25 @@ function makeMapping(key, transform, update, fallback) {
   }
 }
 
-function aggregatePropertyUpdateWhen(v, obj, kpath, doUpdate)
-{
+function aggregatePropertyUpdateWhen(v, obj, kpath, doUpdate) {
   const cv = cmn.jsonGetFromKpath(obj, kpath, false);
-  if (doUpdate(v))
-  {
+  if (doUpdate(v)) {
     const uv = cmn.isArray(v) ? v : [v];
     return cmn.jsonSetFromKpath(obj, kpath, cv ? cv.concat(uv) : uv);
   }
-  else if (cv)
-  {
+  else if (cv) {
     return obj
   }
-  else
-  {
+  else {
     return cmn.jsonSetFromKpath(obj, kpath, []);
   }
 }
 
-function aggregatePropertyUpdate(v, obj, kpath)
-{
+function aggregatePropertyUpdate(v, obj, kpath) {
   return aggregatePropertyUpdateWhen(v, obj, kpath, (v) => { return true; });
 }
 
-function renameAndTransformProperty(key, kpath, transform)
-{
+function renameAndTransformProperty(key, kpath, transform) {
   return makeMapping(
     key,
     transform,
@@ -303,23 +271,19 @@ function renameAndTransformProperty(key, kpath, transform)
     null);
 }
 
-function transformProperty(key, transform)
-{
+function transformProperty(key, transform) {
   return renameAndTransformProperty(key, [key], transform);
 }
 
-function renameProperty(key, kpath)
-{
+function renameProperty(key, kpath) {
   return renameAndTransformProperty(key, kpath, (obj, key) => cmn.jsonGet(obj, key), null);
 }
 
-function getProperty(key)
-{
+function getProperty(key) {
   return renameProperty(key, [key]);
 }
 
-function aggregatePropertyWhen(key, kpath, doUpdate)
-{
+function aggregatePropertyWhen(key, kpath, doUpdate) {
   return makeMapping(
     key,
     (obj, key) => cmn.jsonGet(obj, key),
@@ -327,8 +291,7 @@ function aggregatePropertyWhen(key, kpath, doUpdate)
     []);
 }
 
-function aggregateAndTransformProperty(key, kpath, transform)
-{
+function aggregateAndTransformProperty(key, kpath, transform) {
   return makeMapping(
     key,
     transform,
@@ -336,53 +299,42 @@ function aggregateAndTransformProperty(key, kpath, transform)
     []);
 }
 
-function aggregateProperty(key, kpath)
-{
+function aggregateProperty(key, kpath) {
   return aggregatePropertyWhen(key, kpath, v => true);
 }
 
-function attrId(attribute)
-{
+function attrId(attribute) {
   return cmn.jsonGet(attribute, 'attribute_type_id');
 }
 
-function attrValue(attribute)
-{
+function attrValue(attribute) {
   return cmn.jsonGet(attribute, 'value');
 }
 
-function areNoAttributes(attributes)
-{
+function areNoAttributes(attributes) {
   return attributes === undefined || attributes === null || cmn.isArrayEmpty(attributes);
 }
 
-function renameAndTransformAttribute(attributeId, kpath, transform)
-{
+function renameAndTransformAttribute(attributeId, kpath, transform) {
   return makeMapping(
     'attributes',
-    (obj, key) =>
-    {
+    (obj, key) => {
       const attributes = cmn.jsonGet(obj, key, null);
-      if (areNoAttributes(attributes))
-      {
+      if (areNoAttributes(attributes)) {
         return null;
       }
 
-      for (const attribute of attributes)
-      {
-        if (attributeId === attrId(attribute))
-        {
+      for (const attribute of attributes) {
+        if (attributeId === attrId(attribute)) {
           return transform(attrValue(attribute));
         }
       }
 
       return null;
     },
-    (v, obj) =>
-    {
+    (v, obj) => {
       const currentValue = cmn.jsonGetFromKpath(obj, kpath, false);
-      if (currentValue && v === null)
-      {
+      if (currentValue && v === null) {
         return obj;
       }
 
@@ -391,81 +343,66 @@ function renameAndTransformAttribute(attributeId, kpath, transform)
     null);
 }
 
-function aggregateAndTransformAttributes(attributeIds, tgtKey, transform)
-{
+function aggregateAndTransformAttributes(attributeIds, tgtKey, transform) {
   return makeMapping(
     'attributes',
-    (obj, key, context) =>
-    {
+    (obj, key, context) => {
       const attributes = cmn.jsonGet(obj, key, null);
-      if (areNoAttributes(attributes))
-      {
+      if (areNoAttributes(attributes)) {
         return [];
       }
 
       const result = [];
-      attributes.forEach(attribute =>
-        {
-          const v = (attributeIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
-          result.push(...transform(v, context));
-        });
+      attributes.forEach(attribute => {
+        const v = (attributeIds.includes(attrId(attribute))) ? attrValue(attribute) : [];
+        result.push(...transform(v, context));
+      });
 
       return result;
     },
-    (v, obj) =>
-    {
+    (v, obj) => {
       const cv = cmn.jsonGet(obj, tgtKey, false);
       cmn.jsonSet(obj, tgtKey, cv ? cv.concat(v) : v);
     },
     []);
 }
 
-function aggregateAttributes(attributeIds, tgtKey)
-{
+function aggregateAttributes(attributeIds, tgtKey) {
   return aggregateAndTransformAttributes(
     attributeIds,
     tgtKey,
     (v) => { return cmn.isArray(v) ? v : [v] });
 }
 
-function tagAttribute(attributeId, transform)
-{
+function tagAttribute(attributeId, transform) {
   return makeMapping(
     'attributes',
-    (obj, key, context) =>
-    {
+    (obj, key, context) => {
       const attributes = obj[key];
-      if (areNoAttributes(attributes))
-      {
+      if (areNoAttributes(attributes)) {
         return [];
       }
 
-      for (const attribute of attributes)
-      {
-        if (attributeId === attrId(attribute))
-        {
+      for (const attribute of attributes) {
+        if (attributeId === attrId(attribute)) {
           return transform(attrValue(attribute), context);
         }
       }
 
       return [];
     },
-    (vs, obj) =>
-    {
+    (vs, obj) => {
       const currentTags = cmn.jsonSetDefaultAndGet(obj, 'tags', {});
       if (!vs) {
         return obj;
       }
 
-      if (!cmn.isArray(vs))
-      {
+      if (!cmn.isArray(vs)) {
         vs = [vs];
       }
 
-      vs.forEach((v) =>
-      {
-        if (v && currentTags[v.tag] === undefined)
-        {
+      vs.forEach((v) => {
+        if (v && currentTags[v.tag] === undefined) {
           currentTags[v.tag] = v.description;
         }
       });
@@ -532,7 +469,7 @@ function getPublications() {
 }
 
 function getPrimarySource(sources) {
-  for (let source of sources) {
+for (let source of sources) {
     const id = cmn.jsonGet(source, 'resource_id', false);
     const role = cmn.jsonGet(source, 'resource_role', false);
     if (!role || !id) {
@@ -546,87 +483,69 @@ function getPrimarySource(sources) {
   throw new Error('No primary knowledge source found');
 }
 
-function makeSummarizeRules(rules)
-{
-  return (obj, context) =>
-  {
+function makeSummarizeRules(rules) {
+  return (obj, context) => {
     return rules.map(rule => { return rule(obj, context); });
   };
 }
 
-function trapiBindingToKobj(binding, type, kgraph)
-{
+function trapiBindingToKobj(binding, type, kgraph) {
   return cmn.jsonGet(cmn.jsonGet(kgraph, type, {}), binding, false);
 }
 
-function redgeToTrapiKedge(edgeBinding, kgraph)
-{
+function redgeToTrapiKedge(edgeBinding, kgraph) {
   return trapiBindingToKobj(edgeBinding, 'edges', kgraph);
 }
 
-function rnodeToTrapiKnode(nodeBinding, kgraph)
-{
+function rnodeToTrapiKnode(nodeBinding, kgraph) {
   return trapiBindingToKobj(nodeBinding, 'nodes', kgraph);
 }
 
-function getBindingId(bindings, key)
-{
+function getBindingId(bindings, key) {
   const nodeBinding = cmn.jsonGet(bindings, key, false);
-  if (!nodeBinding)
-  {
+  if (!nodeBinding) {
     throw new NodeBindingNotFoundError(nodeBinding);
   }
 
   return cmn.jsonGet(nodeBinding[0], 'id');
 }
 
-function flattenBindings(bindings)
-{
-  return Object.values(bindings).reduce((ids, binding) =>
-    {
-      return ids.concat(binding.map(obj => { return cmn.jsonGet(obj, 'id'); }));
-    },
-    []);
+function flattenBindings(bindings) {
+  return Object.values(bindings).reduce((ids, binding) => {
+    return ids.concat(binding.map(obj => { return cmn.jsonGet(obj, 'id'); }));
+  },
+  []);
 }
 
-function kedgeSubject(kedge)
-{
+function kedgeSubject(kedge) {
   return cmn.jsonGet(kedge, 'subject');
 }
 
-function kedgeObject(kedge)
-{
+function kedgeObject(kedge) {
   return cmn.jsonGet(kedge, 'object');
 }
 
-function kedgePredicate(kedge)
-{
+function kedgePredicate(kedge) {
   return cmn.jsonGet(kedge, 'predicate');
 }
 
-function isNodeIndex(index)
-{
+function isNodeIndex(index) {
   return index % 2 === 0;
 }
 
-function kedgeAttributes(kedge)
-{
+function kedgeAttributes(kedge) {
   const attributes = cmn.jsonGet(kedge, 'attributes', null);
-  if (areNoAttributes(attributes))
-  {
+  if (areNoAttributes(attributes)) {
     return [];
   }
 
   return attributes;
 }
 
-function kedgeSupportGraphs(kedge)
-{
+function kedgeSupportGraphs(kedge) {
   const attributes = kedgeAttributes(kedge);
-  for (const attr of attributes)
-  {
-    if (attrId(attr) === bl.tagBiolink('support_graphs'))
-    {
+  for (const attr of attributes) {
+    if (attrId(attr) === bl.tagBiolink('support_graphs')) {
       return attrValue(attr);
     }
   };
@@ -634,90 +553,74 @@ function kedgeSupportGraphs(kedge)
   return [];
 }
 
-function kedgeToQualifiers(kedge)
-{
+function kedgeToQualifiers(kedge) {
   const kedgeQualifiers = cmn.jsonGet(kedge, 'qualifiers', false);
-  if (!kedgeQualifiers || !cmn.isArray(kedgeQualifiers) || cmn.isArrayEmpty(kedgeQualifiers))
-  {
+  if (!kedgeQualifiers || !cmn.isArray(kedgeQualifiers) || cmn.isArrayEmpty(kedgeQualifiers)) {
     return false;
   }
 
   const qualifiers = {};
-  kedgeQualifiers.forEach((q) =>
+  kedgeQualifiers.forEach((q) => {
+    const qualifierKey = q['qualifier_type_id'];
+    const qualifierValue = q['qualifier_value'];
+    if (qualifierKey === undefined || qualifierValue === undefined)
     {
-      const qualifierKey = q['qualifier_type_id'];
-      const qualifierValue = q['qualifier_value'];
-      if (qualifierKey === undefined || qualifierValue === undefined)
-      {
-        return false;
-      }
+      return false;
+    }
 
-      qualifiers[bl.sanitizeBiolinkItem(qualifierKey)] = bl.sanitizeBiolinkItem(qualifierValue);
-    });
+    qualifiers[bl.sanitizeBiolinkItem(qualifierKey)] = bl.sanitizeBiolinkItem(qualifierValue);
+  });
 
   return qualifiers;
 }
 
-function edgeToQualifiedPredicate(kedge, invert = false)
-{
-  function qualifiersToString(type, qualifiers, prefixes)
-  {
+function edgeToQualifiedPredicate(kedge, invert = false) {
+  function qualifiersToString(type, qualifiers, prefixes) {
     // TODO: How do part and derivative qualifiers interact? Correct ordering?
     // TODO: How to handle the context qualifier?
     // TODO: Make more robust to biolink qualifier changes.
     // This ordering is important for building the correct statement
     const qualifierKeys = ['direction', 'aspect', 'form or variant', 'part', 'derivative'];
-    const qualifierValues = qualifierKeys.map((key) =>
-      {
+    const qualifierValues = qualifierKeys.map((key) => {
         return cmn.jsonGet(qualifiers, `${type} ${key} qualifier`, false);
-      });
+    });
 
     let qualifierStr = '';
-    qualifierValues.forEach((qv, i) =>
-      {
-        if (qv)
-        {
-          if (qualifierStr)
-          {
-            qualifierStr += ' '
-          }
-
-          if (prefixes[i])
-          {
-            qualifierStr += `${prefixes[i]} `;
-
-          }
-
-          qualifierStr += qv;
+    qualifierValues.forEach((qv, i) => {
+      if (qv) {
+        if (qualifierStr) {
+          qualifierStr += ' '
         }
-      });
+
+        if (prefixes[i]) {
+          qualifierStr += `${prefixes[i]} `;
+        }
+
+        qualifierStr += qv;
+      }
+    });
 
     return qualifierStr;
   }
 
-  function subjectQualifiersToString(qualifiers, directionPrefix = false)
-  {
+  function subjectQualifiersToString(qualifiers, directionPrefix = false) {
     return qualifiersToString('subject',
                               qualifiers,
                               [directionPrefix, false, 'of a', 'of the', false]);
   }
 
-  function objectQualifiersToString(qualifiers, directionPrefix = false)
-  {
+  function objectQualifiersToString(qualifiers, directionPrefix = false) {
     return qualifiersToString('object',
                               qualifiers,
                               [directionPrefix, false, 'of a', 'of the', false]);
   }
 
-  function finalizeQualifiedPredicate(prefix, predicate, suffix)
-  {
-    if (prefix)
-    {
+  function finalizeQualifiedPredicate(prefix, predicate, suffix) {
+    if (prefix) {
       prefix += ' ';
     }
 
-    if (suffix)
-    {
+    if (suffix) {
       suffix = ` ${suffix} of`;
     }
 
@@ -725,15 +628,12 @@ function edgeToQualifiedPredicate(kedge, invert = false)
     return finalPredicate;
   }
 
-  function getSpecialCase(predicate, qualifiers, invert)
-  {
+  function getSpecialCase(predicate, qualifiers, invert) {
     const objDirectionQualifier = qualifiers['object direction qualifier'];
     if (predicate === 'regulates' &&
           (objDirectionQualifier === 'upregulated' ||
-           objDirectionQualifier === 'downregulated'))
-    {
-      if (invert)
-      {
+           objDirectionQualifier === 'downregulated')) {
+      if (invert) {
         return `is ${objDirectionQualifier} by`;
       }
 
@@ -745,15 +645,13 @@ function edgeToQualifiedPredicate(kedge, invert = false)
 
   let predicate = bl.sanitizeBiolinkItem(kedgePredicate(kedge));
   let qualifiers = kedgeToQualifiers(kedge);
-  if (!qualifiers && bl.isDeprecatedPredicate(predicate))
-  {
+  if (!qualifiers && bl.isDeprecatedPredicate(predicate)) {
     [predicate, qualifiers] = bl.deprecatedPredicateToPredicateAndQualifiers(predicate);
   }
+
   // If we don't have any qualifiers, treat it like biolink v2
-  if (!qualifiers)
-  {
-    if (invert)
-    {
+  if (!qualifiers) {
+    if (invert) {
       predicate = bl.invertBiolinkPredicate(predicate);
     }
 
@@ -761,19 +659,16 @@ function edgeToQualifiedPredicate(kedge, invert = false)
   }
 
   const qualifiedPredicate = cmn.jsonGet(qualifiers, 'qualified predicate', false);
-  if (qualifiedPredicate)
-  {
+  if (qualifiedPredicate) {
     predicate = qualifiedPredicate;
   }
 
   const specialCase = getSpecialCase(predicate, qualifiers, invert);
-  if (specialCase)
-  {
+  if (specialCase) {
     return specialCase;
   }
 
-  if (invert)
-  {
+  if (invert) {
     const subjectQualifierStr = subjectQualifiersToString(qualifiers);
     const objectQualifierStr = objectQualifiersToString(qualifiers, 'has');
     return finalizeQualifiedPredicate(objectQualifierStr,
@@ -788,31 +683,26 @@ function edgeToQualifiedPredicate(kedge, invert = false)
                                     objectQualifierStr);
 }
 
-function makeTag(tag, name, description = '')
-{
+function makeTag(tag, name, description = '') {
   return {
     'tag': tag,
     'description': makeTagDescription(name, description)
   };
 }
 
-function makeTagDescription(name, description = '')
-{
+function makeTagDescription(name, description = '') {
   return {
     'name': name,
     'value': description
   };
 }
 
-function determineAnswerTag(type, answerTags, queryType)
-{
-  function isDrug(type, fdaLevel)
-  {
+function determineAnswerTag(type, answerTags, queryType) {
+  function isDrug(type, fdaLevel) {
     return fdaLevel === 4 || type === 'Drug';
   }
 
-  function isClinicalPhase(fdaLevel)
-  {
+  function isClinicalPhase(fdaLevel) {
     return fdaLevel > 0 && fdaLevel < 4;
   }
 
@@ -835,115 +725,109 @@ function determineAnswerTag(type, answerTags, queryType)
   return [`cc:other`, `Other`];
 }
 
-function makeRgraph(rnodes, redges, kgraph)
-{
-  if (!redges)
-  {
+function makeRgraph(rnodes, redges, edgeMappings, kgraph) {
+  if (!redges) {
     return false;
   }
 
   const knodes = cmn.jsonGet(kgraph, 'nodes');
-  for (const rnode of rnodes)
-  {
-    if (!cmn.jsonHasKey(knodes, rnode))
-    {
+  for (const rnode of rnodes) {
+    if (!cmn.jsonHasKey(knodes, rnode)) {
       return false;
     }
   }
 
   const rgraph = {};
   rgraph.nodes = rnodes;
-  rgraph.edges = redges.filter(redge =>
-    {
-      const kedge = redgeToTrapiKedge(redge, kgraph);
-      return bl.isBiolinkPredicate(kedgePredicate(kedge));
-    });
+  rgraph.edges = redges.filter(redge => {
+    const kedge = redgeToTrapiKedge(redge, kgraph);
+    return bl.isBiolinkPredicate(kedgePredicate(kedge));
+  });
+  rgraph.edgeMappings = edgeMappings;
 
   return rgraph;
 }
 
-function isRedgeInverted(redge, subject, kgraph)
-{
+function isRedgeInverted(redge, subject, kgraph) {
   const kedge = redgeToTrapiKedge(redge, kgraph);
   return subject === kedgeObject(kedge);
 }
 
-function analysisToRgraph(analysis, kgraph, auxGraphs)
-{
-  let unprocessedEdgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings', []));
+function analysisToRgraph(analysis, kgraph, auxGraphs) {
+  const edgeBindingData = new Map();
+  let unprocessedEdgeBindings = flattenBindings(cmn.jsonGet(analysis, 'edge_bindings', [])).map((eb) => {
+    edgeBindingData[eb] = { partOf: ['root'] };
+    return eb;
+  });
+
   let unprocessedSupportGraphs = [];
-  const edgeBindings = new Set();
   const nodeBindings = new Set();
   const supportGraphs = new Set();
-  while (!cmn.isArrayEmpty(unprocessedEdgeBindings) || !cmn.isArrayEmpty(unprocessedSupportGraphs))
-  {
-    while (!cmn.isArrayEmpty(unprocessedEdgeBindings))
-    {
+  // Invariant: edges and subgraphs will only ever be processed once. This is very important
+  //            for how the following code works.
+  while (!cmn.isArrayEmpty(unprocessedEdgeBindings) || !cmn.isArrayEmpty(unprocessedSupportGraphs)) {
+    while (!cmn.isArrayEmpty(unprocessedEdgeBindings)) {
       const eb = unprocessedEdgeBindings.pop();
       const kedge = redgeToTrapiKedge(eb, kgraph);
-      if (!kedge)
-      {
+      if (!kedge) {
         throw new EdgeBindingNotFoundError(eb);
       }
 
       nodeBindings.add(kedgeSubject(kedge));
       nodeBindings.add(kedgeObject(kedge));
       const edgeSupportGraphs = kedgeSupportGraphs(kedge);
-      edgeSupportGraphs.forEach((sg) =>
-      {
-        if (!supportGraphs.has(sg))
-        {
+      edgeBindingData[eb].support = edgeSupportGraphs;
+      edgeSupportGraphs.forEach((sg) => {
+        if (!supportGraphs.has(sg)) {
           unprocessedSupportGraphs.push(sg);
         }
       });
-
-      edgeBindings.add(eb);
     };
 
-    while (!cmn.isArrayEmpty(unprocessedSupportGraphs))
-    {
+    while (!cmn.isArrayEmpty(unprocessedSupportGraphs)) {
       const gid = unprocessedSupportGraphs.pop();
       const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
-      if (auxGraph)
-      {
-        const sgEdgeBindings = cmn.jsonGet(auxGraph, 'edges', []);
-        sgEdgeBindings.forEach((eb) =>
-        {
-          if (!edgeBindings.has(eb))
-          {
-            unprocessedEdgeBindings.push(eb);
-          }
-        });
+      if (!auxGraph) {
+        throw new AuxGraphNotFoundError(gid);
       }
+
+      const sgEdgeBindings = cmn.jsonGet(auxGraph, 'edges', []);
+      sgEdgeBindings.forEach((eb) => {
+        if (!edgeBindingData[eb]) {
+          edgeBindingData[eb] = { partOf: [gid] };
+          unprocessedEdgeBindings.push(eb);
+        } else {
+          // We do not want to process the same edge twice, but we need to include this
+          // graph as a graph where this edge occurs.
+          edgeBindingData[eb].partOf.push(gid);
+        }
+      });
 
       supportGraphs.add(gid);
     }
   }
 
-  return makeRgraph([...nodeBindings], [...edgeBindings], kgraph);
+  return makeRgraph([...nodeBindings], [...Object.keys(edgeBindingData)], edgeBindingData, kgraph);
 }
 
-function rnodeToKey(rnode, kgraph)
-{
+function rnodeToKey(rnode, kgraph) {
   return rnode;
 }
 
-function redgeToKey(redge, kgraph, doInvert = false)
-{
+function redgeToKey(redge, kgraph, doInvert = false) {
   const kedge = redgeToTrapiKedge(redge, kgraph);
   const ksubject = kedgeSubject(kedge);
   const predicate = edgeToQualifiedPredicate(kedge, doInvert);
   const kobject = kedgeObject(kedge);
-  if (doInvert)
-  {
-    return pathToKey([kobject, predicate, ksubject]);
+  const knowledgeLevel = bl.inforesToProvenance(getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0]).knowledge_level;
+  if (doInvert) {
+    return pathToKey([kobject, predicate, ksubject, knowledgeLevel]);
   }
 
-  return pathToKey([ksubject, predicate, kobject]);
+  return pathToKey([ksubject, predicate, kobject, knowledgeLevel]);
 }
 
-function summarizeRnode(rnode, kgraph, nodeRules, context)
-{
+function summarizeRnode(rnode, kgraph, nodeRules, context) {
   const rnodeKey = rnodeToKey(rnode, kgraph);
   return cmn.makePair(rnodeToKey(rnode, kgraph),
     nodeRules(rnodeToTrapiKnode(rnode, kgraph), context),
@@ -951,67 +835,58 @@ function summarizeRnode(rnode, kgraph, nodeRules, context)
     'transforms');
 }
 
-function summarizeRedge(redge, kgraph, edgeRules, context)
-{
+function summarizeRedge(redge, kgraph, edgeRules, context) {
   return cmn.makePair(redgeToKey(redge, kgraph),
     edgeRules(redgeToTrapiKedge(redge, kgraph), context),
     'key',
     'transforms');
 }
 
-function makeRedgeToEdgeId(rgraph, kgraph)
-{
+function makeRedgeToEdgeId(rgraph, kgraph) {
   function makeEdgeId(subject, object)
   {
     return cmn.makePair(subject, object, 'subject', 'object');
   }
 
   let redgeToEdgeId = {};
-  rgraph.edges.forEach(redge =>
-    {
-      const kedge = redgeToTrapiKedge(redge, kgraph);
-      cmn.jsonSet(redgeToEdgeId, redge, makeEdgeId(kedgeSubject(kedge), kedgeObject(kedge)));
-    });
+  rgraph.edges.forEach(redge => {
+    const kedge = redgeToTrapiKedge(redge, kgraph);
+    cmn.jsonSet(redgeToEdgeId, redge, makeEdgeId(kedgeSubject(kedge), kedgeObject(kedge)));
+  });
 
   return (redge) => { return cmn.jsonGet(redgeToEdgeId, redge); };
 }
 
-function makeRnodeToOutEdges(rgraph, kgraph)
-{
+function makeRnodeToOutEdges(rgraph, kgraph) {
 
-  function makeOutEdge(redge, node)
-  {
+  function makeOutEdge(redge, node) {
     return cmn.makePair(redge, node, 'redge', 'target');
   }
 
   const redgeToEdgeId = makeRedgeToEdgeId(rgraph, kgraph);
   const rnodeToOutEdges = {};
-  rnodeToOutEdges.update = (rnode, val) =>
-  {
+  rnodeToOutEdges.update = (rnode, val) => {
     const outEdges = cmn.jsonGet(rnodeToOutEdges, rnode, []);
     outEdges.push(val);
     cmn.jsonSet(rnodeToOutEdges, rnode, outEdges);
   };
 
-  rgraph.edges.forEach(redge =>
-    {
-      const edgeId = redgeToEdgeId(redge);
-      const subject = edgeId.subject;
-      const object = edgeId.object;
+  rgraph.edges.forEach(redge => {
+    const edgeId = redgeToEdgeId(redge);
+    const subject = edgeId.subject;
+    const object = edgeId.object;
 
-      rnodeToOutEdges.update(subject, makeOutEdge(redge, object));
-      rnodeToOutEdges.update(object, makeOutEdge(redge, subject));
-    });
+    rnodeToOutEdges.update(subject, makeOutEdge(redge, object));
+    rnodeToOutEdges.update(object, makeOutEdge(redge, subject));
+  });
 
   return (rnode) => { return cmn.jsonGet(rnodeToOutEdges, rnode, []); };
 }
 
-function rgraphFold(proc, init, acc)
-{
+function rgraphFold(proc, init, acc) {
   let objLeft = init;
   let res = acc;
-  while (!cmn.isArrayEmpty(objLeft))
-  {
+  while (!cmn.isArrayEmpty(objLeft)) {
     const paths = proc(objLeft.pop());
     objLeft.push(...paths.first);
     res.push(...paths.second);
@@ -1020,8 +895,7 @@ function rgraphFold(proc, init, acc)
   return res;
 }
 
-function makeSummaryFragment(agents, paths, nodes, edges, scores, errors)
-{
+function makeSummaryFragment(agents, paths, nodes, edges, scores, errors) {
   const summaryFragment = {};
   summaryFragment.agents = agents;
   summaryFragment.paths = paths;
@@ -1032,122 +906,160 @@ function makeSummaryFragment(agents, paths, nodes, edges, scores, errors)
   return summaryFragment;
 }
 
-function emptySummaryFragment()
-{
-  return makeSummaryFragment([], [], [], [], {}, {});
+function emptySummaryFragment() {
+  return makeSummaryFragment(
+    [], // agents
+    [], // paths
+    [], // nodes
+    {base: {}, updates: []}, //edges
+    {}, // scores
+    {}  // errors
+  );
 }
 
-function errorSummaryFragment(agent, error)
-{
+function errorSummaryFragment(agent, error) {
   const summaryFragment = emptySummaryFragment();
   summaryFragment.agents = [agent];
   summaryFragment.errors[agent] = [error];
   return summaryFragment;
 }
 
-function isEmptySummaryFragment(summaryFragment)
-{
+function isEmptySummaryFragment(summaryFragment) {
   return cmn.isArrayEmpty(summaryFragment.paths) &&
          cmn.isArrayEmpty(summaryFragment.nodes) &&
-         cmn.isArrayEmpty(summaryFragment.edges);
+         cmn.isObjEmpty(summaryFragment.edges.base) &&
+         cmn.isArrayEmpty(summaryFragment.edges.updates);
 }
 
-function condensedSummaryAgents(condensedSummary)
-{
+function condensedSummaryAgents(condensedSummary) {
   return condensedSummary.agents;
 }
 
-function condensedSummaryPaths(condensedSummary)
-{
+function condensedSummaryPaths(condensedSummary) {
   return condensedSummary.paths;
 }
 
-function condensedSummaryNodes(condensedSummary)
-{
+function condensedSummaryNodes(condensedSummary) {
   return condensedSummary.nodes;
 }
 
-function condensedSummaryEdges(condensedSummary)
-{
+function condensedSummaryEdges(condensedSummary) {
   return condensedSummary.edges;
 }
 
-function condensedSummaryScores(condensedSummary)
-{
+function condensedSummaryScores(condensedSummary) {
   return condensedSummary.scores;
 }
 
-function condensedSummaryErrors(condensedSummary)
-{
+function condensedSummaryErrors(condensedSummary) {
   return condensedSummary.errors;
 }
 
-function pathToKey(path)
-{
+function makeEdgeBase() {
+  return {
+    aras: [],
+    support: []
+  };
+}
+
+function isInvalidEdge(edge) {
+  return !edge.subject || !edge.object || !edge.predicate;
+}
+
+function pathToKey(path) {
   return hash(path);
 }
 
-function mergeSummaryFragments(f1, f2)
-{
+function mergeFragmentObjects(obj1, obj2) {
+  Object.keys(obj2).forEach((k) => {
+    const current = cmn.jsonSetDefaultAndGet(obj1, k, []);
+    current.push(...obj2[k]);
+  });
+}
+
+function mergeSummaryFragments(f1, f2) {
   f1.agents.push(...f2.agents);
   f1.paths.push(...f2.paths);
   f1.nodes.push(...f2.nodes);
-  f1.edges.push(...f2.edges);
-  Object.keys(f2.scores).forEach((k) =>
-  {
-    const currentScores = cmn.jsonSetDefaultAndGet(f1.scores, k, []);
-    currentScores.push(...f2.scores[k]);
+  f1.edges.updates.push(...f2.edges.updates);
+  Object.keys(f2.edges.base).forEach((ek) => {
+    const currentEdge = cmn.jsonSetDefaultAndGet(f1.edges.base, ek, makeEdgeBase());
+    mergeFragmentObjects(currentEdge, f2.edges.base[ek]);
   });
-
-  Object.keys(f2.errors).forEach((k) =>
-  {
-    const currentErrors = cmn.jsonSetDefaultAndGet(f1.errors, k, []);
-    currentErrors.push(...f2.errors[k]);
-  });
-
+  mergeFragmentObjects(f1.scores, f2.scores);
+  mergeFragmentObjects(f1.errors, f2.errors);
   return f1;
 }
 
-function getPathDirection(qgraph)
-{
+function getPathDirection(qgraph) {
   const startIsObject = cmn.jsonGetFromKpath(qgraph, ['nodes', subjectKey, 'ids'], false);
-  if (startIsObject)
-  {
+  if (startIsObject) {
     return [objectKey, subjectKey];
   }
 
   return [subjectKey, objectKey];
 }
 
-function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHops)
-{
-  function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey, errors)
-  {
-    function analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end)
-    {
-      function normalizePaths(rgraphPaths, kgraph)
-      {
+function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHops) {
+  function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey, errors) {
+    function analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end) {
+      function finalizePaths(rgraphPaths, edgeMappings, kgraph) {
         function N(n) { return rnodeToKey(n, kgraph); }
         function E(e, o) { return redgeToKey(e, kgraph, isRedgeInverted(e, o, kgraph)); }
-        return rgraphPaths.map(path =>
-          {
-            let normalizedPath = [];
-            const pathLength = path.length - 1;
-            if (pathLength < 0)
-            {
-              return normalizedPath;
-            }
-
-            for (let i = 0; i < pathLength; i+=2)
-            {
-              const node = path[i];
-              const edge = path[i+1];
-              normalizedPath.push(N(node), E(edge, node));
-            }
-
-            normalizedPath.push(N(path[pathLength]));
+        const normalizedMappings = {};
+        const normalizedPaths = rgraphPaths.map(path => {
+          let normalizedPath = [];
+          const pathLength = path.length - 1;
+          if (pathLength < 0) {
             return normalizedPath;
-          });
+          }
+
+          for (let i = 0; i < pathLength; i+=2) {
+            const node = path[i];
+            const edge = path[i+1];
+            const normalizedEdge = E(edge, node);
+            normalizedMappings[normalizedEdge] = edgeMappings[edge];
+            normalizedPath.push(N(node), normalizedEdge);
+          }
+
+          normalizedPath.push(N(path[pathLength]));
+          return normalizedPath;
+        });
+
+        const pathToSupportGraph = {};
+        // For every path find which graphs the path appears in. A path appears in a graph iff all
+        // edges in the path appear in the graph.
+        for (const path of normalizedPaths) {
+          let gids = normalizedMappings[path[1]].partOf;
+          for (let i = 3; i < path.length; i+=2) {
+            gids = gids.filter((gid) => normalizedMappings[path[i]].partOf.includes(gid));
+          }
+
+          pathToSupportGraph[pathToKey(path)] = gids;
+        }
+
+        const edgeBases = {}
+        // Determine which paths support which edges
+        for (const edge of Object.keys(normalizedMappings)) {
+          const edgeSupportGraphs = normalizedMappings[edge].support;
+          const edgePaths = [];
+          for (const path of Object.keys(pathToSupportGraph)) {
+            for (const pgid of pathToSupportGraph[path]) {
+              if (edgeSupportGraphs.includes(pgid)) {
+                edgePaths.push(path);
+                break;
+              }
+            }
+          }
+
+          if (!edgeBases[edge]) {
+            edgeBases[edge] = makeEdgeBase();
+          }
+
+          edgeBases[edge].support.push(...edgePaths);
+        }
+
+        return [normalizedPaths, edgeBases];
       }
 
       const agent = cmn.jsonGet(analysis, 'resource_id', false);
@@ -1159,35 +1071,31 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
         const rgraph = analysisToRgraph(analysis, kgraph, auxGraphs);
         const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
         const maxPathLength = (2 * maxHops) + 1;
-        const rgraphPaths = rgraphFold((path) =>
-          {
+        const rgraphPaths = rgraphFold((path) => {
             const currentRnode = path[path.length-1];
-            if (maxPathLength < path.length)
-            {
+            if (maxPathLength < path.length) {
               return cmn.makePair([], []);
             }
-            else if (currentRnode === end)
-            {
+            else if (currentRnode === end) {
               return cmn.makePair([], [path]);
             }
-            else
-            {
+            else {
               let validPaths = [];
-              rnodeToOutEdges(currentRnode).forEach((edge) =>
-                {
-                  const target = edge.target
-                  if (!path.includes(target))
-                  {
-                    let newPath = [...path, edge.redge, edge.target];
-                    validPaths.push(newPath);
-                  }
-                });
+              rnodeToOutEdges(currentRnode).forEach((edge) => {
+                const target = edge.target
+                if (!path.includes(target)) {
+                  let newPath = [...path, edge.redge, edge.target];
+                  validPaths.push(newPath);
+                }
+              });
 
               return cmn.makePair(validPaths, []);
             }
           },
           [[start]],
           []);
+
+        const [normalizedPaths, edgesBase] = finalizePaths(rgraphPaths, rgraph.edgeMappings, kgraph);
 
         const analysisContext = {
           agent: agent,
@@ -1196,18 +1104,22 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
 
         return makeSummaryFragment(
           [agent],
-          normalizePaths(rgraphPaths, kgraph),
+          normalizedPaths,
           rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules, analysisContext); }),
-          rgraph.edges.map(redge => {
-            const kedge = redgeToTrapiKedge(redge, kgraph);
-            const edgeContext = cmn.deepCopy(analysisContext);
-            edgeContext.primarySource = getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0];
-            return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
-          }),
+          {
+            base: edgesBase,
+            updates: rgraph.edges.map(redge => {
+                       const kedge = redgeToTrapiKedge(redge, kgraph);
+                       const edgeContext = cmn.deepCopy(analysisContext);
+                       edgeContext.primarySource = getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0];
+                       return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
+            })
+          },
           {},
           {});
-      } catch (e) {
-        if (e instanceof EdgeBindingNotFoundError) {
+      } catch (err) {
+        console.error(err);
+        if (err instanceof EdgeBindingNotFoundError) {
           return errorSummaryFragment(agent, e.message);
         }
 
@@ -1221,16 +1133,14 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
       const end = getBindingId(resultNodeBindings, endKey);
       const analyses = cmn.jsonGet(trapiResult, 'analyses');
       const resultSummaryFragment = analyses.reduce(
-        (rsf, analysis) =>
-        {
+        (rsf, analysis) => {
           return mergeSummaryFragments(
             rsf,
             analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
         },
         emptySummaryFragment());
 
-      if (!isEmptySummaryFragment(resultSummaryFragment))
-      {
+      if (!isEmptySummaryFragment(resultSummaryFragment)) {
         // Insert the ordering components after the analyses have been merged
         const resultStartKey = rnodeToKey(start, kgraph);
         const scoringComponents = cmn.jsonGet(trapiResult, 'ordering_components', {confidence: 0, novelty: 0, clinical_evidence: 0});
@@ -1262,11 +1172,9 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
     const auxGraphs = cmn.jsonGet(trapiMessage, 'auxiliary_graphs', {});
     const [startKey, endKey] = getPathDirection(cmn.jsonGet(trapiMessage, 'query_graph'));
 
-    trapiResults.forEach((result) =>
-    {
+    trapiResults.forEach((result) => {
       const sf = trapiResultToSummaryFragment(result, kgraph, auxGraphs, startKey, endKey, errors);
-      if (!isEmptySummaryFragment(sf))
-      {
+      if (!isEmptySummaryFragment(sf)) {
         summaryFragments.push(sf);
       }
     });
@@ -1275,78 +1183,63 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
   return [summaryFragments, errors];
 }
 
-async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, agentToName, annotationClient, errors)
-{
-  function fragmentPathsToResultsAndPaths(fragmentPaths)
-  {
+async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, agentToName, annotationClient, errors) {
+  function fragmentPathsToResultsAndPaths(fragmentPaths) {
     // TODO: use objects instead of arrays?
     let results = [];
     let paths = [];
-    fragmentPaths.forEach((path) =>
-      {
-        const pathKey = pathToKey(path);
-        results.push(cmn.makePair(path[0], pathKey, 'start', 'pathKey'))
-        paths.push(cmn.makePair(pathKey, path, 'key', 'path'))
-      });
+    fragmentPaths.forEach((path) => {
+      const pathKey = pathToKey(path);
+      results.push(cmn.makePair(path[0], pathKey, 'start', 'pathKey'))
+      paths.push(cmn.makePair(pathKey, path, 'key', 'path'))
+    });
 
     return [results, paths];
   }
 
-  function extendSummaryResults(results, newResults)
-  {
-    newResults.forEach((result) =>
-      {
-        let existingResult = cmn.jsonSetDefaultAndGet(results, result.start, {});
-        let paths = cmn.jsonSetDefaultAndGet(existingResult, 'paths', [])
-        paths.push(result.pathKey);
-      });
+  function extendSummaryResults(results, newResults) {
+    newResults.forEach((result) => {
+      let existingResult = cmn.jsonSetDefaultAndGet(results, result.start, {});
+      let paths = cmn.jsonSetDefaultAndGet(existingResult, 'paths', [])
+      paths.push(result.pathKey);
+    });
   }
 
-  function extendSummaryPaths(paths, newPaths, agents)
-  {
-    newPaths.forEach((path) =>
-      {
-        let existingPath = cmn.jsonGet(paths, path.key, false);
-        if (existingPath)
-        {
-          cmn.jsonGet(existingPath, 'aras').concat(agents);
-          return;
-        }
+  function extendSummaryPaths(paths, newPaths, agents) {
+    newPaths.forEach((path) => {
+      let existingPath = cmn.jsonGet(paths, path.key, false);
+      if (existingPath) {
+        cmn.jsonGet(existingPath, 'aras').concat(agents);
+        return;
+      }
 
-        cmn.jsonSet(paths, path.key, {'subgraph': path.path, 'aras': agents});
-      });
+      cmn.jsonSet(paths, path.key, {'subgraph': path.path, 'aras': agents});
+    });
   }
 
-  function extendSummaryObj(objs, updates, agents)
-  {
-    updates.forEach((update) =>
-      {
-        let obj = cmn.jsonSetDefaultAndGet(objs, update.key, {'aras': []});
-        update.transforms.forEach((transform) =>
-          {
-            transform(obj);
-            obj.aras.push(...agents);
-          });
+  function extendSummaryObj(objs, updates, agents) {
+    updates.forEach((update) => {
+      let obj = cmn.jsonSetDefaultAndGet(objs, update.key, makeEdgeBase());
+      update.transforms.forEach((transform) => {
+        transform(obj);
+        obj.aras.push(...agents);
       });
+    });
   }
 
-  function extendSummaryNodes(nodes, nodeUpdates, agents)
-  {
+  function extendSummaryNodes(nodes, nodeUpdates, agents) {
     extendSummaryObj(nodes, nodeUpdates, agents);
   }
 
-  function extendSummaryEdges(edges, edgeUpdates, agents)
-  {
+  function extendSummaryEdges(edges, edgeUpdates, agents) {
     extendSummaryObj(edges, edgeUpdates, agents);
   }
 
-  function extendSummaryScores(scores, newScores)
-  {
-    Object.keys(newScores).forEach((resultNode) =>
-      {
-        const currentScores = cmn.jsonSetDefaultAndGet(scores, resultNode, []);
-        currentScores.push(...newScores[resultNode]);
-      });
+  function extendSummaryScores(scores, newScores) {
+    Object.keys(newScores).forEach((resultNode) => {
+      const currentScores = cmn.jsonSetDefaultAndGet(scores, resultNode, []);
+      currentScores.push(...newScores[resultNode]);
+    });
   }
 
   function extendSummaryErrors(errors, newErrors) {
@@ -1356,10 +1249,8 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     });
   }
 
-  function extendSummaryPublications(publications, edge)
-  {
-    function makePublicationObject(type, url, snippet, pubdate, source)
-    {
+  function extendSummaryPublications(publications, edge) {
+    function makePublicationObject(type, url, snippet, pubdate, source) {
       return {
         'type': type,
         'url': url,
@@ -1386,28 +1277,26 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
           }
         }
 
-        if (publicationObj)
-        {
-          const snippet = cmn.jsonGet(publicationObj, 'sentence', null);
-          const pubdate = cmn.jsonGet(publicationObj, 'publication date', null);
-          cmn.jsonSet(publications, id, makePublicationObject(type, url, snippet, pubdate, pub.source));
-          return;
-        }
+      if (publicationObj) {
+        const snippet = cmn.jsonGet(publicationObj, 'sentence', null);
+        const pubdate = cmn.jsonGet(publicationObj, 'publication date', null);
+        cmn.jsonSet(publications, id, makePublicationObject(type, url, snippet, pubdate, pub.source));
+        return;
+      }
 
         cmn.jsonSet(publications, id, makePublicationObject(type, url, null, null, pub.source));
       });
     });
   }
 
-  function edgesToEdgesAndPublications(edges)
-  {
-    function addInverseEdge(edges, edge)
-    {
+  function edgesToEdgesAndPublications(edges) {
+    function addInverseEdge(edges, edge) {
       const invertedPredicate = edgeToQualifiedPredicate(edge, true);
       const subject = cmn.jsonGet(edge, 'subject');
       const object = cmn.jsonGet(edge, 'object');
+      const knowledgeLevel = cmn.jsonGet(edge, 'knowledge_level');
 
-      const invertedEdgeKey = pathToKey([object, invertedPredicate, subject]);
+      const invertedEdgeKey = pathToKey([object, invertedPredicate, subject, knowledgeLevel]);
       let invertedEdge = cmn.deepCopy(edge);
       cmn.jsonMultiSet(invertedEdge,
                       [['subject', object],
@@ -1419,8 +1308,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     }
 
     const publications = {};
-    Object.values(edges).forEach((edge) =>
-      {
+    Object.values(edges).forEach((edge) => {
         extendSummaryPublications(publications, edge);
         const edgePublications = cmn.jsonGet(edge, 'publications', {})
         Object.keys(edgePublications).forEach((knowledgeLevel) => {
@@ -1437,24 +1325,18 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     return [edges, publications];
   }
 
-  function resultsToResultsAndTags(results, paths, nodes, scores)
-  {
-    function isPathLessThan(pid1, pid2)
-    {
+  function resultsToResultsAndTags(results, paths, nodes, scores, errors) {
+    function isPidLessThan(pid1, pid2) {
       const path1 = getPathFromPid(paths, pid1);
       const path2 = getPathFromPid(paths, pid2);
       const p1Len = path1.length;
       const p2Len = path2.length;
-      if (p1Len === p2Len)
-      {
-        for (let i = 0; i < path1.length; i+=2)
-        {
-          if (path1[i] < path2[i])
-          {
+      if (p1Len === p2Len) {
+        for (let i = 0; i < path1.length; i+=2) {
+          if (path1[i] < path2[i]) {
             return -1;
           }
-          else if (path1[i] > path2[i])
-          {
+          else if (path1[i] > path2[i]) {
             return 1;
           }
         }
@@ -1462,51 +1344,73 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
         return 0;
       }
 
-      if (p1Len < p2Len)
-      {
+      if (p1Len < p2Len) {
         return -1;
       }
 
       return 1;
     }
 
-    const usedTags = {};
-    const expandedResults = results.map((result) =>
-      {
-        const ps = cmn.jsonGet(result, 'paths');
-        const subgraph = getPathFromPid(paths, ps[0]);
-        const start = subgraph[0];
-        const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
-        const end = subgraph[subgraph.length-1];
-        const tags = {};
-        ps.forEach((p) => {
-          Object.keys(paths[p].tags).forEach((tag) => {
-            usedTags[tag] = paths[p].tags[tag];
-            tags[tag] = null;
-          });
-        });
+    function isRootPath(pid) {
+      const path = getPathFromPid(paths, pid);
+      return getPathFromPid(paths, pid).length === 3;
+    }
 
-        return {
-          'id': hash([start, end]),
-          'subject': start,
-          'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
-          'paths': ps.sort(isPathLessThan),
-          'object': end,
-          'scores': scores[start],
-          'tags': tags
+    const usedTags = {};
+    const expandedResults = [];
+    for (const result of results) {
+      const pids = cmn.jsonGet(result, 'paths');
+      const rootPids = pids.filter(isRootPath);
+      // Bail if there are no root paths
+      if (rootPids.length === 0) {
+        let aras = new Set();
+        for (const pid of pids) {
+          for (const ara of paths[pid].aras) {
+            aras.add(ara);
+          }
         }
+
+        aras = [...aras];
+        const errorString = "No root paths found";
+        console.error(`${aras.join(', ')}: ${errorString}`)
+        for (const ara of aras) {
+          const araErrors = cmn.jsonSetDefaultAndGet(errors, ara, []);
+          araErrors.push(errorString);
+        }
+
+        continue;
+      }
+
+      const subgraph = getPathFromPid(paths, rootPids[0]);
+      const start = subgraph[0];
+      const startNames = cmn.jsonGetFromKpath(nodes, [start, 'names']);
+      const end = subgraph[subgraph.length-1];
+      const tags = {};
+      pids.forEach((pid) => {
+        Object.keys(paths[pid].tags).forEach((tag) => {
+          usedTags[tag] = paths[pid].tags[tag];
+          tags[tag] = null;
+        });
       });
+
+      expandedResults.push({
+        'id': hash([start, end]),
+        'subject': start,
+        'drug_name': (cmn.isArrayEmpty(startNames)) ? start : startNames[0],
+        'paths': rootPids.sort(isPidLessThan),
+        'object': end,
+        'scores': scores[start],
+        'tags': tags
+      });
+    }
 
     return [expandedResults, usedTags];
   }
 
-  function objRemoveDuplicates(obj)
-  {
-    Object.keys(obj).forEach((k) =>
-      {
+  function objRemoveDuplicates(obj) {
+    Object.keys(obj).forEach((k) => {
         let v = cmn.jsonGet(obj, k);
-        if (cmn.isArray(v))
-        {
+        if (cmn.isArray(v)) {
           obj[k] = [...new Set(v)];
         }
       });
@@ -1514,8 +1418,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     return obj;
   }
 
-  function getPathFromPid(paths, pid)
-  {
+  function getPathFromPid(paths, pid) {
     return cmn.jsonGetFromKpath(paths, [pid, 'subgraph']);
   }
 
@@ -1526,84 +1429,103 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
   let publications = {};
   let scores = {};
   let tags = [];
-  condensedSummaries.forEach((cs) =>
-    {
-      const agents = condensedSummaryAgents(cs);
-      const [newResults, newPaths] = fragmentPathsToResultsAndPaths(condensedSummaryPaths(cs));
-      extendSummaryResults(results, newResults);
-      extendSummaryPaths(paths, newPaths, agents);
-      extendSummaryNodes(nodes, condensedSummaryNodes(cs), agents);
-      extendSummaryEdges(edges, condensedSummaryEdges(cs), agents);
-      extendSummaryScores(scores, condensedSummaryScores(cs));
-      extendSummaryErrors(errors, condensedSummaryErrors(cs));
+  condensedSummaries.forEach((cs) => {
+    const agents = condensedSummaryAgents(cs);
+    const [newResults, newPaths] = fragmentPathsToResultsAndPaths(condensedSummaryPaths(cs));
+    const summaryEdges = condensedSummaryEdges(cs);
+
+    extendSummaryResults(results, newResults);
+    extendSummaryPaths(paths, newPaths, agents);
+    extendSummaryNodes(nodes, condensedSummaryNodes(cs), agents);
+    Object.keys(summaryEdges.base).forEach((k) => {
+      const edge = cmn.jsonSetDefaultAndGet(edges, k, makeEdgeBase());
+      Object.keys(summaryEdges.base[k]).forEach((attr) => {
+        edge[attr].push(...summaryEdges.base[k][attr]);
+      })
     });
+
+    extendSummaryEdges(edges, summaryEdges.updates, agents);
+    extendSummaryScores(scores, condensedSummaryScores(cs));
+    extendSummaryErrors(errors, condensedSummaryErrors(cs));
+  });
 
   results = Object.values(results).map(objRemoveDuplicates)
   const annotationPromise = annotationClient.annotateGraph(createKGFromNodeIds(Object.keys(nodes)));
-  function pushIfEmpty(arr, val)
-  {
-    if (cmn.isArrayEmpty(arr))
-    {
+  function pushIfEmpty(arr, val) {
+    if (cmn.isArrayEmpty(arr)) {
       arr.push(val);
     }
   };
 
   // Edge post-processing
-  Object.values(edges).forEach((edge) =>
-    {
-      // Remove any duplicates on all edge attributes
-      objRemoveDuplicates(edge);
+  Object.keys(edges).forEach((ek) => {
+    const edge = edges[ek];
+    // Remove any edges that have a missing subject, object, or predicate
+    if (isInvalidEdge(edge)) {
+      console.error(`Found invalid edge ${ek}`);
+      delete edges[ek];
+      return;
+    }
 
-      // Remove duplicates from publications
-      objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
+    // Remove any duplicates on all edge attributes
+    objRemoveDuplicates(edge);
 
-      // Convert all infores to provenance
-      cmn.jsonUpdate(edge, 'provenance', (provenance) =>
-        {
-          return provenance.map(bl.inforesToProvenance).filter(cmn.identity);
-        });
+    // Remove duplicates from publications
+    objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
+
+    // Convert all infores to provenance
+    cmn.jsonUpdate(edge, 'provenance', (provenance) => {
+      return provenance.map(bl.inforesToProvenance).filter(cmn.identity);
     });
+
+    // Populate knowledge level
+    if(edge?.provenance[0] === undefined) {
+      edge.knowledge_level = 'unknown';
+      edge.provenance = {};
+    } else {
+      edge.knowledge_level = edge.provenance[0].knowledge_level;
+    }
+  });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
 
   const metadataObject = makeMetadataObject(qid, cmn.distinctArray(condensedSummaries.map((cs) => { return cs.agents; }).flat()));
-  try
-  {
+  try {
     // Node annotation
     const nodeRules = makeSummarizeRules(
       [
         renameAndTransformAttribute(
           'biothings_annotations',
           ['descriptions'],
-          (annotations) =>
-          {
+          (annotations) => {
             const description = bta.getDescription(annotations);
             if (description === null) {
               return [];
             }
 
             return [description];
-          }),
+          }
+        ),
         aggregateAndTransformAttributes(
           ['biothings_annotations'],
           'curies',
-          (annotations) =>
-          {
+          (annotations) => {
             const curies = bta.getCuries(annotations);
             if (curies === null) {
               return [];
             }
 
             return curies;
-          })
-      ]);
+          }
+        )
+      ]
+    );
 
     const resultNodeRules = makeSummarizeRules(
       [
         tagAttribute(
           'biothings_annotations',
-          (annotations) =>
-          {
+          (annotations) => {
             const fdaApproval = bta.getFdaApproval(annotations);
             if (fdaApproval === null) {
               return false;
@@ -1619,42 +1541,41 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
             } else {
               return makeTag(`fda:${fdaApproval}`, `FDA Approved`);
             }
-          }),
+          }
+        ),
         tagAttribute(
           'biothings_annotations',
-          (annotations, context) =>
-          {
+          (annotations, context) => {
             if (isGeneChemicalQuery(context.queryType)) return [];
 
             const chebiRoles = bta.getChebiRoles(annotations);
-            if (chebiRoles === null)
-            {
+            if (chebiRoles === null) {
               return [];
             }
 
             return chebiRoles.map((role) => { return makeTag(`role:${role.id}`, cmn.titleize(role.name))});
-          }),
+          }
+        ),
         renameAndTransformAttribute(
           'biothings_annotations',
           ['indications'],
-          (annotations) =>
-          {
+          (annotations) => {
             const indications = bta.getDrugIndications(annotations);
             if (indications === null) {
               return [];
             }
 
             return indications;
-          })
-        ]);
+          }
+        )
+        ]
+      );
 
 
     const resultNodes = new Set();
-    results.forEach((result) =>
-      {
+    results.forEach((result) => {
         const ps = cmn.jsonGet(result, 'paths');
-        ps.forEach((p) =>
-        {
+        ps.forEach((p) => {
           const subgraph = getPathFromPid(paths, p);
           resultNodes.add(subgraph[0]);
         });
@@ -1668,114 +1589,104 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       errors: {}
     };
 
-    const nodeUpdates = Object.keys(knodes).map((rnode) =>
-    {
+    const nodeUpdates = Object.keys(knodes).map((rnode) => {
       return summarizeRnode(rnode, kgraph, nodeRules, annotationContext);
     });
 
-    const resultNodeUpdates = [...resultNodes].map((rnode) =>
-    {
+    const resultNodeUpdates = [...resultNodes].map((rnode) => {
       return summarizeRnode(rnode, kgraph, resultNodeRules, annotationContext);
     });
 
     extendSummaryNodes(nodes, nodeUpdates.concat(resultNodeUpdates), ['biothings-annotator']);
     extendSummaryErrors(errors, annotationContext.errors);
   }
-  catch (err)
-  {
+  catch (err) {
     console.error(err);
   }
-  finally
-  {
+  finally {
     // Node post-processing
-    Object.keys(nodes).forEach((k) =>
-      {
-        const node = nodes[k];
-        node.curies.push(k);
-        // Remove any duplicates on all node attributes
-        objRemoveDuplicates(node);
-        node.types.sort(bl.biolinkClassCmpFn);
+    Object.keys(nodes).forEach((k) => {
+      const node = nodes[k];
+      node.curies.push(k);
+      // Remove any duplicates on all node attributes
+      objRemoveDuplicates(node);
+      node.types.sort(bl.biolinkClassCmpFn);
 
-        // Provide a CURIE as a fallback if the node has no name
-        const nodeNames = cmn.jsonGet(node, 'names');
-        pushIfEmpty(nodeNames, k);
+      // Provide a CURIE as a fallback if the node has no name
+      const nodeNames = cmn.jsonGet(node, 'names');
+      pushIfEmpty(nodeNames, k);
 
-        cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
+      cmn.jsonSet(node, 'provenance', [bl.curieToUrl(k)])
 
-        // Add tag attribute to nodes that don't have one
-        cmn.jsonSetDefaultAndGet(node, 'tags', []);
-      });
+      // Add tag attribute to nodes that don't have one
+      cmn.jsonSetDefaultAndGet(node, 'tags', []);
+    });
 
     // Path post-processing
-    Object.values(paths).forEach((path) =>
-      {
-        // Remove duplicates from every attribute on a path
-        objRemoveDuplicates(path);
+    Object.values(paths).forEach((path) => {
+      // Remove duplicates from every attribute on a path
+      objRemoveDuplicates(path);
 
-        // Determine if drug is indicated for disease
-        if (isChemicalDiseaseQuery(queryType)) {
-          const start = nodes[path.subgraph[0]];
-          if (start.indications !== undefined) {
-            const startIndications = new Set(start.indications);
-            const end = nodes[path.subgraph[path.subgraph.length-1]];
-            const endMeshIds = end.curies.filter((curie) => { return curie.startsWith('MESH:'); });
-            let indicatedFor = false;
-            for (let i = 0; i < endMeshIds.length; i++) {
-              if (startIndications.has(endMeshIds[i])) {
-                indicatedFor = true;
-                break;
-              }
-            }
-
-            if (indicatedFor) {
-              start.tags['di:ind'] = makeTagDescription('Indicated for Disease');
-            } else {
-              start.tags['di:not'] = makeTagDescription('Not Indicated for Disease');
+      // Determine if drug is indicated for disease
+      if (isChemicalDiseaseQuery(queryType)) {
+        const start = nodes[path.subgraph[0]];
+        if (start.indications !== undefined) {
+          const startIndications = new Set(start.indications);
+          const end = nodes[path.subgraph[path.subgraph.length-1]];
+          const endMeshIds = end.curies.filter((curie) => { return curie.startsWith('MESH:'); });
+          let indicatedFor = false;
+          for (let i = 0; i < endMeshIds.length; i++) {
+            if (startIndications.has(endMeshIds[i])) {
+              indicatedFor = true;
+              break;
             }
           }
 
-          cmn.jsonDelete(start, 'indications');
-        }
-
-        // Add tags for paths by processing nodes
-        const tags = {};
-        for (let i = 0; i < path.subgraph.length; ++i)
-        {
-          if (isNodeIndex(i))
-          {
-            const node = nodes[path.subgraph[i]];
-            if (node !== undefined) // Remove me when result graphs are fixed
-            {
-              // Take all node tags
-              Object.keys(node.tags).forEach((k) => { tags[k] = node.tags[k]; });
-
-              // Generate tags based on the node category
-              const type = cmn.isArrayEmpty(node.types) ?
-                           'Named Thing' :
-                            bl.sanitizeBiolinkItem(node.types[0]);
-              if (i === 0) {
-                const [answerTag, answerDescription] = determineAnswerTag(type, node.tags, queryType);
-                if (answerTag) {
-                  tags[answerTag] = makeTagDescription(answerDescription);
-                }
-              }
-
-              tags[`pc:${type}`] = makeTagDescription(type);
-            }
+          if (indicatedFor) {
+            start.tags['di:ind'] = makeTagDescription('Indicated for Disease');
+          } else {
+            start.tags['di:not'] = makeTagDescription('Not Indicated for Disease');
           }
         }
 
-        // Generate tags based on the aras for this path
-        const aras = cmn.jsonGet(path, 'aras');
-        aras.forEach((ara) =>
-        {
-          tags[`ara:${ara}`] = makeTagDescription(agentToName(ara));
-        });
+        cmn.jsonDelete(start, 'indications');
+      }
 
-        path.tags = tags;
+      // Add tags for paths by processing nodes
+      const tags = {};
+      for (let i = 0; i < path.subgraph.length; ++i) {
+        if (isNodeIndex(i)) {
+          const node = nodes[path.subgraph[i]];
+          if (node !== undefined) { // Remove me when result graphs are fixed
+            // Take all node tags
+            Object.keys(node.tags).forEach((k) => { tags[k] = node.tags[k]; });
+
+            // Generate tags based on the node category
+            const type = cmn.isArrayEmpty(node.types) ?
+                         'Named Thing' :
+                          bl.sanitizeBiolinkItem(node.types[0]);
+            if (i === 0) {
+              const [answerTag, answerDescription] = determineAnswerTag(type, node.tags, queryType);
+              if (answerTag) {
+                tags[answerTag] = makeTagDescription(answerDescription);
+              }
+            }
+
+            tags[`pc:${type}`] = makeTagDescription(type);
+          }
+        }
+      }
+
+      // Generate tags based on the aras for this path
+      const aras = cmn.jsonGet(path, 'aras');
+      aras.forEach((ara) => {
+        tags[`ara:${ara}`] = makeTagDescription(agentToName(ara));
       });
 
-    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores);
+      path.tags = tags;
+    });
+
+    [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores, errors);
     return {
       'meta': metadataObject,
       'results': results,
@@ -1789,18 +1700,20 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
   }
 }
 
-class NodeBindingNotFoundError extends Error
-{
-  constructor(edgeBinding)
-  {
+class NodeBindingNotFoundError extends Error {
+  constructor(edgeBinding) {
     super(`Node binding not found for ${JSON.stringify(edgeBinding)}`);
   }
 }
 
-class EdgeBindingNotFoundError extends Error
-{
-  constructor(edgeBinding)
-  {
+class EdgeBindingNotFoundError extends Error {
+  constructor(edgeBinding) {
     super(`Edge binding not found for ${JSON.stringify(edgeBinding)}`);
+  }
+}
+
+class AuxGraphNotFoundError extends Error {
+  constructor(auxGraph) {
+    super(`Auxiliary graph not found for ${auxGraph}`);
   }
 }
