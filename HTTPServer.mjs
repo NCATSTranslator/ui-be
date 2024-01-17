@@ -109,6 +109,16 @@ function handleLogout(config, authService) {
 
 
 function validateAuthSession(config, authService) {
+  function handleUnauthSession(req, res) {
+    let redirectPath = '/login';
+    // This is a little gross because we have to know the route on the FE.
+    if (req.path === '/main/results') {
+      redirectPath = `/demo/results?${new URLSearchParams(req.query).toString()}`;
+    }
+
+    res.redirect(302, redirectPath);
+  }
+
   return async function(req, res, next) {
     let cookiePath = config.mainsite_path;
     let cookieToken = req.cookies[config.session_cookie.name];
@@ -116,7 +126,7 @@ function validateAuthSession(config, authService) {
 
     if (!cookieToken || !authService.isTokenSyntacticallyValid(cookieToken)) {
       console.error(`%% %% %% no cookie found`);
-      return res.redirect(302, `/login`);
+      return handleUnauthSession(req, res);
     }
     console.error(`%% %% %% we get cookie: ${cookieToken}`);
 
@@ -124,22 +134,22 @@ function validateAuthSession(config, authService) {
     console.error(`%% %% %% we get session: ${JSON.stringify(session)}`);
     if (!session) {
       console.error(`%% %% %% no session found for ${cookieToken}`);
-      return res.redirect(302, `/login`);
+      return handleUnauthSession(req, res);
     }
     if (!session.user_id || session.force_kill) {
       console.error(`%% %% %% no user found for ${JSON.stringify(session)} or else force killed`);
-      return res.redirect(302, `/login`);
+      return handleUnauthSession(req, res);
     }
     const user = await authService.getUserById(session.user_id);
     if (!user) {
       console.error(`%% %% %% no user found`);
-      return res.redirect(302, `/login`);
+      return handleUnauthSession(req, res);
     } else if (user.deleted) {
       console.error(`%% %% %% User deleted`);
       return res.status(403).send('This account has been deactivated. Please re-register to use the site');
     } else if (authService.isSessionExpired(session)) {
       console.error(`%% %% %% Session expired: ${JSON.stringify(session)}`);
-      return res.redirect(302, `/login`);
+      return handleUnauthSession(req, res);
     } else if (authService.isTokenExpired(session)) {
       console.error(`%% %% %% Token expired, refreshing: ${JSON.stringify(session)}`);
       session = await authService.refreshSessionToken(session);
