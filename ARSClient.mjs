@@ -265,6 +265,7 @@ class ARSClient {
     if (cmn.isArray(mergedVersionList) && mergedVersionList.length > 0) {
       // Fetch all the merged version statuses to get the most recent version
       // that is also complete.
+      mergedVersionList.reverse(); // First element should be the most recent
       const statusPromises = mergedVersionList.map((mergedEntry) => {
         const [uuid, agent] = mergedEntry;
         return this._fetchMessage(uuid, true);
@@ -272,6 +273,7 @@ class ARSClient {
 
       await Promise.allSettled(statusPromises).then((promises) => {
         let i = 0;
+        let foundMostRecentDone = false;
         for (const promise of promises) {
           if (promise.status !== 'fulfilled') continue;
 
@@ -284,7 +286,7 @@ class ARSClient {
 
           // We have to inject the status codes because we expect them but the ARS does not
           // provide them
-          if (message.status === 'Done') {
+          if (foundMostRecentDone || message.status === 'Done') {
             status.code = 200;
             completed.push(status);
           } else if (message.status === 'Running') {
@@ -298,8 +300,8 @@ class ARSClient {
         }
       });
 
-      const mostRecentCompleted = completed[completed.length-1] || null;
-      const pastCompleted = completed.slice(0, completed.length-1);
+      const mostRecentCompleted = completed[0] || null;
+      const pastCompleted = completed.slice(1,);
       if (!statusCheck && mostRecentCompleted !== null) {
         // Finally get the actual result of the most recent complete merged version
         const [meta, results] = await this._fetchMessage(mostRecentCompleted.uuid);
@@ -321,16 +323,16 @@ class ARSClient {
       }
     }
 
-    const status = arsSummary.fields.status;
+    const parentStatus = arsSummary.fields.status;
     const message = {
       uuid: pkey,
       agent: arsSummary.fields.name,
       data: []
     };
 
-    if (status === 'Done') {
+    if (parentStatus === 'Done') {
       completed.push(message);
-    } else if (status === 'Running') {
+    } else if (parentStatus === 'Running') {
       running.push(message);
     } else {
       errored.push(message);
