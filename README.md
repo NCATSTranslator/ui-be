@@ -12,7 +12,7 @@
 ## Name Resolver
 ||**CI**|**Test**|**Production**|
 |-|-|-|-|
-|**Endpoint**|name-lookup.transltr.io|name-lookup.transltr.io|name-lookup.transltr.io|
+|**Endpoint**|name-lookup.ci.transltr.io|name-lookup.test.transltr.io|name-lookup.transltr.io|
 ## TRAPI
 * [TRAPI](https://github.com/NCATSTranslator/ReasonerAPI/tree/v1.4.2): v1.4.2
 ## Biolink Model

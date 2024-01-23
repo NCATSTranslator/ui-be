@@ -15,7 +15,7 @@ import * as wutil from './webutils.mjs';
 export function startServer(config, services) {
   console.log("Der Anfang ist das Ende und das Ende ist der Anfang");
   const authService = services.authService;
-  const demoQueries = config.frontend.filter(e => e.allow_inbound);
+  const demoQueries = config.frontend.cached_queries.filter(e => e.allow_inbound);
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
   app.use(pinoHttp());
