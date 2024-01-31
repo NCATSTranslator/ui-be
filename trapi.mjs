@@ -1664,7 +1664,24 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     });
 
     // Path post-processing
-    Object.values(paths).forEach((path) => {
+    Object.keys(paths).forEach((pk) => {
+      const path = paths[pk];
+      // Remove paths where there is an undefined node reference in the path
+      for (let i = 0; i < path.subgraph.length; i += 2) {
+        if (nodes[path.subgraph[i]] === undefined) {
+          delete paths[pk];
+          return;
+        }
+      }
+
+      // Remove paths where there is an undefined edge reference in the path
+      for (let i = 1; i < path.subgraph.length; i += 2) {
+        if (edges[path.subgraph[i]] === undefined) {
+          delete paths[pk];
+          return;
+        }
+      }
+
       // Remove duplicates from every attribute on a path
       objRemoveDuplicates(path);
 
@@ -1726,6 +1743,14 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
       path.tags = tags;
     });
+
+    // Remove PIDs that are no longer valid
+    results.forEach((r) => {
+      r.paths = r.paths.filter(p => paths[p] !== undefined);
+    });
+
+    // Remove results that no longer have any paths
+    results = results.filter(r => r.paths.length > 0);
 
     [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores, errors);
     return {
