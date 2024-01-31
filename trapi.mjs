@@ -984,10 +984,6 @@ function reasonsForEdgeErrors(edge) {
     reasons.push(`Invalid edge found: ${edgeToString(edge)}`);
   }
 
-  if (!edge.provenance) {
-    console.log('GDP edge');
-    console.log(JSON.stringify(edge));
-  }
   if (edge.provenance.length === 0) {
     reasons.push(`No provenance for edge: ${edgeToString(edge)}`);
   }
