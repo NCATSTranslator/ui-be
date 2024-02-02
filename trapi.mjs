@@ -1744,7 +1744,11 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       path.tags = tags;
     });
 
-    // Remove PIDs that are no longer valid
+    // Remove PIDs that are no longer valid from results and support for edges
+    Object.keys(edges).forEach((k) => {
+      edges[k].support = edges[k].support.filter(p => paths[p] !== undefined);
+    });
+
     results.forEach((r) => {
       r.paths = r.paths.filter(p => paths[p] !== undefined);
     });
