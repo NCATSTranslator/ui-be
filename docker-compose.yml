@@ -10,7 +10,7 @@ services:
       - pgdb
     volumes:
       - ~/translator/app-logs/:/logs
-      
+
   pgdb:
     image: postgres:15.5
     environment:
