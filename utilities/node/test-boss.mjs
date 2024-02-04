@@ -108,7 +108,7 @@ class MyARSClient {
   async getResults(pk) {
     let res;
     try {
-      res = await this.baseClient.collectAllResults(pk, this.filters, true);
+      res = await this.baseClient._collectChildResults(pk, this.filters, true);
       //throw new Error({we: "got problems"});
     } catch (err) {
       err.pk = pk;
@@ -123,7 +123,8 @@ await (async function (opts) {
   const config = await cmn.readJson(`${configRoot}/${opts.env}.json`);
   let baseClient = new ARSClient(`https://${config.ars_endpoint.host}`,
                               config.ars_endpoint.pull_uri,
-                              config.ars_endpoint.post_uri, [200, 206]);
+                              config.ars_endpoint.post_uri,
+                              false, [200, 206]);
   let service = new TranslatorService(baseClient, outputAdapter);
   console.log(service);
 
@@ -132,7 +133,7 @@ await (async function (opts) {
   client = new MyARSClient(service, baseClient);
 })(cli.flags);
 
-function summarizeResponse(queryData, responseData,       logger, env) {
+function summarizeResponse(queryData, responseData, logger, env) {
 
   function summarize_query_data(qdata) {
     return {
