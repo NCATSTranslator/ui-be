@@ -231,7 +231,7 @@ class ARSClient {
       let toFetch = agents.map(e => completed[e].uuid);
       let start = new Date();
       const promises = toFetch.map(async (e) => {
-        console.log(`kicking off fetch for ${e}`);
+        // console.log(`kicking off fetch for ${e}`);
         return this._fetchMessage(e);
       });
       let finalCompleted = [];
@@ -249,14 +249,14 @@ class ARSClient {
 
             elem.meta = item.value[0];
             finalCompleted.push(elem);
-            console.log(`settled ${agent}`);
+            // console.log(`settled ${agent}`);
           } else {
             //
             console.error('Unexpected case of being unable to fetch a result for an agent that reported code=200');
             errored.push(item.value); // No idea what might be in this object
           }
         });
-        console.log('done settling promises');
+        // console.log('done settling promises');
         retval = {
           pk: pkey,
           completed: finalCompleted,
