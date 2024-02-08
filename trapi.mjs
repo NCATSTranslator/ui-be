@@ -1017,8 +1017,33 @@ function makeEdgeBase() {
   };
 }
 
-function isInvalidEdge(edge) {
-  return !edge.subject || !edge.object || !edge.predicate;
+function edgeToString(edge) {
+  return `${edge.subject}-${edge.predicate}-${edge.object}`;
+}
+
+function updateErrorsFromEdge(edge, errors, edgeErrorReasons) {
+  const edgeAras = edge.aras;
+  let edgeErrors = null;
+  if (edgeAras.length !== 1) {
+    edgeErrors = cmn.jsonSetDefaultAndGet(errors, 'unknown', []);
+  } else {
+    edgeErrors = cmn.jsonSetDefaultAndGet(errors, edgeAras[0], []);
+  }
+
+  edgeErrors.push(...edgeErrorReasons);
+}
+
+function reasonsForEdgeErrors(edge) {
+  const reasons = [];
+  if (!edge.subject || !edge.object || !edge.predicate) {
+    reasons.push(`Invalid edge found: ${edgeToString(edge)}`);
+  }
+
+  if (edge.provenance.length === 0) {
+    reasons.push(`No provenance for edge: ${edgeToString(edge)}`);
+  }
+
+  return reasons;
 }
 
 function pathToKey(path) {
@@ -1119,7 +1144,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
 
       const agent = cmn.jsonGet(analysis, 'resource_id', false);
       if (!agent) {
-        return errorSummaryFragment('Unknown', 'Expected analysis to have resource_id');
+        return errorSummaryFragment('unknown', 'Expected analysis to have resource_id');
       }
 
       try {
@@ -1207,10 +1232,10 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
       return resultSummaryFragment;
     } catch (e) {
       if (e instanceof NodeBindingNotFoundError) {
-        return errorSummaryFragment('Unknown', e.message);
+        return errorSummaryFragment('unknown', e.message);
       }
 
-      return errorSummaryFragment('Unknown', 'Unknown error while building result summary fragment');
+      return errorSummaryFragment('unknown', 'Unknown error while building result summary fragment');
     }
   }
 
@@ -1506,9 +1531,17 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
   // Edge post-processing
   Object.keys(edges).forEach((ek) => {
     const edge = edges[ek];
-    // Remove any edges that have a missing subject, object, or predicate
-    if (isInvalidEdge(edge)) {
-      console.error(`Found invalid edge ${ek}`);
+    // Remove any empty edges. TODO: Why are these even here?
+    if (Object.keys(edge).length === 2 && edge.aras !== undefined && edge.support !== undefined) {
+      delete edges[ek];
+      return;
+    }
+
+    // Remove any edges that have a missing subject, object, predicate, or provenance
+    const edgeErrorReasons = reasonsForEdgeErrors(edge);
+    if (edgeErrorReasons.length !== 0) {
+      console.error(`Found invalid edge ${ek}. Reasons: ${JSON.stringify(reasons)}`);
+      updateErrorsFromEdge(edge, errors, edgeErrorReasons);
       delete edges[ek];
       return;
     }
@@ -1521,16 +1554,24 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
     // Convert all infores to provenance
     cmn.jsonUpdate(edge, 'provenance', (provenance) => {
-      return provenance.map(bl.inforesToProvenance).filter(cmn.identity);
+      return provenance.map((p) => {
+        const provenanceMapping = bl.inforesToProvenance(p);
+        if (!provenanceMapping) {
+          edgeErrorReasons.push(`Found invalid provenance ${p} on edge ${edgeToString(edge)}`);
+        }
+
+        return provenanceMapping;
+      }).filter(cmn.identity);
     });
 
-    // Populate knowledge level
-    if(edge?.provenance[0] === undefined) {
-      edge.knowledge_level = 'unknown';
-      edge.provenance = {};
-    } else {
-      edge.knowledge_level = edge.provenance[0].knowledge_level;
+    if (edgeErrorReasons.length !== 0) {
+      updateErrorsFromEdge(edge, errors, edgeErrorReasons);
+      delete edges[ek];
+      return
     }
+
+    // Populate knowledge level
+    edge.knowledge_level = edge.provenance[0].knowledge_level;
   });
 
   [edges, publications] = edgesToEdgesAndPublications(edges);
@@ -1669,7 +1710,24 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     });
 
     // Path post-processing
-    Object.values(paths).forEach((path) => {
+    Object.keys(paths).forEach((pk) => {
+      const path = paths[pk];
+      // Remove paths where there is an undefined node reference in the path
+      for (let i = 0; i < path.subgraph.length; i += 2) {
+        if (nodes[path.subgraph[i]] === undefined) {
+          delete paths[pk];
+          return;
+        }
+      }
+
+      // Remove paths where there is an undefined edge reference in the path
+      for (let i = 1; i < path.subgraph.length; i += 2) {
+        if (edges[path.subgraph[i]] === undefined) {
+          delete paths[pk];
+          return;
+        }
+      }
+
       // Remove duplicates from every attribute on a path
       objRemoveDuplicates(path);
 
@@ -1731,6 +1789,18 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
 
       path.tags = tags;
     });
+
+    // Remove PIDs that are no longer valid from results and support for edges
+    Object.keys(edges).forEach((k) => {
+      edges[k].support = edges[k].support.filter(p => paths[p] !== undefined);
+    });
+
+    results.forEach((r) => {
+      r.paths = r.paths.filter(p => paths[p] !== undefined);
+    });
+
+    // Remove results that no longer have any paths
+    results = results.filter(r => r.paths.length > 0);
 
     [results, tags] = resultsToResultsAndTags(results, paths, nodes, scores, errors);
     return {
