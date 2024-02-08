@@ -135,9 +135,6 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
       aggregateProperty('categories', ['types']),
       aggregateAttributes([bl.tagBiolink('xref')], 'curies'),
       aggregateAttributes([bl.tagBiolink('description')], 'descriptions'),
-      aggregateAttributes([bl.tagBiolink('synonym')], 'synonyms'),
-      aggregateAttributes([bl.tagBiolink('same_as')], 'same_as'),
-      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types')
     ]);
 
   const edgeRules = makeSummarizeRules(
@@ -147,9 +144,8 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
       transformProperty('qualifiers', (obj, key) => cmn.jsonGet(obj, key, false)),
       getProperty('subject'),
       getProperty('object'),
-      aggregateAttributes([bl.tagBiolink('IriType')], 'iri_types'),
-      aggregateAttributes(['bts:sentence'], 'snippets'),
       getPublications(),
+      getSupportingText()
     ]);
 
   const queryType = answerToQueryType(answers[0]);
@@ -311,6 +307,10 @@ function attrValue(attribute) {
   return cmn.jsonGet(attribute, 'value');
 }
 
+function attrAttributes(attribute) {
+  return cmn.jsonGet(attribute, 'attributes');
+}
+
 function areNoAttributes(attributes) {
   return attributes === undefined || attributes === null || cmn.isArrayEmpty(attributes);
 }
@@ -410,6 +410,61 @@ function tagAttribute(attributeId, transform) {
       return obj
     },
     null);
+}
+
+function getSupportingText() {
+  const searchAttrId = bl.tagBiolink('has_supporting_study_result');
+  const publicationsId = bl.tagBiolink('publications');
+  const textId = bl.tagBiolink('supporting_text');
+  const subjectTokenId = bl.tagBiolink('subject_location_in_text');
+  const objectTokenId = bl.tagBiolink('object_location_in_text');
+
+  function parseTokenIndex(token) {
+    return token.split('|').map(t => (parseInt(t.trim())+1));
+  }
+
+  return makeMapping(
+    'attributes',
+    (obj, key) => {
+      const attributes = obj[key];
+      if (areNoAttributes(attributes)) {
+        return {};
+      }
+
+      const supportingText = {};
+      attributes.forEach(attribute => {
+        const innerAttrs = attrId(attribute) === searchAttrId ? attrAttributes(attribute) : [];
+        const supportingTextData = {};
+        innerAttrs.forEach(attribute => {
+          const aid = attrId(attribute);
+          const av = attrValue(attribute);
+          if (aid === publicationsId) {
+            supportingText[ev.normalize(av)] = supportingTextData;
+          } else if (aid === textId) {
+            supportingTextData.text = av;
+          } else if (aid === subjectTokenId) {
+            supportingTextData.subject = av;
+          } else if (aid === objectTokenId) {
+            supportingTextData.object = av;
+          }
+        });
+
+        if (!cmn.isObjEmpty(supportingTextData)) {
+          supportingTextData.subject = parseTokenIndex(supportingTextData.subject);
+          supportingTextData.object = parseTokenIndex(supportingTextData.object);
+        }
+      });
+
+      return supportingText;
+    },
+    (vs, obj) =>
+    {
+      const currentSupportingText = cmn.jsonSetDefaultAndGet(obj, 'supporting_text', {});
+      Object.keys(vs).forEach((pid) => {
+        currentSupportingText[pid] = vs[pid];
+      });
+    },
+    {});
 }
 
 function getPublications() {
@@ -1274,42 +1329,33 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     });
   }
 
-  function extendSummaryPublications(publications, edge) {
-    function makePublicationObject(type, url, snippet, pubdate, source) {
+  function extendSummaryPublications(publications, edge)
+  {
+    function makePublicationObject(type, url, support, source)
+    {
       return {
         'type': type,
         'url': url,
-        'snippet': snippet,
-        'pubdate': pubdate,
+        'support': support,
         'source': source
       };
     }
 
-    const snippets = cmn.jsonGet(edge, 'snippets');
     const pubs = cmn.jsonGet(edge, 'publications', {});
+    const supportingText = cmn.jsonGet(edge, 'supporting_text', {});
     Object.keys(pubs).forEach((ks) => {
       const publicationData = cmn.jsonGet(pubs, ks, []);
       publicationData.forEach((pub) => {
         const id = pub.id;
         const [type, url] = ev.idToTypeAndUrl(id);
-        let publicationObj = false;
-        for (const snippet of snippets)
-        {
-          publicationObj = cmn.jsonGet(snippet, id, false);
-          if (!!publicationObj)
-          {
-            break;
-          }
+        const pubSupport = supportingText[id] || {};
+
+        if (!cmn.isObjEmpty(pubSupport)) {
+          cmn.jsonSet(publications, id, makePublicationObject(type, url, pubSupport, pub.source));
+          return;
         }
 
-      if (publicationObj) {
-        const snippet = cmn.jsonGet(publicationObj, 'sentence', null);
-        const pubdate = cmn.jsonGet(publicationObj, 'publication date', null);
-        cmn.jsonSet(publications, id, makePublicationObject(type, url, snippet, pubdate, pub.source));
-        return;
-      }
-
-        cmn.jsonSet(publications, id, makePublicationObject(type, url, null, null, pub.source));
+        cmn.jsonSet(publications, id, makePublicationObject(type, url, null, pub.source));
       });
     });
   }
@@ -1341,7 +1387,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
             return pub.id;
           });
         });
-        delete edge['snippets'];
+        delete edge['supporting_text'];
         addInverseEdge(edges, edge);
         cmn.jsonSet(edge, 'predicate', edgeToQualifiedPredicate(edge));
         delete edge['qualifiers'];
