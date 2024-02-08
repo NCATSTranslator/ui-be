@@ -439,7 +439,7 @@ function getSupportingText() {
           const aid = attrId(attribute);
           const av = attrValue(attribute);
           if (aid === publicationsId) {
-            supportingText[av] = supportingTextData;
+            supportingText[ev.normalize(av)] = supportingTextData;
           } else if (aid === textId) {
             supportingTextData.text = av;
           } else if (aid === subjectTokenId) {
