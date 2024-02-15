@@ -823,6 +823,10 @@ function analysisToRgraph(analysis, kgraph, auxGraphs) {
   while (!cmn.isArrayEmpty(unprocessedEdgeBindings) || !cmn.isArrayEmpty(unprocessedSupportGraphs)) {
     while (!cmn.isArrayEmpty(unprocessedEdgeBindings)) {
       const eb = unprocessedEdgeBindings.pop();
+      if (edgeBindingData[eb].support !== undefined) {
+        continue;
+      }
+
       const kedge = redgeToTrapiKedge(eb, kgraph);
       if (!kedge) {
         throw new EdgeBindingNotFoundError(eb);
@@ -841,6 +845,10 @@ function analysisToRgraph(analysis, kgraph, auxGraphs) {
 
     while (!cmn.isArrayEmpty(unprocessedSupportGraphs)) {
       const gid = unprocessedSupportGraphs.pop();
+      if (supportGraphs.has(gid)) {
+        continue;
+      }
+
       const auxGraph = cmn.jsonGet(auxGraphs, gid, false);
       if (!auxGraph) {
         throw new AuxGraphNotFoundError(gid);
@@ -1098,7 +1106,11 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
             const node = path[i];
             const edge = path[i+1];
             const normalizedEdge = E(edge, node);
-            normalizedMappings[normalizedEdge] = edgeMappings[edge];
+            if (!normalizedMappings[normalizedEdge]) {
+              normalizedMappings[normalizedEdge] = { partOf: [], support: [] };
+            }
+            normalizedMappings[normalizedEdge].partOf.push(...edgeMappings[edge].partOf);
+            normalizedMappings[normalizedEdge].support.push(...edgeMappings[edge].support);
             normalizedPath.push(N(node), normalizedEdge);
           }
 
@@ -1106,11 +1118,16 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           return normalizedPath;
         });
 
+        Object.keys(normalizedMappings).forEach(key => {
+          normalizedMappings[key].partOf = [...new Set(normalizedMappings[key].partOf)];
+          normalizedMappings[key].support = [...new Set(normalizedMappings[key].support)];
+        });
+
         const pathToSupportGraph = {};
         // For every path find which graphs the path appears in. A path appears in a graph iff all
         // edges in the path appear in the graph.
         for (const path of normalizedPaths) {
-          let gids = normalizedMappings[path[1]].partOf;
+          let gids = [...normalizedMappings[path[1]].partOf];
           for (let i = 3; i < path.length; i+=2) {
             gids = gids.filter((gid) => normalizedMappings[path[i]].partOf.includes(gid));
           }
@@ -1132,7 +1149,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
             }
           }
 
-          if (!edgeBases[edge]) {
+          if (edgeBases[edge] === undefined) {
             edgeBases[edge] = makeEdgeBase();
           }
 
@@ -1175,8 +1192,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           [[start]],
           []);
 
-        const [normalizedPaths, edgesBase] = finalizePaths(rgraphPaths, rgraph.edgeMappings, kgraph);
-
+        const [normalizedPaths, edgeBases] = finalizePaths(rgraphPaths, rgraph.edgeMappings, kgraph);
         const analysisContext = {
           agent: agent,
           errors: errors
@@ -1187,7 +1203,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           normalizedPaths,
           rgraph.nodes.map(rnode => { return summarizeRnode(rnode, kgraph, nodeRules, analysisContext); }),
           {
-            base: edgesBase,
+            base: edgeBases,
             updates: rgraph.edges.map(redge => {
                        const kedge = redgeToTrapiKedge(redge, kgraph);
                        const edgeContext = cmn.deepCopy(analysisContext);
