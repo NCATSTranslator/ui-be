@@ -7,6 +7,7 @@
     "host": "ars-prod.transltr.io",
     "post_uri": "/ars/api/submit",
     "pull_uri": "/ars/api/messages",
+    "retain_uri": "/ars/api/retain",
     "protocol": "https",
     "use_ars_merging": false
   },

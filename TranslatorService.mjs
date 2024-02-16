@@ -55,6 +55,16 @@ class TranslatorService
     }
   }
 
+  async retainQuery(queryId) {
+    try {
+      const resp = await this.queryClient.retainQuery(queryId);
+      return resp;
+    } catch (err) {
+      console.log(err);
+      throw new QueryClientError(`Error retaining query for ${queryId}`, queryId, 'retain', err);
+    }
+  }
+
   async getQueryStatus(queryId, filters={})
   {
     try
