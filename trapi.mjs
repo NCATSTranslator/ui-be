@@ -1125,11 +1125,7 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
           return normalizedPath;
         });
 
-        Object.keys(normalizedMappings).forEach(key => {
-          normalizedMappings[key].partOf = [...new Set(normalizedMappings[key].partOf)];
-          normalizedMappings[key].support = [...new Set(normalizedMappings[key].support)];
-        });
-
+        Object.keys(normalizedMappings).forEach(key => cmn.objRemoveDuplicates(normalizedMappings[key]));
         const pathToSupportGraph = {};
         // For every path find which graphs the path appears in. A path appears in a graph iff all
         // edges in the path appear in the graph.
@@ -1501,17 +1497,6 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     return [expandedResults, usedTags];
   }
 
-  function objRemoveDuplicates(obj) {
-    Object.keys(obj).forEach((k) => {
-        let v = cmn.jsonGet(obj, k);
-        if (cmn.isArray(v)) {
-          obj[k] = [...new Set(v)];
-        }
-      });
-
-    return obj;
-  }
-
   function getPathFromPid(paths, pid) {
     return cmn.jsonGetFromKpath(paths, [pid, 'subgraph']);
   }
@@ -1543,7 +1528,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     extendSummaryErrors(errors, condensedSummaryErrors(cs));
   });
 
-  results = Object.values(results).map(objRemoveDuplicates)
+  results = Object.values(results).map(cmn.objRemoveDuplicates)
   const annotationPromise = annotationClient.annotateGraph(createKGFromNodeIds(Object.keys(nodes)));
   function pushIfEmpty(arr, val) {
     if (cmn.isArrayEmpty(arr)) {
@@ -1570,10 +1555,10 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
     }
 
     // Remove any duplicates on all edge attributes
-    objRemoveDuplicates(edge);
+    cmn.objRemoveDuplicates(edge);
 
     // Remove duplicates from publications
-    objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
+    cmn.objRemoveDuplicates(cmn.jsonGet(edge, 'publications', {}));
 
     // Convert all infores to provenance
     cmn.jsonUpdate(edge, 'provenance', (provenance) => {
@@ -1719,7 +1704,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       const node = nodes[k];
       node.curies.push(k);
       // Remove any duplicates on all node attributes
-      objRemoveDuplicates(node);
+      cmn.objRemoveDuplicates(node);
       node.types.sort(bl.biolinkClassCmpFn);
 
       // Provide a CURIE as a fallback if the node has no name
@@ -1752,7 +1737,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       }
 
       // Remove duplicates from every attribute on a path
-      objRemoveDuplicates(path);
+      cmn.objRemoveDuplicates(path);
 
       // Determine if drug is indicated for disease
       if (isChemicalDiseaseQuery(queryType)) {

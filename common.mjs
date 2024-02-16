@@ -138,6 +138,17 @@ export function isObjEmpty(o)
   throw new TypeError(`Expected object got ${o}`);
 }
 
+export function objRemoveDuplicates(obj) {
+  Object.keys(obj).forEach((k) => {
+      let v = jsonGet(obj, k);
+      if (isArray(v)) {
+        obj[k] = [...new Set(v)];
+      }
+    });
+
+  return obj;
+}
+
 export function jsonHasKey(obj, key)
 {
   return obj[key] !== undefined
