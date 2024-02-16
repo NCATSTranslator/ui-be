@@ -163,9 +163,15 @@ export function creativeAnswersToSummary (qid, answers, maxHops, annotationClien
     errors);
 }
 
+// Create a minimal TRAPI message for the annotator
 function createKGFromNodeIds(nodeIds) {
   const nodes = {};
-  nodeIds.forEach(e => { nodes[e] = {}; });
+  nodeIds.forEach(id => {
+    if (bl.isValidCurie(id)) {
+      nodes[id] = {};
+    }
+  });
+
   const retval = {
     message: {
       knowledge_graph: {
@@ -174,6 +180,7 @@ function createKGFromNodeIds(nodeIds) {
       }
     }
   };
+
   return retval;
 }
 
