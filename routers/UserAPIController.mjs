@@ -12,6 +12,7 @@ export { createUserController };
 
 function createUserController(config, services) {
   var router = express.Router();
+  var translatorService = services.translatorService;
   var userService = services.userService;
   var authService = services.authService;
 
@@ -79,6 +80,19 @@ function createUserController(config, services) {
   router.post('/me/saves', async function(req, res, next) {
     try {
       let data = {...req.body};
+      // TODO: generalize saving object behavior when we start saving more types
+      if (data.save_type === 'bookmark') {
+        const pk = data.ars_pkey
+        if (!pk) {
+          const error = 'No PK in save for result';
+          wutil.logInternalServerError(req, error);
+          return wutil.sendError(res, 400, error);
+        } else {
+          console.log(`Retaining ${pk}`);
+          await translatorService.retainQuery(pk);
+        }
+      }
+
       data.user_id = req.user.id;
       let saveData = new UserSavedData(data);
       let result = await userService.saveUserData(saveData);

@@ -36,10 +36,11 @@ class ARSError extends Error {
 }
 
 class ARSClient {
-  constructor(origin, getPath, postPath, useARSMerging, completeCodes=[200,206], runningCodes=[202]) {
+  constructor(origin, getPath, postPath, retainPath, useARSMerging, completeCodes=[200,206], runningCodes=[202]) {
     this.origin = origin;
     this.getURL = `${origin}${getPath}`;
     this.postURL = `${origin}${postPath}`;
+    this.retainURL = `${origin}${retainPath}`;
     this.completeCodes = completeCodes;
     this.runningCodes = runningCodes;
     this.useARSMerging = useARSMerging;
@@ -47,6 +48,14 @@ class ARSClient {
 
   async postQuery(query) {
     return cmn.sendRecvJSON2(this.postURL, 'POST', {}, query)
+  }
+
+  async retainQuery(pkey) {
+    return cmn.sendRecvHTTP2(`${this.retainURL}/${pkey}`, 'POST', {},
+        null, 'application/json', {
+      encode: JSON.stringify,
+      decode: cmn.identity // TODO: change this when the ARS sends back valid JSON
+    });
   }
 
   async getQueryStatus(pkey, filters) {
