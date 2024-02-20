@@ -3,356 +3,338 @@
     "endpoint": "https://name-lookup.test.transltr.io"
   },
   "cached_queries": [
-     {
-         "name": "Breast Cancer",
-         "type": "drug",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "a6d28087-f193-441c-ade3-26b04fdd0dd1",
-         "id": "MONDO:0007254"
-     },
-     {
-         "name": "Addison Disease",
-         "type": "drug",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "5d4e2e08-8b53-49d1-9a91-8bbda60d2493",
-         "id": "MONDO:0009410"
-     },
-     {
-         "name": "Hypertensive Heart Disease",
-         "type": "drug",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "f508837e-c39e-4eda-b226-3a31c3b19c6c",
-         "id": "MONDO:0001302"
-     },
-     {
-         "name": "Familial Hypercholesterolemia ",
-         "type": "drug",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "f3799e9e-d4f2-4624-b281-a26c3e10b86f",
-         "id": "MONDO:0005439"
-     },
-     {
-         "name": "Chronic Obstructive Pulmonary Disease",
-         "type": "drug",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "916a7b2a-3259-4ed1-b069-85e383675dad",
-         "id": "MONDO:0005002"
-     },
-     {
-         "name": "Type 1 Diabetes Mellitus",
-         "type": "drug",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "fd98f902-e26b-4fd8-bac4-49d0c904a222",
-         "id": "MONDO:0005147"
-     },
-     {
-         "name": "Bethlem Myopathy",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "02e27d51-1ff7-4c4f-aa73-27bcc9c7d919",
-         "id": "MONDO:0008029"
-     },
-     {
-         "name": "Ehlers-Danlos Syndrome, Hypermobility Type",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "7a86caa9-2bf7-4a6b-8470-6fe99cb23f57",
-         "id": "MONDO:0007523"
-     },
-     {
-         "name": "Ehlers-Danlos Syndrome, Vascular Type",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "fcb0c16f-2634-4c9e-824e-008e1d96dc10",
-         "id": "MONDO:0017314"
-     },
-     {
-         "name": "Ehlers-Danlos Syndrome",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "1f264926-8037-4262-ad6b-a5005f91295f",
-         "id": "MONDO:0020066"
-     },
-     {
-         "name": "Inclusion Body Myositis",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "f662624d-88da-48f1-af10-058e49e8a708",
-         "id": "MONDO:0007827"
-     },
-     {
-         "name": "Ullrich Congenital Muscular Dystrophy",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "ec3c8f8d-3f89-47b1-a244-8e62b4ed4e39",
-         "id": "MONDO:0000355"
-     },
-     {
-         "name": "Fatal Familial Insomnia",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": true,
-         "direction": null,
-         "uuid": "ac0a1c9c-1831-46f4-a356-ecd1edbd32f1",
-         "id": "MONDO:0010808"
-     },
-     {
-         "name": "Cerebral Arteriopathy with Subcortical Infarcts and Leukoencephalopathy",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": false,
-         "direction": null,
-         "uuid": "17cfa994-b87a-498c-8333-7b3abcaf086c",
-         "id": "MONDO:0007432"
-     },
-     {
-         "name": "Hereditary Sensory and Autonomic Neuropathy Type 4",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": false,
-         "direction": null,
-         "uuid": "a792486d-6364-43e0-84cf-189689f1b792",
-         "id": "MONDO:0009746"
-     },
-     {
-         "name": "Kyphoscoliotic Ehlers-Danlos Syndrome",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": false,
-         "direction": null,
-         "uuid": "ecbff630-724f-4154-9ad4-7f05efd4b88c",
-         "id": "MONDO:0034024"
-     },
-     {
-         "name": "Ehlers-Danlos Syndrome, Arthrochalasis Type",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": false,
-         "direction": null,
-         "uuid": "58344180-bdbe-4fdd-8cd8-fd9cda5ea580",
-         "id": "MONDO:0007525"
-     },
-     {
-         "name": "Ehlers-Danlos Syndrome, Classic Type",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": false,
-         "direction": null,
-         "uuid": "858b62a2-9277-4a50-85f0-43b63f05bc9e",
-         "id": "MONDO:0007522"
-     },
-     {
-         "name": "Ehlers-Danlos Syndrome, Dermatosparaxis Type",
-         "type": "drug",
-         "allow_inbound": true,
-         "allow_outbound": false,
-         "direction": null,
-         "uuid": "d5b6f9d0-f128-4f3e-a75f-61b6923dcc00",
-         "id": "MONDO:0009161"
-     },
-     {
-         "name": "NGLY1",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "7c7b719b-65db-4d04-ac9c-d5dba19508c9",
-         "id": "NCBIGene:55768"
-     },
-     {
-         "name": "NGLY1",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "efa1cf10-b63f-4130-a059-70e77968d619",
-         "id": "NCBIGene:55768"
-     },
-     {
-         "name": "ADNP",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "de3bd68a-bcc9-41ae-a1c8-f4131e84ca2b",
-         "id": "NCBIGene:23394"
-     },
-     {
-         "name": "ADNP",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "5b1fa788-59a0-47f1-82a4-d26152bee3f4",
-         "id": "NCBIGene:23394"
-     },
-     {
-         "name": "CHAMP1",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "196a5733-3a2d-44c3-8ab4-36e5f589bfe3",
-         "id": "NCBIGene:283489"
-     },
-     {
-         "name": "CHAMP1",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "21cd1292-0ff6-462b-9b45-ecd989139269",
-         "id": "NCBIGene:283489"
-     },
-     {
-         "name": "SCN1A",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "b74a8a64-3f31-493f-9607-017e7031e6b3",
-         "id": "NCBIGene:6323"
-     },
-     {
-         "name": "SCN1A",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "a246b64e-1242-4e83-9121-f42f9b145d01",
-         "id": "NCBIGene:6323"
-     },
-     {
-         "name": "SLC6A1",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "4438a61f-3567-4f22-baa8-d45798e4975d",
-         "id": "NCBIGene:6529"
-     },
-     {
-         "name": "SLC6A1",
-         "type": "chemical",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "65e0c262-883e-4344-a4e7-9afb1908277b",
-         "id": "NCBIGene:6529"
-     },
-     {
-         "name": "Pregabalin",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "fcc234b3-5b31-4038-aade-45d753f9b566",
-         "id": "PUBCHEM.COMPOUND:5486971"
-     },
-     {
-         "name": "Pregabalin",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "573e32d1-0be5-42c1-b6b0-0ade3fe0b8e5",
-         "id": "PUBCHEM.COMPOUND:5486971"
-     },
-     {
-         "name": "Rosuvastatin",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "6a3cdfdc-6b7c-47e9-966e-71c5d1bc8c4a",
-         "id": "PUBCHEM.COMPOUND:446157"
-     },
-     {
-         "name": "Rosuvastatin",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "186d21f6-5005-475d-ad1f-ba4173ed7211",
-         "id": "PUBCHEM.COMPOUND:446157"
-     },
-     {
-         "name": "Propranolol",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "cdcdfd2d-41ae-4326-a941-927d516891c2",
-         "id": "PUBCHEM.COMPOUND:4946"
-     },
-     {
-         "name": "Propranolol",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "d246eb57-3152-49b9-8f51-d208653726f9",
-         "id": "PUBCHEM.COMPOUND:4946"
-     },
-     {
-         "name": "Eletriptan",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "fd138c96-6a95-437e-acc5-4e383829c3c2",
-         "id": "PUBCHEM.COMPOUND:77993"
-     },
-     {
-         "name": "Eletriptan",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "43e33c9f-53cc-440e-825d-753bc84da0c7",
-         "id": "PUBCHEM.COMPOUND:77993"
-     },
-     {
-         "name": "Amlodipine",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "increased",
-         "uuid": "c804ac19-c2d7-495f-b5d4-9f95edc7e4ca",
-         "id": "PUBCHEM.COMPOUND:2162"
-     },
-     {
-         "name": "Amlodipine",
-         "type": "gene",
-         "allow_inbound": false,
-         "allow_outbound": true,
-         "direction": "decreased",
-         "uuid": "f0822bc2-4ec3-4ece-9c6a-0a70080041ec",
-         "id": "PUBCHEM.COMPOUND:2162"
-     }
+    {
+      "name": "Breast Cancer",
+      "type": "drug",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "723a8922-0aae-4e1b-aca2-8706bb902619",
+      "id": "MONDO:0007254"
+    },
+    {
+      "name": "Adrenocortical Hypofunction, Chronic Primary Congenital",
+      "type": "drug",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "4b9a408b-cda3-4eda-9470-bc5f437e6b33",
+      "id": "MONDO:0007071"
+    },
+    {
+      "name": "Hypertensive Heart Disease",
+      "type": "drug",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "9012c31d-7c37-482c-a86e-d084b3a6eb04",
+      "id": "MONDO:0001302"
+    },
+    {
+      "name": "Familial Hypercholesterolemia ",
+      "type": "drug",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "e9c8febc-88b8-4763-950f-deafac52a9dd",
+      "id": "MONDO:0005439"
+    },
+    {
+      "name": "Chronic Obstructive Pulmonary Disease",
+      "type": "drug",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "5a495bb2-30db-4a54-9e02-4fa37b62ec52",
+      "id": "MONDO:0005002"
+    },
+    {
+      "name": "Type 1 Diabetes Mellitus",
+      "type": "drug",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "3fbd7d56-84b4-4ad0-9ad7-fee4855dd899",
+      "id": "MONDO:0005147"
+    },
+    {
+      "name": "Bethlem Myopathy",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "b851031e-658e-4d44-a231-08a80f732674",
+      "id": "MONDO:0008029"
+    },
+    {
+      "name": "Ehlers-Danlos Syndrome, Hypermobility Type",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "8a9d890c-6075-4235-bb59-a6129511724f",
+      "id": "MONDO:0007523"
+    },
+    {
+      "name": "Ehlers-Danlos Syndrome, Vascular Type",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "cb1b93b3-de3d-47c7-9992-e8f4f3307561",
+      "id": "MONDO:0017314"
+    },
+    {
+      "name": "Ehlers-Danlos Syndrome",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "55996893-7884-4949-93c9-415dd9631f44",
+      "id": "MONDO:0020066"
+    },
+    {
+      "name": "Inclusion Body Myositis",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "77a66407-43b3-4aa8-a0ea-c303a3480aff",
+      "id": "MONDO:0007827"
+    },
+    {
+      "name": "Ullrich Congenital Muscular Dystrophy",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "b7df1174-e7dd-4479-8f7c-b4139d429f1c",
+      "id": "MONDO:0000355"
+    },
+    {
+      "name": "Fatal Familial Insomnia",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": true,
+      "direction": null,
+      "uuid": "661ec8cf-58fd-456f-ae27-9830600cc033",
+      "id": "MONDO:0010808"
+    },
+    {
+      "name": "Cerebral Arteriopathy with Subcortical Infarcts and Leukoencephalopathy",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": false,
+      "direction": null,
+      "uuid": "19e618e1-a6d3-40c1-a295-158327e813c3",
+      "id": "MONDO:0007432"
+    },
+    {
+      "name": "Hereditary Sensory and Autonomic Neuropathy Type 4",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": false,
+      "direction": null,
+      "uuid": "0df92169-e449-40a5-a0e1-e1c72cc4fc11",
+      "id": "MONDO:0009746"
+    },
+    {
+      "name": "Kyphoscoliotic Ehlers-Danlos Syndrome",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": false,
+      "direction": null,
+      "uuid": "b87bff6a-2137-4749-92e1-7e8b4cdc8405",
+      "id": "MONDO:0034024"
+    },
+    {
+      "name": "Ehlers-Danlos Syndrome, Arthrochalasis Type",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": false,
+      "direction": null,
+      "uuid": "6d403878-931f-4bab-af62-2346fd685428",
+      "id": "MONDO:0007525"
+    },
+    {
+      "name": "Ehlers-Danlos Syndrome, Classic Type",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": false,
+      "direction": null,
+      "uuid": "1c457838-4565-468e-bb94-017f41265d4e",
+      "id": "MONDO:0007522"
+    },
+    {
+      "name": "Ehlers-Danlos Syndrome, Dermatosparaxis Type",
+      "type": "drug",
+      "allow_inbound": true,
+      "allow_outbound": false,
+      "direction": null,
+      "uuid": "da695024-2b13-448e-b5af-965e814ba121",
+      "id": "MONDO:0009161"
+    },
+    {
+      "name": "NGLY1",
+      "type": "chemical",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "increased",
+      "uuid": "6068f164-4d0d-403f-9d0f-ced37be1e38e",
+      "id": "NCBIGene:55768"
+    },
+    {
+      "name": "NGLY1",
+      "type": "chemical",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "decreased",
+      "uuid": "216cdc0a-c95d-4b60-92ec-50425dc2eb81",
+      "id": "NCBIGene:55768"
+    },
+    {
+      "name": "ADNP",
+      "type": "chemical",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "increased",
+      "uuid": "2fe8cef0-c54a-468c-9f59-ef89374b16e7",
+      "id": "NCBIGene:23394"
+    },
+    {
+      "name": "ADNP",
+      "type": "chemical",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "decreased",
+      "uuid": "e303902d-4a84-4aab-9dcf-669af5f57704",
+      "id": "NCBIGene:23394"
+    },
+    {
+      "name": "SCN1A",
+      "type": "chemical",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "increased",
+      "uuid": "cd4c2092-d846-41b0-99d4-bc933db47b1e",
+      "id": "NCBIGene:6323"
+    },
+    {
+      "name": "SCN1A",
+      "type": "chemical",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "decreased",
+      "uuid": "32ebb05a-8bff-449d-b584-2b12d222d9b9",
+      "id": "NCBIGene:6323"
+    },
+    {
+      "name": "SLC6A1",
+      "type": "chemical",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "increased",
+      "uuid": "5ce708cf-ac4a-4c28-a75e-c69376d5dd6d",
+      "id": "NCBIGene:6529"
+    },
+    {
+      "name": "SLC6A1",
+      "type": "chemical",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "decreased",
+      "uuid": "d8091d2f-73ea-4a9d-a29d-536f86d7f446",
+      "id": "NCBIGene:6529"
+    },
+    {
+      "name": "Pregabalin",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "increased",
+      "uuid": "6c5e2db3-84ea-491b-af47-406b438c5e53",
+      "id": "PUBCHEM.COMPOUND:5486971"
+    },
+    {
+      "name": "Pregabalin",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "decreased",
+      "uuid": "af810a67-bc61-4342-8a94-8566aafe7d3b",
+      "id": "PUBCHEM.COMPOUND:5486971"
+    },
+    {
+      "name": "Rosuvastatin",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "increased",
+      "uuid": "8f8aecc3-6603-4aef-9fdd-5dd7b81f4724",
+      "id": "PUBCHEM.COMPOUND:446157"
+    },
+    {
+      "name": "Rosuvastatin",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "decreased",
+      "uuid": "8e6e5f30-9466-4ef2-be58-335cf21baf67",
+      "id": "PUBCHEM.COMPOUND:446157"
+    },
+    {
+      "name": "Propranolol",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "increased",
+      "uuid": "4a24b844-9cc5-4890-94af-248fbd974dc1",
+      "id": "PUBCHEM.COMPOUND:4946"
+    },
+    {
+      "name": "Propranolol",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "decreased",
+      "uuid": "922c0769-9867-4ad0-9eb8-914c86ca2797",
+      "id": "PUBCHEM.COMPOUND:4946"
+    },
+    {
+      "name": "Eletriptan",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "increased",
+      "uuid": "5c29ec29-3568-4f08-a7d2-62e9f487caf8",
+      "id": "PUBCHEM.COMPOUND:77993"
+    },
+    {
+      "name": "Eletriptan",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "decreased",
+      "uuid": "000e3529-73ea-46d5-957b-6a33d6cc82af",
+      "id": "PUBCHEM.COMPOUND:77993"
+    },
+    {
+      "name": "Amlodipine",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "increased",
+      "uuid": "dc787f7b-6660-46fb-b34d-c6848942a8ea",
+      "id": "PUBCHEM.COMPOUND:2162"
+    },
+    {
+      "name": "Amlodipine",
+      "type": "gene",
+      "allow_inbound": false,
+      "allow_outbound": true,
+      "direction": "decreased",
+      "uuid": "73b57a92-82a5-4fe7-ad84-94eb5056e9fc",
+      "id": "PUBCHEM.COMPOUND:2162"
+    }
   ]
 }
