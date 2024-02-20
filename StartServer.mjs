@@ -45,6 +45,7 @@ const TRANSLATOR_SERVICE = (function (config) {
     `${config.ars_endpoint.protocol}://${config.ars_endpoint.host}`,
     config.ars_endpoint.pull_uri,
     config.ars_endpoint.post_uri,
+    config.ars_endpoint.retain_uri,
     config.ars_endpoint.use_ars_merging);
   const annotationClient = new KGAnnotationClient(
     `https://${config.annotation_endpoint.host}`,

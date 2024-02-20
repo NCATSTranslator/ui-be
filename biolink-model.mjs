@@ -65,6 +65,11 @@ export function inforesToProvenance(infores) {
   return provenance;
 }
 
+export function isValidCurie(curie) {
+  const curieParts = curie.split(':');
+  return curieParts.length > 1 && PREFIX_CATALOG[curieParts[0]] !== undefined;
+}
+
 export function curieToUrl(curie) {
   const [curiePrefix, curieId] = curie.split(':');
   const url = PREFIX_CATALOG[curiePrefix];
