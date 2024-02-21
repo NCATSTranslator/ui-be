@@ -905,8 +905,13 @@ function summarizeRnode(rnode, kgraph, nodeRules, context) {
     'transforms');
 }
 
-function summarizeRedge(redge, kgraph, edgeRules, context) {
-  return cmn.makePair(redgeToKey(redge, kgraph),
+function summarizeRedge(redge, kgraph, edgeRules, context, edgeBaseKeys) {
+  let edgeKey = redgeToKey(redge, kgraph);
+  if (!edgeBaseKeys.has(edgeKey)) {
+    edgeKey = redgeToKey(redge, kgraph, true);
+  }
+
+  return cmn.makePair(edgeKey,
     edgeRules(redgeToTrapiKedge(redge, kgraph), context),
     'key',
     'transforms');
@@ -1211,7 +1216,8 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
                        const kedge = redgeToTrapiKedge(redge, kgraph);
                        const edgeContext = cmn.deepCopy(analysisContext);
                        edgeContext.primarySource = getPrimarySource(cmn.jsonGet(kedge, 'sources'))[0];
-                       return summarizeRedge(redge, kgraph, edgeRules, edgeContext);
+                       return summarizeRedge(redge, kgraph,
+                          edgeRules, edgeContext, new Set(Object.keys(edgeBases)));
             })
           },
           {},
