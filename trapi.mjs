@@ -1745,8 +1745,10 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       // Remove duplicates from every attribute on a path
       cmn.objRemoveDuplicates(path);
 
-      // Determine if drug is indicated for disease
       if (isChemicalDiseaseQuery(queryType)) {
+        // Consider the chemical indicated for the disease iff
+        //   1. The chemical is marked as indicated for the disease
+        //   2. The chemical has reached phase 4 approval from the FDA
         const start = nodes[path.subgraph[0]];
         if (start.indications !== undefined) {
           const startIndications = new Set(start.indications);
@@ -1755,7 +1757,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
           let indicatedFor = false;
           for (let i = 0; i < endMeshIds.length; i++) {
             if (startIndications.has(endMeshIds[i])) {
-              indicatedFor = true;
+              indicatedFor = start.tags['fda:4'] !== undefined;
               break;
             }
           }
