@@ -1493,6 +1493,20 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
         });
       });
 
+      // Generate inferred/lookup tags for results
+      rootPids.forEach((pid) => {
+        const subgraph = getPathFromPid(paths, pid);
+        let tag = 'pt:inf';
+        if (!cmn.isArrayEmpty(edges[subgraph[1]].support)) {
+          usedTags[tag] = makeTagDescription('Inferred');
+          tags[tag] = null;
+        } else {
+          tag = 'pt:lkup';
+          usedTags[tag] = makeTagDescription('Lookup');
+          tags[tag] = null;
+        }
+      });
+
       expandedResults.push({
         'id': hash([start, end]),
         'subject': start,
