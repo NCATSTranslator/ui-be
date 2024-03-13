@@ -563,13 +563,13 @@ function rnodeToTrapiKnode(nodeBinding, kgraph) {
   return trapiBindingToKobj(nodeBinding, 'nodes', kgraph);
 }
 
-function getBindingId(bindings, key) {
+function getNodeBindingIds(bindings, key) {
   const nodeBinding = cmn.jsonGet(bindings, key, false);
   if (!nodeBinding) {
     throw new NodeBindingNotFoundError(nodeBinding);
   }
 
-  return cmn.jsonGet(nodeBinding[0], 'id');
+  return nodeBinding.map(entry => cmn.jsonGet(entry, 'id'));
 }
 
 function flattenBindings(bindings) {
@@ -1102,7 +1102,7 @@ function getPathDirection(qgraph) {
 
 function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHops) {
   function trapiResultToSummaryFragment(trapiResult, kgraph, auxGraphs, startKey, endKey, errors) {
-    function analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end) {
+    function analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, ends) {
       function finalizePaths(rgraphPaths, edgeMappings, kgraph) {
         function N(n) { return rnodeToKey(n, kgraph); }
         function E(e, o) { return redgeToKey(e, kgraph, isRedgeInverted(e, o, kgraph)); }
@@ -1176,29 +1176,33 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
         const rgraph = analysisToRgraph(analysis, kgraph, auxGraphs);
         const rnodeToOutEdges = makeRnodeToOutEdges(rgraph, kgraph);
         const maxPathLength = (2 * maxHops) + 1;
+        // This is an exhaustive search based on the max path length. We may have to come up
+        // with a better algorithm if the max path length increases significantly.
         const rgraphPaths = rgraphFold((path) => {
-            const currentRnode = path[path.length-1];
-            if (maxPathLength < path.length) {
-              return cmn.makePair([], []);
-            }
-            else if (currentRnode === end) {
-              return cmn.makePair([], [path]);
-            }
-            else {
-              let validPaths = [];
-              rnodeToOutEdges(currentRnode).forEach((edge) => {
-                const target = edge.target
-                if (!path.includes(target)) {
-                  let newPath = [...path, edge.redge, edge.target];
-                  validPaths.push(newPath);
-                }
-              });
+          const currentRnode = path[path.length-1];
+          if (maxPathLength < path.length) {
+            return cmn.makePair([], []);
+          }
 
-              return cmn.makePair(validPaths, []);
+          let validPaths = [];
+          rnodeToOutEdges(currentRnode).forEach((edge) => {
+            const target = edge.target
+            // Do not allow cycles
+            if (!path.includes(target)) {
+              let newPath = [...path, edge.redge, edge.target];
+              validPaths.push(newPath);
             }
-          },
-          [[start]],
-          []);
+          });
+
+          const finalPaths = [];
+          if (ends.includes(currentRnode)) {
+            finalPaths.push(path);
+          }
+
+          return cmn.makePair(validPaths, finalPaths);
+        },
+        [[start]],
+        []);
 
         const [normalizedPaths, edgeBases] = finalizePaths(rgraphPaths, rgraph.edgeMappings, kgraph);
         const analysisContext = {
@@ -1234,14 +1238,14 @@ function creativeAnswersToSummaryFragments(answers, nodeRules, edgeRules, maxHop
 
     try {
       const resultNodeBindings = cmn.jsonGet(trapiResult, 'node_bindings');
-      const start = getBindingId(resultNodeBindings, startKey);
-      const end = getBindingId(resultNodeBindings, endKey);
+      const start = getNodeBindingIds(resultNodeBindings, startKey)[0];
+      const ends = getNodeBindingIds(resultNodeBindings, endKey);
       const analyses = cmn.jsonGet(trapiResult, 'analyses');
       const resultSummaryFragment = analyses.reduce(
         (rsf, analysis) => {
           return mergeSummaryFragments(
             rsf,
-            analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, end));
+            analysisToSummaryFragment(analysis, kgraph, auxGraphs, start, ends));
         },
         emptySummaryFragment());
 
@@ -1487,6 +1491,20 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
           usedTags[tag] = paths[pid].tags[tag];
           tags[tag] = null;
         });
+      });
+
+      // Generate inferred/lookup tags for results
+      rootPids.forEach((pid) => {
+        const subgraph = getPathFromPid(paths, pid);
+        let tag = 'pt:inf';
+        if (!cmn.isArrayEmpty(edges[subgraph[1]].support)) {
+          usedTags[tag] = makeTagDescription('Inferred');
+          tags[tag] = null;
+        } else {
+          tag = 'pt:lkup';
+          usedTags[tag] = makeTagDescription('Lookup');
+          tags[tag] = null;
+        }
       });
 
       expandedResults.push({
@@ -1745,8 +1763,10 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
       // Remove duplicates from every attribute on a path
       cmn.objRemoveDuplicates(path);
 
-      // Determine if drug is indicated for disease
       if (isChemicalDiseaseQuery(queryType)) {
+        // Consider the chemical indicated for the disease iff
+        //   1. The chemical is marked as indicated for the disease
+        //   2. The chemical has reached phase 4 approval from the FDA
         const start = nodes[path.subgraph[0]];
         if (start.indications !== undefined) {
           const startIndications = new Set(start.indications);
@@ -1755,7 +1775,7 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
           let indicatedFor = false;
           for (let i = 0; i < endMeshIds.length; i++) {
             if (startIndications.has(endMeshIds[i])) {
-              indicatedFor = true;
+              indicatedFor = start.tags['fda:4'] !== undefined;
               break;
             }
           }
