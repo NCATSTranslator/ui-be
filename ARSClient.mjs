@@ -74,12 +74,21 @@ class ARSClient {
     return await this._collectChildResults(pkey, filters, true);
   }
 
-  async _fetchMessage(uuid, doTrace=false) {
+  async _fetchMessage(uuid, doTrace=false, compress=false) {
     let url = `${this.getURL}/${uuid}`;
+    if (doTrace && compress) {
+      throw new ARSError('Cannot specify both trace and compress', null);
+    }
+
+    const headers = {};
     if (doTrace) {
       url += '?trace=y';
+    } else if (compress) {
+      url += '?compress=y';
+      headers['Accept-Encoding'] = 'gzip';
     }
-    return cmn.sendRecvJSON2(url, 'GET');
+
+    return cmn.sendRecvJSON2(url, 'GET', headers);
   }
 
   _isComplete(code) {
@@ -313,8 +322,8 @@ class ARSClient {
       const pastCompleted = completed.slice(1,);
       if (!statusCheck && mostRecentCompleted !== null) {
         // Finally get the actual result of the most recent complete merged version
-        const [meta, results] = await this._fetchMessage(mostRecentCompleted.uuid);
-        mostRecentCompleted.data = results.fields.data.message;
+        const [meta, results] = await this._fetchMessage(mostRecentCompleted.uuid, false, true);
+        mostRecentCompleted.data = results.message;
         mostRecentCompleted.meta = meta;
       }
 
