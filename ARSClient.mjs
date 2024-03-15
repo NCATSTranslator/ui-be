@@ -88,7 +88,7 @@ class ARSClient {
       headers['Accept-Encoding'] = 'gzip';
     }
 
-    return cmn.sendRecvJSON2(url, 'GET', headers);
+    return cmn.sendRecvJSON2(url, 'GET', headers, null, compress);
   }
 
   _isComplete(code) {
