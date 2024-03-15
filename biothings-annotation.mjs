@@ -43,6 +43,14 @@ export function getCuries(annotation) {
     noHandler);
 }
 
+export function getNames(annotation) {
+  return parseAnnotation(
+    annotation,
+    noHandler,
+    getChemicalNames,
+    noHandler);
+}
+
 function parseAnnotation(annotation, diseaseHandler, chemicalHandler, geneHandler, fallback = null) {
   annotation = annotation[0];
   if (isDisease(annotation)) {
@@ -85,6 +93,28 @@ function getDiseaseMeshCuries(annotation) {
 
 function isDisease(annotation) {
   return annotation.disease_ontology !== undefined;
+}
+
+function getChemicalNames(annotation) {
+  const ndc = cmn.jsonGetFromKpath(annotation, ['ndc'], []);
+  const commercialNames = new Set();
+  const genericNames = new Set();
+  for (const entry of ndc) {
+    let commercialName = cmn.jsonGet(entry, 'proprietaryname', null);
+    let genericName = cmn.jsonGet(entry, 'nonproprietaryname', null);
+    if (commercialName !== null) {
+      commercialNames.add(commercialName.toLowerCase());
+    }
+
+    if(genericName !== null) {
+      genericNames.add(genericName.toLowerCase());
+    }
+  }
+
+  return {
+    commercial: [...commercialNames],
+    generic: [...genericNames]
+  };
 }
 
 function getChemicalDescription(annotation) {
@@ -134,8 +164,7 @@ function getChemicalDrugIndications(annotation) {
 function isChemical(annotation) {
   return annotation.chebi !== undefined ||
          annotation.chembl !== undefined ||
-         annotation.drugbank !== undefined ||
-         annotation.pubchem !== undefined;
+         annotation.ndc !== undefined;
 }
 
 function getGeneDescription(annotation) {

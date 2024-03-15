@@ -50,6 +50,7 @@ const TRANSLATOR_SERVICE = (function (config) {
   const annotationClient = new KGAnnotationClient(
     `https://${config.annotation_endpoint.host}`,
     config.annotation_endpoint.pull_uri,
+    config.annotation_endpoint.fields,
     config.annotation_endpoint.timeout_ms);
   const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
   return new TranslatorService(queryClient, outputAdapter);

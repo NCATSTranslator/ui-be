@@ -1625,6 +1625,19 @@ async function summaryFragmentsToSummary(qid, condensedSummaries, queryType, age
             return [description];
           }
         ),
+        renameAndTransformAttribute(
+          'biothings_annotations',
+          ['other_names'],
+          (annotations) => {
+            const otherNames = bta.getNames(annotations);
+            if (otherNames === null
+                || (cmn.isArrayEmpty(otherNames.commercial) && cmn.isArrayEmpty(otherNames.generic))) {
+              return null;
+            }
+
+            return otherNames;
+          }
+        ),
         aggregateAndTransformAttributes(
           ['biothings_annotations'],
           'curies',
