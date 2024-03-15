@@ -1,6 +1,7 @@
 'use strict'
 
 import * as fs from 'fs';
+import * as zlib from 'zlib';
 import { validate as isUuid } from 'uuid';
 import { join } from 'path';
 
@@ -294,11 +295,22 @@ export class HTTPError extends Error {
   }
 }
 
-export async function sendRecvJSON2(url, method='GET', headers={}, body=null) {
-  return sendRecvHTTP2(url, method, headers, body, 'application/json', {
+export async function sendRecvJSON2(url, method='GET', headers={}, body=null, compressed=false) {
+  const codec = {
     encode: JSON.stringify,
-    decode: JSON.parse
-  });
+    decode: async (resp) => {
+      // No headers are sent to tell us this is compressed
+      let data = await resp.arrayBuffer();
+      try {
+        const enc = new TextDecoder("utf-8");
+        return JSON.parse(enc.decode(data));
+      } catch (e) {
+        return JSON.parse(zlib.gunzipSync(new Uint8Array(data)));
+      }
+    }
+  };
+
+  return sendRecvHTTP2(url, method, headers, body, 'application/json', codec)
 }
 
 
@@ -320,7 +332,7 @@ export async function sendRecvHTTP2(url, method='GET', headers={}, body=null,
   let parseMs = 0;
   if (resp.ok) {
     startTime = new Date();
-    body = codec.decode(await resp.text());
+    body = await codec.decode(resp);
     parseMs = new Date() - startTime;
     return [{
         fetchMs: fetchMs,
