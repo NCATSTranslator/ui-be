@@ -14,7 +14,7 @@ import { UserService } from './UserService.mjs';
 
 import { SessionStorePostgres } from './auth/SessionStorePostgres.mjs';
 import { UserStorePostgres } from './users/UserStorePostgres.mjs';
-import { pg } from './postgres_preamble.mjs';
+import { pg } from './lib/postgres_preamble.mjs';
 import { UserPreferenceStorePostgres } from './users/UserPreferenceStorePostgres.mjs';
 import { UserSavedDataStorePostgres } from './users/UserSavedDataStorePostgres.mjs';
 

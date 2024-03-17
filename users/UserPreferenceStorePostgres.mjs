@@ -1,6 +1,6 @@
 'use strict';
 
-import { pg, pgExec, pgExecTrans } from '../postgres_preamble.mjs';
+import { pg, pgExec, pgExecTrans } from '../lib/postgres_preamble.mjs';
 import { UserPreference } from '../models/UserPreference.mjs'; // path to the UserPreference class
 
 export { UserPreferenceStorePostgres };

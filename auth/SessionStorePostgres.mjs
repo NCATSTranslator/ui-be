@@ -1,6 +1,6 @@
 'use strict';
 
-import { pg, pgExec } from '../postgres_preamble.mjs';
+import { pg, pgExec } from '../lib/postgres_preamble.mjs';
 import { Session } from  '../models/Session.mjs';
 import { SessionAnalytics } from '../models/SessionAnalytics.mjs';
 import { iSessionStore } from './iSessionStore.mjs';

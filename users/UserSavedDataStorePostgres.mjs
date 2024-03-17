@@ -1,4 +1,4 @@
-import { pg, pgExec } from '../postgres_preamble.mjs';
+import { pg, pgExec } from '../lib/postgres_preamble.mjs';
 import { UserSavedData } from '../models/UserSavedData.mjs'; // assuming UserSavedData is exported from this module
 
 export { UserSavedDataStorePostgres };
