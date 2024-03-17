@@ -1,10 +1,10 @@
 'use strict';
 
-import * as cmn from './common.mjs';
+import * as cmn from './lib/common.mjs';
 import { validate as isUuid } from 'uuid';
 import * as trapi from './lib/trapi.mjs';
-import { loadConfigFromFile, postProcessConfig }  from './config.mjs';
-import { loadBiolink } from './biolink-model.mjs';
+import { loadConfigFromFile, postProcessConfig }  from './lib/config.mjs';
+import { loadBiolink } from './lib/biolink-model.mjs';
 
 
 

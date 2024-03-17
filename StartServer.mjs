@@ -2,12 +2,12 @@
 
 import { bootstrapConfig } from './lib/config.mjs';
 
-import { loadBiolink } from './biolink-model.mjs';
-import { loadChebi } from './chebi.mjs';
-import { TranslatorService } from './TranslatorService.mjs';
-import { TranslatorServicexFEAdapter } from './TranslatorServicexFEAdapter.mjs';
+import { loadBiolink } from './lib/biolink-model.mjs';
+import { loadChebi } from './lib/chebi.mjs';
+import { TranslatorService } from './services/TranslatorService.mjs';
+import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
-import { KGAnnotationClient } from './KGAnnotationClient.mjs';
+import { KGAnnotationClient } from './lib/KGAnnotationClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';

@@ -1,8 +1,7 @@
 'use strict';
 
-import * as cmn from './common.mjs';
-import * as arsmsg from './ARSMessages.mjs';
-import * as trapi from './lib/ARSClient.mjs';
+import * as arsmsg from '../lib/ARSMessages.mjs';
+import * as trapi from '../lib/ARSClient.mjs';
 
 export { TranslatorService };
 

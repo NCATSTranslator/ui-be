@@ -1,8 +1,6 @@
 'use strict';
 
 import { default as express } from 'express';
-import { User } from '../models/User.mjs';
-import * as wutil from '../webutils.mjs';
 
 import { createQueryController } from './QueryAPIController.mjs'
 

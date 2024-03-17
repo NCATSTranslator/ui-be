@@ -2,8 +2,8 @@
 
 import { describe, it, before } from 'node:test';
 import * as assert from 'assert';
-import * as cmn from '../common.mjs';
-import * as bl from '../biolink-model.mjs';
+import * as cmn from '../lib/common.mjs';
+import * as bl from '../lib/biolink-model.mjs';
 import * as evd from '../evidence.mjs';
 import * as trapi from '../lib/trapi.mjs';
 
