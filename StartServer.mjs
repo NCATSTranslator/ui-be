@@ -12,11 +12,11 @@ import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './auth/AuthService.mjs';
 import { UserService } from './UserService.mjs';
 
-import { SessionStorePostgres } from './auth/SessionStorePostgres.mjs';
-import { UserStorePostgres } from './users/UserStorePostgres.mjs';
+import { SessionStorePostgres } from './stores/SessionStorePostgres.mjs';
+import { UserStorePostgres } from './stores/UserStorePostgres.mjs';
 import { pg } from './lib/postgres_preamble.mjs';
-import { UserPreferenceStorePostgres } from './users/UserPreferenceStorePostgres.mjs';
-import { UserSavedDataStorePostgres } from './users/UserSavedDataStorePostgres.mjs';
+import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgres.mjs';
+import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
 
 // Load the config asap as basically everything depends on it
 const SERVER_CONFIG = await (async function() {
