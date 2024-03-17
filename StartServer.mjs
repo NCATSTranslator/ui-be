@@ -10,7 +10,7 @@ import { ARSClient } from './ARSClient.mjs';
 import { KGAnnotationClient } from './KGAnnotationClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './auth/AuthService.mjs';
-import { UserService } from './UserService.mjs';
+import { UserService } from './services/UserService.mjs';
 
 import { SessionStorePostgres } from './stores/SessionStorePostgres.mjs';
 import { UserStorePostgres } from './stores/UserStorePostgres.mjs';

@@ -1,7 +1,6 @@
 'use strict';
 
-import { UserPreference } from "./models/UserPreference.mjs";
-import { User } from './models/User.mjs';
+import { UserPreference } from "../models/UserPreference.mjs";
 
 export { UserService };
 
