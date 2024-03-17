@@ -1,9 +1,9 @@
 'use strict';
 import fs from 'fs';
-import * as cmn from '../../common.mjs';
+import * as cmn from '../../lib/common.mjs';
 import { ARSClient } from '../../lib/ARSClient.mjs';
-import { TranslatorServicexFEAdapter } from '../../TranslatorServicexFEAdapter.mjs';
-import { TranslatorService } from '../../TranslatorService.mjs';
+import { TranslatorServicexFEAdapter } from '../../adapters/TranslatorServicexFEAdapter.mjs';
+import { TranslatorService } from '../../services/TranslatorService.mjs';
 import { query } from 'express';
 
 function parseLine(line) {

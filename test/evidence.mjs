@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import * as assert from 'assert';
-import { isValidId, idToTypeAndUrl } from '../evidence.mjs';
+import { isValidId, idToTypeAndUrl } from '../lib/evidence.mjs';
 
 describe('isValidId', () =>
   {

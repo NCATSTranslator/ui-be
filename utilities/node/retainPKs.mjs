@@ -1,5 +1,5 @@
 import * as fs from 'node:fs'
-import * as cmn from '../../common.mjs';
+import * as cmn from '../../lib/common.mjs';
 import { ARSClient } from '../../lib/ARSClient.mjs';
 
 const configRoot = '../../configurations';

@@ -1,6 +1,6 @@
 'use strict'
 
-import * as cmn from '../common.mjs';
+import * as cmn from '../lib/common.mjs';
 import { makeMetadataObject } from '../lib/trapi.mjs';
 
 export async function postQuery(query)
