@@ -3,7 +3,6 @@
 import { default as express } from 'express';
 import * as cmn from '../lib/common.mjs';
 import * as wutil from '../lib/webutils.mjs';
-import { validateDemoQueryRequest } from '../DemoQueryHandler.mjs';
 
 export { createQueryController };
 
