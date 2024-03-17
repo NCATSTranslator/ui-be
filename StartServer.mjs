@@ -9,7 +9,7 @@ import { TranslatorServicexFEAdapter } from './TranslatorServicexFEAdapter.mjs';
 import { ARSClient } from './ARSClient.mjs';
 import { KGAnnotationClient } from './KGAnnotationClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
-import { AuthService } from './auth/AuthService.mjs';
+import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
 
 import { SessionStorePostgres } from './stores/SessionStorePostgres.mjs';

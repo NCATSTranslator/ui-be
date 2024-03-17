@@ -6,7 +6,7 @@ import * as wutil from '../webutils.mjs';
 import { UserSavedData } from '../models/UserSavedData.mjs';
 import { CookieNotFoundError, NoUserForSessionError, SessionExpiredError,
    SessionNotFoundError, SessionNotUsableError, UserDeletedError
-  } from '../auth/AuthService.mjs';
+  } from '../services/AuthService.mjs';
 
 export { createUserController };
 
