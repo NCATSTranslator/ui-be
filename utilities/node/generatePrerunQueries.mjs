@@ -1,7 +1,7 @@
 'use strict';
 import fs from 'fs';
 import * as cmn from '../../common.mjs';
-import { ARSClient } from '../../ARSClient.mjs';
+import { ARSClient } from '../../lib/ARSClient.mjs';
 import { TranslatorServicexFEAdapter } from '../../TranslatorServicexFEAdapter.mjs';
 import { TranslatorService } from '../../TranslatorService.mjs';
 import { query } from 'express';

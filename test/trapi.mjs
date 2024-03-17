@@ -5,7 +5,7 @@ import * as assert from 'assert';
 import * as cmn from '../common.mjs';
 import * as bl from '../biolink-model.mjs';
 import * as evd from '../evidence.mjs';
-import * as trapi from '../trapi.mjs';
+import * as trapi from '../lib/trapi.mjs';
 
 function assertInterface(obj, keys)
 {

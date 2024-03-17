@@ -2,7 +2,7 @@
 
 import { createReadStream, promises as fs } from 'fs';
 import { createInterface } from 'readline';
-import { ARSClient } from '../../ARSClient.mjs';
+import { ARSClient } from '../../lib/ARSClient.mjs';
 
 /**
  * Reads all lines from a file, trims them and returns an array of non-empty lines.

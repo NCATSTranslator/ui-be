@@ -1,7 +1,7 @@
 'use strict'
 
 import * as cmn from '../common.mjs';
-import { makeMetadataObject } from '../trapi.mjs';
+import { makeMetadataObject } from '../lib/trapi.mjs';
 
 export async function postQuery(query)
 {
@@ -54,4 +54,3 @@ function makeQueryState(status, data)
     'data': data
   };
 }
-

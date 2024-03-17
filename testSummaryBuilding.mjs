@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 import * as cmn from './common.mjs';
-import * as trapi from './trapi.mjs';
+import * as trapi from './lib/trapi.mjs';
 
 var fnames=["msg-1.final","msg-2.final","msg-3.final","msg-4.final","msg-5.final","msg-6.final","msg-7.final","msg-8.final","msg-9.final","msg-10.final","msg-11.final","msg-12.final","msg-13.final","msg-14.final","msg-15.final","msg-16.final","msg-17.final","msg-18.final","msg-19.final","msg-20.final","msg-21.final","msg-22.final","msg-23.final","msg-24.final","msg-25.final","msg-26.final","msg-27.final","msg-28.final","msg-29.final","msg-30.final","msg-31.final","msg-32.final","msg-33.final","msg-34.final","msg-35.final","msg-36.final","msg-37.final","msg-38.final","msg-39.final","msg-40.final","msg-41.final","msg-42.final","msg-43.final","msg-44.final"];
 

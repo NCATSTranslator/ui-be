@@ -6,7 +6,7 @@ import { loadBiolink } from './biolink-model.mjs';
 import { loadChebi } from './chebi.mjs';
 import { TranslatorService } from './TranslatorService.mjs';
 import { TranslatorServicexFEAdapter } from './TranslatorServicexFEAdapter.mjs';
-import { ARSClient } from './ARSClient.mjs';
+import { ARSClient } from './lib/ARSClient.mjs';
 import { KGAnnotationClient } from './KGAnnotationClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './services/AuthService.mjs';
