@@ -1,7 +1,7 @@
 'use strict';
 
 import * as arsmsg from '../lib/ARSMessages.mjs';
-import * as trapi from '../lib/ARSClient.mjs';
+import * as trapi from '../lib/trapi.mjs';
 
 export { TranslatorService };
 
