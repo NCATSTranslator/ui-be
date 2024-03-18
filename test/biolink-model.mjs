@@ -2,7 +2,7 @@
 
 import { describe, it } from 'node:test';
 import * as assert from 'assert';
-import * as bl from '../biolink-model.mjs';
+import * as bl from '../lib/biolink-model.mjs';
 
 describe('tagBiolink', () =>
   {

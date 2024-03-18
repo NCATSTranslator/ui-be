@@ -1,6 +1,6 @@
 'use strict'
 
-import * as cmn from '../../common.mjs';
+import * as cmn from '../../lib/common.mjs';
 
 function cleanupKnowledgeLevel(rawKL) {
   if (rawKL === 'curated') {
