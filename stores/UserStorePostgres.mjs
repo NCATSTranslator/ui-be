@@ -1,6 +1,6 @@
 'use strict';
 
-import { pg, pgExec } from '../postgres_preamble.mjs';
+import { pg, pgExec } from '../lib/postgres_preamble.mjs';
 import { User } from '../models/User.mjs';
 
 export { UserStorePostgres };

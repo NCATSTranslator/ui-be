@@ -10,7 +10,7 @@ import { createUserController } from './routers/UserAPIController.mjs';
 import { createAPIRouter } from './routers/APIRouter.mjs';
 import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
-import * as wutil from './webutils.mjs';
+import * as wutil from './lib/webutils.mjs';
 
 export function startServer(config, services) {
   console.log("Der Anfang ist das Ende und das Ende ist der Anfang");

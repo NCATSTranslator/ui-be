@@ -1,36 +1,36 @@
 'use strict'
 
-import { loadConfigFromFile, postProcessConfig }  from './config.mjs';
-import { loadBiolink } from './biolink-model.mjs';
-import { loadChebi } from './chebi.mjs';
-import { TranslatorService } from './TranslatorService.mjs';
-import { TranslatorServicexFEAdapter } from './TranslatorServicexFEAdapter.mjs';
-import { ARSClient } from './ARSClient.mjs';
-import { KGAnnotationClient } from './KGAnnotationClient.mjs';
-import * as httpserver from './HTTPServer.mjs';
-import { AuthService } from './auth/AuthService.mjs';
-import { UserService } from './UserService.mjs';
+import { bootstrapConfig } from './lib/config.mjs';
 
-import { SessionStorePostgres } from './auth/SessionStorePostgres.mjs';
-import { UserStorePostgres } from './users/UserStorePostgres.mjs';
-import { pg } from './postgres_preamble.mjs';
-import { UserPreferenceStorePostgres } from './users/UserPreferenceStorePostgres.mjs';
-import { UserSavedDataStorePostgres } from './users/UserSavedDataStorePostgres.mjs';
-import { overwriteObj, readJson } from './common.mjs';
+import { loadBiolink } from './lib/biolink-model.mjs';
+import { loadChebi } from './lib/chebi.mjs';
+import { TranslatorService } from './services/TranslatorService.mjs';
+import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
+import { ARSClient } from './lib/ARSClient.mjs';
+import { KGAnnotationClient } from './lib/KGAnnotationClient.mjs';
+import * as httpserver from './HTTPServer.mjs';
+import { AuthService } from './services/AuthService.mjs';
+import { UserService } from './services/UserService.mjs';
+
+import { SessionStorePostgres } from './stores/SessionStorePostgres.mjs';
+import { UserStorePostgres } from './stores/UserStorePostgres.mjs';
+import { pg } from './lib/postgres_preamble.mjs';
+import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgres.mjs';
+import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
 
 // Load the config asap as basically everything depends on it
-//let SERVER_CONFIG = await loadConfigFromFile(process.argv.length < 3 ? './configurations/mock.json' : './' + process.argv[2]);
-let SERVER_CONFIG;
-if (process.argv.length === 3) {
-  SERVER_CONFIG = await loadConfigFromFile(process.argv[2]);
-} else if (process.argv.length ===  4) {
-  SERVER_CONFIG = await loadConfigFromFile(process.argv[2]);
-  let overrides = await loadConfigFromFile(process.argv[3]);
-  SERVER_CONFIG = overwriteObj(SERVER_CONFIG, overrides);
-} else {
-  throw new Error(`Unsupported number of args (${process.argv.length}) at startup. Exiting.`);
-}
-postProcessConfig(SERVER_CONFIG);
+const SERVER_CONFIG = await (async function() {
+  let basefile, overrides = null;
+  if (process.argv.length === 3) {
+    basefile = process.argv[2];
+  } else if (process.argv.length === 4) {
+    basefile = process.argv[2];
+    overrides = process.argv[3]
+  } else {
+    throw new Error(`Unsupported number of args (${process.argv.length}) at startup. Exiting.`);
+  }
+  return bootstrapConfig(basefile, overrides);
+})();
 
 await loadBiolink(SERVER_CONFIG.biolink.version,
                   SERVER_CONFIG.biolink.support_deprecated_predicates,
