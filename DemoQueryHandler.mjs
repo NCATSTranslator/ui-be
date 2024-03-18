@@ -1,6 +1,6 @@
 'use strict'
 
-import * as wutil from './webutils.mjs';
+import * as wutil from './lib/webutils.mjs';
 
 export { validateDemoQueryRequest, handleDemoQueryRequest };
 
