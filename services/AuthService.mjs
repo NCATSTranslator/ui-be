@@ -2,7 +2,7 @@
 
 import { Session } from '../models/Session.mjs';
 import { User } from '../models/User.mjs';
-import * as sso from '../SocialSignOn.mjs';
+import * as sso from '../lib/SocialSignOn.mjs';
 
 export { AuthService,
   CookieNotFoundError,
