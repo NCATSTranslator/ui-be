@@ -10,6 +10,10 @@ import { createUserController } from './routers/UserAPIController.mjs';
 import { createAPIRouter } from './routers/APIRouter.mjs';
 import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
+// Controllers
+import { configController } from './controllers/ConfigAPIController.mjs';
+import { queryController } from './controllers/QueryAPIController.mjs';
+
 import * as wutil from './lib/webutils.mjs';
 
 export function startServer(config, services) {
@@ -62,6 +66,9 @@ export function startServer(config, services) {
   app.get(['/demo', '/main', '/demo/*', '/main/*', '/login'], (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
+
+  app.use('/api/v1/config', configController(config));
+  app.use('/api/v1/query', queryController(config, services.translatorService));
 
   app.get('*', (req, res, next) => {
     res.redirect(302, '/main');
