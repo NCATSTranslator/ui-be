@@ -13,6 +13,18 @@ export { AuthService,
   SessionExpiredError
 };
 
+const SESSION_NO_TOKEN = 0;
+const SESSION_INVALID_TOKEN = 1;
+const SESSION_TOKEN_NOT_FOUND = 2;
+const SESSION_NO_USER = 3;
+const SESSION_SESSION_EXPIRED = 4;
+const SESSION_TOKEN_EXPIRED = 5;
+const SESSION_VALID = 6;
+const SESSION_INVALID_USER = 7;
+const SESSION_FORCE_KILLED = 8;
+
+
+
 class CookieNotFoundError extends Error {
   constructor() {
       super(`No token submitted`);
@@ -69,17 +81,51 @@ class AuthService {
     return this.userStore.retrieveUserById(id);
   }
 
-  async createNewUnauthSession(SSOData) {
-    let res = null;
-    try {
-       res = this.sessionStore.createNewSession(new Session());
-       console.log(`authservice: new unauth session: ${JSON.stringify(res)}`);
-       return res;
-    } catch (err) {
-      console.error(err);
-      return res;
+  async getSessionStatus(token) {
+    if (!token) {
+      return SESSION_NO_TOKEN;
     }
+
+    if (!this.isTokenSyntacticallyValid(token)) {
+      return SESSION_INVALID_TOKEN;
+    }
+
+    const session = await this.retrieveSessionByToken(token);
+    if (!session) {
+      return SESSION_TOKEN_NOT_FOUND;
+    }
+
+    if (!session.user_id) {
+      return SESSION_NO_USER;
+    }
+
+    if (session.force_kill) {
+      return SESSION_FORCE_KILLED;
+    }
+
+    const user =  await this.getUserById(session.user_id);
+    if (!user) {
+      return SESSION_NO_USER;
+    }
+
+    if (user.deleted) {
+      return SESSION_INVALID_USER;
+    }
+
+    /* Note: it's critical to check session expiry before token expiry, as
+     * an expired session requires a re-login whereas a live session with
+     * an expired token is a valid session that only requires a token refresh. */
+    if (this.isSessionExpired(session)) {
+      return SESSION_SESSION_EXPIRED;
+    }
+
+    if (this.isTokenExpired(session)) {
+      return SESSION_TOKEN_EXPIRED;
+    }
+
+    return SESSION_VALID;
   }
+
 
   async createNewAuthSession(user, SSOData) {
     let res = null;
@@ -215,3 +261,42 @@ class AuthService {
   }
 
 }
+
+/*
+import { pg } from '../lib/postgres_preamble.mjs';
+import { SessionStorePostgres } from '../stores/SessionStorePostgres.mjs';
+import { UserStorePostgres } from '../stores/UserStorePostgres.mjs';
+
+export const aa = (function (config) {
+  const dbPool = new pg.Pool({
+    ...config.storage.pg,
+    password: config.secrets.pg.password,
+    ssl: config.db_conn.ssl
+  });
+  return new AuthService({
+    tokenTTLSec: config.sessions.token_ttl_sec,
+    sessionAbsoluteTTLSec: config.sessions.session_absolute_ttl_sec,
+    sessionMaxIdleTimeSec: config.sessions.session_max_idle_time_sec
+  },
+  new SessionStorePostgres(dbPool),
+  new UserStorePostgres(dbPool));
+})({
+  storage: {
+    "pg": {
+      "host": "pgdb",
+      "user": "app_data",
+      "port": "5432",
+      "database": "app_data"
+    }
+  },
+  "db_conn": {
+    "ssl": false
+  },
+  secrets: { pg: {password: "yourpassword"}},
+  sessions: {
+    "token_ttl_sec": 1800,
+    "session_max_idle_time_sec": 15780000,
+    "session_absolute_ttl_sec": 15780000
+  }
+})
+*/
