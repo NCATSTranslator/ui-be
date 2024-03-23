@@ -67,8 +67,13 @@ export function startServer(config, services) {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
 
+  // NEW
   app.use('/api/v1/config', configController(config));
   app.use('/api/v1/query', queryController(config, services.translatorService));
+
+  app.all(['/api', '/api/*'], (req, res) => {
+    return res.status(403).send('Forbidden');
+  });
 
   app.get('*', (req, res, next) => {
     res.redirect(302, '/main');
