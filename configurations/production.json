@@ -19,7 +19,7 @@
   "biolink": {
     "version": "3.6.0",
     "support_deprecated_predicates": false,
-    "infores_catalog": "infores-catalog-mini.json",
+    "infores_catalog": "infores-catalog-v0.2.5.json",
     "prefix_catalog": "prefix-catalog.json"
   },
   "session_cookie": {
