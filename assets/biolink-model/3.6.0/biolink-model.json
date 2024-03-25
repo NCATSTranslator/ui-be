@@ -1668,6 +1668,7 @@
     },
     "superclass of": {
       "is_a": "related to at concept level",
+      "inverse": "subclass of",
       "description": "holds between two classes where the domain class is a super class of the range class",
       "domain": "ontology class",
       "range": "ontology class",

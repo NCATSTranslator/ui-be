@@ -13,7 +13,19 @@
   },
   "annotation_endpoint": {
     "host": "biothings.ci.transltr.io",
-    "pull_uri": "/annotator/",
+    "fields": [
+      "chebi.relationship.has_role",
+      "chembl.max_phase",
+      "chembl.drug_indications.mesh_id",
+      "disease_ontology.def",
+      "disease_ontology.xrefs.mesh",
+      "mondo.xrefs.mesh",
+      "ndc.proprietaryname",
+      "ndc.nonproprietaryname",
+      "summary",
+      "unii.ncit_description"
+    ],
+    "pull_uri": "/annotator",
     "timeout_ms": 60000
   },
   "biolink": {
