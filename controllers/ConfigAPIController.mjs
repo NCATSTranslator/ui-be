@@ -2,9 +2,9 @@
 
 import { default as express } from 'express';
 
-export { configController };
+export { configAPIController  };
 
-function configController(config) {
+function configAPIController(config) {
   const router = express.Router();
   router.get('/', function(req, res, next) {
     return res.status(200).json({
