@@ -126,6 +126,17 @@ class AuthService {
     return SESSION_VALID;
   }
 
+  async createNewUnauthSession(SSOData) {
+    let res = null;
+    try {
+       res = this.sessionStore.createNewSession(new Session());
+       console.log(`authservice: new unauth session: ${JSON.stringify(res)}`);
+       return res;
+    } catch (err) {
+      console.error(err);
+      return res;
+    }
+  }
 
   async createNewAuthSession(user, SSOData) {
     let res = null;
