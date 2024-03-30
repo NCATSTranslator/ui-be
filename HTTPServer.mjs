@@ -11,8 +11,9 @@ import { createAPIRouter } from './routers/APIRouter.mjs';
 import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
 // Controllers
-import { configController } from './controllers/ConfigAPIController.mjs';
-import { queryController } from './controllers/QueryAPIController.mjs';
+import { configAPIController } from './controllers/ConfigAPIController.mjs';
+import { queryAPIController } from './controllers/QueryAPIController.mjs';
+import { LoginController } from './controllers/LoginController.mjs';
 
 import * as wutil from './lib/webutils.mjs';
 
@@ -22,6 +23,7 @@ export function startServer(config, services) {
   const demoQueries = config.frontend.cached_queries.filter(e => e.allow_inbound);
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
+  const loginController = new LoginController(config, authService)
   app.use(pinoHttp());
   app.use(express.json({ limit: config.json_payload_limit }));
   app.use(cookieParser());
@@ -34,15 +36,21 @@ export function startServer(config, services) {
     res.send('OK');
   });
 
+  app.get('/main/logout.html',  (req, res, next) => {
+    res.sendFile(path.join(__root, 'build/logout.html'));
+  });
+
   app.all(['/demo', '/demo/*'], validateUnauthSession(config, authService));
   app.all(['/main', '/main/*'], validateAuthSession(config, authService));
 
   app.get('/main',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
-  app.get('/main/logout', handleLogout(config, authService));
+  ///app.get('/main/logout', handleLogout(config, authService));
   // logout.html is temp. to test una logout.
-  app.get('/main/logout.html',  (req, res, next) => {
+
+
+  app.get('/logout.html',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/logout.html'));
   });
 
@@ -61,19 +69,22 @@ export function startServer(config, services) {
   app.use('/demo/api/v1/pub', createAPIRouter(config, services, true));
   app.use('/main/api/v1/pvt/users', createUserController(config, services));
 
-  app.get('/oauth2/redir/:provider', handleLogin(config, authService));
+  ///app.get('/oauth2/redir/:provider', handleLogin(config, authService));
 
   app.get(['/demo', '/main', '/demo/*', '/main/*', '/login'], (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
 
   // NEW
-  app.use('/api/v1/config', configController(config));
-  app.use('/api/v1/query', queryController(config, services.translatorService));
-
+  app.use('/api/v1/config', configAPIController(config));
+  app.use('/api/v1/query', queryAPIController(config, services.translatorService));
+  //app.use('/api/v1/users', userRouter(config))
   app.all(['/api', '/api/*'], (req, res) => {
     return res.status(403).send('Forbidden');
   });
+
+  app.get('/oauth2/redir/:provider', loginController.login);
+  app.get('/main/logout2', loginController.logout);
 
   app.get('*', (req, res, next) => {
     res.redirect(302, '/main');
@@ -82,6 +93,7 @@ export function startServer(config, services) {
   app.listen(8386);
 }
 
+/*
 function handleLogin(config, authService) {
   return async function(req, res, next) {
     const provider = req.params.provider;
@@ -118,7 +130,7 @@ function handleLogout(config, authService) {
     return res.redirect(302, `/demo`);
   };
 }
-
+*/
 
 function validateAuthSession(config, authService) {
   function handleUnauthSession(req, res) {
@@ -208,6 +220,7 @@ function validateUnauthSession(config, authService) {
         console.log(`>>> >>> >>> sessionData: ${JSON.stringify(session)}`);
       }
     } catch (err) {
+      console.error(`Yaboo: ${err}`);
       wutil.logInternalServerError(`Auth validation error: ${err}`);
       return wutil.sendInternalServerError(`Auth validation error: ${err}`);
     }

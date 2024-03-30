@@ -4,9 +4,9 @@ import { default as express } from 'express';
 import * as cmn from '../lib/common.mjs';
 import * as wutil from '../lib/webutils.mjs';
 
-export { queryController };
+export { queryAPIController };
 
-function queryController(config, translatorService) {
+function queryAPIController(config, translatorService) {
   let router = express.Router();
 
   router.post('/', function(req, res, next) {
