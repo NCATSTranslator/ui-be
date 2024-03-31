@@ -43,7 +43,6 @@ class QueryAPIController {
   }
 
   async getQueryStatus(req, res, next) {
-    console.log(`${this.config}`);
     if (!this.isValidQueryResultRequest(req)) {
       return wutil.sendError(res, 400, 'Malformed Request');
     }
@@ -65,7 +64,7 @@ class QueryAPIController {
       let uuid = req.params.qid;
       let svcRes = await this.translatorService.getResults(uuid, this.filters);
       let retval = await this.translatorService.outputAdapter.queryResultsToFE(
-        svcRes, config.max_hops, config.ara_to_infores_map);
+        svcRes, this.config.max_hops, this.config.ara_to_infores_map);
       return res.status(200).json(retval);
     } catch (err) {
       wutil.logInternalServerError(req, err);

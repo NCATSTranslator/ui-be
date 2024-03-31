@@ -11,7 +11,7 @@ import { createAPIRouter } from './routers/APIRouter.mjs';
 import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
 // Controllers
-import { configAPIController } from './controllers/ConfigAPIController.mjs';
+import { ConfigAPIController } from './controllers/ConfigAPIController.mjs';
 import { QueryAPIController } from './controllers/QueryAPIController.mjs';
 import { LoginController } from './controllers/LoginController.mjs';
 
@@ -30,6 +30,8 @@ export function startServer(config, services) {
   const app = express();
   const loginController = new LoginController(config, authService);
   const queryAPIController = new QueryAPIController(config, translatorService, filters);
+  const configAPIController = new ConfigAPIController(config);
+
   app.use(pinoHttp());
   app.use(express.json({ limit: config.json_payload_limit }));
   app.use(cookieParser());
@@ -79,18 +81,18 @@ export function startServer(config, services) {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
 
-  // NEW
-  app.use('/api/v1/config', configAPIController(config));
+  // == -- -- NEW -- -- ==
+  app.use('/api/v1/config', configAPIController.getConfig.bind(configAPIController));
+
+  // Query routes
+  app.post('/api/v1/query', queryAPIController.submitQuery.bind(queryAPIController));
+  app.get('/api/v1/query/:qid/status', queryAPIController.getQueryStatus.bind(queryAPIController));
+  app.get('/api/v1/query/:qid/result', queryAPIController.getQueryResult.bind(queryAPIController));
+
   //app.use('/api/v1/query', queryAPIController(config, services.translatorService));
-
-  app.post('/api/v1/query', queryAPIController.submitQuery);
-  app.get('/api/v1/query/:qid/status', queryAPIController.getQueryStatus);
-  app.get('/api/v1/query/:qid/result', queryAPIController.getQueryResult);
-
-
   //app.use('/api/v1/users', userRouter(config))
   app.all(['/api', '/api/*'], (req, res) => {
-    return res.status(403).send('Forbidden');
+    return res.status(403).send('API action Forbidden');
   });
 
   app.get('/oauth2/redir/:provider', loginController.login);
