@@ -12,25 +12,29 @@ import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHan
 
 // Controllers
 import { configAPIController } from './controllers/ConfigAPIController.mjs';
-import { queryAPIController } from './controllers/QueryAPIController.mjs';
+import { QueryAPIController } from './controllers/QueryAPIController.mjs';
 import { LoginController } from './controllers/LoginController.mjs';
 
 import * as wutil from './lib/webutils.mjs';
 
 export function startServer(config, services) {
   console.log("Der Anfang ist das Ende und das Ende ist der Anfang");
+
+  const filters = {whitelistRx: /^ara-/}; // TODO: move to config
+  config.filters = filters;
+
   const authService = services.authService;
+  const translatorService = services.translatorService;
   const demoQueries = config.frontend.cached_queries.filter(e => e.allow_inbound);
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
-  const loginController = new LoginController(config, authService)
+  const loginController = new LoginController(config, authService);
+  const queryAPIController = new QueryAPIController(config, translatorService, filters);
   app.use(pinoHttp());
   app.use(express.json({ limit: config.json_payload_limit }));
   app.use(cookieParser());
 
   app.use(express.static('./build'));
-  const filters = {whitelistRx: /^ara-/}; // TODO: move to config
-  config.filters = filters;
 
   app.get('/health', (req, res, next) => {
     res.send('OK');
@@ -77,7 +81,13 @@ export function startServer(config, services) {
 
   // NEW
   app.use('/api/v1/config', configAPIController(config));
-  app.use('/api/v1/query', queryAPIController(config, services.translatorService));
+  //app.use('/api/v1/query', queryAPIController(config, services.translatorService));
+
+  app.post('/api/v1/query', queryAPIController.submitQuery);
+  app.get('/api/v1/query/:qid/status', queryAPIController.getQueryStatus);
+  app.get('/api/v1/query/:qid/result', queryAPIController.getQueryResult);
+
+
   //app.use('/api/v1/users', userRouter(config))
   app.all(['/api', '/api/*'], (req, res) => {
     return res.status(403).send('Forbidden');
