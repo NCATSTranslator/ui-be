@@ -82,48 +82,65 @@ class AuthService {
   }
 
   async getSessionStatus(token) {
+    let retval = {
+      status: null,
+      user: null,
+      session: null
+    };
+
     if (!token) {
-      return SESSION_NO_TOKEN;
+      retval.status = SESSION_NO_TOKEN;
+      return retval;
     }
 
     if (!this.isTokenSyntacticallyValid(token)) {
-      return SESSION_INVALID_TOKEN;
+      retval.status = SESSION_INVALID_TOKEN;
+      return retval;
     }
 
-    const session = await this.retrieveSessionByToken(token);
-    if (!session) {
-      return SESSION_TOKEN_NOT_FOUND;
+    retval.session = await this.retrieveSessionByToken(token);
+    if (!retval.session) {
+      retval.status = SESSION_TOKEN_NOT_FOUND;
+      return retval;
     }
 
-    if (!session.user_id) {
-      return SESSION_NO_USER;
+    if (!retval.session.user_id) {
+      retval.status = SESSION_NO_USER;
+      return retval;
     }
 
-    if (session.force_kill) {
-      return SESSION_FORCE_KILLED;
+    if (retval.session.force_kill) {
+      retval.status = SESSION_FORCE_KILLED;
+      return retval;
     }
 
-    const user =  await this.getUserById(session.user_id);
-    if (!user) {
-      return SESSION_NO_USER;
+    // Note: reuse of SESSION_NO_USER is intentional
+    retval.user =  await this.getUserById(retval.session.user_id);
+    if (!retval.user) {
+      retval.status = SESSION_NO_USER;
+      return retval;
     }
 
-    if (user.deleted) {
-      return SESSION_INVALID_USER;
+    if (retval.user.deleted) {
+      retval.status = SESSION_INVALID_USER;
+      return retval;
     }
 
     /* Note: it's critical to check session expiry before token expiry, as
      * an expired session requires a re-login whereas a live session with
      * an expired token is a valid session that only requires a token refresh. */
-    if (this.isSessionExpired(session)) {
-      return SESSION_SESSION_EXPIRED;
+    if (this.isSessionExpired(retval.session)) {
+      retval.status = SESSION_SESSION_EXPIRED;
+      return retval;
     }
 
-    if (this.isTokenExpired(session)) {
-      return SESSION_TOKEN_EXPIRED;
+    if (this.isTokenExpired(retval.session)) {
+      retval.status = SESSION_TOKEN_EXPIRED;
+      return retval;
     }
 
-    return SESSION_VALID;
+    retval.status = SESSION_VALID;
+    return retval;
   }
 
   async createNewUnauthSession(SSOData) {
