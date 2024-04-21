@@ -14,6 +14,7 @@ import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHan
 import { ConfigAPIController } from './controllers/ConfigAPIController.mjs';
 import { QueryAPIController } from './controllers/QueryAPIController.mjs';
 import { LoginController } from './controllers/LoginController.mjs';
+import { SessionController } from './controllers/SessionController.mjs';
 
 import * as wutil from './lib/webutils.mjs';
 
@@ -31,6 +32,7 @@ export function startServer(config, services) {
   const loginController = new LoginController(config, authService);
   const queryAPIController = new QueryAPIController(config, translatorService, filters);
   const configAPIController = new ConfigAPIController(config);
+  const sessionController = new SessionController(config, authService);
 
   app.use(pinoHttp());
   app.use(express.json({ limit: config.json_payload_limit }));
@@ -88,6 +90,10 @@ export function startServer(config, services) {
   app.post('/api/v1/query', queryAPIController.submitQuery.bind(queryAPIController));
   app.get('/api/v1/query/:qid/status', queryAPIController.getQueryStatus.bind(queryAPIController));
   app.get('/api/v1/query/:qid/result', queryAPIController.getQueryResult.bind(queryAPIController));
+
+  // Session routes
+  app.get('/api/v1/session/status', sessionController.getStatus.bind(sessionController));
+  app.post('/api/v1/session/status', sessionController.updateStatus.bind(sessionController));
 
   //app.use('/api/v1/query', queryAPIController(config, services.translatorService));
   //app.use('/api/v1/users', userRouter(config))
