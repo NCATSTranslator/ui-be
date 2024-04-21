@@ -95,8 +95,8 @@ export function startServer(config, services) {
     return res.status(403).send('API action Forbidden');
   });
 
-  app.get('/oauth2/redir/:provider', loginController.login);
-  app.get('/main/logout2', loginController.logout);
+  app.get('/oauth2/redir/:provider', loginController.login.bind(loginController));
+  app.get('/main/logout2', loginController.logout.bind(loginController));
 
   app.get('*', (req, res, next) => {
     res.redirect(302, '/main');
