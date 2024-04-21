@@ -202,6 +202,9 @@ class AuthService {
 
   async handleSSORedirect(provider, authcode, config) {
     const SSOData = await sso.handleSSORedirect(provider, authcode, config);
+    if (!SSOData) {
+      return null;
+    }
     let email = SSOData.email;
     let user = await this.userStore.retrieveUserByEmail(email);
     if (user) {
