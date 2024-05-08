@@ -32,7 +32,7 @@ class TranslatorService
 
   inputToQuery(input)
   {
-    return trapi.queryToCreativeQuery(input);
+    return trapi.queryToTrapiQuery(input);
   }
 
   async submitQuery(query)

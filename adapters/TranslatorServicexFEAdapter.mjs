@@ -52,7 +52,7 @@ class TranslatorServicexFEAdapter {
       }
     });
 
-    const summary = await trapi.creativeAnswersToSummary(
+    const summary = await trapi.answersToSummary(
       msg.pk,
       data,
       maxHops,
