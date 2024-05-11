@@ -44,6 +44,20 @@ export function startServer(config, services) {
     res.send('OK');
   });
 
+  /* On all routes below, check the session status. If a valid session exists for a submitted token,
+   * refresh the token if necessary, update the session time, and attach the user to req.
+   * If no valid session exists (or no token submitted/invalid token, etc.), take no backend action
+   * but attach a boolean to the req object indicating no valid session present.
+   *
+   * ** !!! Privileged routes below rely on these actions taking place prior to their handlers being called !!! ***
+   */
+  app.use(sessionController.attachSessionStatus.bind(sessionController));
+
+  // Session status API
+  app.get('/api/v1/session/status', sessionController.getStatus.bind(sessionController));
+  app.post('/api/v1/session/status', sessionController.updateStatus.bind(sessionController));
+
+
   app.get('/main/logout.html',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/logout.html'));
   });

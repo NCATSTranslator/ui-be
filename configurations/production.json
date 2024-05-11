@@ -40,10 +40,11 @@
     }
   },
   "session_cookie": {
-    "name": "session_token",
+    "name": "nc0000",
     "http_only": true,
     "secure": true,
-    "same_site": "Lax"
+    "same_site": "Lax",
+    "path": "/"
   },
   "db_conn": {
     "ssl": {

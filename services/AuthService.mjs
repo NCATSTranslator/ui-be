@@ -10,18 +10,29 @@ export { AuthService,
   SessionNotUsableError,
   NoUserForSessionError,
   UserDeletedError,
-  SessionExpiredError
+  SessionExpiredError,
+  SESSION_NO_TOKEN,
+  SESSION_INVALID_TOKEN,
+  SESSION_TOKEN_NOT_FOUND,
+  SESSION_NO_USER,
+  SESSION_SESSION_EXPIRED,
+  SESSION_TOKEN_EXPIRED,
+  SESSION_VALID,
+  SESSION_INVALID_USER,
+  SESSION_FORCE_KILLED
 };
 
 const SESSION_NO_TOKEN = 0;
 const SESSION_INVALID_TOKEN = 1;
 const SESSION_TOKEN_NOT_FOUND = 2;
 const SESSION_NO_USER = 3;
-const SESSION_SESSION_EXPIRED = 4;
-const SESSION_TOKEN_EXPIRED = 5;
-const SESSION_VALID = 6;
-const SESSION_INVALID_USER = 7;
-const SESSION_FORCE_KILLED = 8;
+const SESSION_FORCE_KILLED = 4;
+const SESSION_INVALID_USER = 5;
+const SESSION_SESSION_EXPIRED = 6;
+const SESSION_TOKEN_EXPIRED = 7;
+const SESSION_VALID = 8;
+
+
 
 
 
@@ -141,6 +152,10 @@ class AuthService {
 
     retval.status = SESSION_VALID;
     return retval;
+  }
+
+  isSessionStatusValid(status) {
+    return (status === SESSION_TOKEN_EXPIRED || status === SESSION_VALID);
   }
 
   async createNewUnauthSession(SSOData) {
