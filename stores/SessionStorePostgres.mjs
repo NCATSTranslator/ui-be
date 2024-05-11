@@ -14,6 +14,7 @@ class SessionStorePostgres extends iSessionStore {
     // https://node-postgres.com/apis/pool#new-pool
     this.pool = pool ? pool : new pg.Pool(config);
   }
+
   async retrieveSessionByToken(token) {
     let retval = null;
     const sql = `
@@ -79,6 +80,22 @@ class SessionStorePostgres extends iSessionStore {
     let retval = null;
     let sql = `UPDATE sessions SET force_kill = true WHERE token = $1 RETURNING *`;
     let res = await pgExec(this.pool, sql, [token]);
+    if (res.rows.length > 0) {
+      retval = new Session(res.rows[0]);
+    }
+    return retval;
+  }
+
+  async updateSessionTimeByToken(token, time=new Date()) {
+    let retval = null;
+    const sql = `
+      UPDATE sessions
+      SET
+        time_session_updated = $1
+      WHERE token = $2
+      RETURNING *
+    `;
+    let res = await pgExec(this.pool, sql, [time, token]);
     if (res.rows.length > 0) {
       retval = new Session(res.rows[0]);
     }
