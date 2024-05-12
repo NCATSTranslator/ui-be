@@ -33,6 +33,7 @@ class SessionController {
       return res.status(500).send(`Server error retrieving session status`);
     }
     let sessionStatus = {...req.sessionStatus};
+    // Delete raw session data before returning to FE
      return res.status(200).json(this._sanitizeSessionStatus(sessionStatus));
   }
 
