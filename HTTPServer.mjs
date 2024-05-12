@@ -19,7 +19,6 @@ import { SessionController } from './controllers/SessionController.mjs';
 import * as wutil from './lib/webutils.mjs';
 
 export function startServer(config, services) {
-  console.log("Der Anfang ist das Ende und das Ende ist der Anfang");
 
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config file
   config.filters = filters;
@@ -123,6 +122,7 @@ export function startServer(config, services) {
   });
 
   app.listen(8386);
+  console.log("Der Anfang ist das Ende und das Ende ist der Anfang");
 }
 
 /*
