@@ -21,7 +21,7 @@ import * as wutil from './lib/webutils.mjs';
 export function startServer(config, services) {
   console.log("Der Anfang ist das Ende und das Ende ist der Anfang");
 
-  const filters = {whitelistRx: /^ara-/}; // TODO: move to config
+  const filters = {whitelistRx: /^ara-/}; // TODO: move to config file
   config.filters = filters;
 
   const authService = services.authService;
