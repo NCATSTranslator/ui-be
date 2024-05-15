@@ -1,7 +1,7 @@
 'use strict';
 
 import * as arsmsg from '../lib/ARSMessages.mjs';
-import * as trapi from '../lib/trapi.mjs';
+import * as summarizer from '../lib/summarizer.mjs';
 
 /* Translate messages coming from the Translator Service into the formats that the Frontend (FE) app expects */
 /* This module should not contain logic that goes beyond message transformations */
@@ -52,7 +52,7 @@ class TranslatorServicexFEAdapter {
       }
     });
 
-    const summary = await trapi.answersToSummary(
+    const summary = await summarizer.answersToSummary(
       msg.pk,
       data,
       maxHops,

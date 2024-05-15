@@ -4,6 +4,7 @@ import { bootstrapConfig } from './lib/config.mjs';
 
 import { loadBiolink } from './lib/biolink-model.mjs';
 import { loadChebi } from './lib/chebi.mjs';
+import { loadTrapi } from './lib/trapi.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
@@ -32,10 +33,8 @@ const SERVER_CONFIG = await (async function() {
   return bootstrapConfig(basefile, overrides);
 })();
 
-await loadBiolink(SERVER_CONFIG.biolink.version,
-                  SERVER_CONFIG.biolink.support_deprecated_predicates,
-                  SERVER_CONFIG.biolink.infores_catalog,
-                  SERVER_CONFIG.biolink.prefix_catalog);
+await loadBiolink(SERVER_CONFIG.biolink);
+await loadTrapi(SERVER_CONFIG.trapi);
 await loadChebi();
 
 // Bootstrap the translator service.
@@ -53,7 +52,7 @@ const TRANSLATOR_SERVICE = (function (config) {
     config.annotation_endpoint.fields,
     config.annotation_endpoint.timeout_ms);
   const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
-  return new TranslatorService(queryClient, outputAdapter);
+  return new TranslatorService(queryClient, outputAdapter, config.trapi);
 })(SERVER_CONFIG);
 
 // Bootstrap the auth service
