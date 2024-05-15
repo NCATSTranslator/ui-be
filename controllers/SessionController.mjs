@@ -34,7 +34,7 @@ class SessionController {
     }
     let sessionStatus = {...req.sessionStatus};
     // Delete raw session data before returning to FE
-     return res.status(200).json(this._sanitizeSessionStatus(sessionStatus));
+    return res.status(200).json(this._sanitizeSessionStatus(sessionStatus));
   }
 
   async refreshSession(req, res, next) {
