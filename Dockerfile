@@ -5,6 +5,7 @@ WORKDIR /app
 # This script assumes no git actions
 COPY . ./
 RUN npm install \
+  && rm -rf node_modules/resolve/test \
   && cd ui-fe \
   && npm install \
   && npm run build \
