@@ -33,7 +33,7 @@
     "timeout_ms": 60000
   },
   "biolink": {
-    "version": "3.6.0",
+    "version": "4.2.0",
     "support_deprecated_predicates": false,
     "infores_catalog": "infores-catalog-v0.2.5.json",
     "prefix_catalog": "prefix-catalog.json"
