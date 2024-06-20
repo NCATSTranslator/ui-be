@@ -1,0 +1,600 @@
+
+> js@1.0.0 test
+> node StartServer.mjs configurations/test.json configurations/local-overrides.json
+
+configurations/test.json
+configurations/local-overrides.json
+{
+  document_root: false,
+  port: 8386,
+  response_timeout: 300,
+  json_payload_limit: '1mb',
+  ars_endpoint: {
+    host: 'ars.test.transltr.io',
+    post_uri: '/ars/api/submit',
+    pull_uri: '/ars/api/messages',
+    retain_uri: '/ars/api/retain',
+    protocol: 'https',
+    use_ars_merging: true
+  },
+  annotation_endpoint: {
+    host: 'biothings.test.transltr.io',
+    fields: [
+      'chebi.relationship.has_role',
+      'chembl.max_phase',
+      'chembl.drug_indications.mesh_id',
+      'disease_ontology.def',
+      'disease_ontology.xrefs.mesh',
+      'mondo.xrefs.mesh',
+      'ndc.proprietaryname',
+      'ndc.nonproprietaryname',
+      'summary',
+      'unii.ncit_description'
+    ],
+    pull_uri: '/annotator',
+    timeout_ms: 60000
+  },
+  biolink: {
+    version: '4.2.1',
+    support_deprecated_predicates: false,
+    infores_catalog: 'infores-catalog-v0.2.7.json',
+    prefix_catalog: 'prefix-catalog.json'
+  },
+  session_cookie: {
+    name: 'session_token',
+    http_only: true,
+    secure: true,
+    same_site: 'Lax'
+  },
+  db_conn: { ssl: false },
+  google_analytics_id: 'G-T9HTSPVNW9',
+  _load_frontend: 'configurations/frontend/test.json',
+  max_hops: 3,
+  log_level: 'all',
+  log_format: 'common',
+  _load_auth: 'configurations/auth/auth.local.json',
+  _load_sessions: 'configurations/sessions.json',
+  _load_storage: 'configurations/storage.json',
+  _load_secrets: 'configurations/secrets/secrets.json',
+  mainsite_path: '/main',
+  demosite_path: '/demo',
+  pg_host: 'pgdb',
+  'document-root': '/Users/guthrieprice/dev/ui-be',
+  frontend: {
+    name_resolver: { endpoint: 'https://name-lookup.test.transltr.io' },
+    cached_queries: [
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object]
+    ]
+  },
+  auth: {
+    social_providers: { google: [Object], facebook: [Object], una: [Object] }
+  },
+  sessions: {
+    token_ttl_sec: 1800,
+    session_max_idle_time_sec: 15780000,
+    session_absolute_ttl_sec: 15780000
+  },
+  storage: {
+    pg: {
+      host: 'pgdb',
+      user: 'app_data',
+      port: '5432',
+      database: 'app_data'
+    }
+  },
+  secrets: '[REDACTED]'
+}
+Der Anfang ist das Ende und das Ende ist der Anfang
+{"level":30,"time":1718907852648,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":1,"method":"GET","url":"/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","query":{"l":"Asthma","i":"MONDO:0004979","t":"0","r":"0","q":"89a5b9e7-9daf-48b7-8cd7-bc7ade73808a"},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","cookie":"session_token=50c40572-3f86-49f3-87fc-0fb4e89bf5ed","upgrade-insecure-requests":"1","sec-fetch-dest":"document","sec-fetch-mode":"navigate","sec-fetch-site":"none","sec-fetch-user":"?1","priority":"u=1"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55477},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"731-190041c28e8\"","content-type":"text/html; charset=UTF-8","content-length":1841}},"responseTime":159,"msg":"request completed"}
+{"level":30,"time":1718907852661,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":2,"method":"GET","url":"/assets/index-b830f440.js","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","sec-fetch-dest":"script","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"1424cf-190041c28e8\""},"remoteAddress":"::ffff:127.0.0.1","remotePort":55477},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"1424cf-190041c28e8\""}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1718907852663,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":3,"method":"GET","url":"/assets/index-bd076751.css","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"text/css,*/*;q=0.1","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","sec-fetch-dest":"style","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"23980-190041c28de\"","priority":"u=2"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55479},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"23980-190041c28de\""}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1718907852734,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":4,"method":"GET","url":"/assets/site-logo-427c2ea9.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"7b13-190041c28c8\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55477},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"7b13-190041c28c8\""}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1718907852740,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":5,"method":"GET","url":"/assets/loading-purple-24929053.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"20b1-190041c28c8\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55477},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"20b1-190041c28c8\""}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1718907852741,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":6,"method":"GET","url":"/assets/pfp-71898c51.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"3ae4-190041c28c8\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55479},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"3ae4-190041c28c8\""}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1718907852748,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":7,"method":"GET","url":"/assets/Property_1_Down-38eda2b3.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"d8-190041c28c8\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55477},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"d8-190041c28c8\""}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1718907852749,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":8,"method":"GET","url":"/assets/arrow-counterclockwise-4469d059.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"167-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55479},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"167-190041c28c7\""}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1718907852755,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":9,"method":"GET","url":"/assets/arrow-clockwise-1a76c340.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"160-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55480},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"160-190041c28c7\""}},"responseTime":5,"msg":"request completed"}
+{"level":30,"time":1718907852759,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":10,"method":"GET","url":"/assets/text-paragraph-ca45ef4b.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"1a1-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55481},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"1a1-190041c28c7\""}},"responseTime":3,"msg":"request completed"}
+{"level":30,"time":1718907852761,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":11,"method":"GET","url":"/assets/chevron-down-13f7d60a.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"122-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55482},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"122-190041c28c7\""}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1718907852762,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":13,"method":"GET","url":"/assets/type-bold-8e7adb4a.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"1d6-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55483},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"1d6-190041c28c7\""}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1718907852863,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":14,"method":"GET","url":"/main/api/v1/pub/config","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","content-type":"application/json","connection":"keep-alive","cookie":"session_token=50c40572-3f86-49f3-87fc-0fb4e89bf5ed","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","if-none-match":"W/\"1934-XCHlezqmC8THqsm87vg782Kv/KE\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55479},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","etag":"W/\"1934-XCHlezqmC8THqsm87vg782Kv/KE\""}},"responseTime":101,"msg":"request completed"}
+{"level":30,"time":1718907852863,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":18,"method":"GET","url":"/assets/type-italic-29722685.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"15f-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55483},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"15f-190041c28c7\""}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1718907852864,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":19,"method":"GET","url":"/assets/type-underline-e1038bb0.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"14e-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55479},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"14e-190041c28c7\""}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1718907852864,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":20,"method":"GET","url":"/assets/type-strikethrough-7e294324.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"243-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55483},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"243-190041c28c7\""}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1718907852864,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":21,"method":"GET","url":"/assets/code-e66b460f.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"16a-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55479},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"16a-190041c28c7\""}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1718907852865,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":16,"method":"GET","url":"/main/api/v1/pvt/users/me","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","content-type":"application/json","connection":"keep-alive","cookie":"session_token=50c40572-3f86-49f3-87fc-0fb4e89bf5ed","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","if-none-match":"W/\"142-yLBQIvzc3HM3Wz4P+H6SIF/jMyk\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55481},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","etag":"W/\"142-yLBQIvzc3HM3Wz4P+H6SIF/jMyk\""}},"responseTime":29,"msg":"request completed"}
+{"level":30,"time":1718907852866,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":22,"method":"GET","url":"/assets/text-left-330d4ff8.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"19c-190041c28c7\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55483},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"19c-190041c28c7\""}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1718907852866,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":23,"method":"GET","url":"/assets/text-center-20cf7d44.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"1a0-190041c28c8\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55479},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"1a0-190041c28c8\""}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1718907852866,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":24,"method":"GET","url":"/assets/text-right-5aaf7eb3.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"19f-190041c28c8\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55481},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"19f-190041c28c8\""}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1718907852866,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":25,"method":"GET","url":"/assets/justify-f7955762.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-bd076751.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"19e-190041c28c8\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55483},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"19e-190041c28c8\""}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1718907853001,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":15,"method":"GET","url":"/main/api/v1/pvt/users/me/saves","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","content-type":"application/json","connection":"keep-alive","cookie":"session_token=50c40572-3f86-49f3-87fc-0fb4e89bf5ed","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","if-none-match":"W/\"a2d6e-gMb9KxHdJHUTOzPyYr8i/t+t26E\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55480},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","etag":"W/\"a2d6e-gMb9KxHdJHUTOzPyYr8i/t+t26E\""}},"responseTime":239,"msg":"request completed"}
+{"level":30,"time":1718907853037,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":17,"method":"GET","url":"/main/api/v1/pvt/users/me/preferences","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","content-type":"application/json","connection":"keep-alive","cookie":"session_token=50c40572-3f86-49f3-87fc-0fb4e89bf5ed","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","if-none-match":"W/\"46c-4xbC9nZKqzDmVB0/11exBciDFfo\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55482},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","etag":"W/\"46c-4xbC9nZKqzDmVB0/11exBciDFfo\""}},"responseTime":186,"msg":"request completed"}
+{"level":30,"time":1718907853150,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":27,"method":"GET","url":"/favicon.ico","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=6"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55481},"res":{"statusCode":null,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:30 GMT","etag":"W/\"fb6-190041c21c8\"","content-type":"image/x-icon","content-length":4022}},"responseTime":3,"msg":"request aborted"}
+{"level":30,"time":1718907853150,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":26,"method":"GET","url":"/logo192.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=6"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55479},"res":{"statusCode":null,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:30 GMT","etag":"W/\"14e3-190041c21c8\"","content-type":"image/png","content-length":5347}},"responseTime":4,"msg":"request aborted"}
+{"level":30,"time":1718907853490,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":12,"method":"GET","url":"/main/api/v1/pub/query/89a5b9e7-9daf-48b7-8cd7-bc7ade73808a/status","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","content-type":"application/json","connection":"keep-alive","cookie":"session_token=50c40572-3f86-49f3-87fc-0fb4e89bf5ed","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","if-none-match":"W/\"c2-RHh+KLexLyp+1p8AgMnw0Xi5AYI\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55477},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","etag":"W/\"c2-RHh+KLexLyp+1p8AgMnw0Xi5AYI\""}},"responseTime":730,"msg":"request completed"}
+{
+  "fda:2": {
+    "name": "Clinical Trial Phase 2",
+    "value": ""
+  },
+  "di:not": {
+    "name": "Not in a clinical trial for indicated disease",
+    "value": ""
+  },
+  "cc:phase2": {
+    "name": "Phase 2 Drug",
+    "value": ""
+  },
+  "pc:SmallMolecule": {
+    "name": "SmallMolecule",
+    "value": ""
+  },
+  "pc:Disease": {
+    "name": "Disease",
+    "value": ""
+  },
+  "ara:infores:biothings-explorer": {
+    "name": "BioThings Explorer",
+    "value": ""
+  },
+  "ara:infores:improving-agent": {
+    "name": "imProving Agent",
+    "value": ""
+  },
+  "pt:lkup": {
+    "name": "Lookup",
+    "value": ""
+  },
+  "pt:inf": {
+    "name": "Inferred",
+    "value": ""
+  },
+  "cc:other": {
+    "name": "Other",
+    "value": ""
+  },
+  "pc:Drug": {
+    "name": "Drug",
+    "value": ""
+  },
+  "ara:infores:arax": {
+    "name": "ARAX Translator Reasoner",
+    "value": ""
+  },
+  "fda:0": {
+    "name": "Not FDA Approved",
+    "value": ""
+  },
+  "role:CHEBI:50857": {
+    "name": "Anti-allergic Agent",
+    "value": ""
+  },
+  "role:CHEBI:65023": {
+    "name": "Anti-asthmatic Agent",
+    "value": ""
+  },
+  "fda:4": {
+    "name": "FDA Approved",
+    "value": ""
+  },
+  "di:ind": {
+    "name": "In a clinical trial for indicated disease",
+    "value": ""
+  },
+  "cc:drug": {
+    "name": "Drug",
+    "value": ""
+  },
+  "role:CHEBI:48706": {
+    "name": "Antagonist",
+    "value": ""
+  },
+  "role:CHEBI:35554": {
+    "name": "Cardiovascular Drug",
+    "value": ""
+  },
+  "role:CHEBI:67079": {
+    "name": "Anti-inflammatory Agent",
+    "value": ""
+  },
+  "role:CHEBI:50177": {
+    "name": "Dermatologic Drug",
+    "value": ""
+  },
+  "role:CHEBI:35942": {
+    "name": "Neurotransmitter Agent",
+    "value": ""
+  },
+  "role:CHEBI:35523": {
+    "name": "Bronchodilator Agent",
+    "value": ""
+  },
+  "role:CHEBI:35703": {
+    "name": "Xenobiotic",
+    "value": ""
+  },
+  "role:CHEBI:52209": {
+    "name": "Aetiopathogenetic Role",
+    "value": ""
+  },
+  "pc:Gene": {
+    "name": "Gene",
+    "value": ""
+  },
+  "ara:infores:unsecret-agent": {
+    "name": "Unsecret Agent OpenAPI for NCATS Biomedical Translator Reasoners",
+    "value": ""
+  },
+  "role:CHEBI:136859": {
+    "name": "Pro-agent",
+    "value": ""
+  },
+  "role:CHEBI:35610": {
+    "name": "Antineoplastic Agent",
+    "value": ""
+  },
+  "role:CHEBI:35705": {
+    "name": "Immunosuppressive Agent",
+    "value": ""
+  },
+  "role:CHEBI:25212": {
+    "name": "Metabolite",
+    "value": ""
+  },
+  "role:CHEBI:76759": {
+    "name": "Ec 3.* (hydrolase) Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:50689": {
+    "name": "Reproductive Control Drug",
+    "value": ""
+  },
+  "role:CHEBI:35526": {
+    "name": "Hypoglycemic Agent",
+    "value": ""
+  },
+  "fda:3": {
+    "name": "Clinical Trial Phase 3",
+    "value": ""
+  },
+  "role:CHEBI:51177": {
+    "name": "Antitussive",
+    "value": ""
+  },
+  "role:CHEBI:51372": {
+    "name": "Neuromuscular Agent",
+    "value": ""
+  },
+  "pc:MolecularMixture": {
+    "name": "MolecularMixture",
+    "value": ""
+  },
+  "role:CHEBI:50267": {
+    "name": "Protective Agent",
+    "value": ""
+  },
+  "role:CHEBI:50919": {
+    "name": "Antiemetic",
+    "value": ""
+  },
+  "role:CHEBI:50141": {
+    "name": "Bronchoconstrictor Agent",
+    "value": ""
+  },
+  "role:CHEBI:35441": {
+    "name": "Antiinfective Agent",
+    "value": ""
+  },
+  "role:CHEBI:76725": {
+    "name": "Ec 1.* (oxidoreductase) Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:35842": {
+    "name": "Antirheumatic Drug",
+    "value": ""
+  },
+  "role:CHEBI:35222": {
+    "name": "Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:33281": {
+    "name": "Antimicrobial Agent",
+    "value": ""
+  },
+  "role:CHEBI:22586": {
+    "name": "Antioxidant",
+    "value": ""
+  },
+  "role:CHEBI:71300": {
+    "name": "Ec 2.* (transferase) Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:48705": {
+    "name": "Agonist",
+    "value": ""
+  },
+  "role:CHEBI:52214": {
+    "name": "Ligand",
+    "value": ""
+  },
+  "role:CHEBI:78295": {
+    "name": "Food Component",
+    "value": ""
+  },
+  "pc:Protein": {
+    "name": "Protein",
+    "value": ""
+  },
+  "role:CHEBI:50513": {
+    "name": "Mydriatic Agent",
+    "value": ""
+  },
+  "role:CHEBI:50846": {
+    "name": "Immunomodulator",
+    "value": ""
+  },
+  "role:CHEBI:33295": {
+    "name": "Diagnostic Agent",
+    "value": ""
+  },
+  "role:CHEBI:38867": {
+    "name": "Anaesthetic",
+    "value": ""
+  },
+  "role:CHEBI:35480": {
+    "name": "Analgesic",
+    "value": ""
+  },
+  "role:CHEBI:50910": {
+    "name": "Neurotoxin",
+    "value": ""
+  },
+  "role:CHEBI:60809": {
+    "name": "Adjuvant",
+    "value": ""
+  },
+  "role:CHEBI:35470": {
+    "name": "Central Nervous System Drug",
+    "value": ""
+  },
+  "role:CHEBI:25512": {
+    "name": "Neurotransmitter",
+    "value": ""
+  },
+  "role:CHEBI:62488": {
+    "name": "Signalling Molecule",
+    "value": ""
+  },
+  "role:CHEBI:50248": {
+    "name": "Hematologic Agent",
+    "value": ""
+  },
+  "role:CHEBI:49201": {
+    "name": "Anti-ulcer Drug",
+    "value": ""
+  },
+  "role:CHEBI:77715": {
+    "name": "Nasal Decongestant",
+    "value": ""
+  },
+  "fda:0.5": {
+    "name": "Clinical Trial Phase 0.5",
+    "value": ""
+  },
+  "pc:ChemicalEntity": {
+    "name": "ChemicalEntity",
+    "value": ""
+  },
+  "role:CHEBI:33229": {
+    "name": "Vitamin (role)",
+    "value": ""
+  },
+  "role:CHEBI:73336": {
+    "name": "Vulnerary",
+    "value": ""
+  },
+  "role:CHEBI:77034": {
+    "name": "Mucolytic",
+    "value": ""
+  },
+  "role:CHEBI:50733": {
+    "name": "Nutraceutical",
+    "value": ""
+  },
+  "role:CHEBI:50646": {
+    "name": "Bone Density Conservation Agent",
+    "value": ""
+  },
+  "role:CHEBI:25944": {
+    "name": "Pesticide",
+    "value": ""
+  },
+  "role:CHEBI:52290": {
+    "name": "Mitogen",
+    "value": ""
+  },
+  "role:CHEBI:38632": {
+    "name": "Membrane Transport Modulator",
+    "value": ""
+  },
+  "role:CHEBI:35493": {
+    "name": "Antipyretic",
+    "value": ""
+  },
+  "role:CHEBI:33286": {
+    "name": "Agrochemical",
+    "value": ""
+  },
+  "role:CHEBI:36063": {
+    "name": "Oxytocic",
+    "value": ""
+  },
+  "role:CHEBI:47867": {
+    "name": "Indicator",
+    "value": ""
+  },
+  "cc:phase3": {
+    "name": "Phase 3 Drug",
+    "value": ""
+  },
+  "role:CHEBI:35498": {
+    "name": "Diuretic",
+    "value": ""
+  },
+  "role:CHEBI:26130": {
+    "name": "Biological Pigment",
+    "value": ""
+  },
+  "role:CHEBI:68495": {
+    "name": "Apoptosis Inducer",
+    "value": ""
+  },
+  "role:CHEBI:75603": {
+    "name": "Ec 6.* (ligase) Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:35679": {
+    "name": "Antilipemic Drug",
+    "value": ""
+  },
+  "role:CHEBI:50503": {
+    "name": "Laxative",
+    "value": ""
+  },
+  "role:CHEBI:55324": {
+    "name": "Gastrointestinal Drug",
+    "value": ""
+  },
+  "role:CHEBI:35221": {
+    "name": "Antimetabolite",
+    "value": ""
+  },
+  "role:CHEBI:66981": {
+    "name": "Ophthalmology Drug",
+    "value": ""
+  },
+  "role:CHEBI:76710": {
+    "name": "Ec 4.* (lyase) Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:48318": {
+    "name": "Fragrance",
+    "value": ""
+  },
+  "role:CHEBI:149552": {
+    "name": "Emetic",
+    "value": ""
+  },
+  "role:CHEBI:138880": {
+    "name": "Autophagy Inducer",
+    "value": ""
+  },
+  "role:CHEBI:68494": {
+    "name": "Apoptosis Inhibitor",
+    "value": ""
+  },
+  "pc:PhysiologicalProcess": {
+    "name": "PhysiologicalProcess",
+    "value": ""
+  },
+  "role:CHEBI:76932": {
+    "name": "Pathway Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:173085": {
+    "name": "Ferroptosis Inducer",
+    "value": ""
+  },
+  "pc:AnatomicalEntity": {
+    "name": "AnatomicalEntity",
+    "value": ""
+  },
+  "role:CHEBI:65265": {
+    "name": "Antacid",
+    "value": ""
+  },
+  "role:CHEBI:77035": {
+    "name": "Expectorant",
+    "value": ""
+  },
+  "pc:GrossAnatomicalStructure": {
+    "name": "GrossAnatomicalStructure",
+    "value": ""
+  },
+  "fda:1": {
+    "name": "Clinical Trial Phase 1",
+    "value": ""
+  },
+  "cc:phase1": {
+    "name": "Phase 1 Drug",
+    "value": ""
+  },
+  "role:CHEBI:49205": {
+    "name": "Cetp Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:66956": {
+    "name": "Antidyskinesia Agent",
+    "value": ""
+  },
+  "role:CHEBI:48422": {
+    "name": "Angiogenesis Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:52726": {
+    "name": "Proteasome Inhibitor",
+    "value": ""
+  },
+  "role:CHEBI:145047": {
+    "name": "Antispermatogenic Agent",
+    "value": ""
+  },
+  "role:CHEBI:49110": {
+    "name": "Peripheral Nervous System Drug",
+    "value": ""
+  },
+  "pc:Device": {
+    "name": "Device",
+    "value": ""
+  },
+  "pc:Food": {
+    "name": "Food",
+    "value": ""
+  },
+  "role:CHEBI:64909": {
+    "name": "Poison",
+    "value": ""
+  },
+  "role:CHEBI:50188": {
+    "name": "Provitamin",
+    "value": ""
+  },
+  "role:CHEBI:66980": {
+    "name": "Nootropic Agent",
+    "value": ""
+  },
+  "role:CHEBI:59174": {
+    "name": "Hapten",
+    "value": ""
+  },
+  "role:CHEBI:25728": {
+    "name": "Osmolyte",
+    "value": ""
+  },
+  "pc:OrganismTaxon": {
+    "name": "OrganismTaxon",
+    "value": ""
+  }
+}
+{"level":30,"time":1718907862780,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":28,"method":"GET","url":"/main/api/v1/pub/query/89a5b9e7-9daf-48b7-8cd7-bc7ade73808a/result","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","content-type":"application/json","connection":"keep-alive","cookie":"session_token=50c40572-3f86-49f3-87fc-0fb4e89bf5ed","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","if-none-match":"W/\"7c5ae1-MMJgrOE8b67QcW7oq3y3rcTbGME\"","priority":"u=4"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55477},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","content-type":"application/json; charset=utf-8","content-length":"8372201","etag":"W/\"7fbfe9-Pi71RhaSro41LNMhQgYgLDmRseo\""}},"responseTime":9276,"msg":"request completed"}
+{"level":30,"time":1718907863591,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":29,"method":"GET","url":"/assets/GraphView-3d7636db.js","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","sec-fetch-dest":"script","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"f9993-190041c28e8\""},"remoteAddress":"::ffff:127.0.0.1","remotePort":55477},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"f9993-190041c28e8\""}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1718907863592,"pid":66337,"hostname":"Guthries-MBP.lan","req":{"id":30,"method":"GET","url":"/assets/GraphView-793a2483.css","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"text/css,*/*;q=0.1","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Asthma&i=MONDO:0004979&t=0&r=0&q=89a5b9e7-9daf-48b7-8cd7-bc7ade73808a","sec-fetch-dest":"style","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","if-modified-since":"Mon, 10 Jun 2024 21:44:32 GMT","if-none-match":"W/\"b56-190041c28de\"","priority":"u=2"},"remoteAddress":"::ffff:127.0.0.1","remotePort":55498},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Mon, 10 Jun 2024 21:44:32 GMT","etag":"W/\"b56-190041c28de\""}},"responseTime":1,"msg":"request completed"}
