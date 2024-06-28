@@ -18,9 +18,6 @@ function determineStatus(msg) {
 }
 
 class TranslatorServicexFEAdapter {
-  constructor (annotationClient) {
-    this.annotationClient = annotationClient;
-  }
 
   querySubmitToFE(msg) {
     return {
@@ -55,8 +52,7 @@ class TranslatorServicexFEAdapter {
     const summary = await trapi.creativeAnswersToSummary(
       msg.pk,
       data,
-      maxHops,
-      this.annotationClient);
+      maxHops);
     summary.meta.timestamp = msg.meta.timestamp;
 
     return {
