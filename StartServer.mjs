@@ -7,7 +7,6 @@ import { loadChebi } from './lib/chebi.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
-import { KGAnnotationClient } from './lib/KGAnnotationClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
@@ -47,12 +46,7 @@ const TRANSLATOR_SERVICE = (function (config) {
     config.ars_endpoint.post_uri,
     config.ars_endpoint.retain_uri,
     config.ars_endpoint.use_ars_merging);
-  const annotationClient = new KGAnnotationClient(
-    `https://${config.annotation_endpoint.host}`,
-    config.annotation_endpoint.pull_uri,
-    config.annotation_endpoint.fields,
-    config.annotation_endpoint.timeout_ms);
-  const outputAdapter = new TranslatorServicexFEAdapter(annotationClient);
+  const outputAdapter = new TranslatorServicexFEAdapter();
   return new TranslatorService(queryClient, outputAdapter);
 })(SERVER_CONFIG);
 
