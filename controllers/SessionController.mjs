@@ -23,8 +23,8 @@ class SessionController {
   }
 
   async _fetchStatus(req) {
-    let cookieToken = req.cookies[this.config.session_cookie.name];
-    let retval = await this.authService.getSessionStatus(cookieToken);
+    let token = req.cookies[this.config.session_cookie.name];
+    let retval = await this.authService.getSessionStatus(token);
     console.log(retval);
     return retval;
   }
