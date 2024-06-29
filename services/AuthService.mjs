@@ -92,7 +92,7 @@ class AuthService {
     return this.userStore.retrieveUserById(id);
   }
 
-  async getSessionStatus(token) {
+  async getSessionData(token) {
     let retval = {
       status: null,
       user: null,

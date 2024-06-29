@@ -13,18 +13,18 @@ class SessionController {
   }
 
   // All subsequent Session Controller middleware functions assume that this has been done
-  async attachSessionStatus(req, res, next) {
-    let sessionStatus = await this._fetchStatus(req);
-    if (!sessionStatus) {
+  async attachSessionData(req, res, next) {
+    let sessionData = await this._fetchStatus(req);
+    if (!sessionData) {
       return res.status(500).send(`Server error retrieving session status.`);
     }
-    req.sessionStatus = sessionStatus;
+    req.sessionData = sessionData;
     next();
   }
 
   async _fetchStatus(req) {
     let token = req.cookies[this.config.session_cookie.name];
-    let retval = await this.authService.getSessionStatus(token);
+    let retval = await this.authService.getSessionData(token);
     console.log(retval);
     return retval;
   }
@@ -58,23 +58,23 @@ class SessionController {
   }
 
   async getStatus(req, res, next) {
-    if (!req.sessionStatus) {
+    if (!req.sessionData) {
       return res.status(500).send(`Server error retrieving session status`);
     }
     // Delete raw session data before returning to FE
-    return res.status(200).json(this._sanitizeSessionStatus(req.sessionStatus));
+    return res.status(200).json(this._sanitizeSessionData(req.sessionData));
   }
 
   async refreshSession(req, res, next) {
-    if (!req.sessionStatus) {
+    if (!req.sessionData) {
       return res.status(500).send('Could not find current attached session status');
     }
 
-    if (!this.authService.isSessionStatusValid(req.sessionStatus.status)) {
+    if (!this.authService.isSessionStatusValid(req.sessionData.status)) {
       return res.status(401).send('Invalid session status. Cannot service request.');
     }
 
-    let newSession = this._refreshSessionInDB(req.sessionStatus);
+    let newSession = this._refreshSessionInDB(req.sessionData);
     if (!newSession) {
       res.status(500).send('Error refreshing status');
     }
@@ -83,7 +83,7 @@ class SessionController {
       res.status(500).send('Error refreshing status upon refetch');
     }
     // If the original status was 'token expired', it's time to set a new cookie
-    if (req.sessionStatus.status === AuthService.SESSION_TOKEN_EXPIRED) {
+    if (req.sessionData.status === AuthService.SESSION_TOKEN_EXPIRED) {
       let cookiePath = '/'; // TODO get from config
       /* This age should more correctly be maxagesec - <time already elapsed since start of session>,
        * but it doesn't really matter as we always check the session length in the BE. */
@@ -92,12 +92,12 @@ class SessionController {
         cookiePath, cookieMaxAgeSec);
     }
 
-    req.sessionStatus = newSession;
+    req.sessionData = newSession;
     next();
   }
 
-  _sanitizeSessionStatus(sessionStatus) {
-    let retval = {...sessionStatus};
+  _sanitizeSessionData(sessionData) {
+    let retval = {...sessionData};
     if (retval && retval.session && retval.session.data) {
       delete retval.session.data;
     }
@@ -105,7 +105,7 @@ class SessionController {
   }
 
   async updateStatus(req, res, next) {
-    let curSession = req.sessionStatus;
+    let curSession = req.sessionData;
     if (!this.authService.isSessionStatusValid(curSession.status)) {
       return res(401).send('Invalid session status. Cannot service request');
     }
@@ -137,7 +137,7 @@ class SessionController {
     }
     // now actualy FETCH the new status, vs just updating the req object?
 
-    return res.status(200).json(this._sanitizeSessionStatus(newSession));
+    return res.status(200).json(this._sanitizeSessionData(newSession));
   }
 
   _validateStatusUpdatePayload(body) {

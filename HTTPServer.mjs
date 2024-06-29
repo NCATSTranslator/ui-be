@@ -50,7 +50,7 @@ export function startServer(config, services) {
    *
    * ** !!! Privileged routes below rely on these actions taking place prior to their handlers being called !!! ***
    */
-  app.use(sessionController.attachSessionStatus.bind(sessionController));
+  app.use(sessionController.attachSessionData.bind(sessionController));
 
   // Session status API
   app.get('/api/v1/session/status', sessionController.getStatus.bind(sessionController));
