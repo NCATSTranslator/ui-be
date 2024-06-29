@@ -61,9 +61,8 @@ class SessionController {
     if (!req.sessionStatus) {
       return res.status(500).send(`Server error retrieving session status`);
     }
-    let sessionStatus = {...req.sessionStatus};
     // Delete raw session data before returning to FE
-    return res.status(200).json(this._sanitizeSessionStatus(sessionStatus));
+    return res.status(200).json(this._sanitizeSessionStatus(req.sessionStatus));
   }
 
   async refreshSession(req, res, next) {
@@ -87,7 +86,7 @@ class SessionController {
     if (req.sessionStatus.status === AuthService.SESSION_TOKEN_EXPIRED) {
       let cookiePath = '/'; // TODO get from config
       /* This age should more correctly be maxagesec - <time already elapsed since start of session>,
-       * but it doesn't really matter as we always check the session length. */
+       * but it doesn't really matter as we always check the session length in the BE. */
       let cookieMaxAgeSec = this.authService.sessionAbsoluteTTLSec;
       wutil.setSessionCookie(res, this.config.session_cookie, newSession.session.token,
         cookiePath, cookieMaxAgeSec);
@@ -98,10 +97,11 @@ class SessionController {
   }
 
   _sanitizeSessionStatus(sessionStatus) {
-    if (sessionStatus && sessionStatus.session && sessionStatus.session.data) {
-      delete sessionStatus.session.data;
+    let retval = {...sessionStatus};
+    if (retval && retval.session && retval.session.data) {
+      delete retval.session.data;
     }
-    return sessionStatus;
+    return retval;
   }
 
   async updateStatus(req, res, next) {
