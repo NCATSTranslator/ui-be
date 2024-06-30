@@ -28,6 +28,76 @@ class SessionController {
     return retval;
   }
 
+  async getStatus(req, res, next) {
+    if (!req.sessionData) {
+      return res.status(500).send(`Server error retrieving session status`);
+    }
+    // Delete raw session data before returning to FE
+    return res.status(200).json(this._sanitizeSessionData(req.sessionData));
+  }
+
+  /*
+   * The difference between authenticatePrivilegedRequest vs ...UnprivilegedRequest:
+   * The former will return an auth error if the existing session is invalid.
+   * The latter will do nothing unless there an existing and valid session.
+   *
+   * Both will return an error if there is a valid session but the attempt to
+   * refresh it fails.
+   */
+  async authenticatePrivilegedRequest(req, res, next) {
+    let oldSession = req.sessionData;
+    if (!oldSession) {
+      return res.status(500).send('Server error retrieving session status');
+    }
+
+    if (!this.authService.isSessionStatusValid(oldSession.status)) {
+      return res.status(401).send('Invalid session status. Cannot service request.');
+    }
+
+    let [success, errstr] = await this._refreshSession(req, res, oldSession);
+    if (!success) {
+      return res.status(500).send(errstr);
+    }
+    next();
+  }
+
+  async authenticateUnprivilegedRequest(req, res, next) {
+    let oldSession = req.sessionData;
+    if (oldSession && this.authService.isSessionStatusValid(oldSession.status)) {
+      let [success, errstr] = await this._refreshSession(req, res, oldSession);
+      if (!success) {
+        return res.status(500).send(errstr);
+      }
+    }
+    next();
+  }
+
+
+  /* This function smells awful: it side-effects req, the DB, and cookies.
+   * The possible saving grace is that this exact sequence is needed in two cases
+   * and at least this centralizes it. */
+  async _refreshSession(req, res, sessionData) {
+    let newSession = await this._refreshSessionInDB(sessionData);
+    if (!newSession) {
+      return [false, 'Server error refreshing session'];
+    }
+    newSession = await this._fetchStatus(req); // Expensive but feels safer
+    if (!newSession) {
+      return [false, 'Server error fetching refreshed session'];
+    }
+    // If the original status was 'token expired', we need to set the new cookie
+    if (sessionData.status === AuthService.SESSION_TOKEN_EXPIRED) {
+      let cookiePath = '/'; // TODO get from config
+      /* This age should more correctly be maxagesec - <time already elapsed since start of session>,
+       * but it doesn't really matter as we always check the session length in the BE. */
+      let cookieMaxAgeSec = this.authService.sessionAbsoluteTTLSec;
+      wutil.setSessionCookie(res, this.config.session_cookie, newSession.session.token,
+        cookiePath, cookieMaxAgeSec);
+    }
+    // Finally, attach the new sessionData to req
+    req.sessionData = newSession;
+  }
+
   async _refreshSessionInDB(existingSession) {
     if (!existingSession) {
       return false;
@@ -56,44 +126,7 @@ class SessionController {
     return newSession;
   }
 
-  async getStatus(req, res, next) {
-    if (!req.sessionData) {
-      return res.status(500).send(`Server error retrieving session status`);
-    }
-    // Delete raw session data before returning to FE
-    return res.status(200).json(this._sanitizeSessionData(req.sessionData));
-  }
 
-  async refreshSession(req, res, next) {
-    if (!req.sessionData) {
-      return res.status(500).send('Could not find current attached session status');
-    }
-
-    if (!this.authService.isSessionStatusValid(req.sessionData.status)) {
-      return res.status(401).send('Invalid session status. Cannot service request.');
-    }
-
-    let newSession = this._refreshSessionInDB(req.sessionData);
-    if (!newSession) {
-      res.status(500).send('Error refreshing status');
-    }
-    newSession = this._fetchStatus(req); // Expensive but feels safer
-    if (!newSession) {
-      res.status(500).send('Error refreshing status upon refetch');
-    }
-    // If the original status was 'token expired', it's time to set a new cookie
-    if (req.sessionData.status === AuthService.SESSION_TOKEN_EXPIRED) {
-      let cookiePath = '/'; // TODO get from config
-      /* This age should more correctly be maxagesec - <time already elapsed since start of session>,
-       * but it doesn't really matter as we always check the session length in the BE. */
-      let cookieMaxAgeSec = this.authService.sessionAbsoluteTTLSec;
-      wutil.setSessionCookie(res, this.config.session_cookie, newSession.session.token,
-        cookiePath, cookieMaxAgeSec);
-    }
-
-    req.sessionData = newSession;
-    next();
-  }
 
   _sanitizeSessionData(sessionData) {
     let retval = {...sessionData};
