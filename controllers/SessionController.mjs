@@ -25,7 +25,6 @@ class SessionController {
   async _fetchStatus(req) {
     let token = req.cookies[this.config.session_cookie.name];
     let retval = await this.authService.getSessionData(token);
-    console.log(retval);
     return retval;
   }
 
@@ -107,7 +106,7 @@ class SessionController {
   async updateStatus(req, res, next) {
     let curSession = req.sessionData;
     if (!this.authService.isSessionStatusValid(curSession.status)) {
-      return res(401).send('Invalid session status. Cannot service request');
+      return res.status(401).send('Invalid session status. Cannot service request');
     }
     let [valid, str] = this._validateStatusUpdatePayload(req.body);
 
@@ -118,25 +117,29 @@ class SessionController {
     // now do the actual stuff
     let action = Object.keys(req.body)[0];
     let newSession = null;
+    let cookiePath = '/';
+    let cookieMaxAgeSec = this.authService.sessionAbsoluteTTLSec;
     switch (action) {
       case 'update':
         if (curSession.status === AuthService.SESSION_TOKEN_EXPIRED) {
-          newSession = this.authService.refreshSessionToken(curSession.session);
+          newSession = await this.authService.refreshSessionToken(curSession.session);
           wutil.setSessionCookie(res, this.config.session_cookie, newSession.token,
             cookiePath, cookieMaxAgeSec);
         } else if (curSession.status === AuthService.SESSION_VALID) {
-          newSession = this.authService.updateSessionTime(curSession.session);
+          newSession = await this.authService.updateSessionTime(curSession.session);
         }
         break;
       case 'expire':
-        newSession = this.authService.expireSessionByToken(curSession.session.token);
+        newSession = await this.authService.expireSessionByToken(curSession.session.token);
         break;
     }
     if (!newSession) {
       return res.status(500).send('Server error while updating status');
     }
-    // now actualy FETCH the new status, vs just updating the req object?
-
+    newSession = await this.authService.getSessionData(newSession.token)
+    if (!newSession) {
+      return res.status(500).send('Server error while retrieving updated session');
+    }
     return res.status(200).json(this._sanitizeSessionData(newSession));
   }
 
@@ -151,7 +154,7 @@ class SessionController {
       return [false, 'Invalid number of fields in payload (expected exactly 1)']; // res.status(400).send('Invalid number of fields in payload (expected exactly 1)');
     } else if (!['update', 'expire'].includes(keys[0])) {
       return [false, 'Unsupported action requested']; // res.status(400).send('Unsupported action requested');
-    } else if (req.body[keys[0]] !== true) {
+    } else if (body[keys[0]] !== true) {
       return [false, 'Unsupported value for requested action']; // res.status(400).send('Unsupported value for requested action');
     }
     return [true, ''];
