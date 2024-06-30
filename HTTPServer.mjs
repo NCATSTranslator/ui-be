@@ -70,6 +70,14 @@ export function startServer(config, services) {
    * towards updating session last-touch times, we therefore exclude this API from that set. */
   app.use('/api/v1/config', configAPIController.getConfig.bind(configAPIController));
 
+  /** All routes below this point MUST use one of authenticate[Un]PrivilegedRequest() **/
+
+  // Query routes
+  app.use('/api/v1/query', sessionController.authenticateUnprivilegedRequest.bind(sessionController));
+  app.post('/api/v1/query', queryAPIController.submitQuery.bind(queryAPIController));
+  app.get('/api/v1/query/:qid/status', queryAPIController.getQueryStatus.bind(queryAPIController));
+  app.get('/api/v1/query/:qid/result', queryAPIController.getQueryResult.bind(queryAPIController));
+
   // OLDER STUFF
 
   app.get('/main/logout.html',  (req, res, next) => {
@@ -113,10 +121,6 @@ export function startServer(config, services) {
 
   // == -- -- NEW -- -- ==
 
-  // Query routes
-  app.post('/api/v1/query', queryAPIController.submitQuery.bind(queryAPIController));
-  app.get('/api/v1/query/:qid/status', queryAPIController.getQueryStatus.bind(queryAPIController));
-  app.get('/api/v1/query/:qid/result', queryAPIController.getQueryResult.bind(queryAPIController));
 
   //app.use('/api/v1/query', queryAPIController(config, services.translatorService));
   //app.use('/api/v1/users', userRouter(config))
