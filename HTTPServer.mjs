@@ -61,6 +61,15 @@ export function startServer(config, services) {
   // *=* NEED TO KNOW HOW LOGOUT WORKS TODAY -- DO WE EVER SEE A BE REQ FOR LOGOUT??
   app.get('/main/logout2', loginController.logout.bind(loginController));
 
+  /* Config. ** Idiosyncratic decision alert!! **
+   * Similar to the GET session status API, we choose to not have requests to the config API update the session status.
+   * The reason is that this is completely open and app-wide info, requiring no auth and not tied to a user session.
+   * If the FE app makes a request to this API, it is doing so for its own purposes, that may or may not be tied
+   * to explicit user activity (e.g., the FE app needs this at startup regardless of whether there is a user
+   * session active). To maintain consistency with the decision that only intentional user activity should count
+   * towards updating session last-touch times, we therefore exclude this API from that set. */
+  app.use('/api/v1/config', configAPIController.getConfig.bind(configAPIController));
+
   // OLDER STUFF
 
   app.get('/main/logout.html',  (req, res, next) => {
@@ -103,7 +112,6 @@ export function startServer(config, services) {
   });
 
   // == -- -- NEW -- -- ==
-  app.use('/api/v1/config', configAPIController.getConfig.bind(configAPIController));
 
   // Query routes
   app.post('/api/v1/query', queryAPIController.submitQuery.bind(queryAPIController));
