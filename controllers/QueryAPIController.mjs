@@ -1,6 +1,5 @@
 'use strict';
 
-import { default as express } from 'express';
 import * as cmn from '../lib/common.mjs';
 import * as wutil from '../lib/webutils.mjs';
 

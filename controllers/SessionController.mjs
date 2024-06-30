@@ -96,6 +96,7 @@ class SessionController {
     }
     // Finally, attach the new sessionData to req
     req.sessionData = newSession;
+    return [true, ''];
   }
 
   async _refreshSessionInDB(existingSession) {
@@ -108,13 +109,13 @@ class SessionController {
     let newSession;
     switch (existingSession.status) {
       case AuthService.SESSION_TOKEN_EXPIRED:
-        newSession = await this.authService.refreshSessionToken(existingSession.status);
+        newSession = await this.authService.refreshSessionToken(existingSession.session);
         if (!newSession) {
           return false;
         }
         break;
       case AuthService.SESSION_VALID:
-        newSession = await this.authService.updateSessionTime(existingSession.status);
+        newSession = await this.authService.updateSessionTime(existingSession.session);
         if (!newSession) {
           return false;
         }
