@@ -56,6 +56,12 @@ export function startServer(config, services) {
   app.get('/api/v1/session/status', sessionController.getStatus.bind(sessionController));
   app.post('/api/v1/session/status', sessionController.updateStatus.bind(sessionController));
 
+  // Login/logout
+  app.get('/oauth2/redir/:provider', loginController.login.bind(loginController));
+  // *=* NEED TO KNOW HOW LOGOUT WORKS TODAY -- DO WE EVER SEE A BE REQ FOR LOGOUT??
+  app.get('/main/logout2', loginController.logout.bind(loginController));
+
+  // OLDER STUFF
 
   app.get('/main/logout.html',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/logout.html'));
@@ -104,18 +110,11 @@ export function startServer(config, services) {
   app.get('/api/v1/query/:qid/status', queryAPIController.getQueryStatus.bind(queryAPIController));
   app.get('/api/v1/query/:qid/result', queryAPIController.getQueryResult.bind(queryAPIController));
 
-  // Session routes
-  app.get('/api/v1/session/status', sessionController.getStatus.bind(sessionController));
-  app.post('/api/v1/session/status', sessionController.updateStatus.bind(sessionController));
-
   //app.use('/api/v1/query', queryAPIController(config, services.translatorService));
   //app.use('/api/v1/users', userRouter(config))
   app.all(['/api', '/api/*'], (req, res) => {
     return res.status(403).send('API action Forbidden');
   });
-
-  app.get('/oauth2/redir/:provider', loginController.login.bind(loginController));
-  app.get('/main/logout2', loginController.logout.bind(loginController));
 
   app.get('*', (req, res, next) => {
     res.redirect(302, '/main');
