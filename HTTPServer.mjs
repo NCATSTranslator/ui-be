@@ -87,6 +87,8 @@ export function startServer(config, services) {
   app.get('/api/v1/users/me', userAPIController.getUser.bind(userAPIController));
   app.get('/api/v1/users/me/preferences', userAPIController.getUserPrefs.bind(userAPIController));
   app.post('/api/v1/users/me/preferences', userAPIController.updateUserPrefs.bind(userAPIController));
+  app.get('/api/v1/users/me/saves', userAPIController.getUserSaves.bind(userAPIController));
+
 
 
 
