@@ -25,6 +25,7 @@ class UserAPIController {
     }
   }
 
+  // Preferences
   async getUserPrefs(req, res, next) {
     let user_id = req.sessionData.user.id;
     try {
@@ -54,6 +55,23 @@ class UserAPIController {
         } else {
           return res.status(200).json(result);
         }
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
+
+  // Saves
+  async getUserSaves(req, res, next) {
+    let user_id = req.sessionData.user.id;
+    let includeDeleted = req.query.include_deleted === 'true';
+    try {
+      let result = await this.userService.getUserSavesByUid(user_id, includeDeleted);
+      if (!result || result.length === 0) {
+        return res.status(200).json([]);
+      } else {
+        return res.status(200).json(result);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
