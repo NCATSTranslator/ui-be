@@ -109,6 +109,23 @@ class UserAPIController {
       return wutil.sendInternalServerError(res);
     }
   }
+
+  async getUserSaveById(req, res, next) {
+    let save_id = parseInt(req.params.save_id, 10);
+    let user_id = req.sessionData.user.id;
+    let includeDeleted = req.query.include_deleted === 'true';
+    try {
+      let result = await this.userService.getUserSavesBy(user_id, {id: save_id}, includeDeleted);
+      if (!result) {
+        return wutil.sendError(res, 404, `No saved data found for id ${save_id}`);
+      } else {
+        return res.status(200).json(result[0]);
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
 }
 
 
