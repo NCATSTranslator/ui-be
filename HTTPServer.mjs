@@ -94,10 +94,11 @@ export function startServer(config, services) {
   app.delete('/api/v1/users/me/saves/:save_id', userAPIController.deleteUserSaveById.bind(userAPIController));
 
 
+  // All routes below this point MUST be unprivileged
+  app.use(sessionController.authenticateUnprivilegedRequest.bind(sessionController));
 
 
-
-  // OLDER STUFF
+  // -- THIS IS THE CUTOFF POINT -- OLDER STUFF THAT SHOULD DIE SOON --
 
   app.get('/main/logout.html',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/logout.html'));
