@@ -31,6 +31,7 @@
     }
   },
   "google_analytics_id": null,
+  "google_tag_manager_id": null,
   "_load_frontend": "configurations/frontend/dev.json",
   "max_hops": 3,
   "log_level": "all",
