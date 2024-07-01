@@ -15,8 +15,10 @@ import { ConfigAPIController } from './controllers/ConfigAPIController.mjs';
 import { QueryAPIController } from './controllers/QueryAPIController.mjs';
 import { LoginController } from './controllers/LoginController.mjs';
 import { SessionController } from './controllers/SessionController.mjs';
+import { UserAPIController } from './controllers/UserAPIController.mjs';
 
 import * as wutil from './lib/webutils.mjs';
+import { User } from './models/User.mjs';
 
 export function startServer(config, services) {
 
@@ -24,6 +26,7 @@ export function startServer(config, services) {
   config.filters = filters;
 
   const authService = services.authService;
+  const userService = services.userService;
   const translatorService = services.translatorService;
   const demoQueries = config.frontend.cached_queries.filter(e => e.allow_inbound);
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
@@ -31,6 +34,7 @@ export function startServer(config, services) {
   const loginController = new LoginController(config, authService);
   const queryAPIController = new QueryAPIController(config, translatorService, filters);
   const configAPIController = new ConfigAPIController(config);
+  const userAPIController = new UserAPIController(config, userService);
   const sessionController = new SessionController(config, authService);
 
   app.use(pinoHttp());
@@ -72,11 +76,19 @@ export function startServer(config, services) {
 
   /** All routes below this point MUST use one of authenticate[Un]PrivilegedRequest() **/
 
-  // Query routes
+  // Query routes: unprivileged
   app.use('/api/v1/query', sessionController.authenticateUnprivilegedRequest.bind(sessionController));
   app.post('/api/v1/query', queryAPIController.submitQuery.bind(queryAPIController));
   app.get('/api/v1/query/:qid/status', queryAPIController.getQueryStatus.bind(queryAPIController));
   app.get('/api/v1/query/:qid/result', queryAPIController.getQueryResult.bind(queryAPIController));
+
+  // User routes: privileged
+  app.use('/api/v1/users', sessionController.authenticatePrivilegedRequest.bind(sessionController));
+  app.get('/api/v1/users/me', userAPIController.getUser.bind(userAPIController));
+  app.get('/api/v1/users/me/preferences', userAPIController.getUserPrefs.bind(userAPIController));
+  app.post('/api/v1/users/me/preferences', userAPIController.updateUserPrefs.bind(userAPIController));
+
+
 
   // OLDER STUFF
 
