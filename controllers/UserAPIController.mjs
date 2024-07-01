@@ -10,9 +10,10 @@ import { CookieNotFoundError, NoUserForSessionError, SessionExpiredError,
 export { UserAPIController };
 
 class UserAPIController {
-  constructor(config, userService) {
+  constructor(config, userService, translatorService) {
     this.config = config;
     this.userService = userService;
+    this.translatorService = translatorService;
   }
 
   getUser(req, res, next) {
@@ -70,6 +71,36 @@ class UserAPIController {
       let result = await this.userService.getUserSavesByUid(user_id, includeDeleted);
       if (!result || result.length === 0) {
         return res.status(200).json([]);
+      } else {
+        return res.status(200).json(result);
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
+
+  async updateUserSaves(req, res, next) {
+    try {
+      let data = {...req.body};
+      // TODO: generalize saving object behavior when we start saving more types
+      if (data.save_type === 'bookmark') {
+        const pk = data.ars_pkey
+        if (!pk) {
+          const error = 'No PK in save for result';
+          wutil.logInternalServerError(req, error);
+          return wutil.sendError(res, 400, error);
+        } else {
+          console.log(`Retaining ${pk}`);
+          //await this.translatorService.retainQuery(pk);
+        }
+      }
+
+      data.user_id = req.sessionData.user.id;
+      let saveData = new UserSavedData(data);
+      let result = await this.userService.saveUserData(saveData);
+      if (!result) {
+        return wutil.sendError(res, 400, `Error saving user data`);
       } else {
         return res.status(200).json(result);
       }
