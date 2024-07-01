@@ -90,6 +90,8 @@ export function startServer(config, services) {
   app.get('/api/v1/users/me/saves', userAPIController.getUserSaves.bind(userAPIController));
   app.post('/api/v1/users/me/saves', userAPIController.updateUserSaves.bind(userAPIController));
   app.get('/api/v1/users/me/saves/:save_id', userAPIController.getUserSaveById.bind(userAPIController));
+  app.put('/api/v1/users/me/saves/:save_id', userAPIController.updateUserSaveById.bind(userAPIController));
+  app.delete('/api/v1/users/me/saves/:save_id', userAPIController.deleteUserSaveById.bind(userAPIController));
 
 
 
