@@ -126,6 +126,52 @@ class UserAPIController {
       return wutil.sendInternalServerError(res);
     }
   }
+
+  /* Slight violation of REST in that PUT is supposed to take as input the entire object,
+   * and we out here accepting partial fields. What. evah.
+   */
+  async updateUserSaveById(req, res, next) {
+    let save_id = parseInt(req.params.save_id, 10);
+    let user_id = req.sessionData.user.id;
+    let includeDeleted = req.query.include_deleted === 'true';
+    try {
+      let exists = await this.userService.getUserSavesBy(user_id, {id: save_id}, includeDeleted);
+      if (!exists) {
+        return wutil.sendError(res, 404, `No saved data found for id ${save_id}`);
+      } else {
+        let result = await this.userService.updateUserSave(req.body, includeDeleted);
+        if (!result) {
+          return wutil.sendError(res, 500, `Error saving data`);
+        } else {
+          return res.status(200).json(result);
+        }
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
+
+  async deleteUserSaveById(req, res, next) {
+    let save_id = parseInt(req.params.save_id, 10);
+    let user_id = req.sessionData.user.id;
+    try {
+      let exists = await this.userService.getUserSavesBy(user_id, {id: save_id});
+      if (!exists) {
+        return wutil.sendError(res, 404, `No saved data found for id ${save_id}`);
+      } else {
+        let result = await this.userService.deleteUserSave(save_id);
+        if (!result) {
+          return wutil.sendError(res, 400, `No saved data found for id ${save_id}`);
+        } else {
+          return res.status(204).end();
+        }
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
 }
 
 
