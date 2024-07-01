@@ -34,7 +34,7 @@ export function startServer(config, services) {
   const loginController = new LoginController(config, authService);
   const queryAPIController = new QueryAPIController(config, translatorService, filters);
   const configAPIController = new ConfigAPIController(config);
-  const userAPIController = new UserAPIController(config, userService);
+  const userAPIController = new UserAPIController(config, userService, translatorService);
   const sessionController = new SessionController(config, authService);
 
   app.use(pinoHttp());
@@ -88,6 +88,9 @@ export function startServer(config, services) {
   app.get('/api/v1/users/me/preferences', userAPIController.getUserPrefs.bind(userAPIController));
   app.post('/api/v1/users/me/preferences', userAPIController.updateUserPrefs.bind(userAPIController));
   app.get('/api/v1/users/me/saves', userAPIController.getUserSaves.bind(userAPIController));
+  app.post('/api/v1/users/me/saves', userAPIController.updateUserSaves.bind(userAPIController));
+  app.get('/api/v1/users/me/saves/:save_id', userAPIController.getUserSaveById.bind(userAPIController));
+
 
 
 
