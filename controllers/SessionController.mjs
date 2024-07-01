@@ -81,10 +81,11 @@ class SessionController {
     if (!newSession) {
       return [false, 'Server error refreshing session'];
     }
-    newSession = await this._fetchStatus(req); // Expensive but feels safer
+    newSession = await this.authService.getSessionData(newSession.token);
     if (!newSession) {
       return [false, 'Server error fetching refreshed session'];
     }
+
     // If the original status was 'token expired', we need to set the new cookie
     if (sessionData.status === AuthService.SESSION_TOKEN_EXPIRED) {
       let cookiePath = '/'; // TODO get from config
