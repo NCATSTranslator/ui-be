@@ -51,6 +51,7 @@
     }
   },
   "google_analytics_id": "G-7EBCDRY7DX",
+  "google_tag_manager_id": "GTM-5SGQTGPF",
   "_load_frontend": "configurations/frontend/ci.json",
   "max_hops": 3,
   "log_level": "all",
