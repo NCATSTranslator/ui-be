@@ -7,27 +7,8 @@ import { CookieNotFoundError, NoUserForSessionError, SessionExpiredError,
    SessionNotFoundError, SessionNotUsableError, UserDeletedError
   } from '../services/AuthService.mjs';
 
-export { createUserController };
+export {createUserController};
 
-function getUser(req, res, next) {
-  return res.status(200).json(req.user);
-}
-
-function getUserPrefs(userService) {
-  return async function(req, res, next) {
-    try {
-      let result = await userService.getUserPreferences(req.user.id);
-      if (!result) {
-        return wutil.sendError(res, 404, `No preference data for user ${req.user.id}`);
-      } else {
-        return res.status(200).json(result);
-      }
-    } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
-    }
-  };
-}
 function createUserController(config, services) {
   var router = express.Router();
   var translatorService = services.translatorService;
