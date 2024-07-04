@@ -36,7 +36,12 @@
     "version": "4.2.1",
     "support_deprecated_predicates": false,
     "infores_catalog": "infores-catalog-v0.2.7.json",
-    "prefix_catalog": "prefix-catalog.json"
+    "prefix_catalog": {
+      "path": "prefix-catalog.json",
+      "exclude": [
+        "VANDF"
+      ]
+    }
   },
   "session_cookie": {
     "name": "session_token",
@@ -50,6 +55,7 @@
     }
   },
   "google_analytics_id": "G-MQ5SCJJ6Q3",
+  "google_tag_manager_id": "GTM-5SGQTGPF",
   "_load_frontend": "configurations/frontend/production.json",
   "max_hops": 3,
   "log_level": "info",

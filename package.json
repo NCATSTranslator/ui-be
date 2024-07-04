@@ -9,7 +9,7 @@
     "ci": "node StartServer.mjs configurations/ci.json configurations/local-overrides.json",
     "dev": "node StartServer.mjs configurations/dev.json configurations/local-overrides.json",
     "mock": "node StartServer.mjs configurations/mock.json configurations/local-overrides.json",
-    "unit": "node --test"
+    "unit": "node --test test/**/*.mjs"
   },
   "author": "Guthrie Price",
   "license": "ISC",
