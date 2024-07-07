@@ -36,6 +36,7 @@ export function startServer(config, services) {
   const configAPIController = new ConfigAPIController(config);
   const userAPIController = new UserAPIController(config, userService, translatorService);
   const sessionController = new SessionController(config, authService);
+  const API_PATH_PREFIX = '/api/v1';
 
   app.use(pinoHttp());
   app.use(express.json({ limit: config.json_payload_limit }));
@@ -57,8 +58,8 @@ export function startServer(config, services) {
   app.use(sessionController.attachSessionData.bind(sessionController));
 
   // Session status API
-  app.get('/api/v1/session/status', sessionController.getStatus.bind(sessionController));
-  app.post('/api/v1/session/status', sessionController.updateStatus.bind(sessionController));
+  app.get(`${API_PATH_PREFIX}/session/status`, sessionController.getStatus.bind(sessionController));
+  app.post(`${API_PATH_PREFIX}/session/status`, sessionController.updateStatus.bind(sessionController));
 
   // Login/logout
   app.get('/oauth2/redir/:provider', loginController.login.bind(loginController));
@@ -72,26 +73,26 @@ export function startServer(config, services) {
    * to explicit user activity (e.g., the FE app needs this at startup regardless of whether there is a user
    * session active). To maintain consistency with the decision that only intentional user activity should count
    * towards updating session last-touch times, we therefore exclude this API from that set. */
-  app.use('/api/v1/config', configAPIController.getConfig.bind(configAPIController));
+  app.use(`${API_PATH_PREFIX}/config`, configAPIController.getConfig.bind(configAPIController));
 
   /** All routes below this point MUST use one of authenticate[Un]PrivilegedRequest() **/
 
   // Query routes: unprivileged
-  app.use('/api/v1/query', sessionController.authenticateUnprivilegedRequest.bind(sessionController));
-  app.post('/api/v1/query', queryAPIController.submitQuery.bind(queryAPIController));
-  app.get('/api/v1/query/:qid/status', queryAPIController.getQueryStatus.bind(queryAPIController));
-  app.get('/api/v1/query/:qid/result', queryAPIController.getQueryResult.bind(queryAPIController));
+  app.use(`${API_PATH_PREFIX}/query`, sessionController.authenticateUnprivilegedRequest.bind(sessionController));
+  app.post(`${API_PATH_PREFIX}/query`, queryAPIController.submitQuery.bind(queryAPIController));
+  app.get(`${API_PATH_PREFIX}/query/:qid/status`, queryAPIController.getQueryStatus.bind(queryAPIController));
+  app.get(`${API_PATH_PREFIX}/query/:qid/result`, queryAPIController.getQueryResult.bind(queryAPIController));
 
   // User routes: privileged
-  app.use('/api/v1/users', sessionController.authenticatePrivilegedRequest.bind(sessionController));
-  app.get('/api/v1/users/me', userAPIController.getUser.bind(userAPIController));
-  app.get('/api/v1/users/me/preferences', userAPIController.getUserPrefs.bind(userAPIController));
-  app.post('/api/v1/users/me/preferences', userAPIController.updateUserPrefs.bind(userAPIController));
-  app.get('/api/v1/users/me/saves', userAPIController.getUserSaves.bind(userAPIController));
-  app.post('/api/v1/users/me/saves', userAPIController.updateUserSaves.bind(userAPIController));
-  app.get('/api/v1/users/me/saves/:save_id', userAPIController.getUserSaveById.bind(userAPIController));
-  app.put('/api/v1/users/me/saves/:save_id', userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete('/api/v1/users/me/saves/:save_id', userAPIController.deleteUserSaveById.bind(userAPIController));
+  app.use(`${API_PATH_PREFIX}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
+  app.get(`${API_PATH_PREFIX}/users/me`, userAPIController.getUser.bind(userAPIController));
+  app.get(`${API_PATH_PREFIX}/users/me/preferences`, userAPIController.getUserPrefs.bind(userAPIController));
+  app.post(`${API_PATH_PREFIX}/users/me/preferences`, userAPIController.updateUserPrefs.bind(userAPIController));
+  app.get(`${API_PATH_PREFIX}/users/me/saves`, userAPIController.getUserSaves.bind(userAPIController));
+  app.post(`${API_PATH_PREFIX}/users/me/saves`, userAPIController.updateUserSaves.bind(userAPIController));
+  app.get(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.getUserSaveById.bind(userAPIController));
+  app.put(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
+  app.delete(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
 
 
   // All routes below this point MUST be unprivileged
