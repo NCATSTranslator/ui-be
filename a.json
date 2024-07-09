@@ -1,0 +1,522 @@
+
+> js@1.0.0 test
+> node StartServer.mjs configurations/test.json configurations/local-overrides.json
+
+configurations/test.json
+configurations/local-overrides.json
+{
+  document_root: false,
+  port: 8386,
+  response_timeout: 300,
+  json_payload_limit: '1mb',
+  ars_endpoint: {
+    host: 'ars.test.transltr.io',
+    post_uri: '/ars/api/submit',
+    pull_uri: '/ars/api/messages',
+    retain_uri: '/ars/api/retain',
+    protocol: 'https',
+    use_ars_merging: true
+  },
+  annotation_endpoint: {
+    host: 'biothings.test.transltr.io',
+    fields: [
+      'chebi.relationship.has_role',
+      'chembl.max_phase',
+      'chembl.drug_indications.mesh_id',
+      'disease_ontology.def',
+      'disease_ontology.xrefs.mesh',
+      'mondo.xrefs.mesh',
+      'ndc.proprietaryname',
+      'ndc.nonproprietaryname',
+      'summary',
+      'unii.ncit_description'
+    ],
+    pull_uri: '/annotator',
+    timeout_ms: 60000
+  },
+  biolink: {
+    version: '4.2.1',
+    support_deprecated_predicates: false,
+    infores_catalog: 'infores-catalog-v0.2.7.json',
+    prefix_catalog: { path: 'prefix-catalog.json', exclude: [Array] }
+  },
+  session_cookie: {
+    name: 'session_token',
+    http_only: true,
+    secure: true,
+    same_site: 'Lax'
+  },
+  db_conn: { ssl: false },
+  google_analytics_id: 'G-T9HTSPVNW9',
+  google_tag_manager_id: 'GTM-5SGQTGPF',
+  _load_frontend: 'configurations/frontend/test.json',
+  max_hops: 3,
+  log_level: 'all',
+  log_format: 'common',
+  _load_auth: 'configurations/auth/auth.local.json',
+  _load_sessions: 'configurations/sessions.json',
+  _load_storage: 'configurations/storage.json',
+  _load_secrets: 'configurations/secrets/secrets.json',
+  mainsite_path: '/main',
+  demosite_path: '/demo',
+  pg_host: 'pgdb',
+  'document-root': '/Users/guthrieprice/dev/ui-be',
+  frontend: {
+    name_resolver: { endpoint: 'https://name-lookup.test.transltr.io' },
+    cached_queries: [
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object], [Object], [Object], [Object],
+      [Object]
+    ]
+  },
+  auth: {
+    social_providers: { google: [Object], facebook: [Object], una: [Object] }
+  },
+  sessions: {
+    token_ttl_sec: 1800,
+    session_max_idle_time_sec: 15780000,
+    session_absolute_ttl_sec: 15780000
+  },
+  storage: {
+    pg: {
+      host: 'pgdb',
+      user: 'app_data',
+      port: '5432',
+      database: 'app_data'
+    }
+  },
+  secrets: '[REDACTED]'
+}
+Der Anfang ist das Ende und das Ende ist der Anfang
+{"level":30,"time":1720555330824,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":1,"method":"GET","url":"/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","query":{"l":"Seasonal Allergic Rhinitis","i":"MONDO:0005324","t":"0","r":"0","q":"6fff0b27-c22a-4b6b-982d-d8b03eb29421"},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","cookie":"session_token=488f332e-9c60-427b-86e8-ee13a2b89ab5","upgrade-insecure-requests":"1","sec-fetch-dest":"document","sec-fetch-mode":"navigate","sec-fetch-site":"none","sec-fetch-user":"?1","priority":"u=1","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56074},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"731-190711da059\"","content-type":"text/html; charset=UTF-8","content-length":1841}},"responseTime":103,"msg":"request completed"}
+{"level":30,"time":1720555330856,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":3,"method":"GET","url":"/assets/index-f63c4c66.css","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"text/css,*/*;q=0.1","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"style","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=2","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56076},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"23b67-190711da04e\"","content-type":"text/css; charset=UTF-8","content-length":146279}},"responseTime":3,"msg":"request completed"}
+{"level":30,"time":1720555330861,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":2,"method":"GET","url":"/assets/index-c6eeb451.js","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"script","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56074},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"14607f-190711da059\"","content-type":"application/javascript; charset=UTF-8","content-length":1335423}},"responseTime":11,"msg":"request completed"}
+{"level":30,"time":1720555330963,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":4,"method":"GET","url":"/assets/site-logo-427c2ea9.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56074},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"7b13-190711da039\"","content-type":"image/png","content-length":31507}},"responseTime":3,"msg":"request completed"}
+{"level":30,"time":1720555330963,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":5,"method":"GET","url":"/assets/pfp-71898c51.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56076},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"3ae4-190711da039\"","content-type":"image/png","content-length":15076}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1720555330969,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":6,"method":"GET","url":"/assets/loading-purple-24929053.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56074},"res":{"statusCode":null,"headers":{"x-powered-by":"Express"}},"responseTime":5,"msg":"request aborted"}
+{"level":30,"time":1720555330996,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":7,"method":"GET","url":"/assets/site-logo-427c2ea9.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56076},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"7b13-190711da039\"","content-type":"image/png","content-length":31507}},"responseTime":8,"msg":"request completed"}
+{"level":30,"time":1720555331001,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":8,"method":"GET","url":"/assets/pfp-71898c51.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56077},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"3ae4-190711da039\"","content-type":"image/png","content-length":15076}},"responseTime":10,"msg":"request completed"}
+{"level":30,"time":1720555331012,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":9,"method":"GET","url":"/assets/loading-purple-24929053.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56078},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"20b1-190711da039\"","content-type":"image/png","content-length":8369}},"responseTime":18,"msg":"request completed"}
+{"level":30,"time":1720555331020,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":10,"method":"GET","url":"/assets/Property_1_Down-38eda2b3.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56079},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"d8-190711da03a\"","content-type":"image/svg+xml","content-length":216}},"responseTime":21,"msg":"request completed"}
+{"level":30,"time":1720555331021,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":12,"method":"GET","url":"/assets/arrow-counterclockwise-4469d059.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56080},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"167-190711da038\"","content-type":"image/svg+xml","content-length":359}},"responseTime":17,"msg":"request completed"}
+{"level":30,"time":1720555331021,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":14,"method":"GET","url":"/assets/arrow-clockwise-1a76c340.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"160-190711da038\"","content-type":"image/svg+xml","content-length":352}},"responseTime":10,"msg":"request completed"}
+{"level":30,"time":1720555331027,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":18,"method":"GET","url":"/assets/text-paragraph-ca45ef4b.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"1a1-190711da038\"","content-type":"image/svg+xml","content-length":417}},"responseTime":4,"msg":"request completed"}
+{"level":30,"time":1720555331028,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":19,"method":"GET","url":"/assets/chevron-down-13f7d60a.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"122-190711da038\"","content-type":"image/svg+xml","content-length":290}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1720555331028,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":20,"method":"GET","url":"/assets/type-bold-8e7adb4a.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"1d6-190711da038\"","content-type":"image/svg+xml","content-length":470}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1720555331029,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":21,"method":"GET","url":"/assets/type-italic-29722685.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"15f-190711da038\"","content-type":"image/svg+xml","content-length":351}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1720555331030,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":22,"method":"GET","url":"/assets/type-underline-e1038bb0.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"14e-190711da038\"","content-type":"image/svg+xml","content-length":334}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1720555331031,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":23,"method":"GET","url":"/assets/type-strikethrough-7e294324.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"243-190711da038\"","content-type":"image/svg+xml","content-length":579}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1720555331031,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":24,"method":"GET","url":"/assets/code-e66b460f.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"16a-190711da038\"","content-type":"image/svg+xml","content-length":362}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1720555331032,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":25,"method":"GET","url":"/assets/text-left-330d4ff8.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"19c-190711da039\"","content-type":"image/svg+xml","content-length":412}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1720555331033,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":26,"method":"GET","url":"/assets/text-center-20cf7d44.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"1a0-190711da038\"","content-type":"image/svg+xml","content-length":416}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1720555331033,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":27,"method":"GET","url":"/assets/text-right-5aaf7eb3.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"19f-190711da039\"","content-type":"image/svg+xml","content-length":415}},"responseTime":0,"msg":"request completed"}
+{"level":30,"time":1720555331034,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":28,"method":"GET","url":"/assets/justify-f7955762.svg","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/assets/index-f63c4c66.css","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56081},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"19e-190711da039\"","content-type":"image/svg+xml","content-length":414}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1720555331080,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":29,"method":"GET","url":"/assets/index-c6eeb451.js.map","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","if-modified-since":"Tue, 02 Jul 2024 01:44:45 GMT","if-none-match":"W/\"4e3b8f-190711da059\"","priority":"u=4","cache-control":"max-age=0"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56087},"res":{"statusCode":304,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"4e3b8f-190711da059\""}},"responseTime":1,"msg":"request completed"}
+{"level":30,"time":1720555331161,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":15,"method":"GET","url":"/main/api/v1/pub/config","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","content-type":"application/json","connection":"keep-alive","cookie":"session_token=488f332e-9c60-427b-86e8-ee13a2b89ab5","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56078},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","content-type":"application/json; charset=utf-8","content-length":"6475","etag":"W/\"194b-Km0WlW+3ZWE+I/y5E3J2hW/ipDQ\""}},"responseTime":145,"msg":"request completed"}
+{"level":30,"time":1720555331165,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":16,"method":"GET","url":"/main/api/v1/pvt/users/me","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","content-type":"application/json","connection":"keep-alive","cookie":"session_token=488f332e-9c60-427b-86e8-ee13a2b89ab5","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56079},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","content-type":"application/json; charset=utf-8","content-length":"322","etag":"W/\"142-yLBQIvzc3HM3Wz4P+H6SIF/jMyk\""}},"responseTime":143,"msg":"request completed"}
+{"level":30,"time":1720555331200,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":11,"method":"GET","url":"/main/api/v1/pvt/users/me/saves","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","content-type":"application/json","connection":"keep-alive","cookie":"session_token=488f332e-9c60-427b-86e8-ee13a2b89ab5","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56076},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","content-type":"application/json; charset=utf-8","content-length":"666990","etag":"W/\"a2d6e-gMb9KxHdJHUTOzPyYr8i/t+t26E\""}},"responseTime":197,"msg":"request completed"}
+{"level":30,"time":1720555331231,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":17,"method":"GET","url":"/main/api/v1/pvt/users/me/preferences","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","content-type":"application/json","connection":"keep-alive","cookie":"session_token=488f332e-9c60-427b-86e8-ee13a2b89ab5","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56080},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","content-type":"application/json; charset=utf-8","content-length":"1132","etag":"W/\"46c-HKsIBEyfzPb8ZX0wT/0in/qD8cM\""}},"responseTime":209,"msg":"request completed"}
+{"level":30,"time":1720555331341,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":30,"method":"GET","url":"/logo192.png","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=6","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56076},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:43 GMT","etag":"W/\"14e3-190711d98c7\"","content-type":"image/png","content-length":5347}},"responseTime":3,"msg":"request completed"}
+{"level":30,"time":1720555331343,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":31,"method":"GET","url":"/favicon.ico","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"image/avif,image/webp,*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"image","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=6","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56078},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:43 GMT","etag":"W/\"fb6-190711d98c7\"","content-type":"image/x-icon","content-length":4022}},"responseTime":4,"msg":"request completed"}
+{"level":30,"time":1720555331876,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":13,"method":"GET","url":"/main/api/v1/pub/query/6fff0b27-c22a-4b6b-982d-d8b03eb29421/status","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","content-type":"application/json","connection":"keep-alive","cookie":"session_token=488f332e-9c60-427b-86e8-ee13a2b89ab5","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56077},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","content-type":"application/json; charset=utf-8","content-length":"168","etag":"W/\"a8-P04TWcwCSCmAruyniHusyR/aB7k\""}},"responseTime":866,"msg":"request completed"}
+gdp
+{
+  "PMC2866555": [
+    {
+      "text": "Comparative trial of two non-sedative H1 antihistamines, terfenadine and astemizole, for hay fever",
+      "subject": [
+        74,
+        83
+      ],
+      "object": [
+        90,
+        98
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC2931689": [
+    {
+      "text": "Phenylephrine, now the most common OTC decongestant in the United States, relieve swelling of the nasal mucosa accompanying such conditions as the common cold and hay fever; and diphenhydramine is a synthetic antihistamine used in the treatment of various conditions including hay fever, acute skin reactions (such as hives), contact dermatitis (such as from poison ivy), and motion sickness (http://Encyclopedia Britannica.",
+      "subject": [
+        1,
+        13
+      ],
+      "object": [
+        278,
+        286
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC5427624": [
+    {
+      "text": "No oral ephedrine preparation is currently licensed for humans in the European Union for myasthenia gravis and pharmacies in the Netherlands must either import tablets from Spain (50?mg tablets, Laboratorios ERN, licensed in Spain for the treatment of asthma and hay fever) or compound ephedrine capsules themselves.",
+      "subject": [
+        9,
+        17
+      ],
+      "object": [
+        264,
+        272
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC2931689": [
+    {
+      "text": "Phenylephrine, now the most common OTC decongestant in the United States, relieve swelling of the nasal mucosa accompanying such conditions as the common cold and hay fever; and diphenhydramine is a synthetic antihistamine used in the treatment of various conditions including hay fever, acute skin reactions (such as hives), contact dermatitis (such as from poison ivy), and motion sickness (http://Encyclopedia Britannica.",
+      "subject": [
+        179,
+        193
+      ],
+      "object": [
+        278,
+        286
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC3465128": [
+    {
+      "text": "Levocetirizine dihydrochloride is an orally active, third-generation non-sedative antihistamine used in the symptomatic relief of seasonal and perennial allergic rhinitis, hay fever, and for the treatment of chronic idiopathic urticaria.",
+      "subject": [
+        1,
+        14
+      ],
+      "object": [
+        173,
+        181
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC2596749": [
+    {
+      "text": "One received treatment with penicillin due to pharyngitis in the beginning of the collection period, and one had a short attack of hay fever and took anti-histamine.",
+      "subject": [
+        156,
+        164
+      ],
+      "object": [
+        132,
+        140
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC4632331": [
+    {
+      "text": "Rhinospray? Plus is a topical nasal spray containing tramazoline hydrochloride monohydrate and essential oils (eucalyptol, levomenthol and camphor); it is effective and well-tolerated in treatment of nasal congestion caused by acute rhinitis due to common cold or hay fever.",
+      "subject": [
+        140,
+        146
+      ],
+      "object": [
+        265,
+        273
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC6269001": [
+    {
+      "text": "AZD8848/DSP-3025 is a novel TLR7 agonist being tested for the treatment of asthma and hay fever.",
+      "subject": [
+        1,
+        7
+      ],
+      "object": [
+        87,
+        95
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC5740937": [
+    {
+      "text": "Doxylamine succinate is a first-generation antihistamine used to relieve symptoms of allergy, hay fever, and the common cold.",
+      "subject": [
+        1,
+        20
+      ],
+      "object": [
+        95,
+        103
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC5405573": [
+    {
+      "text": "Plants of the genus ephedra have traditionally been used by indigenous people for a variety of medicinal purposes, including treatment of asthma, hay fever, and common cold.",
+      "subject": [
+        21,
+        27
+      ],
+      "object": [
+        147,
+        155
+      ]
+    }
+  ],
+  "PMC4319790": [
+    {
+      "text": "Ephedra is a genus with several species, including E. sinica (ma huang), which has been used in Chinese traditional medicine for thousands of years for treatment of asthma and hay fever.",
+      "subject": [
+        1,
+        7
+      ],
+      "object": [
+        177,
+        185
+      ]
+    }
+  ],
+  "PMC3416653": [
+    {
+      "text": "Plants of the Ephedra genus have traditionally been used by indigenous people for a variety of medicinal purposes, including treatment of asthma, hay fever, and common cold, used in decoction as diuretic, cholagogue, antiinflammatory and vulnerary.",
+      "subject": [
+        15,
+        21
+      ],
+      "object": [
+        147,
+        155
+      ]
+    }
+  ],
+  "PMC6918150": [
+    {
+      "text": "Plants of the genus Ephedra, including E. sinica and others, which has been traditionally used by indigenous people for a variety of medicinal purposes, including treatment of asthma, hay fever, and the common cold.",
+      "subject": [
+        21,
+        27
+      ],
+      "object": [
+        185,
+        193
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC3235667": [
+    {
+      "text": "Nettle leaves are a rich source of essential amino acids, ascorbic acid, several mineral element, and vitamins, such as iron, provitamin A, and vitamin C. Nettle extracts can be used to treat arthritis, hay fever, kidney problems, pain, and anemia.",
+      "subject": [
+        121,
+        124
+      ],
+      "object": [
+        204,
+        212
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC2844275": [
+    {
+      "text": "Cubeb cigarettes, containing cubeb or tailed pepper, stramonium, eucalyptus and other plant extracts, had been marketed for asthma, hay fever, and catarrh since the mid-nineteenth century: indeed, Marshall?s, Blosser?s and Dr Perrin?s cubeb cigarettes remained popular herbal brands well into the late twentieth century.",
+      "subject": [
+        66,
+        75
+      ],
+      "object": [
+        133,
+        141
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC6232386": [
+    {
+      "text": "CAM (brand names: Palgic, Histex PD, Karbinal ER, Carboxine, Ryvent) and SCM (brand names: Chlor-Trimeton, Allergy Relief, Chlorphen) are H1-receptor blocking agent-based antihistamine drugs approved by the U.S. FDA in 1950s and 1982 for treatment of hay fever, rhinitis, urticaria, and asthma.",
+      "subject": [
+        51,
+        59
+      ],
+      "object": [
+        252,
+        260
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC4632331": [
+    {
+      "text": "Rhinospray? Plus is a topical nasal spray containing tramazoline hydrochloride monohydrate and essential oils (eucalyptol, levomenthol and camphor); it is effective and well-tolerated in treatment of nasal congestion caused by acute rhinitis due to common cold or hay fever.",
+      "subject": [
+        124,
+        134
+      ],
+      "object": [
+        265,
+        273
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC3003978": [
+    {
+      "text": "Although argyria as a response to silver and colloidal silver preparation had been reported from the beginning of the 20th Century, the first reported case of true allergy was seen in a 26-year-old man following use of colloidal silver (Argyrol) to treat asthma and hay fever.",
+      "subject": [
+        220,
+        235
+      ],
+      "object": [
+        267,
+        275
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC7411884": [
+    {
+      "text": "Icariin, commonly known as horny goat weed or Yin Yang Huo, is a bioactive flavonoid and phytoestrogen compound extracted from Epimedium that has been widely used in Asian countries practicing Chinese Traditional Medicine to treat conditions from hay fever and fatigue to atherosclerosis and osteoporosis.",
+      "subject": [
+        1,
+        7
+      ],
+      "object": [
+        248,
+        256
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC5473499": [
+    {
+      "text": "Methamphetamine (desoxyephedrine) was first approved in 1943 by the FDA for treating narcolepsy, mild depression, postencephalitic Parkinson syndrome, chronic alcoholism, cerebral arteriosclerosis, and hay fever.",
+      "subject": [
+        1,
+        15
+      ],
+      "object": [
+        203,
+        211
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC9299260": [
+    {
+      "text": "Exclusion criteria included the following: (1) consumption of foods, supplements, and medicines rich in lactic acid bacteria at least 3 times a week; (2) having a skin condition that tends to be influenced by wearing a mask (inflammation, dryness, etc.), and impossibility of wearing the mask being used during the study; (3) daily consumption of foods, supplements, and medicines that could affect the condition of the skin; (4) prior cosmetic medical treatments at measurement sites (e.g., injection of Botox, hyaluronic acid, or collagen, and intense pulsed light [photofacial] therapy); (5) prior cosmetic medical treatments at sites other than those to be examined, or hormone replacement therapy within a year before the screening test; (6) prior aesthetic, scrubbing, or hair removal at measurement sites within a month before the screening test or intention to receive such treatment during the study period; (7) history of excessive sunburn, e.g., due to outdoor work, leisure, or exercise, within a month before the screening test or high risk of experiencing excessive sunburn during the study period; (8) daily washing of the measurement sites with materials that act as a strong stimulus to the skin, e.g., nylon towels; (9) routine use of bathwater additives; (10) wounds or inflammatory diseases at the measurement sites that could affect the study results; (11) allergic diseases, such as hay fever or atopic dermatitis; (12) extreme skin condition changes at the measurement sites due to menstruation; (13) unstable work schedule or working night shifts; (14) planning to travel abroad during the study; (15) having asthma or a high risk of having an asthma attack during the study; (16) current or previous history of diabetes; hepatic, kidney, cardiac, gastrointestinal, or vascular disease; or other diseases; (17) possibility of allergic reaction to the test food; (18) current o",
+      "subject": [
+        105,
+        115
+      ],
+      "object": [
+        1406,
+        1414
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC3235667": [
+    {
+      "text": "Nettle leaves are a rich source of essential amino acids, ascorbic acid, several mineral element, and vitamins, such as iron, provitamin A, and vitamin C. Nettle extracts can be used to treat arthritis, hay fever, kidney problems, pain, and anemia.",
+      "subject": [
+        59,
+        71
+      ],
+      "object": [
+        204,
+        212
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC6232386": [
+    {
+      "text": "CAM (brand names: Palgic, Histex PD, Karbinal ER, Carboxine, Ryvent) and SCM (brand names: Chlor-Trimeton, Allergy Relief, Chlorphen) are H1-receptor blocking agent-based antihistamine drugs approved by the U.S. FDA in 1950s and 1982 for treatment of hay fever, rhinitis, urticaria, and asthma.",
+      "subject": [
+        92,
+        96
+      ],
+      "object": [
+        252,
+        260
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC4632331": [
+    {
+      "text": "Rhinospray? Plus is a topical nasal spray containing tramazoline hydrochloride monohydrate and essential oils (eucalyptol, levomenthol and camphor); it is effective and well-tolerated in treatment of nasal congestion caused by acute rhinitis due to common cold or hay fever.",
+      "subject": [
+        112,
+        121
+      ],
+      "object": [
+        265,
+        273
+      ]
+    }
+  ]
+}
+gdp
+{
+  "PMC3321302": [
+    {
+      "text": "Effect of protamine on the immunological behavior of glucuronidase in mice and patients with hay fever",
+      "subject": [
+        11,
+        19
+      ],
+      "object": [
+        94,
+        102
+      ]
+    }
+  ]
+}
+{"level":30,"time":1720555333117,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":32,"method":"GET","url":"/main/api/v1/pub/query/6fff0b27-c22a-4b6b-982d-d8b03eb29421/result","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","content-type":"application/json","connection":"keep-alive","cookie":"session_token=488f332e-9c60-427b-86e8-ee13a2b89ab5","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","priority":"u=4","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56076},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","content-type":"application/json; charset=utf-8","content-length":"3483203","etag":"W/\"352643-TiaV/dpZ8HLyMVmKbked35eR0kY\""}},"responseTime":1228,"msg":"request completed"}
+{"level":30,"time":1720555333799,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":34,"method":"GET","url":"/assets/GraphView-793a2483.css","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"text/css,*/*;q=0.1","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"style","sec-fetch-mode":"no-cors","sec-fetch-site":"same-origin","priority":"u=2","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56077},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"b56-190711da04e\"","content-type":"text/css; charset=UTF-8","content-length":2902}},"responseTime":2,"msg":"request completed"}
+{"level":30,"time":1720555333801,"pid":42899,"hostname":"Guthries-MBP.lan","req":{"id":33,"method":"GET","url":"/assets/GraphView-6dccb9db.js","query":{},"params":{},"headers":{"host":"localhost:8386","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0","accept":"*/*","accept-language":"en-US,en;q=0.5","accept-encoding":"gzip, deflate, br, zstd","connection":"keep-alive","referer":"http://localhost:8386/main/results?l=Seasonal%20Allergic%20Rhinitis&i=MONDO:0005324&t=0&r=0&q=6fff0b27-c22a-4b6b-982d-d8b03eb29421","sec-fetch-dest":"script","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","pragma":"no-cache","cache-control":"no-cache"},"remoteAddress":"::ffff:127.0.0.1","remotePort":56076},"res":{"statusCode":200,"headers":{"x-powered-by":"Express","accept-ranges":"bytes","cache-control":"public, max-age=0","last-modified":"Tue, 02 Jul 2024 01:44:45 GMT","etag":"W/\"f9993-190711da059\"","content-type":"application/javascript; charset=UTF-8","content-length":1022355}},"responseTime":5,"msg":"request completed"}
