@@ -8,12 +8,6 @@ import { loadBiolink } from '../lib/biolink-model.mjs';
 import { loadChebi } from '../lib/chebi.mjs';
 import * as trapi from '../lib/trapi.mjs';
 
-async function blackBoxTest(name, f) {
-  const input = cmn.readJson(`test/data/trapi/in/${name}.json`);
-  const output = cmn.readJson(`test/data/trapi/out/${name}.json`);
-  return [f.apply(null, await input), await output];
-}
-
 // We have to do this because the 'before' hook does not seem to work
 async function loadConfig() {
   const config = await cfg.bootstrapConfig('test/data/trapi/config.json')
@@ -29,20 +23,23 @@ function reduceSummaryNoise(summary) {
   summary.errors = null;
 }
 
-async function creativeAnswersToSummaryTest(pathToData) {
-  loadConfig();
-  const [actual, expected] = await blackBoxTest(pathToData, trapi.creativeAnswersToSummary);
-  assert.deepEqual(reduceSummaryNoise(actual), reduceSummaryNoise(expected));
+async function creativeAnswersToSummaryTest(testFile) {
+  await loadConfig();
+  const input = cmn.readJson(`test/data/trapi/in/${testFile}.json`);
+  const expected = cmn.readJson(`test/data/trapi/out/${testFile}.json`);
+  const maxHops = 3;
+  const actual = await trapi.creativeAnswersToSummary("", await input, maxHops);
+  assert.deepEqual(reduceSummaryNoise(actual), reduceSummaryNoise(await expected));
 }
 
 
 describe('creativeAnswersToSummary', async () => {
   it('Should return an empty summary for an empty answers array', async () => {
-    creativeAnswersToSummaryTest('empty-summary');
+    await creativeAnswersToSummaryTest('empty-summary');
   });
 
   // Regression tests
-  it('Heart Disorder regression test', async () => {
-    creativeAnswersToSummaryTest('mondo-0005267');
+  it('Bethlem Myopathy regression test', async () => {
+    await creativeAnswersToSummaryTest('mondo-0008029');
   });
 });
