@@ -24,8 +24,8 @@ function reduceSummaryNoise(summary) {
 
 async function regressionTest(testFile) {
   await loadConfig();
-  const input = cmn.readJson(`test/data/regression/in/${testFile}.json`);
-  const expected = cmn.readJson(`test/data/regression/out/${testFile}.json`);
+  const input = cmn.readJson(`test/data/regression/in/${testFile}`);
+  const expected = cmn.readJson(`test/data/regression/out/${testFile}`);
   const maxHops = 3;
   const translatorAdapter = new TranslatorServicexFEAdapter();
   const actual = await translatorAdapter.queryResultsToFE(await input, maxHops);
@@ -34,151 +34,151 @@ async function regressionTest(testFile) {
 
 describe('Regression Tests', async () => {
 
-  it('Regression test for cb16276d-8379-4cae-92b2-0d4f0ba421ba', async () => {
-    await regressionTest('cb16276d-8379-4cae-92b2-0d4f0ba421ba');
+  it('Regression test for 00881bc8-5bcd-472b-aafa-dbc4e8992dcd.json', async () => {
+    await regressionTest('00881bc8-5bcd-472b-aafa-dbc4e8992dcd.json');
   });
 
-  it('Regression test for 0eec85f0-88bf-4ec7-ad4e-3dc9b41391a1', async () => {
-    await regressionTest('0eec85f0-88bf-4ec7-ad4e-3dc9b41391a1');
+  it('Regression test for 020d41bd-1709-416f-befc-392b7ca56e2a.json', async () => {
+    await regressionTest('020d41bd-1709-416f-befc-392b7ca56e2a.json');
   });
 
-  it('Regression test for e559666b-f7de-489b-a34f-4eb4b456630b', async () => {
-    await regressionTest('e559666b-f7de-489b-a34f-4eb4b456630b');
+  it('Regression test for 050daf46-2233-4603-bec5-e71812290494.json', async () => {
+    await regressionTest('050daf46-2233-4603-bec5-e71812290494.json');
   });
 
-  it('Regression test for 907143de-e017-4c6d-8ff0-2b0d05fd3377', async () => {
-    await regressionTest('907143de-e017-4c6d-8ff0-2b0d05fd3377');
+  it('Regression test for 055991c4-37c7-4c2d-b048-82041f7a2137.json', async () => {
+    await regressionTest('055991c4-37c7-4c2d-b048-82041f7a2137.json');
   });
 
-  it('Regression test for bd58b7a6-73b7-4a3f-8c6a-430f6947a2fa', async () => {
-    await regressionTest('bd58b7a6-73b7-4a3f-8c6a-430f6947a2fa');
+  it('Regression test for 0dea8612-2e19-423e-85ae-c021b5d132ac.json', async () => {
+    await regressionTest('0dea8612-2e19-423e-85ae-c021b5d132ac.json');
   });
 
-  it('Regression test for f2f60055-b59f-4b75-80bf-55bf67d01688', async () => {
-    await regressionTest('f2f60055-b59f-4b75-80bf-55bf67d01688');
+  it('Regression test for 24798984-a55f-460e-b286-531f2eeb541d.json', async () => {
+    await regressionTest('24798984-a55f-460e-b286-531f2eeb541d.json');
   });
 
-  it('Regression test for 225150d1-1705-4ef3-83fd-6daab63b6fa8', async () => {
-    await regressionTest('225150d1-1705-4ef3-83fd-6daab63b6fa8');
+  it('Regression test for 285a6a67-df50-414c-8b86-19e1a2ff1412.json', async () => {
+    await regressionTest('285a6a67-df50-414c-8b86-19e1a2ff1412.json');
   });
 
-  it('Regression test for a4b63cba-1b6e-49d0-a130-64dbcf50271b', async () => {
-    await regressionTest('a4b63cba-1b6e-49d0-a130-64dbcf50271b');
+  it('Regression test for 28a4edfd-03d6-4b30-a899-fe37fbd85265.json', async () => {
+    await regressionTest('28a4edfd-03d6-4b30-a899-fe37fbd85265.json');
   });
 
-  it('Regression test for bfbcb4f2-574a-42dc-be8d-48583fb7167a', async () => {
-    await regressionTest('bfbcb4f2-574a-42dc-be8d-48583fb7167a');
+  it('Regression test for 2ad7c20f-c252-4c15-bdf2-f4e4b5e7b50c.json', async () => {
+    await regressionTest('2ad7c20f-c252-4c15-bdf2-f4e4b5e7b50c.json');
   });
 
-  it('Regression test for b165076f-f37a-4423-ac0e-15472151d30a', async () => {
-    await regressionTest('b165076f-f37a-4423-ac0e-15472151d30a');
+  it('Regression test for 2d4b2a6a-887c-4e73-90e5-e62119071396.json', async () => {
+    await regressionTest('2d4b2a6a-887c-4e73-90e5-e62119071396.json');
   });
 
-  it('Regression test for 12b5ddda-995b-47c5-966d-140b1c277ca4', async () => {
-    await regressionTest('12b5ddda-995b-47c5-966d-140b1c277ca4');
+  it('Regression test for 35462d4e-4d67-439b-97e2-3c6d7c5920bf.json', async () => {
+    await regressionTest('35462d4e-4d67-439b-97e2-3c6d7c5920bf.json');
   });
 
-  it('Regression test for 1be4815d-4849-422b-a55a-4aede6006726', async () => {
-    await regressionTest('1be4815d-4849-422b-a55a-4aede6006726');
+  it('Regression test for 497b7e08-a541-492a-9930-417fac4dfaea.json', async () => {
+    await regressionTest('497b7e08-a541-492a-9930-417fac4dfaea.json');
   });
 
-  it('Regression test for 768b07da-715b-4849-a906-cd9acb03d887', async () => {
-    await regressionTest('768b07da-715b-4849-a906-cd9acb03d887');
+  it('Regression test for 4e1346f1-d3f2-462f-954f-546084b8dd37.json', async () => {
+    await regressionTest('4e1346f1-d3f2-462f-954f-546084b8dd37.json');
   });
 
-  it('Regression test for c47bcb40-f965-424a-b99f-1f89c5dcc628', async () => {
-    await regressionTest('c47bcb40-f965-424a-b99f-1f89c5dcc628');
+  it('Regression test for 52000f6d-a3ea-4dc1-ae44-636fa5b6e447.json', async () => {
+    await regressionTest('52000f6d-a3ea-4dc1-ae44-636fa5b6e447.json');
   });
 
-  it('Regression test for 6443aa34-4b08-4b44-a53d-cb1e7285cadc', async () => {
-    await regressionTest('6443aa34-4b08-4b44-a53d-cb1e7285cadc');
+  it('Regression test for 577a5ce3-8f31-4a6b-bc7a-372977265802.json', async () => {
+    await regressionTest('577a5ce3-8f31-4a6b-bc7a-372977265802.json');
   });
 
-  it('Regression test for 9d5cabdd-7642-4970-b01c-329324719e8c', async () => {
-    await regressionTest('9d5cabdd-7642-4970-b01c-329324719e8c');
+  it('Regression test for 58b410ec-5a46-4d53-9709-781e20a2c9d0.json', async () => {
+    await regressionTest('58b410ec-5a46-4d53-9709-781e20a2c9d0.json');
   });
 
-  it('Regression test for 041900d4-dbc5-483b-b73a-51a0af9bd910', async () => {
-    await regressionTest('041900d4-dbc5-483b-b73a-51a0af9bd910');
+  it('Regression test for 5fab4b98-7825-4b1e-ba79-8638687ed6de.json', async () => {
+    await regressionTest('5fab4b98-7825-4b1e-ba79-8638687ed6de.json');
   });
 
-  it('Regression test for 44a6420c-23b7-44f4-b10b-545bbe358599', async () => {
-    await regressionTest('44a6420c-23b7-44f4-b10b-545bbe358599');
+  it('Regression test for 6990d9c1-0a5d-46dc-83d0-c608178a3fb4.json', async () => {
+    await regressionTest('6990d9c1-0a5d-46dc-83d0-c608178a3fb4.json');
   });
 
-  it('Regression test for 6f95047c-00c8-4862-8a93-264d0f477243', async () => {
-    await regressionTest('6f95047c-00c8-4862-8a93-264d0f477243');
+  it('Regression test for 898407e1-e07d-4f33-bdbf-e8c4eacd24f6.json', async () => {
+    await regressionTest('898407e1-e07d-4f33-bdbf-e8c4eacd24f6.json');
   });
 
-  it('Regression test for 8e2a8a4b-a7d6-42e3-a762-238923a60df5', async () => {
-    await regressionTest('8e2a8a4b-a7d6-42e3-a762-238923a60df5');
+  it('Regression test for 89fcc19e-6c86-47f5-84a2-4053be34a49b.json', async () => {
+    await regressionTest('89fcc19e-6c86-47f5-84a2-4053be34a49b.json');
   });
 
-  it('Regression test for caba4861-65c4-4a03-ac67-fa0dd61a5124', async () => {
-    await regressionTest('caba4861-65c4-4a03-ac67-fa0dd61a5124');
+  it('Regression test for 9b461266-37be-4d35-b665-23f67eacdae8.json', async () => {
+    await regressionTest('9b461266-37be-4d35-b665-23f67eacdae8.json');
   });
 
-  it('Regression test for 8aa05017-6e89-4858-b71b-10c0e2c7ea95', async () => {
-    await regressionTest('8aa05017-6e89-4858-b71b-10c0e2c7ea95');
+  it('Regression test for ae3db825-c2e8-40dc-acbc-831d4b8325a8.json', async () => {
+    await regressionTest('ae3db825-c2e8-40dc-acbc-831d4b8325a8.json');
   });
 
-  it('Regression test for fa78c1f0-a3ff-467d-b493-9235614d084f', async () => {
-    await regressionTest('fa78c1f0-a3ff-467d-b493-9235614d084f');
+  it('Regression test for b1276f27-97aa-4e7b-8559-069bd6fb8f67.json', async () => {
+    await regressionTest('b1276f27-97aa-4e7b-8559-069bd6fb8f67.json');
   });
 
-  it('Regression test for 41a288e1-42ab-4cad-883b-a4c848e8146c', async () => {
-    await regressionTest('41a288e1-42ab-4cad-883b-a4c848e8146c');
+  it('Regression test for c4b08dec-2c29-40c2-9e0a-4ffdf5ffe0cc.json', async () => {
+    await regressionTest('c4b08dec-2c29-40c2-9e0a-4ffdf5ffe0cc.json');
   });
 
-  it('Regression test for 97be0b97-cc7d-43cd-93c0-18fd7549892d', async () => {
-    await regressionTest('97be0b97-cc7d-43cd-93c0-18fd7549892d');
+  it('Regression test for ce985250-4701-4c66-941f-97242c764ab0.json', async () => {
+    await regressionTest('ce985250-4701-4c66-941f-97242c764ab0.json');
   });
 
-  it('Regression test for 37d6fa3d-3627-4229-acae-0c1196a9bf39', async () => {
-    await regressionTest('37d6fa3d-3627-4229-acae-0c1196a9bf39');
+  it('Regression test for d88b2261-00ce-4a30-a684-75ac1a9d2a70.json', async () => {
+    await regressionTest('d88b2261-00ce-4a30-a684-75ac1a9d2a70.json');
   });
 
-  it('Regression test for a5a7eee7-c627-414d-85a6-08e9955c3a7c', async () => {
-    await regressionTest('a5a7eee7-c627-414d-85a6-08e9955c3a7c');
+  it('Regression test for ddb0c5e8-35fd-4ef9-8d97-11698d87addf.json', async () => {
+    await regressionTest('ddb0c5e8-35fd-4ef9-8d97-11698d87addf.json');
   });
 
-  it('Regression test for 538f4bdb-6639-4465-ab19-4de7517b270e', async () => {
-    await regressionTest('538f4bdb-6639-4465-ab19-4de7517b270e');
+  it('Regression test for de949c79-7364-473c-a57b-f9a3d7922e0a.json', async () => {
+    await regressionTest('de949c79-7364-473c-a57b-f9a3d7922e0a.json');
   });
 
-  it('Regression test for 19bf663b-1018-4f62-9ac4-9b0a2e0f2a8b', async () => {
-    await regressionTest('19bf663b-1018-4f62-9ac4-9b0a2e0f2a8b');
+  it('Regression test for dee141c2-2566-4983-91b0-b7e0166bcd82.json', async () => {
+    await regressionTest('dee141c2-2566-4983-91b0-b7e0166bcd82.json');
   });
 
-  it('Regression test for f6c52599-8733-42a7-8b87-a0feffb5d853', async () => {
-    await regressionTest('f6c52599-8733-42a7-8b87-a0feffb5d853');
+  it('Regression test for dfb87e9f-96a4-44ef-a015-7704392ac62a.json', async () => {
+    await regressionTest('dfb87e9f-96a4-44ef-a015-7704392ac62a.json');
   });
 
-  it('Regression test for d2bf1ca7-32a1-47b7-b2c1-c3bb11a92bfd', async () => {
-    await regressionTest('d2bf1ca7-32a1-47b7-b2c1-c3bb11a92bfd');
+  it('Regression test for e07b41c5-1a2f-47ca-9511-d0d7de70ca9f.json', async () => {
+    await regressionTest('e07b41c5-1a2f-47ca-9511-d0d7de70ca9f.json');
   });
 
-  it('Regression test for 63b8efad-b314-44ec-a637-ed2bc920e2ac', async () => {
-    await regressionTest('63b8efad-b314-44ec-a637-ed2bc920e2ac');
+  it('Regression test for eafb6dcf-ef65-46b6-bd5b-d237e23907da.json', async () => {
+    await regressionTest('eafb6dcf-ef65-46b6-bd5b-d237e23907da.json');
   });
 
-  it('Regression test for e8e540bf-45c3-453f-8fc6-5df32e7e90d6', async () => {
-    await regressionTest('e8e540bf-45c3-453f-8fc6-5df32e7e90d6');
+  it('Regression test for f18a3b53-b309-4978-93f2-0b38d8f3c701.json', async () => {
+    await regressionTest('f18a3b53-b309-4978-93f2-0b38d8f3c701.json');
   });
 
-  it('Regression test for a33418b9-2952-441b-aa35-ba158fd14004', async () => {
-    await regressionTest('a33418b9-2952-441b-aa35-ba158fd14004');
+  it('Regression test for f6b094da-ad8a-40a5-839f-d2a3c26ae99c.json', async () => {
+    await regressionTest('f6b094da-ad8a-40a5-839f-d2a3c26ae99c.json');
   });
 
-  it('Regression test for f2ff6e25-7a49-4b26-a282-8011600e2188', async () => {
-    await regressionTest('f2ff6e25-7a49-4b26-a282-8011600e2188');
+  it('Regression test for fa9c31cf-6d13-4284-b657-96acee6c387d.json', async () => {
+    await regressionTest('fa9c31cf-6d13-4284-b657-96acee6c387d.json');
   });
 
-  it('Regression test for 99624abf-08f2-41ce-b52a-8658f246bb38', async () => {
-    await regressionTest('99624abf-08f2-41ce-b52a-8658f246bb38');
+  it('Regression test for fbdf1b14-179b-44c0-a41f-ee2bc84047a6.json', async () => {
+    await regressionTest('fbdf1b14-179b-44c0-a41f-ee2bc84047a6.json');
   });
 
-  it('Regression test for f56f2eb7-6438-41e3-833f-be0cbeeacd1a', async () => {
-    await regressionTest('f56f2eb7-6438-41e3-833f-be0cbeeacd1a');
+  it('Regression test for fe681a8f-b240-4d07-a2dd-67e789907778.json', async () => {
+    await regressionTest('fe681a8f-b240-4d07-a2dd-67e789907778.json');
   });
 });

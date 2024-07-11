@@ -2,7 +2,7 @@
 
 pk_file=$1
 config_file=$2
-if [ -z $config_file ]; then
+if [ -z "$config_file" ]; then
   config_file="./configurations/production.json"
 fi
 
@@ -38,8 +38,8 @@ function reduceSummaryNoise(summary) {
 
 async function regressionTest(testFile) {
   await loadConfig();
-  const input = cmn.readJson("'`test/data/regression/in/${testFile}.json`'");
-  const expected = cmn.readJson("'`test/data/regression/out/${testFile}.json`'");
+  const input = cmn.readJson("'`test/data/regression/in/${testFile}`'");
+  const expected = cmn.readJson("'`test/data/regression/out/${testFile}`'");
   const maxHops = 3;
   const translatorAdapter = new TranslatorServicexFEAdapter();
   const actual = await translatorAdapter.queryResultsToFE(await input, maxHops);
@@ -47,13 +47,18 @@ async function regressionTest(testFile) {
 }
 
 describe('Regression Tests', async () => {" > $test_file
-rm -f $data_in/* $data_out/*
-for pk in $(cat "./utilities/${pk_file}"); do
-  node ./utilities/node/downloadQuery.mjs ${pk} > "$data_in/${pk}.json"
-  node ./utilities/node/summarizeQuery.mjs "${config_file}" "$data_in/${pk}.json" > "$data_out/${pk}.json"
+if [ -n "$pk_file" ]; then
+  rm -f $data_in/* $data_out/*
+  for pk in $(cat "./utilities/${pk_file}"); do
+    node ./utilities/node/downloadQuery.mjs ${pk} > "$data_in/${pk}.json"
+    node ./utilities/node/summarizeQuery.mjs "${config_file}" "$data_in/${pk}.json" > "$data_out/${pk}.json"
+  done
+fi
+
+for f in $(ls $data_in); do
   echo "
-  it('Regression test for ${pk}', async () => {
-    await regressionTest('${pk}');
+  it('Regression test for ${f}', async () => {
+    await regressionTest('${f}');
   });" >> $test_file
 done
 
