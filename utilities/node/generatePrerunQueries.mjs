@@ -101,9 +101,11 @@ async function main() {
   const preRunQueries = {};
   for (const env of envs) {
     const config = await cmn.readJson(`${configRoot}/${env}.json`);
-    const client = new ARSClient(`https://${config.ars_endpoint.host}`,
+    const client = new ARSClient(`${config.ars_endpoint.protocol}://${config.ars_endpoint.host}`,
                                  '',
-                                 config.ars_endpoint.post_uri);
+                                 config.ars_endpoint.post_uri,
+                                 '',
+                                 config.use_ars_merging);
     const service = new TranslatorService(client, outputAdapter);
     preRunQueries[env] = [];
     let qc = 0;
@@ -119,7 +121,7 @@ async function main() {
         preRunQueries[env].push(qElem);
         qc += 1;
         console.log(`[${env}] ${qc}/${queryList.length} queries submitted [${qElem.id} -- ${qElem.uuid}]`);
-        await new Promise(r => setTimeout(r, 60000));
+        await new Promise(r => setTimeout(r, 300000));
       } catch (err) {
         console.error(err);
         //process.exit();

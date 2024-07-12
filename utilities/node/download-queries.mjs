@@ -50,11 +50,15 @@ async function writeToFile(object, filename) {
 let l = await readAndTrimLines(process.argv[2]);
 const arsclient = new ARSClient(
   'https://ars-prod.transltr.io',
-  '/ars/api/messages', '/ars/api/submit');
-const filters = {whitelistRx: /^ara-/};
+  '/ars/api/messages',
+  '/ars/api/submit',
+  '/ars/api/retain',
+  'https',
+  true
+);
 
 l.forEach(async (e) => {
-  let res = await arsclient.collectAllResults(e, filters, true);
+  let res = await arsclient._collectMergedResults(e);
   writeToFile(res, `saved_res.out.${e}`);
   console.log(`Done ${e}`);
 });
