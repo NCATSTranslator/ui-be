@@ -87,24 +87,24 @@ class UserWorkspaceStorePostgres {
     return new UserWorkspace({...res01.rows[0], data: res02.rows[0].data});
   }
 
-  async deleteUserWorkspace(wsid) {
+  async deleteUserWorkspace(ws_id) {
     const res = await pgExec(this.pool,
       'UPDATE user_workspaces set deleted = true, time_updated = $1 where id = $2;',
-      [new Date(), wsid]);
+      [new Date(), ws_id]);
     return res.rowCount === 1;
   }
 
-  async updateUserWorkspaceVisibility(wsid, is_public) {
+  async updateUserWorkspaceVisibility(ws_id, is_public) {
     const res = await pgExec(this.pool,
       'UPDATE user_workspaces set is_public = $1, time_updated = $2 where id = $3;',
-      [is_public, new Date(), wsid]);
+      [is_public, new Date(), ws_id]);
     return res.rowCount === 1;
   }
 
-  async updateUserWorkspaceLastUpdated(wsid, last_updated=new Date()) {
+  async updateUserWorkspaceLastUpdated(ws_id, last_updated=new Date()) {
     const res = await pgExec(this.pool,
       'UPDATE user_workspaces set time_updated = $1 where id = $2;',
-      [last_updated, wsid]);
+      [last_updated, ws_id]);
   }
 }
 
