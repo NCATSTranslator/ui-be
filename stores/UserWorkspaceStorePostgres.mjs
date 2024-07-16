@@ -19,7 +19,7 @@ class UserWorkspaceStorePostgres {
       sql = 'SELECT id, name, description, label, user_id, deleted, is_public, '
        + 'time_created, time_updated from user_workspaces t0';
     }
-    sql = `${sql} WHERE t0.user_id = $1 ${withDel};`;
+    sql = `${sql} WHERE t0.user_id = $1 ${withDel} order by t0.time_updated desc;`;
     const res = await pgExec(this.pool, sql, [uid]);
     const data = res.rows.map(row => new UserWorkspace(row));
     return data.length > 0 ? data : null;
@@ -46,14 +46,14 @@ class UserWorkspaceStorePostgres {
         (id, name, description, label, user_id, deleted,
         is_public, time_created, time_updated)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING *
+      RETURNING *;
     `, [userWorkspace.id, userWorkspace.name, userWorkspace.description,
         userWorkspace.label, userWorkspace.user_id, userWorkspace.deleted,
         userWorkspace.is_public, userWorkspace.time_created,
         userWorkspace.time_updated]);
     const res02 = await client.query(`
       INSERT INTO user_workspace_data(ws_id, data) VALUES ($1, $2)
-      RETURNING *`, [userWorkspace.id, userWorkspace.data]);
+      RETURNING *;`, [userWorkspace.id, userWorkspace.data]);
     if (!(res01.rows.length && res02.rows.length)) {
       return null;
     }
@@ -72,13 +72,13 @@ class UserWorkspaceStorePostgres {
         deleted = $5, is_public = $6, time_created = $7,
         time_updated = $8
       WHERE id = $9
-      RETURNING *
+      RETURNING *;
     `, [userWorkspace.name, userWorkspace.description, userWorkspace.label, userWorkspace.user_id,
         userWorkspace.deleted, userWorkspace.is_public, userWorkspace.time_created,
         userWorkspace.time_updated, userWorkspace.id
     ]);
     const res02 = await client.query(`
-      UPDATE user_workspace_data SET data = $1 where ws_id = $2 RETURNING *`,
+      UPDATE user_workspace_data SET data = $1 where ws_id = $2 RETURNING *;`,
       [userWorkspace.data, userWorkspace.id]);
     if (!(res01.rows.length && res02.rows.length)) {
       return null;
@@ -89,21 +89,27 @@ class UserWorkspaceStorePostgres {
 
   async deleteUserWorkspace(wsid) {
     const res = await pgExec(this.pool,
-      'UPDATE user_workspaces set deleted = true, time_updated = $1 where id = $2',
+      'UPDATE user_workspaces set deleted = true, time_updated = $1 where id = $2;',
       [new Date(), wsid]);
     return res.rowCount === 1;
   }
 
   async updateUserWorkspaceVisibility(wsid, is_public) {
     const res = await pgExec(this.pool,
-      'UPDATE user_workspaces set is_public = $1, time_updated = $2 where id = $3',
+      'UPDATE user_workspaces set is_public = $1, time_updated = $2 where id = $3;',
       [is_public, new Date(), wsid]);
     return res.rowCount === 1;
   }
+
+  async updateUserWorkspaceLastUpdated(wsid, last_updated=new Date()) {
+    const res = await pgExec(this.pool,
+      'UPDATE user_workspaces set time_updated = $1 where id = $2;',
+      [last_updated, wsid]);
+  }
 }
 
-/*
 
+/*
 // testing code
 export { UserWorkspace };
 
@@ -116,5 +122,7 @@ export var uu = new UserWorkspaceStorePostgres(null, {
   ssl: false
 });
 
-export var m1 = new UserWorkspace({user_id: 'de327795-0848-4ce6-bd44-908efe561c7c', name: 'my workspace'});
+export var uid = 'de327795-0848-4ce6-bd44-908efe561c7c';
+export var w1 = new UserWorkspace({user_id: uid , name: 'my workspace'});
+export var all = await uu.retrieveWorkspacesByUserId(uid, true);
 */
