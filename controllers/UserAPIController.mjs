@@ -172,4 +172,21 @@ class UserAPIController {
       return wutil.sendInternalServerError(res);
     }
   }
+
+  async getUserWorkspaces(req, res, next) {
+    let user_id = req.sessionData.user.id;
+    let includeData = req.query.include_data === 'true';
+    let includeDeleted = req.query.include_deleted === 'true';
+    try {
+      let result = await this.userService.getUserWorkspaces(user_id, includeData, includeDeleted);
+      if (!result) {
+        return wutil.sendError(result, 404, `No workspace data found for user id ${user_id}`);
+      } else {
+        return res.status(200).json(result);
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
 }

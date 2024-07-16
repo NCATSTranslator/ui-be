@@ -93,6 +93,8 @@ export function startServer(config, services) {
   app.get(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.getUserSaveById.bind(userAPIController));
   app.put(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
   app.delete(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+  // workspaces
+  app.get(`${API_PATH_PREFIX}/users/me/workspaces`, userAPIController.getUserWorkspaces.bind(userAPIController));
 
 
   // All routes below this point MUST be unprivileged
