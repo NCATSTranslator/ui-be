@@ -100,27 +100,30 @@ export function startServer(config, services) {
   // All routes below this point MUST be unprivileged
   app.use(sessionController.authenticateUnprivilegedRequest.bind(sessionController));
 
-
   // -- THIS IS THE CUTOFF POINT -- OLDER STUFF THAT SHOULD DIE SOON --
 
   app.get('/main/logout.html',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/logout.html'));
   });
 
-  app.all(['/demo', '/demo/*'], validateUnauthSession(config, authService));
-  app.all(['/main', '/main/*'], validateAuthSession(config, authService));
+  //app.all(['/demo', '/demo/*'], validateUnauthSession(config, authService));
+  //app.all(['/main', '/main/*'], validateAuthSession(config, authService));
 
+/****
   app.get('/main',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
+*/
+
   ///app.get('/main/logout', handleLogout(config, authService));
   // logout.html is temp. to test una logout.
 
-
+/****
   app.get('/logout.html',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/logout.html'));
   });
 
+  // FIGURE THESE GUYS OUT
   app.get('/demo/disease/:disease_id',
     validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.disease_id }),
     handleDemoQueryRequest(config.demosite_path));
@@ -130,29 +133,14 @@ export function startServer(config, services) {
   app.get('/demo/chemical/:chemical_id',
     validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.chemical_id }),
     handleDemoQueryRequest(config.demosite_path));
+*/
 
-
-  app.use('/main/api/v1/pub', createAPIRouter(config, services, false));
-  app.use('/demo/api/v1/pub', createAPIRouter(config, services, true));
-  app.use('/main/api/v1/pvt/users', createUserController(config, services));
-
-  ///app.get('/oauth2/redir/:provider', handleLogin(config, authService));
-
-  app.get(['/demo', '/main', '/demo/*', '/main/*', '/login'], (req, res, next) => {
-    res.sendFile(path.join(__root, 'build/index.html'));
-  });
-
-  // == -- -- NEW -- -- ==
-
-
-  //app.use('/api/v1/query', queryAPIController(config, services.translatorService));
-  //app.use('/api/v1/users', userRouter(config))
   app.all(['/api', '/api/*'], (req, res) => {
     return res.status(403).send('API action Forbidden');
   });
 
-  app.get('*', (req, res, next) => {
-    res.redirect(302, '/main');
+  app.all('*', (req, res, next) => {
+    res.sendFile(path.join(__root, 'build/index.html'));
   });
 
   app.listen(8386);
