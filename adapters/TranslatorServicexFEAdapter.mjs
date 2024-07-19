@@ -1,7 +1,7 @@
 'use strict';
 
 import * as arsmsg from '../lib/ARSMessages.mjs';
-import * as smry from '../lib/summarization.mjs';
+import * as sm from '../lib/summarization.mjs';
 
 /* Translate messages coming from the Translator Service into the formats that the Frontend (FE) app expects */
 /* This module should not contain logic that goes beyond message transformations */
@@ -49,15 +49,15 @@ class TranslatorServicexFEAdapter {
       }
     });
 
-    const summary = await smry.answersToSummary(
+    const smry = await sm.answersToSmry(
       msg.pk,
       data,
       maxHops);
-    summary.meta.timestamp = msg.meta.timestamp;
+    smry.meta.timestamp = msg.meta.timestamp;
 
     return {
       status: determineStatus(msg),
-      data: summary
+      data: smry
     };
   }
 }
