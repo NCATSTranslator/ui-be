@@ -33,6 +33,7 @@ async function loadConfig() {
 function reduceSummaryNoise(summary) {
   summary.meta = null;
   summary.errors = null;
+  return JSON.stringify(summary);
 }
 
 async function regressionTest(testFile) {
@@ -42,7 +43,7 @@ async function regressionTest(testFile) {
   const maxHops = 3;
   const translatorAdapter = new TranslatorServicexFEAdapter();
   const actual = await translatorAdapter.queryResultsToFE(await input, maxHops);
-  assert.deepEqual(reduceSummaryNoise(actual.data), reduceSummaryNoise(await expected));
+  assert.strictEqual(reduceSummaryNoise(actual.data), reduceSummaryNoise(await expected));
 }
 
 describe('Regression Tests', async () => {" > $test_file
