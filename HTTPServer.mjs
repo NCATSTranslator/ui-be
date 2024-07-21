@@ -95,6 +95,9 @@ export function startServer(config, services) {
   app.delete(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
   // workspaces
   app.get(`${API_PATH_PREFIX}/users/me/workspaces`, userAPIController.getUserWorkspaces.bind(userAPIController));
+  app.get(`${API_PATH_PREFIX}/users/me/workspaces/:ws_id`, userAPIController.getUserWorkspaceById.bind(userAPIController));
+  app.post(`${API_PATH_PREFIX}/users/me/workspaces`, userAPIController.createUserWorkspace.bind(userAPIController));
+
 
   app.all(['/api', '/api/*'], (req, res) => {
     return res.status(403).send('API action Forbidden');

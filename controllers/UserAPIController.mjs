@@ -6,6 +6,7 @@ import { UserSavedData } from '../models/UserSavedData.mjs';
 import { CookieNotFoundError, NoUserForSessionError, SessionExpiredError,
    SessionNotFoundError, SessionNotUsableError, UserDeletedError
   } from '../services/AuthService.mjs';
+import { UserWorkspace } from '../models/UserWorkspace.mjs';
 
 export { UserAPIController };
 
@@ -178,15 +179,52 @@ class UserAPIController {
     let includeData = req.query.include_data === 'true';
     let includeDeleted = req.query.include_deleted === 'true';
     try {
-      let result = await this.userService.getUserWorkspaces(user_id, includeData, includeDeleted);
-      if (!result) {
-        return wutil.sendError(result, 404, `No workspace data found for user id ${user_id}`);
+      let workspaces = await this.userService.getUserWorkspaces(user_id, includeData, includeDeleted);
+      if (!workspaces) {
+        return wutil.sendError(res, 404, `No workspace data found for user id ${user_id}`);
       } else {
-        return res.status(200).json(result);
+        return res.status(200).json(workspaces);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
     }
   }
+
+  async getUserWorkspaceById(req, res, next) {
+    let user_id = req.sessionData.user.id;
+    let ws_id = req.params.ws_id;
+    let includeDeleted = req.query.include_deleted === 'true';
+    try {
+      let workspace = await this.userService.getUserWorkspaceById(ws_id, includeDeleted);
+      if (!workspace) {
+        return wutil.sendError(res, 404, `No workspace data found for user id ${user_id}`);
+      } else if (user_id !== workspace.user_id) {
+        // TODO: logic around is_public
+        return wutil.sendError(res, 403, `User ${user_id} does not have permission to access this workspace`);
+      } else {
+        return res.status(200).json(workspace);
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
+
+  async createUserWorkspace(req, res, next) {
+    let user_id = req.sessionData.user.id;
+    try {
+      let workspace = await this.userService.createUserWorkspace(new UserWorkspace(req.body));
+      if (!workspace) {
+        return wutil.sendError(res, 500, `Server error creating workspace`);
+      } else {
+        return res.status(200).json(workspace);
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
+
+
 }
