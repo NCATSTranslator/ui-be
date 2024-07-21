@@ -212,7 +212,6 @@ class UserAPIController {
   }
 
   async createUserWorkspace(req, res, next) {
-    let user_id = req.sessionData.user.id;
     try {
       let workspace = await this.userService.createUserWorkspace(new UserWorkspace(req.body));
       if (!workspace) {
@@ -226,5 +225,53 @@ class UserAPIController {
     }
   }
 
+  // As with save data updates, we will accept a partial object
+  async updateUserWorkspace(req, res, next) {
+    let user_id = req.sessionData.user.id;
+    let ws_id = req.params.ws_id;
+    let includeDeleted = req.query.include_deleted === 'true';
+    try {
+      let workspace = await this.userService.getUserWorkspaceById(ws_id, includeDeleted);
+      if (!workspace) {
+        return wutil.sendError(res, 404, `Could not find workspace id ${ws_id}`);
+      }
+      if (user_id !== workspace.user_id) {
+        return wutil.sendError(res, 403, `User ${user_id} does not have permission to update this workspace`);
+      }
+      workspace = new UserWorkspace({...workspace, ...req.body});
+      workspace = await this.userService.updateUserWorkspace(workspace);
+      if (!workspace) {
+        return wutil.sendError(res, 500, `Server error updating workspace`);
+      } else {
+        return res.status(200).json(workspace);
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
+
+  async deleteUserWorkspace(req, res, next) {
+    let user_id = req.sessionData.user.id;
+    let ws_id = req.params.ws_id;
+    try {
+      let workspace = await this.userService.getUserWorkspaceById(ws_id, true);
+      if (!workspace) {
+        return wutil.sendError(res, 404, `Could not find workspace id ${ws_id}`);
+      }
+      if (user_id !== workspace.user_id) {
+        return wutil.sendError(res, 403, `User ${user_id} does not have permission to delete this workspace`);
+      }
+      let success = await this.userService.deleteUserWorkspace(ws_id);
+      if (!success) {
+        return wutil.sendError(res, 500, `Server error deleting workspace`);
+      } else {
+        return res.status(204).end();
+      }
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
 
 }

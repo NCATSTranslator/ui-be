@@ -97,6 +97,8 @@ export function startServer(config, services) {
   app.get(`${API_PATH_PREFIX}/users/me/workspaces`, userAPIController.getUserWorkspaces.bind(userAPIController));
   app.get(`${API_PATH_PREFIX}/users/me/workspaces/:ws_id`, userAPIController.getUserWorkspaceById.bind(userAPIController));
   app.post(`${API_PATH_PREFIX}/users/me/workspaces`, userAPIController.createUserWorkspace.bind(userAPIController));
+  app.put(`${API_PATH_PREFIX}/users/me/workspaces/:ws_id`, userAPIController.updateUserWorkspace.bind(userAPIController));
+  app.delete(`${API_PATH_PREFIX}/users/me/workspaces/:ws_id`, userAPIController.deleteUserWorkspace.bind(userAPIController));
 
 
   app.all(['/api', '/api/*'], (req, res) => {
