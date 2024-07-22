@@ -20,6 +20,7 @@ async function loadConfig() {
 function reduceSummaryNoise(summary) {
   summary.meta = null;
   summary.errors = null;
+  return summary;
 }
 
 async function regressionTest(testFile) {
