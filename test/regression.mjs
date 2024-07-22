@@ -17,9 +17,22 @@ async function loadConfig() {
 }
 
 function reduceSummaryNoise(summary) {
+  function toObject(c, p) {
+    Object.keys(c[p]).forEach(id => {
+      c[p][id] = {...c[p][id]};
+    });
+
+    return c;
+  }
+
+  summary = {...summary};
+  summary.nodes = toObject(summary, 'nodes');
+  summary.edges = toObject(summary, 'edges');
+  summary.paths = toObject(summary, 'paths');
+  summary.publications = toObject(summary, 'publications');
   summary.meta = null;
   summary.errors = null;
-  return JSON.stringify(summary);
+  return summary;
 }
 
 async function regressionTest(testFile) {
@@ -29,7 +42,7 @@ async function regressionTest(testFile) {
   const maxHops = 3;
   const translatorAdapter = new TranslatorServicexFEAdapter();
   const actual = await translatorAdapter.queryResultsToFE(input, maxHops);
-  assert.strictEqual(reduceSummaryNoise(actual.data), reduceSummaryNoise(expected));
+  assert.deepStrictEqual(reduceSummaryNoise(actual.data), reduceSummaryNoise(expected));
 }
 
 describe('Regression Tests', async () => {
