@@ -9,18 +9,14 @@ function findAllowed(curie, allowList, validationKey) {
   return retval.length > 0 ? retval[0] : null;
 }
 
-function validateDemoQueryRequest(isDemo, allowList, validationKey, reqToCurie) {
+function validateDemoQueryRequest(allowList, validationKey, reqToCurie) {
   return function(req, res, next) {
-    if (isDemo) {
-      const curie = reqToCurie(req);
-      const query = findAllowed(curie, allowList, validationKey);
-      if (!query) {
-        return wutil.sendError(res, 403, `Request for ${curie} is not supported`);
-      } else {
-        req.demoQuery = query;
-        next();
-      }
+    const curie = reqToCurie(req);
+    const query = findAllowed(curie, allowList, validationKey);
+    if (!query) {
+      return wutil.sendError(res, 403, `Request for ${curie} is not supported`);
     } else {
+      req.demoQuery = query;
       next();
     }
   }

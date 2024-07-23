@@ -37,6 +37,7 @@ export function startServer(config, services) {
   const userAPIController = new UserAPIController(config, userService, translatorService);
   const sessionController = new SessionController(config, authService);
   const API_PATH_PREFIX = '/api/v1';
+  const SITE_PATH_PREFIX = '';
 
   app.use(pinoHttp());
   app.use(express.json({ limit: config.json_payload_limit }));
@@ -108,30 +109,25 @@ export function startServer(config, services) {
   // All routes below this point MUST be unprivileged
   app.use(sessionController.authenticateUnprivilegedRequest.bind(sessionController));
 
-  // -- THIS IS THE CUTOFF POINT -- OLDER STUFF THAT SHOULD DIE SOON --
-
+  // TODO: figure out logout
   app.get('/main/logout.html',  (req, res, next) => {
     res.sendFile(path.join(__root, 'build/logout.html'));
   });
 
-  // *=* Still TODO: the /demo/disease route handling.
+  app.get('/demo/disease/:disease_id',
+    validateDemoQueryRequest(demoQueries, 'id', (req) => { return req.params.disease_id }),
+    handleDemoQueryRequest(SITE_PATH_PREFIX));
+  app.get('/demo/gene/:gene_id',
+    validateDemoQueryRequest(demoQueries, 'id', (req) => { return req.params.gene_id }),
+    handleDemoQueryRequest(SITE_PATH_PREFIX));
+  app.get('/demo/chemical/:chemical_id',
+    validateDemoQueryRequest(demoQueries, 'id', (req) => { return req.params.chemical_id }),
+    handleDemoQueryRequest(SITE_PATH_PREFIX));
+
   // Aside from ^, all other routes should now simply return the page skeleton and allow the FE to handle the route
   app.all('*', (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
-
-/** ** **
-  // FIGURE THESE GUYS OUT
-  app.get('/demo/disease/:disease_id',
-    validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.disease_id }),
-    handleDemoQueryRequest(config.demosite_path));
-  app.get('/demo/gene/:gene_id',
-    validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.gene_id }),
-    handleDemoQueryRequest(config.demosite_path));
-  app.get('/demo/chemical/:chemical_id',
-    validateDemoQueryRequest(true, demoQueries, 'id', (req) => { return req.params.chemical_id }),
-    handleDemoQueryRequest(config.demosite_path));
-*/
 
   app.listen(8386);
   console.log("Der Anfang ist das Ende und das Ende ist der Anfang");
