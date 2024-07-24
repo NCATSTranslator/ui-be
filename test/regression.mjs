@@ -9,7 +9,7 @@ import { TranslatorServicexFEAdapter } from '../adapters/TranslatorServicexFEAda
 
 // We have to do this because the 'before' hook does not seem to work
 async function loadConfig() {
-  const config = await cfg.bootstrapConfig('test/data/regression/config.json')
+  const config = await cfg.bootstrapConfig('./configurations/production.json')
   await loadBiolink(config.biolink.version,
                     config.biolink.support_deprecated_predicates,
                     config.biolink.infores_catalog,
@@ -64,3 +64,4 @@ await regressionTest('f6b094da-ad8a-40a5-839f-d2a3c26ae99c.json');
 await regressionTest('fa9c31cf-6d13-4284-b657-96acee6c387d.json');
 await regressionTest('fbdf1b14-179b-44c0-a41f-ee2bc84047a6.json');
 await regressionTest('fe681a8f-b240-4d07-a2dd-67e789907778.json');
+console.log('Regression tests passed');
