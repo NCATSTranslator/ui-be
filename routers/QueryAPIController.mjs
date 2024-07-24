@@ -45,7 +45,7 @@ function logQuerySubmissionRequest(req, res, next) {
 
 function validateQuerySubmissionRequest(req, res, next) {
   let query = req.body;
-  if (cmn.isObj(query)) {
+  if (cmn.isObject(query)) {
     next();
   }
   else {
