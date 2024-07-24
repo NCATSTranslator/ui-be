@@ -13,10 +13,10 @@ data_out="$test_dir/out"
 cd ..
 mkdir -p $data_in $data_out
 echo "'use strict'
-import { describe, it, before } from 'node:test';
 import * as assert from 'assert';
 import * as cfg from '../lib/config.mjs';
 import * as cmn from '../lib/common.mjs';
+import * as tsmy from './lib/summarization.mjs';
 import { loadBiolink } from '../lib/biolink-model.mjs';
 import { loadChebi } from '../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../adapters/TranslatorServicexFEAdapter.mjs';
@@ -30,6 +30,7 @@ async function loadConfig() {
   loadTrapi(config.trapi);
 }
 
+<<<<<<< HEAD
 function reduceSummaryNoise(summary) {
   function toObject(c, p) {
     Object.keys(c[p]).forEach(id => {
@@ -49,6 +50,8 @@ function reduceSummaryNoise(summary) {
   return summary;
 }
 
+=======
+>>>>>>> test/regression
 async function regressionTest(testFile) {
   await loadConfig();
   const input = cmn.readJson("'`test/data/regression/in/${testFile}`'");
@@ -56,10 +59,11 @@ async function regressionTest(testFile) {
   const maxHops = 3;
   const translatorAdapter = new TranslatorServicexFEAdapter();
   const actual = await translatorAdapter.queryResultsToFE(await input, maxHops);
-  assert.deepStrictEqual(reduceSummaryNoise(actual.data), reduceSummaryNoise(await expected));
+  tsmy.testSummary(actual.data, await expected);
 }
 
-describe('Regression Tests', async () => {" > $test_file
+" > $test_file
+
 if [ -n "$pk_file" ]; then
   rm -f $data_in/* $data_out/*
   for pk in $(cat "./utilities/${pk_file}"); do
@@ -69,10 +73,5 @@ if [ -n "$pk_file" ]; then
 fi
 
 for f in $(ls $data_in); do
-  echo "
-  it('Regression test for ${f}', async () => {
-    await regressionTest('${f}');
-  });" >> $test_file
+  echo "await regressionTest('${f}');" >> $test_file
 done
-
-echo "});" >> $test_file
