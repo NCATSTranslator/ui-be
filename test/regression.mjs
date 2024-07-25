@@ -10,7 +10,7 @@ import { loadTrapi } from '../lib/trapi.mjs';
 
 // We have to do this because the 'before' hook does not seem to work
 async function loadConfig() {
-  const config = await cfg.bootstrapConfig('test/data/regression/config.json');
+  const config = await cfg.bootstrapConfig('./configurations/production.json');
   await loadBiolink(config.biolink);
   await loadChebi();
   loadTrapi(config.trapi);
