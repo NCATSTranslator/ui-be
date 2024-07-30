@@ -18,6 +18,7 @@ pipeline {
         IMAGE_NAME = "853771734544.dkr.ecr.us-east-1.amazonaws.com/translator-ui"
         KUBERNETES_BLUE_CLUSTER_NAME = "translator-eks-ci-blue-cluster"
         DEPLOY_ENV="ci"
+        NAMESPACE='ui'
     }
     stages {
         stage('Build Version'){
@@ -65,6 +66,7 @@ pipeline {
                     configFile(fileId: 'prepare.sh', targetLocation: 'prepare.sh')
                     ]){
                         sh '''
+                        kubectl delete deployment translator-ui -n ${NAMESPACE}
                         aws --region ${AWS_REGION} eks update-kubeconfig --name ${KUBERNETES_BLUE_CLUSTER_NAME}
                         /bin/bash prepare.sh
                         cd translator-ops/ops/translator-ui/
