@@ -168,35 +168,3 @@ function createUserController(config, services) {
 
   return router;
 }
-
-function authenticateRequest(config, authService) {
-  return async function (req, res, next) {
-    let cookieName = config.session_cookie.name;
-    let token = req.cookies[cookieName];
-    let cookiePath = config.mainsite_path;
-    let cookieMaxAge = authService.sessionAbsoluteTTLSec;
-
-    let validationResult = null;
-    try {
-      validationResult = await authService.validateAuthSessionToken(token);
-      req.user = validationResult.user;
-      if (validationResult.tokenRefreshed) {
-        wutil.setSessionCookie(res, cookieName, validationResult.session.token, cookiePath, cookieMaxAge);
-      }
-      next();
-    } catch (err) {
-      if (err instanceof CookieNotFoundError
-          || err instanceof SessionNotFoundError
-          || err instanceof SessionNotUsableError
-          || err instanceof NoUserForSessionError
-          || err instanceof SessionExpiredError) {
-            return res.redirect(302, `/login`);
-      } else if (err instanceof UserDeletedError) {
-        return res.status(403).send(`This account has been deactivated. Please re-register to use the site`);
-      } else {
-        wutil.logInternalServerError(req, err);
-        return wutil.sendInternalServerError(res);
-      }
-    }
-  }
-}
