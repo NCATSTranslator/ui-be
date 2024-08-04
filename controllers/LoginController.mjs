@@ -10,7 +10,7 @@ class LoginController {
     this.authService = authService;
   }
 
-  async login(req, res, next) {
+  async authRedir(req, res, next) {
     const provider = req.params.provider;
     const authcode = req.query.code;
     let newSession = await this.authService.handleSSORedirect(provider, authcode, this.config);
@@ -24,6 +24,13 @@ class LoginController {
       // %%SV2: update this to be first '/', then the path in the state param once ready
       return res.redirect(302, '/');  // *=*
     }
+  }
+
+  async login(req, res, next) {
+    const redirPath = req.query.path || '/';
+    let retval = await this.authService.createLoginStateSession(redirPath);
+    console.log(retval);
+    return res.status(200).json(retval);
   }
 
   async logout(req, res, next) {
