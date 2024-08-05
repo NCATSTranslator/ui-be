@@ -158,13 +158,12 @@ class AuthService {
     return (status === SESSION_TOKEN_EXPIRED || status === SESSION_VALID);
   }
 
-  async createLoginStateSession(urlPath) {
+  async createLoginStateSession(data) {
     let res = null;
     try {
       let sessionData = new Session({
-        data: {
-          urlPath: urlPath
-        }
+        auth_provider: 'una',
+        data: data
       });
       return sessionData;
     } catch (err) {

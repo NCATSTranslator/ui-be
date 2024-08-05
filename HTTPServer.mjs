@@ -64,7 +64,7 @@ export function startServer(config, services) {
 
   // Login/logout
   app.get('/oauth2/redir/:provider', loginController.authRedir.bind(loginController));
-  app.get('/login', loginController.login.bind(loginController));
+  app.get('/login', loginController.loginWithUna.bind(loginController));
   // *=* NEED TO KNOW HOW LOGOUT WORKS TODAY -- DO WE EVER SEE A BE REQ FOR LOGOUT??
   app.get('/main/logout2', loginController.logout.bind(loginController));
 
