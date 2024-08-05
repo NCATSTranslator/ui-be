@@ -11,6 +11,7 @@ export { AuthService,
   NoUserForSessionError,
   UserDeletedError,
   SessionExpiredError,
+
   SESSION_NO_TOKEN,
   SESSION_INVALID_TOKEN,
   SESSION_TOKEN_NOT_FOUND,
@@ -19,7 +20,16 @@ export { AuthService,
   SESSION_TOKEN_EXPIRED,
   SESSION_VALID,
   SESSION_INVALID_USER,
-  SESSION_FORCE_KILLED
+  SESSION_FORCE_KILLED,
+
+  LOGIN_NO_TOKEN,
+  LOGIN_INVALID_TOKEN,
+  LOGIN_TOKEN_NOT_FOUND,
+  LOGIN_WRONG_TOKEN_TYPE,
+  LOGIN_FORCE_KILLED,
+  LOGIN_BAD_INTERNAL_DATA,
+  LOGIN_TTL_EXCEEDED,
+  LOGIN_STATE_VALID
 };
 
 const SESSION_NO_TOKEN = 0;
@@ -32,9 +42,14 @@ const SESSION_SESSION_EXPIRED = 6;
 const SESSION_TOKEN_EXPIRED = 7;
 const SESSION_VALID = 8;
 
-
-
-
+const LOGIN_NO_TOKEN = 0;
+const LOGIN_INVALID_TOKEN = 1;
+const LOGIN_TOKEN_NOT_FOUND = 2;
+const LOGIN_WRONG_TOKEN_TYPE = 3;
+const LOGIN_FORCE_KILLED = 4;
+const LOGIN_BAD_INTERNAL_DATA = 5;
+const LOGIN_TTL_EXCEEDED = 6;
+const LOGIN_STATE_VALID = 7;
 
 class CookieNotFoundError extends Error {
   constructor() {
@@ -83,6 +98,7 @@ class AuthService {
     this.tokenTTLSec = sessionParams.tokenTTLSec;
     this.sessionAbsoluteTTLSec = sessionParams.sessionAbsoluteTTLSec;
     this.sessionMaxIdleTimeSec = sessionParams.sessionMaxIdleTimeSec;
+    this.loginRequestTTLSec = sessionParams.loginRequestTTLSec;
 
     this.sessionStore = sessionStore;
     this.userStore = userStore;
@@ -158,19 +174,68 @@ class AuthService {
     return (status === SESSION_TOKEN_EXPIRED || status === SESSION_VALID);
   }
 
+  async getLoginRequestData(token) {
+    let retval = {
+      status: null,
+      loginRequestSession: null
+    };
+
+    if (!token) {
+      retval.status = LOGIN_NO_TOKEN;
+      return retval;
+    }
+
+    if (!this.isTokenSyntacticallyValid(token)) {
+      retval.status = LOGIN_INVALID_TOKEN;
+      return retval;
+    }
+
+    let res = await this.retrieveSessionByToken(token);
+    if (!res) {
+      retval.status = LOGIN_TOKEN_NOT_FOUND;
+      return retval;
+    }
+
+    if (res.data.type !== 'login') {
+      retval.status = LOGIN_WRONG_TOKEN_TYPE;
+      return retval;
+    }
+
+    if (res.force_kill) {
+      retval.status = LOGIN_FORCE_KILLED;
+      return retval;
+    }
+
+    if (!(res.data.hasOwnProperty('codeVerifier') && res.data.hasOwnProperty('urlPath'))) {
+      retval.status = LOGIN_BAD_INTERNAL_DATA;
+      return retval;
+    }
+
+    if (this.isLoginRequestTTLExceeded(res.time_session_created)) {
+      retval.status = LOGIN_TTL_EXCEEDED;
+      return retval;
+    }
+
+    retval.loginRequestSession = res;
+    retval.status = LOGIN_STATE_VALID;
+    return retval;
+  }
+
   async createLoginStateSession(data) {
     let res = null;
     try {
-      let sessionData = new Session({
+      res = await this.sessionStore.createNewSession(new Session({
         auth_provider: 'una',
         data: data
-      });
-      return sessionData;
+      }));
+      console.log(res);
+      return res;
     } catch (err) {
       console.error(err);
       return null;
     }
   }
+
   async createNewUnauthSession(SSOData) {
     let res = null;
     try {
@@ -199,6 +264,7 @@ class AuthService {
    }
 
   }
+
   async retrieveSessionByToken(token) {
     let res = null;
     try {
@@ -241,12 +307,20 @@ class AuthService {
       || (now - sessionData.time_session_created) > (this.sessionAbsoluteTTLSec * 1000);
   }
 
+  isLoginRequestTTLExceeded(timeSessionCreated) {
+    const now = new Date();
+    return (now - timeSessionCreated) > (this.loginRequestTTLSec * 1000);
+  }
+
   isTokenSyntacticallyValid(token) {
     return token && Session.isTokenSyntacticallyValid(token);
   }
 
-  async handleSSORedirect(provider, authcode, config) {
-    const SSOData = await sso.handleSSORedirect(provider, authcode, config);
+  async handleSSORedirect(provider, authcode, config, loginState=null) {
+    console.log('auth service redirect handler');
+    console.log(`provider: ${provider}; authcode: ${authcode}; loginState: ${JSON.stringify(loginState)}`);
+
+    const SSOData = await sso.handleSSORedirect(provider, authcode, config, loginState.data.codeVerifier);
     if (!SSOData) {
       return null;
     }
@@ -318,6 +392,7 @@ class AuthService {
       tokenRefreshed: tokenRefreshed
     };
   }
+
 
 }
 

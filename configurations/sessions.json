@@ -1,5 +1,6 @@
-{
+.{
   "token_ttl_sec": 1800,
   "session_max_idle_time_sec": 15780000,
-  "session_absolute_ttl_sec": 15780000
+  "session_absolute_ttl_sec": 15780000,
+  "login_request_ttl_sec": 600
 }
