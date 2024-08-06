@@ -66,7 +66,7 @@ export function startServer(config, services) {
   app.get('/oauth2/redir/:provider', loginController.authRedir.bind(loginController));
   app.get('/login', loginController.loginWithUna.bind(loginController));
   // *=* NEED TO KNOW HOW LOGOUT WORKS TODAY -- DO WE EVER SEE A BE REQ FOR LOGOUT??
-  app.get('/main/logout2', loginController.logout.bind(loginController));
+  app.get('/logout', loginController.logout.bind(loginController));
 
   /* Config. ** Idiosyncratic decision alert!! **
    * Similar to the GET session status API, we choose to not have requests to the config API update the session status.
