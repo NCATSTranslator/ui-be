@@ -16,6 +16,11 @@ class LoginController {
   // If support for other SSO providers is needed, different login-with-X functions will be needed.
   async loginWithUna(req, res, next) {
     const redirPath = req.query.path || '/';
+
+    if (req.sessionData && this.authService.isSessionStatusValid(req.sessionData.status)) {
+      // If the user has a valid login session, bypass the login flow
+      return res.redirect(302, redirPath);
+    }
     const codeVerifier = generatePKCECodeVerifier(64);
     const codeChallenge = generatePKCECodeChallenge(codeVerifier);
 
