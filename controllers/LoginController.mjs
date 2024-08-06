@@ -75,7 +75,7 @@ class LoginController {
       let cookieMaxAge = this.authService.sessionAbsoluteTTLSec;
       wutil.setSessionCookie(res, this.config.session_cookie, newSession.token, cookiePath, cookieMaxAge);
       // %%SV2: update this to be first '/', then the path in the state param once ready
-      return res.redirect(302, '/');  // *=*
+      return res.redirect(302, decodeURIComponent(loginData.loginRequestSession.data.urlPath));  // *=*
     }
   }
 
