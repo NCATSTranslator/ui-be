@@ -97,7 +97,7 @@ class LoginController {
     if (!session) {
       console.error(`%% %% %% error expiring session for ${cookieToken} when logging out`);
     }
-    console.log(`Logout successful, redirecting to /logout.html`);
-    return res.redirect(302, `/logout.html`);
+    console.log(`Logout successful, redirecting to /`);
+    return res.redirect(302, `/`);
   }
 }
