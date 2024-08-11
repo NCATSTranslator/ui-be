@@ -54,7 +54,11 @@ export function startServer(config, services) {
    * If no valid session exists (or no token submitted/invalid token, etc.), take no backend action
    * but attach a boolean to the req object indicating no valid session present.
    *
-   * ** !!! Privileged routes below rely on these actions taking place prior to their handlers being called !!! ***
+   * ** !!! Privileged routes below rely on this ^ taking place prior to their handlers being called !!! ***
+   *
+   * Note that the ordering of route handlers below is really important; do not add route handlers
+   * without careful understanding of the fall-through.
+   *
    */
   app.use(sessionController.attachSessionData.bind(sessionController));
 
@@ -102,18 +106,12 @@ export function startServer(config, services) {
   app.put(`${API_PATH_PREFIX}/users/me/workspaces/:ws_id`, userAPIController.updateUserWorkspace.bind(userAPIController));
   app.delete(`${API_PATH_PREFIX}/users/me/workspaces/:ws_id`, userAPIController.deleteUserWorkspace.bind(userAPIController));
 
-
   app.all(['/api', '/api/*'], (req, res) => {
     return res.status(403).send('API action Forbidden');
   });
 
-  // All routes below this point MUST be unprivileged
+  // ** ** All routes below this point MUST be unprivileged ** **
   app.use(sessionController.authenticateUnprivilegedRequest.bind(sessionController));
-
-  // TODO: figure out logout
-  app.get('/main/logout.html',  (req, res, next) => {
-    res.sendFile(path.join(__root, 'build/logout.html'));
-  });
 
   app.get('/demo/disease/:disease_id',
     validateDemoQueryRequest(demoQueries, 'id', (req) => { return req.params.disease_id }),
@@ -125,7 +123,15 @@ export function startServer(config, services) {
     validateDemoQueryRequest(demoQueries, 'id', (req) => { return req.params.chemical_id }),
     handleDemoQueryRequest(SITE_PATH_PREFIX));
 
-  // Aside from ^, all other routes should now simply return the page skeleton and allow the FE to handle the route
+  // Redirect old /main and /demo URLs
+  app.all(['/main', '/main/*', '/demo', '/demo/*'], (req, res, next) => {
+    if (['/main', '/demo'].includes(req.originalUrl)) {
+      res.redirect(308, '/');
+    }
+    res.redirect(308, req.originalUrl.replace(/^\/(main|demo)/, ''));
+  });
+
+  // Any route not explicitly handled above should simply return the page skeleton and allow the FE to handle it
   app.all('*', (req, res, next) => {
     res.sendFile(path.join(__root, 'build/index.html'));
   });
