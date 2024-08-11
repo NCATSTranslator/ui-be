@@ -93,7 +93,7 @@ class UserAPIController {
           return wutil.sendError(res, 400, error);
         } else {
           console.log(`Retaining ${pk}`);
-          //await this.translatorService.retainQuery(pk);
+          await this.translatorService.retainQuery(pk);
         }
       }
 
