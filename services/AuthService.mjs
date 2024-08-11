@@ -4,13 +4,8 @@ import { Session } from '../models/Session.mjs';
 import { User } from '../models/User.mjs';
 import * as sso from '../lib/SocialSignOn.mjs';
 
-export { AuthService,
-  CookieNotFoundError,
-  SessionNotFoundError,
-  SessionNotUsableError,
-  NoUserForSessionError,
-  UserDeletedError,
-  SessionExpiredError,
+export {
+  AuthService,
 
   SESSION_NO_TOKEN,
   SESSION_INVALID_TOKEN,
@@ -50,47 +45,6 @@ const LOGIN_FORCE_KILLED = 4;
 const LOGIN_BAD_INTERNAL_DATA = 5;
 const LOGIN_TTL_EXCEEDED = 6;
 const LOGIN_STATE_VALID = 7;
-
-class CookieNotFoundError extends Error {
-  constructor() {
-      super(`No token submitted`);
-      this.name = 'CookieNotFoundError';
-  }
-}
-
-class SessionNotFoundError extends Error {
-  constructor(token) {
-      super(`No session found for token: ${token}`);
-      this.name = 'SessionNotFoundError';
-  }
-}
-
-class SessionNotUsableError extends Error {
-  constructor(token, session_id) {
-      super(`Session ${session_id} for token ${token} is not usable`);
-      this.name = 'SessionNotUsableError';
-  }
-}
-
-class NoUserForSessionError extends Error {
-  constructor(token, session_id, user_id = null) {
-      super(`No valid user for token ${token} and session id ${session_id} [user id ${user_id}]`);
-      this.name = 'NoUserForSessionError';
-  }
-}
-
-class UserDeletedError extends Error {
-  constructor(user_id = null) {
-      super(`user id ${user_id} is a deleted user`);
-      this.name = 'UserDeletedError';
-  }
-}
-class SessionExpiredError extends Error {
-  constructor(token, session_id) {
-      super(`Session expired for token ${token} with session id ${session_id}`);
-      this.name = 'SessionExpiredError';
-  }
-}
 
 
 class AuthService {

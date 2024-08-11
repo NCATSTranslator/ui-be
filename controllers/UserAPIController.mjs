@@ -1,11 +1,8 @@
 'use strict';
 
-import { default as express } from 'express';
 import * as wutil from '../lib/webutils.mjs';
 import { UserSavedData } from '../models/UserSavedData.mjs';
-import { CookieNotFoundError, NoUserForSessionError, SessionExpiredError,
-   SessionNotFoundError, SessionNotUsableError, UserDeletedError
-  } from '../services/AuthService.mjs';
+
 import { UserWorkspace } from '../models/UserWorkspace.mjs';
 
 export { UserAPIController };

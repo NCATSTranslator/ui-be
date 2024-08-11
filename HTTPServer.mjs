@@ -6,8 +6,6 @@ import { default as express } from 'express';
 import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
 
-import { createUserController } from './routers/UserAPIController.mjs';
-import { createAPIRouter } from './routers/APIRouter.mjs';
 import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
 // Controllers
@@ -16,9 +14,6 @@ import { QueryAPIController } from './controllers/QueryAPIController.mjs';
 import { LoginController } from './controllers/LoginController.mjs';
 import { SessionController } from './controllers/SessionController.mjs';
 import { UserAPIController } from './controllers/UserAPIController.mjs';
-
-import * as wutil from './lib/webutils.mjs';
-import { User } from './models/User.mjs';
 
 export function startServer(config, services) {
 
