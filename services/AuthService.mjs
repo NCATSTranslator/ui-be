@@ -2,57 +2,49 @@
 
 import { Session } from '../models/Session.mjs';
 import { User } from '../models/User.mjs';
-import * as sso from '../SocialSignOn.mjs';
+import * as sso from '../lib/SocialSignOn.mjs';
 
-export { AuthService,
-  CookieNotFoundError,
-  SessionNotFoundError,
-  SessionNotUsableError,
-  NoUserForSessionError,
-  UserDeletedError,
-  SessionExpiredError
+export {
+  AuthService,
+
+  SESSION_NO_TOKEN,
+  SESSION_INVALID_TOKEN,
+  SESSION_TOKEN_NOT_FOUND,
+  SESSION_NO_USER,
+  SESSION_SESSION_EXPIRED,
+  SESSION_TOKEN_EXPIRED,
+  SESSION_VALID,
+  SESSION_INVALID_USER,
+  SESSION_FORCE_KILLED,
+
+  LOGIN_NO_TOKEN,
+  LOGIN_INVALID_TOKEN,
+  LOGIN_TOKEN_NOT_FOUND,
+  LOGIN_WRONG_TOKEN_TYPE,
+  LOGIN_FORCE_KILLED,
+  LOGIN_BAD_INTERNAL_DATA,
+  LOGIN_TTL_EXCEEDED,
+  LOGIN_STATE_VALID
 };
 
-class CookieNotFoundError extends Error {
-  constructor() {
-      super(`No token submitted`);
-      this.name = 'CookieNotFoundError';
-  }
-}
+const SESSION_NO_TOKEN = 0;
+const SESSION_INVALID_TOKEN = 1;
+const SESSION_TOKEN_NOT_FOUND = 2;
+const SESSION_NO_USER = 3;
+const SESSION_FORCE_KILLED = 4;
+const SESSION_INVALID_USER = 5;
+const SESSION_SESSION_EXPIRED = 6;
+const SESSION_TOKEN_EXPIRED = 7;
+const SESSION_VALID = 8;
 
-class SessionNotFoundError extends Error {
-  constructor(token) {
-      super(`No session found for token: ${token}`);
-      this.name = 'SessionNotFoundError';
-  }
-}
-
-class SessionNotUsableError extends Error {
-  constructor(token, session_id) {
-      super(`Session ${session_id} for token ${token} is not usable`);
-      this.name = 'SessionNotUsableError';
-  }
-}
-
-class NoUserForSessionError extends Error {
-  constructor(token, session_id, user_id = null) {
-      super(`No valid user for token ${token} and session id ${session_id} [user id ${user_id}]`);
-      this.name = 'NoUserForSessionError';
-  }
-}
-
-class UserDeletedError extends Error {
-  constructor(user_id = null) {
-      super(`user id ${user_id} is a deleted user`);
-      this.name = 'UserDeletedError';
-  }
-}
-class SessionExpiredError extends Error {
-  constructor(token, session_id) {
-      super(`Session expired for token ${token} with session id ${session_id}`);
-      this.name = 'SessionExpiredError';
-  }
-}
+const LOGIN_NO_TOKEN = 0;
+const LOGIN_INVALID_TOKEN = 1;
+const LOGIN_TOKEN_NOT_FOUND = 2;
+const LOGIN_WRONG_TOKEN_TYPE = 3;
+const LOGIN_FORCE_KILLED = 4;
+const LOGIN_BAD_INTERNAL_DATA = 5;
+const LOGIN_TTL_EXCEEDED = 6;
+const LOGIN_STATE_VALID = 7;
 
 
 class AuthService {
@@ -60,6 +52,7 @@ class AuthService {
     this.tokenTTLSec = sessionParams.tokenTTLSec;
     this.sessionAbsoluteTTLSec = sessionParams.sessionAbsoluteTTLSec;
     this.sessionMaxIdleTimeSec = sessionParams.sessionMaxIdleTimeSec;
+    this.loginRequestTTLSec = sessionParams.loginRequestTTLSec;
 
     this.sessionStore = sessionStore;
     this.userStore = userStore;
@@ -69,11 +62,137 @@ class AuthService {
     return this.userStore.retrieveUserById(id);
   }
 
+  async getSessionData(token) {
+    let retval = {
+      status: null,
+      user: null,
+      session: null
+    };
+
+    if (!token) {
+      retval.status = SESSION_NO_TOKEN;
+      return retval;
+    }
+
+    if (!this.isTokenSyntacticallyValid(token)) {
+      retval.status = SESSION_INVALID_TOKEN;
+      return retval;
+    }
+
+    retval.session = await this.retrieveSessionByToken(token);
+    if (!retval.session) {
+      retval.status = SESSION_TOKEN_NOT_FOUND;
+      return retval;
+    }
+
+    if (!retval.session.user_id) {
+      retval.status = SESSION_NO_USER;
+      return retval;
+    }
+
+    if (retval.session.force_kill) {
+      retval.status = SESSION_FORCE_KILLED;
+      return retval;
+    }
+
+    // Note: reuse of SESSION_NO_USER is intentional
+    retval.user =  await this.getUserById(retval.session.user_id);
+    if (!retval.user) {
+      retval.status = SESSION_NO_USER;
+      return retval;
+    }
+
+    if (retval.user.deleted) {
+      retval.status = SESSION_INVALID_USER;
+      return retval;
+    }
+
+    /* Note: it's critical to check session expiry before token expiry, as
+     * an expired session requires a re-login whereas a live session with
+     * an expired token is a valid session that only requires a token refresh. */
+    if (this.isSessionExpired(retval.session)) {
+      retval.status = SESSION_SESSION_EXPIRED;
+      return retval;
+    }
+
+    if (this.isTokenExpired(retval.session)) {
+      retval.status = SESSION_TOKEN_EXPIRED;
+      return retval;
+    }
+
+    retval.status = SESSION_VALID;
+    return retval;
+  }
+
+  isSessionStatusValid(status) {
+    return (status === SESSION_TOKEN_EXPIRED || status === SESSION_VALID);
+  }
+
+  async getLoginRequestData(token) {
+    let retval = {
+      status: null,
+      loginRequestSession: null
+    };
+
+    if (!token) {
+      retval.status = LOGIN_NO_TOKEN;
+      return retval;
+    }
+
+    if (!this.isTokenSyntacticallyValid(token)) {
+      retval.status = LOGIN_INVALID_TOKEN;
+      return retval;
+    }
+
+    let res = await this.retrieveSessionByToken(token);
+    if (!res) {
+      retval.status = LOGIN_TOKEN_NOT_FOUND;
+      return retval;
+    }
+
+    if (res.data.type !== 'login') {
+      retval.status = LOGIN_WRONG_TOKEN_TYPE;
+      return retval;
+    }
+
+    if (res.force_kill) {
+      retval.status = LOGIN_FORCE_KILLED;
+      return retval;
+    }
+
+    if (!(res.data.hasOwnProperty('codeVerifier') && res.data.hasOwnProperty('urlPath'))) {
+      retval.status = LOGIN_BAD_INTERNAL_DATA;
+      return retval;
+    }
+
+    if (this.isLoginRequestTTLExceeded(res.time_session_created)) {
+      retval.status = LOGIN_TTL_EXCEEDED;
+      return retval;
+    }
+
+    retval.loginRequestSession = res;
+    retval.status = LOGIN_STATE_VALID;
+    return retval;
+  }
+
+  async createLoginStateSession(data) {
+    let res = null;
+    try {
+      res = await this.sessionStore.createNewSession(new Session({
+        auth_provider: 'una',
+        data: data
+      }));
+      return res;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  }
+
   async createNewUnauthSession(SSOData) {
     let res = null;
     try {
        res = this.sessionStore.createNewSession(new Session());
-       console.log(`authservice: new unauth session: ${JSON.stringify(res)}`);
        return res;
     } catch (err) {
       console.error(err);
@@ -89,7 +208,6 @@ class AuthService {
         auth_provider: SSOData.provider,
         data: SSOData.raw_data
       }));
-      console.log(`authservice: new auth session: ${JSON.stringify(res)}`);
       return res;
    } catch (err) {
      console.error(err);
@@ -97,6 +215,7 @@ class AuthService {
    }
 
   }
+
   async retrieveSessionByToken(token) {
     let res = null;
     try {
@@ -139,12 +258,20 @@ class AuthService {
       || (now - sessionData.time_session_created) > (this.sessionAbsoluteTTLSec * 1000);
   }
 
+  isLoginRequestTTLExceeded(timeSessionCreated) {
+    const now = new Date();
+    return (now - timeSessionCreated) > (this.loginRequestTTLSec * 1000);
+  }
+
   isTokenSyntacticallyValid(token) {
     return token && Session.isTokenSyntacticallyValid(token);
   }
 
-  async handleSSORedirect(provider, authcode, config) {
-    const SSOData = await sso.handleSSORedirect(provider, authcode, config);
+  async handleSSORedirect(provider, authcode, config, loginState=null) {
+    const SSOData = await sso.handleSSORedirect(provider, authcode, config, loginState.data.codeVerifier);
+    if (!SSOData) {
+      return null;
+    }
     let email = SSOData.email;
     let user = await this.userStore.retrieveUserByEmail(email);
     if (user) {
@@ -214,4 +341,44 @@ class AuthService {
     };
   }
 
+
 }
+
+/*
+import { pg } from '../lib/postgres_preamble.mjs';
+import { SessionStorePostgres } from '../stores/SessionStorePostgres.mjs';
+import { UserStorePostgres } from '../stores/UserStorePostgres.mjs';
+
+export const aa = (function (config) {
+  const dbPool = new pg.Pool({
+    ...config.storage.pg,
+    password: config.secrets.pg.password,
+    ssl: config.db_conn.ssl
+  });
+  return new AuthService({
+    tokenTTLSec: config.sessions.token_ttl_sec,
+    sessionAbsoluteTTLSec: config.sessions.session_absolute_ttl_sec,
+    sessionMaxIdleTimeSec: config.sessions.session_max_idle_time_sec
+  },
+  new SessionStorePostgres(dbPool),
+  new UserStorePostgres(dbPool));
+})({
+  storage: {
+    "pg": {
+      "host": "pgdb",
+      "user": "app_data",
+      "port": "5432",
+      "database": "app_data"
+    }
+  },
+  "db_conn": {
+    "ssl": false
+  },
+  secrets: { pg: {password: "yourpassword"}},
+  sessions: {
+    "token_ttl_sec": 1800,
+    "session_max_idle_time_sec": 15780000,
+    "session_absolute_ttl_sec": 15780000
+  }
+})
+*/

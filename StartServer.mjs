@@ -16,6 +16,8 @@ import { UserStorePostgres } from './stores/UserStorePostgres.mjs';
 import { pg } from './lib/postgres_preamble.mjs';
 import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgres.mjs';
 import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
+import { UserWorkspaceStorePostgres } from './stores/UserWorkspaceStorePostgres.mjs';
+
 
 // Load the config asap as basically everything depends on it
 const SERVER_CONFIG = await (async function() {
@@ -76,7 +78,8 @@ const USER_SERVICE = (function (config) {
   return new UserService(
     new UserStorePostgres(dbPool),
     new UserPreferenceStorePostgres(dbPool),
-    new UserSavedDataStorePostgres(dbPool)
+    new UserSavedDataStorePostgres(dbPool),
+    new UserWorkspaceStorePostgres(dbPool)
   );
 })(SERVER_CONFIG);
 
