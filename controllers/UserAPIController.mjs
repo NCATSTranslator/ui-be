@@ -16,7 +16,6 @@ class UserAPIController {
 
   getUser(req, res, next) {
     let sessionData = req.sessionData;
-    console.log(sessionData);
     if (sessionData && sessionData.user) {
       return res.status(200).json(sessionData.user);
     } else {

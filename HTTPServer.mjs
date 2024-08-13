@@ -123,6 +123,7 @@ export function startServer(config, services) {
     if (['/main', '/demo'].includes(req.originalUrl)) {
       res.redirect(308, '/');
     }
+    console.log(`redirection: ${req.originalUrl} -> ${req.originalUrl.replace(/^\/(main|demo)/, '')}`);
     res.redirect(308, req.originalUrl.replace(/^\/(main|demo)/, ''));
   });
 

@@ -182,7 +182,6 @@ class AuthService {
         auth_provider: 'una',
         data: data
       }));
-      console.log(res);
       return res;
     } catch (err) {
       console.error(err);
@@ -194,7 +193,6 @@ class AuthService {
     let res = null;
     try {
        res = this.sessionStore.createNewSession(new Session());
-       console.log(`authservice: new unauth session: ${JSON.stringify(res)}`);
        return res;
     } catch (err) {
       console.error(err);
@@ -210,7 +208,6 @@ class AuthService {
         auth_provider: SSOData.provider,
         data: SSOData.raw_data
       }));
-      console.log(`authservice: new auth session: ${JSON.stringify(res)}`);
       return res;
    } catch (err) {
      console.error(err);
@@ -271,9 +268,6 @@ class AuthService {
   }
 
   async handleSSORedirect(provider, authcode, config, loginState=null) {
-    console.log('auth service redirect handler');
-    console.log(`provider: ${provider}; authcode: ${authcode}; loginState: ${JSON.stringify(loginState)}`);
-
     const SSOData = await sso.handleSSORedirect(provider, authcode, config, loginState.data.codeVerifier);
     if (!SSOData) {
       return null;

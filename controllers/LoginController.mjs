@@ -41,7 +41,6 @@ class LoginController {
       + `&state=${stateData.token}`
       + `&code_challenge=${codeChallenge}`
       + `&code_challenge_method=S256`; // case sensitive
-    console.log({here: redirUrl, state: stateData});
     return res.redirect(302, redirUrl);
   }
 
@@ -68,8 +67,6 @@ class LoginController {
       default:
         return wutil.sendInternalServerError(res, `Unexpected login state status: `)
     }
-    console.log(`in auth redir handler`);
-    console.log(loginData);
 
     let newSession = await this.authService.handleSSORedirect(provider, authcode, this.config, loginData.loginRequestSession);
     if (!newSession) {
