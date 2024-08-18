@@ -64,8 +64,9 @@ class UserAPIController {
   async getUserSaves(req, res, next) {
     let user_id = req.sessionData.user.id;
     let includeDeleted = req.query.include_deleted === 'true';
+    let saveType = req.query.type ? req.query.type : null;
     try {
-      let result = await this.userService.getUserSavesByUid(user_id, includeDeleted);
+      let result = await this.userService.getUserSavesByUid(user_id, includeDeleted, saveType);
       if (!result || result.length === 0) {
         return res.status(200).json([]);
       } else {
