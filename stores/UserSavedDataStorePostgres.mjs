@@ -8,10 +8,15 @@ class UserSavedDataStorePostgres {
     this.pool = pool ? pool : new pg.Pool(config);
   }
 
-  async retrieveUserSavedDataByUserId(uid, includeDeleted=false) {
+  async retrieveUserSavedDataByUserId(uid, includeDeleted=false, saveType=null) {
     const withDel = includeDeleted ? '' : ' AND deleted = false ';
-    const res = await pgExec(this.pool, `
-      SELECT * FROM user_saved_data WHERE user_id = $1 ${withDel}`, [uid]);
+    let sql = `SELECT * FROM user_saved_data WHERE user_id = $1 ${withDel}`;
+    let args = [uid];
+    if (saveType) {
+      sql += ` AND save_type = $2`;
+      args.push(saveType);
+    }
+    const res = await pgExec(this.pool, sql, args);
     const data = res.rows.map(row => new UserSavedData(row));
     return data.length > 0 ? data : null;
   }

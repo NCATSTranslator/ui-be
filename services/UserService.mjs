@@ -34,8 +34,8 @@ class UserService {
   }
 
   // Saves
-  async getUserSavesByUid(uid, includeDeleted=false) {
-    return this.savedDataStore.retrieveUserSavedDataByUserId(uid, includeDeleted);
+  async getUserSavesByUid(uid, includeDeleted=false, saveType=null) {
+    return this.savedDataStore.retrieveUserSavedDataByUserId(uid, includeDeleted, saveType);
   }
 
   async saveUserData(userData) {
