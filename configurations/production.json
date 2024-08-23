@@ -43,7 +43,8 @@
     "name": "session_token",
     "http_only": true,
     "secure": true,
-    "same_site": "Lax"
+    "same_site": "Lax",
+    "path": "/"
   },
   "db_conn": {
     "ssl": {

@@ -15,3 +15,6 @@ utilities/node/etc
 sandbox
 test/data/*
 test/results/*
+.DS_Store
+.idea/
+
