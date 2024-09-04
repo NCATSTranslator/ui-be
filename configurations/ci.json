@@ -54,7 +54,7 @@
   "google_analytics_id": "G-7EBCDRY7DX",
   "google_tag_manager_id": "GTM-5SGQTGPF",
   "_load_frontend": "configurations/frontend/ci.json",
-  "max_hops": 3,
+  "max_hops": 4,
   "log_level": "all",
   "log_format": "common",
   "_load_auth": "configurations/auth/auth.ci.json",
