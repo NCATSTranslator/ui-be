@@ -2,7 +2,7 @@
   "document_root": false,
   "port": 8386,
   "response_timeout": 300,
-  "json_payload_limit": "1mb",
+  "json_payload_limit": "20mb",
   "ars_endpoint": {
     "host": "ars.ci.transltr.io",
     "post_uri": "/ars/api/submit",
