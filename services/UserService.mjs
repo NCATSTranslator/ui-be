@@ -1,14 +1,17 @@
 'use strict';
 
 import { UserPreference } from "../models/UserPreference.mjs";
+import { UserWorkspace } from "../models/UserWorkspace.mjs";
+
 
 export { UserService };
 
 class UserService {
-  constructor(userStore, userPreferenceStore, userSavedDataStore) {
+  constructor(userStore, userPreferenceStore, userSavedDataStore, userWorkspaceStore) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
     this.savedDataStore = userSavedDataStore;
+    this.userWorkspaceStore = userWorkspaceStore;
   }
 
   async getUserById(uid) {
@@ -31,8 +34,8 @@ class UserService {
   }
 
   // Saves
-  async getUserSavesByUid(uid, includeDeleted=false) {
-    return this.savedDataStore.retrieveUserSavedDataByUserId(uid, includeDeleted);
+  async getUserSavesByUid(uid, includeDeleted=false, saveType=null) {
+    return this.savedDataStore.retrieveUserSavedDataByUserId(uid, includeDeleted, saveType);
   }
 
   async saveUserData(userData) {
@@ -51,7 +54,34 @@ class UserService {
     return this.savedDataStore.deleteUserSavedDataById(save_id);
   }
 
+  // Workspaces
+  async getUserWorkspaces(uid, includeData=false, includeDeleted=false) {
+    return this.userWorkspaceStore.retrieveWorkspacesByUserId(uid, includeData, includeDeleted);
+  }
 
+  async getUserWorkspaceById(ws_id, includeDeleted=false) {
+    return this.userWorkspaceStore.retrieveWorkspaceById(ws_id, includeDeleted);
+  }
+
+  async createUserWorkspace(workspace) {
+    return this.userWorkspaceStore.createUserWorkspace(workspace);
+  }
+
+  async updateUserWorkspace(workspace) {
+    return this.userWorkspaceStore.updateUserWorkspace(workspace);
+  }
+
+  async deleteUserWorkspace(ws_id) {
+    return this.userWorkspaceStore.deleteUserWorkspace(ws_id);
+  }
+
+  async updateUserWorkspaceVisibility(ws_id, is_public) {
+    return this.userWorkspaceStore.updateUserWorkspaceVisibility(ws_id, is_public);
+  }
+
+  async updateUserWorkspaceLastUpdated(ws_id, last_updated=new Date()) {
+    return this.userWorkspaceStore.updateUserWorkspaceLastUpdated(ws_id, last_updated);
+  }
   // Utils
   preferenceArrayToObject(arr)  {
     var retval = {

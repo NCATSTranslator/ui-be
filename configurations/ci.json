@@ -2,7 +2,7 @@
   "document_root": false,
   "port": 8386,
   "response_timeout": 300,
-  "json_payload_limit": "1mb",
+  "json_payload_limit": "20mb",
   "trapi": {
     "query_subject_key": "sn",
     "query_object_key": "on"
@@ -44,10 +44,11 @@
     }
   },
   "session_cookie": {
-    "name": "session_token",
+    "name": "nc0000",
     "http_only": true,
     "secure": true,
-    "same_site": "Lax"
+    "same_site": "Lax",
+    "path": "/"
   },
   "db_conn": {
     "ssl": {
@@ -57,7 +58,7 @@
   "google_analytics_id": "G-7EBCDRY7DX",
   "google_tag_manager_id": "GTM-5SGQTGPF",
   "_load_frontend": "configurations/frontend/ci.json",
-  "max_hops": 3,
+  "max_hops": 4,
   "log_level": "all",
   "log_format": "common",
   "_load_auth": "configurations/auth/auth.ci.json",
