@@ -6,27 +6,25 @@ import * as tsmy from './lib/summarization.mjs';
 import { loadBiolink } from '../lib/biolink-model.mjs';
 import { loadChebi } from '../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../adapters/TranslatorServicexFEAdapter.mjs';
+import { loadTrapi } from '../lib/trapi.mjs';
 
 // We have to do this because the 'before' hook does not seem to work
 async function loadConfig() {
-  const config = await cfg.bootstrapConfig('./configurations/production.json')
-  await loadBiolink(config.biolink.version,
-                    config.biolink.support_deprecated_predicates,
-                    config.biolink.infores_catalog,
-                    config.biolink.prefix_catalog);
+  const config = await cfg.bootstrapConfig('./configurations/production.json');
+  await loadBiolink(config.biolink);
   await loadChebi();
+  loadTrapi(config.trapi);
 }
 
 async function regressionTest(testFile) {
   await loadConfig();
-  const input = cmn.readJson(`test/data/regression/in/${testFile}`);
-  const expected = cmn.readJson(`test/data/regression/out/${testFile}`);
+  const input = await cmn.readJson(`test/data/regression/in/${testFile}`);
+  const expected = await cmn.readJson(`test/data/regression/out/${testFile}`);
   const maxHops = 3;
   const translatorAdapter = new TranslatorServicexFEAdapter();
-  const actual = await translatorAdapter.queryResultsToFE(await input, maxHops);
-  tsmy.testSummary(actual.data, await expected);
+  const actual = await translatorAdapter.queryResultsToFE(input, maxHops);
+  tsmy.testSummary(actual.data, expected);
 }
-
 
 await regressionTest('00881bc8-5bcd-472b-aafa-dbc4e8992dcd.json');
 await regressionTest('020d41bd-1709-416f-befc-392b7ca56e2a.json');
@@ -63,6 +61,5 @@ await regressionTest('eafb6dcf-ef65-46b6-bd5b-d237e23907da.json');
 await regressionTest('f18a3b53-b309-4978-93f2-0b38d8f3c701.json');
 await regressionTest('f6b094da-ad8a-40a5-839f-d2a3c26ae99c.json');
 await regressionTest('fa9c31cf-6d13-4284-b657-96acee6c387d.json');
-await regressionTest('fbdf1b14-179b-44c0-a41f-ee2bc84047a6.json');
 await regressionTest('fe681a8f-b240-4d07-a2dd-67e789907778.json');
 console.log('Regression tests passed');

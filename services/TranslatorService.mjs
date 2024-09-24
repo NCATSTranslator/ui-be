@@ -32,7 +32,7 @@ class TranslatorService
 
   inputToQuery(input)
   {
-    return trapi.queryToCreativeQuery(input);
+    return trapi.clientReqToTrapiQuery(input);
   }
 
   async submitQuery(query)
@@ -59,7 +59,7 @@ class TranslatorService
       const resp = await this.queryClient.retainQuery(queryId);
       return resp;
     } catch (err) {
-      console.log(err);
+      console.error(err);
       throw new QueryClientError(`Error retaining query for ${queryId}`, queryId, 'retain', err);
     }
   }

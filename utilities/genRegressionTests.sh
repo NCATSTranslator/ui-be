@@ -20,17 +20,38 @@ import * as tsmy from './lib/summarization.mjs';
 import { loadBiolink } from '../lib/biolink-model.mjs';
 import { loadChebi } from '../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../adapters/TranslatorServicexFEAdapter.mjs';
+import { loadTrapi } from '../lib/trapi.mjs';
 
 // We have to do this because the 'before' hook does not seem to work
 async function loadConfig() {
-  const config = await cfg.bootstrapConfig('test/data/regression/config.json')
-  await loadBiolink(config.biolink.version,
-                    config.biolink.support_deprecated_predicates,
-                    config.biolink.infores_catalog,
-                    config.biolink.prefix_catalog);
+  const config = await cfg.bootstrapConfig('test/data/regression/config.json');
+  await loadBiolink(config.biolink);
   await loadChebi();
+  loadTrapi(config.trapi);
 }
 
+<<<<<<< HEAD
+function reduceSummaryNoise(summary) {
+  function toObject(c, p) {
+    Object.keys(c[p]).forEach(id => {
+      c[p][id] = {...c[p][id]};
+    });
+
+    return c;
+  }
+
+  summary = {...summary};
+  summary.nodes = toObject(summary, 'nodes');
+  summary.edges = toObject(summary, 'edges');
+  summary.paths = toObject(summary, 'paths');
+  summary.publications = toObject(summary, 'publications');
+  summary.meta = null;
+  summary.errors = null;
+  return summary;
+}
+
+=======
+>>>>>>> test/regression
 async function regressionTest(testFile) {
   await loadConfig();
   const input = cmn.readJson("'`test/data/regression/in/${testFile}`'");
