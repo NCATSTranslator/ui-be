@@ -336,5 +336,6 @@
        "uuid": "e7d6fd2d-b5d6-43f7-81ac-3726f56be7a2",
        "id": "PUBCHEM.COMPOUND:2162"
      }
-  ]
+  ],
+  "include_pathfinder": true
 }
