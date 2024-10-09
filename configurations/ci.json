@@ -63,5 +63,6 @@
   "_load_secrets": "configurations/secrets/secrets.json",
   "mainsite_path": "/main",
   "demosite_path": "/demo",
-  "pg_host": "transltr-ci-rds-ui-postgresql.ceyknq0yekb3.us-east-1.rds.amazonaws.com"
+  "pg_host": "transltr-ci-rds-ui-postgresql.ceyknq0yekb3.us-east-1.rds.amazonaws.com",
+  "include_pathfinder": true
 }
