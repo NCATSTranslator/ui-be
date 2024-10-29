@@ -16,4 +16,5 @@ const arsClient = new ARSClient(
 );
 
 const pk = process.argv[2];
-arsClient._collectMergedResults(pk).then(data => console.log(JSON.stringify(data)));
+const data = await arsClient._collectMergedResults(pk);
+console.log(JSON.stringify(data));
