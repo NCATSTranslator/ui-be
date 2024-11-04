@@ -21,7 +21,10 @@ function genQueryStr(summary) {
   const subgraph = summary.paths[result.paths[0]].subgraph;
   const predicate = summary.edges[subgraph[1]].predicate;
   const objectName = summary.nodes[result.object].names[0];
-  switch(queryType) {
+  this.id = null;
+  if (id) {
+    this.id = id;
+  }
     case QUERY_TYPE.CHEMICAL_GENE:
       return `What chemical ${predicate} ${objectName}?`;
     case QUERY_TYPE.CHEMICAL_DISEASE:
@@ -37,13 +40,7 @@ function genQueryStr(summary) {
 }
 
 const dataPath = process.argv[2];
-const testCases = [];
-const casesToGenerate = 100;
-const summary = await cmn.readJson(dataPath);
-const results = summary.results;
-const resultCount = results.length;
-for (let tc = 0; tc < casesToGenerate; tc++) {
-  const contextCount = Math.min(getRandIntInRange(10, 50), resultCount);
+return new QNode(node.ca
   const resultKeys = getNRandIntsInRange(contextCount, 0, resultCount);
   testCases.push({
     query: genQueryStr(summary),

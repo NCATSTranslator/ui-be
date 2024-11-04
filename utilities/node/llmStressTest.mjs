@@ -51,41 +51,64 @@ function sleep(sec) {
   return new Promise(resolve => setTimeout(resolve, (sec * 1000)));
 }
 
-async function runSimulation(hoursOfTesting, users, requestsPerUser, testCases) {
-  const testingTime = 60 * 60 * hoursOfTesting;
-  const totalRequests = users * requestsPerUser;
-  const timeBetweenRequests = testingTime / totalRequests;
+async function runSimulation(testCases, config) {
+  const testingTime = 60 * 60 * config.hoursOfTesting;
+  const requestRounds = config.requestRounds;
+  const spikeMaxReq = config.spikeMaxReq;
+  const spikeMinReq = config.spikeMinReq;
+  const spikeProb = config.spikeProb;
+  const timeBetweenRounds = testingTime / requestRounds;
 
   console.log(`Testing for ${testingTime} seconds`);
-  console.log(`Time between requests: ${timeBetweenRequests} seconds`);
+  console.log(`Time between request rounds: ${timeBetweenRounds} seconds`);
   let timeElapsed = 0;
   const responseStatus = []
-  for (let currentRequest = 1; currentRequest <= totalRequests; currentRequest++) {
+  for (let curRound = 1; curRound <= requestRounds; curRound++) {
     console.log(`Total time elapsed: ${timeElapsed} seconds`);
-    console.log(`Current status: ${currentRequest}/${totalRequests} requests made`);
+    console.log(`Current status: ${curRound}/${requestRounds} requests made`);
+    let requestsToMake = 1;
+    let isSpike = (spikeProb >= Math.random());
+    if (isSpike) {
+      requestsToMake = Math.floor(Math.random() * (spikeMaxReq - spikeMinReq)) + spikeMinReq;
+      console.log(`Simulating spike with ${requestsToMake} requests`);
+    }
+    const testPromises = [];
+    const testRequests = [];
     let startTime = Date.now();
-    let testCase = testCases[Math.floor(Math.random() * testCases.length)];
-    let response = await makeRequest(testCase);
+    for (let i = 0; i < requestsToMake; i++) {
+      let testCase = testCases[Math.floor(Math.random() * testCases.length)];
+      testRequests.push(testCase);
+      testPromises.push(makeRequest(testCase));
+    }
+    const testResults = await Promise.all(testPromises);
     let endTime = Date.now();
     let requestTime = (endTime - startTime)/1000;
     timeElapsed += requestTime;
-    responseStatus.push({
-      request: testCase,
-      success: response ? true : false,
-      response: response ? response : null,
-      time: requestTime
-    });
-    let sleepTime = Math.max(0, timeBetweenRequests - requestTime);
-    console.log(`Finished request ${currentRequest}. Sleeping for ${sleepTime} seconds`);
+    for (let i = 0; i < testResults.length; i++) {
+      responseStatus.push({
+        testCase: testRequests[i],
+        success: testResults[i] ? true : false,
+        testResult: testResults[i] ? testResults[i] : null,
+        time: requestTime,
+        pathCount: testRequests[i].results.length,
+        roundId: curRound
+      });
+    }
+    let sleepTime = Math.max(0, timeBetweenRounds - requestTime);
+    console.log(`Finished request ${curRound}. Sleeping for ${sleepTime} seconds`);
     await sleep(sleepTime);
   }
   return responseStatus;
 }
 
-const hoursOfTesting = 4;
-const users = 1;
-const requestsPerUser = 240;
+const simulationConfig = {
+  hoursOfTesting: 8,
+  requestRounds: 480,
+  spikeMaxReq: 6,
+  spikeMinReq: 2,
+  spikeProb: 0.2
+};
 const testCases = await loadTestCases(process.argv[2]);
-const result = await runSimulation(hoursOfTesting, users, requestsPerUser, testCases);
+const result = await runSimulation(testCases, simulationConfig);
 console.log(JSON.stringify(result));
 
