@@ -89,7 +89,7 @@ class UserAPIController {
           wutil.logInternalServerError(req, error);
           return wutil.sendError(res, 400, error);
         } else {
-          console.log(`Retaining ${pk}`);
+          req.log.info(`Retaining ${pk}`);
           await this.translatorService.retainQuery(pk);
         }
       }
