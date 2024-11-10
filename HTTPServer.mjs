@@ -3,6 +3,7 @@
 import { default as path } from 'node:path';
 import { default as url } from 'node:url';
 import { default as express } from 'express';
+import { default as pino } from 'pino';
 import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
 
@@ -33,8 +34,8 @@ export function startServer(config, services) {
   const sessionController = new SessionController(config, authService);
   const API_PATH_PREFIX = '/api/v1';
   const SITE_PATH_PREFIX = '';
-
-  app.use(pinoHttp());
+  const logger = pino();
+  app.use(pinoHttp({logger: logger}));
   app.use(express.json({ limit: config.json_payload_limit }));
   app.use(cookieParser());
 
