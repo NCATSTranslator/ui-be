@@ -1,4 +1,5 @@
 'use strict'
+import { logger } from './lib/logger.mjs';
 
 import { bootstrapConfig } from './lib/config.mjs';
 
@@ -83,9 +84,7 @@ const USER_SERVICE = (function (config) {
   );
 })(SERVER_CONFIG);
 
-let log_config = { ...SERVER_CONFIG};
-log_config.secrets = '[REDACTED]'
-console.log(log_config);
+logger.info(SERVER_CONFIG, "Server configuration");
 
 httpserver.startServer(SERVER_CONFIG, {
   translatorService: TRANSLATOR_SERVICE,
