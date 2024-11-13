@@ -1,5 +1,6 @@
 'use strict';
 
+import { logger } from '../lib/logger.mjs';
 import { pg, pgExec, pgExecTrans } from '../lib/postgres_preamble.mjs';
 import { UserPreference } from '../models/UserPreference.mjs'; // path to the UserPreference class
 
@@ -34,7 +35,7 @@ class UserPreferenceStorePostgres {
         `;
         const checkRes = await client.query(checkSql, [userPreference.pref_name]);
         if (checkRes.rows.length === 0) {
-          console.error(`Preference "${userPreference.pref_name}" does not exist in preferences table`);
+          logger.error(`Preference "${userPreference.pref_name}" does not exist in preferences table`);
           continue;
         }
         const prefId = checkRes.rows[0].id;

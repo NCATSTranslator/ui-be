@@ -1,5 +1,6 @@
 'use strict';
 
+import { logger } from '../lib/logger.mjs';
 import { Session } from '../models/Session.mjs';
 import { User } from '../models/User.mjs';
 import * as sso from '../lib/SocialSignOn.mjs';
@@ -184,7 +185,7 @@ class AuthService {
       }));
       return res;
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return null;
     }
   }
@@ -195,7 +196,7 @@ class AuthService {
        res = this.sessionStore.createNewSession(new Session());
        return res;
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return res;
     }
   }
@@ -210,7 +211,7 @@ class AuthService {
       }));
       return res;
    } catch (err) {
-     console.error(err);
+     logger.error(err);
      return res;
    }
 
@@ -222,7 +223,7 @@ class AuthService {
       res = this.sessionStore.retrieveSessionByToken(token);
       return res;
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return res;
     }
   }
@@ -232,7 +233,7 @@ class AuthService {
       sessionData.updateSessionTime();
       return this.sessionStore.updateSession(sessionData);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return false;
     }
   }
@@ -243,7 +244,7 @@ class AuthService {
       sessionData.updateSessionTime()
       return this.sessionStore.updateSession(sessionData);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       return false;
     }
   }
@@ -297,40 +298,40 @@ class AuthService {
   async validateAuthSessionToken(token) {
     let tokenRefreshed = false;
     if (!token || !this.isTokenSyntacticallyValid(token)) {
-      console.error(`%% %% %% no cookie found`);
+      logger.error(`%% %% %% no cookie found`);
       throw new CookieNotFoundError();
     }
-    console.error(`%% %% %% we get cookie: ${token}`);
+    logger.error(`%% %% %% we get cookie: ${token}`);
 
     let session = await this.retrieveSessionByToken(token);
 
     if (!session) {
-      console.error(`%% %% %% no session found for ${token}`);
+      logger.error(`%% %% %% no session found for ${token}`);
       throw new SessionNotFoundError(cookie);
     }
-    console.error(`%% %% %% we get session: ${JSON.stringify(session)}`);
+    logger.error(`%% %% %% we get session: ${JSON.stringify(session)}`);
 
     if (!session.user_id || session.force_kill) {
-      console.error(`%% %% %% no user found for ${JSON.stringify(session)} or else force killed`);
+      logger.error(`%% %% %% no user found for ${JSON.stringify(session)} or else force killed`);
       throw new SessionNotUsableError(token, session.id);
     }
     const user = await this.getUserById(session.user_id);
     if (!user) {
-      console.error(`%% %% %% no user found`);
+      logger.error(`%% %% %% no user found`);
       throw new NoUserForSessionError(token, session.id);
     } else if (user.deleted) {
-      console.error(`%% %% %% User deleted`);
+      logger.error(`%% %% %% User deleted`);
       throw new UserDeletedError(user.id);
     } else if (this.isSessionExpired(session)) {
-      console.error(`%% %% %% Session expired: ${JSON.stringify(session)}`);
+      logger.error(`%% %% %% Session expired: ${JSON.stringify(session)}`);
       throw new SessionExpiredError(token, session.id);
     } else if (this.isTokenExpired(session)) {
-      console.error(`%% %% %% Token expired, refreshing: ${JSON.stringify(session)}`);
+      logger.error(`%% %% %% Token expired, refreshing: ${JSON.stringify(session)}`);
       session = await this.refreshSessionToken(session);
       tokenRefreshed = true;
     } else {
       // Valid session - update time
-      console.error(`%% %% %% session good, udpating time: ${JSON.stringify(session)}`);
+      logger.error(`%% %% %% session good, udpating time: ${JSON.stringify(session)}`);
       session = await this.updateSessionTime(session);
     }
 
