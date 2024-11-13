@@ -1,5 +1,5 @@
 'use strict';
-
+import { logger } from '../lib/logger.mjs';
 import * as arsmsg from '../lib/ARSMessages.mjs';
 import * as trapi from '../lib/trapi.mjs';
 
@@ -59,7 +59,7 @@ class TranslatorService
       const resp = await this.queryClient.retainQuery(queryId);
       return resp;
     } catch (err) {
-      console.error(err);
+      logger.log(err);
       throw new QueryClientError(`Error retaining query for ${queryId}`, queryId, 'retain', err);
     }
   }
@@ -86,7 +86,7 @@ class TranslatorService
     }
     catch (err)
     {
-      console.error(`Error retrieving results for ${queryId}: '${err}'`);
+      logger.error(`Error retrieving results for ${queryId}: '${err}'`);
       throw new QueryClientError(`Error retrieving results for ${queryId}`, queryId, 'result', err);
     }
   }
