@@ -1,6 +1,10 @@
 FROM node:22
 WORKDIR /app
 
+ENV NEW_RELIC_NO_CONFIG_FILE=true
+ENV NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
+ENV NEW_RELIC_LOG=stdout
+
 # Assumes parent script has cloned ui-fe repo and checked out right branch
 # This script assumes no git actions
 COPY . ./
