@@ -2,6 +2,7 @@
 
 import * as cmn from '../lib/common.mjs';
 import * as wutil from '../lib/webutils.mjs';
+import { logger } from "../lib/logger.mjs";
 
 export { QueryAPIController };
 
@@ -31,9 +32,8 @@ class QueryAPIController {
     }
     try {
       let query = this.translatorService.inputToQuery(req.body);
-      req.log.info({query: query});
       let resp = await this.translatorService.submitQuery(query);
-      req.log.info({arsqueryresp: resp});
+      req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: resp}, 'Query submission and response');
       return res.status(200).json(this.translatorService.outputAdapter.querySubmitToFE(resp));
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -48,7 +48,10 @@ class QueryAPIController {
     try {
       let uuid = req.params.qid;
       let statusRes = await this.translatorService.getQueryStatus(uuid, this.filters);
-      return res.status(200).json(this.translatorService.outputAdapter.queryStatusToFE(statusRes));
+      logger.debug({ltype: 'query-status from service', statusRes: statusRes});
+      let retval = this.translatorService.outputAdapter.queryStatusToFE(statusRes)
+      logger.debug({ltype: 'query-status after adapter', value: retval});
+      return res.status(200).json(retval);
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
