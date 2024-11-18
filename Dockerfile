@@ -1,4 +1,4 @@
-FROM node:22
+FROM node:20
 WORKDIR /app
 
 # Assumes parent script has cloned ui-fe repo and checked out right branch
