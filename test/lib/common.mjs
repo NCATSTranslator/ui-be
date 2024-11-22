@@ -1,19 +1,44 @@
 import * as ast from 'node:assert';
 import * as cmn from '../../lib/common.mjs';
 
-export async function runTest(testFunc, testCases, configLoader) {
+export async function functionalTest(testFunc, testCases, configLoader) {
   const testName = testFunc.name;
+  console.log(`Running tests for ${testName}`);
   for (let caseName of Object.keys(testCases)) {
-    console.log(`Running ${testName} ${caseName}`);
+    console.log(`--- Running test case ${caseName}`);
     const tc = testCases[caseName];
-    const config = tc.config;
     if (tc.config) {
       await configLoader(tc.config);
     }
     const actual = await testFunc(...tc.args);
     testDeep(actual, tc.expected);
-    console.log(`${testName} ${caseName} passed`);
+    console.log(`--- Test case ${caseName} passed`);
   }
+  console.log(`${testName} passed`);
+}
+
+export async function classTest(klass, testCases, configLoader) {
+  const className = klass.name;
+  console.log(`Running tests for ${className}`);
+  for (let caseName of Object.keys(testCases)) {
+    console.log(`--- Running test case ${caseName}`);
+    const tc = testCases[caseName];
+    if (tc.config) {
+      await configLoader(tc.config);
+    }
+    let obj = klass;
+    if (tc.constructor !== undefined) {
+      obj = new klass(...tc.constructor.args);
+      console.log(`------ constructor passed`);
+    }
+    for (let step of tc.steps) {
+      const actual = obj[step.method](...step.args);
+      testDeep(actual, step.expected);
+      console.log(`------ ${step.method} passed`);
+    }
+    console.log(`--- ${caseName} passed`);
+  }
+  console.log(`${className} passed`);
 }
 
 export function testDeep(ac, ex) {
