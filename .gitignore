@@ -15,6 +15,7 @@ utilities/node/etc
 sandbox
 test/data/*
 test/results/*
+test/benchmarks/*
 test/regression.mjs
 .DS_Store
 .idea/
