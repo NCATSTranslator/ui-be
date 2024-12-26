@@ -25,15 +25,17 @@ export function startServer(config, services) {
   const authService = services.authService;
   const userService = services.userService;
   const translatorService = services.translatorService;
+  const queryService = services.queryService;
   const demoQueries = config.frontend.cached_queries.filter(e => e.allow_inbound);
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
   const loginController = new LoginController(config, authService);
-  const queryAPIController = new QueryAPIController(config, translatorService, filters);
+  const queryAPIController = new QueryAPIController(config, translatorService, queryService, filters);
   const configAPIController = new ConfigAPIController(config);
   const userAPIController = new UserAPIController(config, userService, translatorService);
   const sessionController = new SessionController(config, authService);
-  const API_PATH_PREFIX = '/api/v1';
+  const API_PATH_V1 = '/api/v1';
+  const API_PATH_V2 = '/api/v2';
   const SITE_PATH_PREFIX = '';
   app.use(pinoHttp({logger: logger}));
   app.use(express.json({ limit: config.json_payload_limit }));
@@ -59,8 +61,8 @@ export function startServer(config, services) {
   app.use(sessionController.attachSessionData.bind(sessionController));
 
   // Session status API
-  app.get(`${API_PATH_PREFIX}/session/status`, sessionController.getStatus.bind(sessionController));
-  app.post(`${API_PATH_PREFIX}/session/status`, sessionController.updateStatus.bind(sessionController));
+  app.get(`${API_PATH_V1}/session/status`, sessionController.getStatus.bind(sessionController));
+  app.post(`${API_PATH_V1}/session/status`, sessionController.updateStatus.bind(sessionController));
 
   // Login/logout
   app.get('/oauth2/redir/:provider', loginController.authRedir.bind(loginController));
@@ -75,32 +77,35 @@ export function startServer(config, services) {
    * to explicit user activity (e.g., the FE app needs this at startup regardless of whether there is a user
    * session active). To maintain consistency with the decision that only intentional user activity should count
    * towards updating session last-touch times, we therefore exclude this API from that set. */
-  app.use(`${API_PATH_PREFIX}/config`, configAPIController.getConfig.bind(configAPIController));
+  app.use(`${API_PATH_V1}/config`, configAPIController.getConfig.bind(configAPIController));
 
   /** All routes below this point MUST use one of authenticate[Un]PrivilegedRequest() **/
 
   // Query routes: unprivileged
-  app.use(`${API_PATH_PREFIX}/query`, sessionController.authenticateUnprivilegedRequest.bind(sessionController));
-  app.post(`${API_PATH_PREFIX}/query`, queryAPIController.submitQuery.bind(queryAPIController));
-  app.get(`${API_PATH_PREFIX}/query/:qid/status`, queryAPIController.getQueryStatus.bind(queryAPIController));
-  app.get(`${API_PATH_PREFIX}/query/:qid/result`, queryAPIController.getQueryResult.bind(queryAPIController));
+  app.use(`${API_PATH_V1}/query`, sessionController.authenticateUnprivilegedRequest.bind(sessionController));
+  app.get(`${API_PATH_V1}/query/:qid/result`, queryAPIController.getQueryResult.bind(queryAPIController));
+  app.post(`${API_PATH_V1}/query`, queryAPIController.submitQuery.bind(queryAPIController));
+  app.get(`${API_PATH_V1}/query/:qid/status`, queryAPIController.getQueryStatus.bind(queryAPIController));
+  //app.use(`${API_PATH_V2}/query`, sessionController.authenticateUnprivilegedRequest.bind(sessionController));
+  //app.post(`${API_PATH_V2}/query`, queryAPIController.submitQuery.bind(queryAPIController));
+  //app.get(`${API_PATH_V2}/query/:qid/status`, queryAPIController.getQueryStatus.bind(queryAPIController));
 
   // User routes: privileged
-  app.use(`${API_PATH_PREFIX}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
-  app.get(`${API_PATH_PREFIX}/users/me`, userAPIController.getUser.bind(userAPIController));
-  app.get(`${API_PATH_PREFIX}/users/me/preferences`, userAPIController.getUserPrefs.bind(userAPIController));
-  app.post(`${API_PATH_PREFIX}/users/me/preferences`, userAPIController.updateUserPrefs.bind(userAPIController));
-  app.get(`${API_PATH_PREFIX}/users/me/saves`, userAPIController.getUserSaves.bind(userAPIController));
-  app.post(`${API_PATH_PREFIX}/users/me/saves`, userAPIController.updateUserSaves.bind(userAPIController));
-  app.get(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.getUserSaveById.bind(userAPIController));
-  app.put(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete(`${API_PATH_PREFIX}/users/me/saves/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+  app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
+  app.get(`${API_PATH_V1}/users/me`, userAPIController.getUser.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/preferences`, userAPIController.getUserPrefs.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/preferences`, userAPIController.updateUserPrefs.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/saves`, userAPIController.getUserSaves.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/saves`, userAPIController.updateUserSaves.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/saves/:save_id`, userAPIController.getUserSaveById.bind(userAPIController));
+  app.put(`${API_PATH_V1}/users/me/saves/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
+  app.delete(`${API_PATH_V1}/users/me/saves/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
   // workspaces
-  app.get(`${API_PATH_PREFIX}/users/me/workspaces`, userAPIController.getUserWorkspaces.bind(userAPIController));
-  app.get(`${API_PATH_PREFIX}/users/me/workspaces/:ws_id`, userAPIController.getUserWorkspaceById.bind(userAPIController));
-  app.post(`${API_PATH_PREFIX}/users/me/workspaces`, userAPIController.createUserWorkspace.bind(userAPIController));
-  app.put(`${API_PATH_PREFIX}/users/me/workspaces/:ws_id`, userAPIController.updateUserWorkspace.bind(userAPIController));
-  app.delete(`${API_PATH_PREFIX}/users/me/workspaces/:ws_id`, userAPIController.deleteUserWorkspace.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/workspaces`, userAPIController.getUserWorkspaces.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/workspaces/:ws_id`, userAPIController.getUserWorkspaceById.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/workspaces`, userAPIController.createUserWorkspace.bind(userAPIController));
+  app.put(`${API_PATH_V1}/users/me/workspaces/:ws_id`, userAPIController.updateUserWorkspace.bind(userAPIController));
+  app.delete(`${API_PATH_V1}/users/me/workspaces/:ws_id`, userAPIController.deleteUserWorkspace.bind(userAPIController));
 
   app.all(['/api', '/api/*'], (req, res) => {
     return res.status(403).send('API action Forbidden');

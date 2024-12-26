@@ -2,13 +2,16 @@
 
 import * as cmn from '../lib/common.mjs';
 import * as wutil from '../lib/webutils.mjs';
+import * as trapi from '../lib/trapi.mjs';
+import { Query } from '../models/Query.mjs';
 
 export { QueryAPIController };
 
 class QueryAPIController {
-  constructor(config, translatorService, filters) {
+  constructor(config, translatorService, queryService, filters) {
     this.config = config;
     this.translatorService = translatorService;
+    this.queryService = queryService;
     this.filters = filters;
   }
 
@@ -30,11 +33,20 @@ class QueryAPIController {
       return wutil.sendError(res, 400, 'Malformed request');
     }
     try {
-      let query = this.translatorService.inputToQuery(req.body);
-      req.log.info({query: query});
-      let resp = await this.translatorService.submitQuery(query);
-      req.log.info({arsqueryresp: resp});
-      return res.status(200).json(this.translatorService.outputAdapter.querySubmitToFE(resp));
+      const trapiQuery = this.translatorService.inputToQuery(req.body);
+      req.log.info({query: trapiQuery});
+      const arsResp = await this.translatorService.submitQuery(trapiQuery);
+      req.log.info({arsqueryresp: arsResp});
+      const pk = trapi.getPk(arsResp);
+      if (!pk) {
+        throw new Error(`ARS submission response has no PK: ${arsResp}`);
+      }
+      let queryModel = new Query({
+        pk: pk,
+        metadata: { query: req.body }
+      });
+      queryModel = await this.queryService.createQuery(queryModel);
+      return res.status(200).json(this.translatorService.outputAdapter.querySubmitToFE(arsResp));
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
@@ -70,5 +82,4 @@ class QueryAPIController {
       return wutil.sendInternalServerError(res, err);
     }
   }
-
 }
