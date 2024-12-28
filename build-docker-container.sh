@@ -41,6 +41,7 @@ cd ui-fe
 fe_tag=$(git rev-parse --short HEAD)
 timestamp=$(date -u "+%Y.%m.%dt%H.%M.%Sz")
 version_tag="FE.${fe_tag}_BE.${be_tag}_$timestamp"
+# Confirmed with FE team that clobbering the .env file is acceptable 2024-12-28 NP
 echo "VITE_BUILD_INFO=$version_tag" > .env
 cd ..
 # Removing latest tag
