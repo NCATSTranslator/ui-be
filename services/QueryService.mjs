@@ -25,10 +25,9 @@ class QueryService {
 
   async processQueryUpdate(update) {
     update = this._queryClient.processQueryUpdate(update);
-    console.log(update);
     switch(update.status) {
       case cmn.CONSTANTS.QUERY_STATUS.RUNNING:
-      case cmn.CONSTANTS.QUERY_STATUS.FINISHED:
+      case cmn.CONSTANTS.QUERY_STATUS.COMPLETE:
         return await this._handleUpdate(update);
       case cmn.CONSTANTS.QUERY_STATUS.ERROR:
         return await this._handleUpdateError();
@@ -52,7 +51,7 @@ class QueryService {
     let storeQueryModel = await this.getQueryByPk(pk);
     if (storeQueryModel === null) return _CONSTANTS.CALLBACK_RESPONSE.GONE;
     if (storeQueryModel.status !== cmn.CONSTANTS.QUERY_STATUS.RUNNING) return _CONSTANTS.CALLBACK_RESPONSE.SUCCESS; // Ignore updates to finished queries
-    if (update.status === cmn.CONSTANTS.QUERY_STATUS.FINISHED ||
+    if (update.status === cmn.CONSTANTS.QUERY_STATUS.COMPLETE ||
         update.aras.length > storeQueryModel.metadata.aras.length) {
       // TODO: Optimize to only update the metadata if needed
       storeQueryModel.metadata.aras = update.aras; // TODO: Absraction is broken
@@ -66,7 +65,6 @@ class QueryService {
 
   async _handleUpdateError() {
     // TODO
-    console.log('GDP WHA??');
     return;
   }
 }
