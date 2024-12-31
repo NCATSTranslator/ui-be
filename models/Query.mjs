@@ -1,10 +1,12 @@
 export { Query };
 
+import * as cmn from '../lib/common.mjs';
+
 class Query {
   constructor({
     id = null,
     pk,
-    status = 0,
+    status = cmn.CONSTANTS.QUERY_STATUS.RUNNING,
     time_created = new Date(),
     time_updated = new Date(),
     deleted = false,

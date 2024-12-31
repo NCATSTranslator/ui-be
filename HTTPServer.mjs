@@ -86,6 +86,7 @@ export function startServer(config, services) {
   app.get(`${API_PATH_V1}/query/:qid/result`, queryAPIController.getQueryResult.bind(queryAPIController));
   app.post(`${API_PATH_V1}/query`, queryAPIController.submitQuery.bind(queryAPIController));
   app.get(`${API_PATH_V1}/query/:qid/status`, queryAPIController.getQueryStatus.bind(queryAPIController));
+  app.post(`${API_PATH_V2}/query/update`, queryAPIController.updateQuery.bind(queryAPIController));
   //app.use(`${API_PATH_V2}/query`, sessionController.authenticateUnprivilegedRequest.bind(sessionController));
   //app.post(`${API_PATH_V2}/query`, queryAPIController.submitQuery.bind(queryAPIController));
   //app.get(`${API_PATH_V2}/query/:qid/status`, queryAPIController.getQueryStatus.bind(queryAPIController));

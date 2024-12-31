@@ -1,11 +1,8 @@
 'use strict';
-
+export { QueryAPIController };
 import * as cmn from '../lib/common.mjs';
 import * as wutil from '../lib/webutils.mjs';
 import * as trapi from '../lib/trapi.mjs';
-import { Query } from '../models/Query.mjs';
-
-export { QueryAPIController };
 
 class QueryAPIController {
   constructor(config, translatorService, queryService, filters) {
@@ -15,21 +12,9 @@ class QueryAPIController {
     this.filters = filters;
   }
 
-  isValidQuerySubmissionRequest(body) {
-    return cmn.isObject(body);
-  }
-
-  isValidQueryResultRequest(req) {
-    return req.params.hasOwnProperty('qid') && req.params.qid;
-  }
-
-  logQuerySubmissionRequest(req) {
-    req.log.info({reqBody: req.body});
-  }
-
   async submitQuery(req, res, next) {
-    this.logQuerySubmissionRequest(req);
-    if (!this.isValidQuerySubmissionRequest(req.body)) {
+    this._logQuerySubmissionRequest(req);
+    if (!this._isValidQuerySubmissionRequest(req.body)) {
       return wutil.sendError(res, 400, 'Malformed request');
     }
     try {
@@ -41,12 +26,8 @@ class QueryAPIController {
       if (!pk) {
         throw new Error(`ARS submission response has no PK: ${arsResp}`);
       }
-      let queryModel = new Query({
-        pk: pk,
-        metadata: { query: req.body }
-      });
-      queryModel = await this.queryService.createQuery(queryModel);
-      return res.status(200).json(this.translatorService.outputAdapter.querySubmitToFE(arsResp));
+      const storeQueryModel = await this.queryService.createQuery(pk, req.body);
+      return res.status(200).json(this.queryService.outputAdapter.querySubmitToFE(storeQueryModel));
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
@@ -54,13 +35,13 @@ class QueryAPIController {
   }
 
   async getQueryStatus(req, res, next) {
-    if (!this.isValidQueryResultRequest(req)) {
+    if (!this._isValidQueryResultRequest(req)) {
       return wutil.sendError(res, 400, 'Malformed Request');
     }
     try {
-      let uuid = req.params.qid;
-      let statusRes = await this.translatorService.getQueryStatus(uuid, this.filters);
-      return res.status(200).json(this.translatorService.outputAdapter.queryStatusToFE(statusRes));
+      const uuid = req.params.qid;
+      const storeQueryModel = await this.queryService.getQueryStatus(uuid);
+      return res.status(200).json(this.queryService.outputAdapter.queryStatusToFE(storeQueryModel));
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
@@ -68,7 +49,7 @@ class QueryAPIController {
   }
 
   async getQueryResult(req, res, next) {
-    if (!this.isValidQueryResultRequest(req)) {
+    if (!this._isValidQueryResultRequest(req)) {
       return wutil.sendError(res, 400, 'Malformed Request');
     }
     try {
@@ -81,5 +62,35 @@ class QueryAPIController {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
     }
+  }
+
+  async updateQuery(req, res, next) {
+    if (!this._isValidQueryUpdateRequest(req)) {
+      return wutil.sendError(res, 400, 'Malformed Request');
+    }
+    try {
+      const resCode = await this.queryService.processQueryUpdate(req.body);
+      return res.status(resCode).send();
+    } catch (err) {
+      // TODO: Send errors at more granular level
+      return wutil.sendInternalServerError(res, err);
+    }
+  }
+
+  _isValidQuerySubmissionRequest(body) {
+    return cmn.isObject(body);
+  }
+
+  _isValidQueryResultRequest(req) {
+    return req.params.hasOwnProperty('qid') && req.params.qid;
+  }
+
+  _isValidQueryUpdateRequest(req) {
+    // TODO: Fill in stub
+    return true;
+  }
+
+  _logQuerySubmissionRequest(req) {
+    req.log.info({reqBody: req.body});
   }
 }
