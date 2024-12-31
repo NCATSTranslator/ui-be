@@ -4,10 +4,12 @@ import { readdir } from 'node:fs/promises';
 import path from 'path';
 import { bootstrapConfig } from '../../lib/config.mjs';
 import { pg } from '../../lib/postgres_preamble.mjs';
-
+import { logger } from '../../lib/logger.mjs';
 import meow from 'meow';
 
 export { getMigrationFiles };
+
+logger.level = 'info';
 
 const program_name = path.basename(process.argv[1]);
 const cli = meow(`
@@ -57,16 +59,16 @@ const cli = meow(`
     }
 );
 
-console.log(cli.flags);
+logger.info(cli.flags);
 
 
 
-async function getMigrationFiles(dir, after_timestamp=0, suffix='.sql') {
-    let match_rx = new RegExp(`^(\\d+)${suffix}$`); // Note doubled \\
+async function getMigrationFiles(dir, after_timestamp=0, suffix='.mjs.') {
+    let match_rx = new RegExp(`^(\\d+)${suffix}`); // Note doubled \\
     let all_files = await readdir(dir);
-    console.log(all_files);
+    logger.debug(all_files);
     let migration_files = all_files.filter(e => e.match(match_rx));
-    console.log(migration_files);
+    logger.debug(migration_files);
     let target_files = migration_files.filter((e) => {
         let file_timestamp = e.match(match_rx)[1];
         return parseInt(file_timestamp, 10) > after_timestamp;
@@ -74,7 +76,8 @@ async function getMigrationFiles(dir, after_timestamp=0, suffix='.sql') {
     return target_files.sort((a, b) => {
         let a_timestamp = parseInt(a.match(match_rx)[1], 10);
         let b_timestamp = parseInt(b.match(match_rx)[1], 10);
-        return a - b;
+        logger.trace(`timestamps: ${a_timestamp}, ${b_timestamp}`);
+        return a_timestamp - b_timestamp;
     });
 }
 
@@ -84,12 +87,18 @@ async function update_migrations_table(applied_migrations) {
 
 
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
-console.log(CONFIG);
+logger.debug(CONFIG);
 
 const dbPool = new pg.Pool({
-    ...CONFIG.storage.pg,
-    password: CONFIG.secrets.pg.password,
-    ssl: CONFIG.db_conn.ssl
-  });
+  ...CONFIG.storage.pg,
+  password: CONFIG.secrets.pg.password,
+  ssl: CONFIG.db_conn.ssl
+});
 
-console.log(dbPool);
+
+
+logger.trace(dbPool);
+
+let target = await getMigrationFiles('utilities/migrations', 1, '.sql');
+logger.info(target);
+
