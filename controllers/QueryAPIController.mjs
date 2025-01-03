@@ -7,6 +7,7 @@ import * as trapi from '../lib/trapi.mjs';
 class QueryAPIController {
   constructor(config, translatorService, queryService, filters) {
     this.config = config;
+    this.apiKey = config.secrets.hmac.key;
     this.translatorService = translatorService;
     this.queryService = queryService;
     this.filters = filters;
@@ -23,11 +24,9 @@ class QueryAPIController {
       const arsResp = await this.translatorService.submitQuery(trapiQuery);
       req.log.info({arsqueryresp: arsResp});
       const pk = trapi.getPk(arsResp);
-      if (!pk) {
-        throw new Error(`ARS submission response has no PK: ${arsResp}`);
-      }
+      if (!pk) throw new Error(`ARS query submission response has no PK: ${arsResp}`);
       const storeQueryModel = await this.queryService.createQuery(pk, req.body);
-      return res.status(200).json(this.queryService.outputAdapter.querySubmitToFE(storeQueryModel));
+      return res.status(200).json(this.queryService.feAdapter.querySubmitToFE(storeQueryModel));
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
@@ -40,8 +39,9 @@ class QueryAPIController {
     }
     try {
       const uuid = req.params.qid;
-      const storeQueryModel = await this.queryService.getQueryStatus(uuid);
-      return res.status(200).json(this.queryService.outputAdapter.queryStatusToFE(storeQueryModel));
+      const storeQueryModel = await this.queryService.getQueryByPk(uuid);
+      const status = this.queryService.feAdapter.queryStatusToFE(storeQueryModel);
+      return res.status(200).json(status);
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
@@ -53,11 +53,11 @@ class QueryAPIController {
       return wutil.sendError(res, 400, 'Malformed Request');
     }
     try {
-      let uuid = req.params.qid;
-      let svcRes = await this.translatorService.getResults(uuid, this.filters);
-      let retval = await this.translatorService.outputAdapter.queryResultsToFE(
-        svcRes, this.config.max_hops, this.config.ara_to_infores_map);
-      return res.status(200).json(retval);
+      const uuid = req.params.qid;
+      let results = await this.translatorService.getResults(uuid, this.filters);
+      results = await this.translatorService.feAdapter.queryResultsToFE(
+          results, this.config.max_hops, this.config.ara_to_infores_map);
+      return res.status(200).json(results);
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
@@ -65,14 +65,18 @@ class QueryAPIController {
   }
 
   async updateQuery(req, res, next) {
-    if (!this._isValidQueryUpdateRequest(req)) {
-      return wutil.sendError(res, 400, 'Malformed Request');
+    const reqVerification = this._isValidQueryUpdateRequest(req);
+    if (!reqVerification.valid) {
+      return wutil.sendError(res, reqVerification.errorCode, reqVerification.errorMsg);
     }
     try {
-      const resCode = await this.queryService.processQueryUpdate(req.body);
+      const update = req.body;
+      const resCode = await this.queryService.processQueryUpdate(update);
+      res.set(_HEADERS.X_EVENT_SIG, cmn.generateHMACSignature(JSON.stringify(res.body), this.apiKey));
       return res.status(resCode).send();
     } catch (err) {
       // TODO: Send errors at more granular level
+      wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
     }
   }
@@ -86,11 +90,29 @@ class QueryAPIController {
   }
 
   _isValidQueryUpdateRequest(req) {
-    // TODO: Fill in stub
-    return true;
+    const reqVerification = {
+      valid: true,
+      errorCode: null,
+      errorMsg: ''
+    };
+    const signature = req.headers[_HEADERS.X_EVENT_SIG];
+    if (!signature) {
+      reqVerification.valid = false;
+      reqVerification.errorCode = 400;
+      reqVerification.errorMsg = 'Signature not provided';
+    } else if (!cmn.verifyHMACSignature(signature, JSON.stringify(req.body), this.apiKey)) {
+      reqVerification.valid = false;
+      reqVerification.errorCode = 401;
+      reqVerification.errorMsg = 'Invalid signature provided';
+    }
+    return reqVerification;
   }
 
   _logQuerySubmissionRequest(req) {
     req.log.info({reqBody: req.body});
   }
 }
+
+const _HEADERS = Object.freeze({
+  X_EVENT_SIG: 'x-event-signature'
+});

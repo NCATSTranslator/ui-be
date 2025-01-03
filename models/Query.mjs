@@ -1,4 +1,4 @@
-export { Query };
+export { Query, QueryMetadata };
 
 import * as cmn from '../lib/common.mjs';
 
@@ -6,11 +6,11 @@ class Query {
   constructor({
     id = null,
     pk,
-    status = cmn.CONSTANTS.QUERY_STATUS.RUNNING,
+    status = cmn.QUERY_STATUS.RUNNING,
     time_created = new Date(),
     time_updated = new Date(),
     deleted = false,
-    metadata = {}
+    metadata = new QueryMetadata()
   } = {}) {
     if (!pk) {
       throw new Error('PK is required');
@@ -24,12 +24,14 @@ class Query {
     this.metadata = metadata;
   }
 
-  update(fields) {
-    for (let key in fields) {
-      if (this.hasOwnProperty(key)) {
-        this[key] = fields[key];
-      }
-    }
+  setAras(aras) {
+    this.metadata.aras = aras;
+    this.time_updated = new Date();
+    return this;
+  }
+
+  setStatus(status) {
+    this.status = status;
     this.time_updated = new Date();
     return this;
   }
@@ -38,5 +40,12 @@ class Query {
     this.deleted = true;
     this.time_updated = new Date();
     return this;
+  }
+}
+
+class QueryMetadata {
+  constructor(query, aras = []) {
+    this.query = query;
+    this.aras = aras;
   }
 }

@@ -8,11 +8,11 @@ class QueryStorePostgres {
   }
 
   async retrieveQueryById(id) {
-    return await this._retrieveQueryById(id);
+    return this._retrieveQueryById(id);
   }
 
   async retrieveQueryByPk(pk) {
-    return await this._retrieveQueryById(pk, 'pk');
+    return this._retrieveQueryById(pk, 'pk');
   }
 
   async createQuery(model) {

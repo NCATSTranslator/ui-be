@@ -81,15 +81,19 @@ export function startServer(config, services) {
 
   /** All routes below this point MUST use one of authenticate[Un]PrivilegedRequest() **/
 
-  // Query routes: unprivileged
-  app.use(`${API_PATH_V1}/query`, sessionController.authenticateUnprivilegedRequest.bind(sessionController));
-  app.get(`${API_PATH_V1}/query/:qid/result`, queryAPIController.getQueryResult.bind(queryAPIController));
-  app.post(`${API_PATH_V1}/query`, queryAPIController.submitQuery.bind(queryAPIController));
-  app.get(`${API_PATH_V1}/query/:qid/status`, queryAPIController.getQueryStatus.bind(queryAPIController));
+  // Submit query route: privileged session
+  app.post(`${API_PATH_V1}/query`,
+    sessionController.authenticatePrivilegedRequest.bind(sessionController),
+    queryAPIController.submitQuery.bind(queryAPIController));
+  // Query request routes: unprivileged session
+  app.get(`${API_PATH_V1}/query/:qid/status`,
+    sessionController.authenticateUnprivilegedRequest.bind(sessionController),
+    queryAPIController.getQueryStatus.bind(queryAPIController));
+  app.get(`${API_PATH_V1}/query/:qid/result`,
+    sessionController.authenticateUnprivilegedRequest.bind(sessionController),
+    queryAPIController.getQueryResult.bind(queryAPIController));
+  // Query callback route: behind hmac
   app.post(`${API_PATH_V2}/query/update`, queryAPIController.updateQuery.bind(queryAPIController));
-  //app.use(`${API_PATH_V2}/query`, sessionController.authenticateUnprivilegedRequest.bind(sessionController));
-  //app.post(`${API_PATH_V2}/query`, queryAPIController.submitQuery.bind(queryAPIController));
-  //app.get(`${API_PATH_V2}/query/:qid/status`, queryAPIController.getQueryStatus.bind(queryAPIController));
 
   // User routes: privileged
   app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));

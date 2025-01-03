@@ -14,6 +14,7 @@ import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
 import { QueryService } from './services/QueryService.mjs';
 import { QueryServicexFEAdapter } from './adapters/QueryServicexFEAdapter.mjs';
+import { ClientxServiceAdapter } from './adapters/ClientxServiceAdapter.mjs';
 
 import { SessionStorePostgres } from './stores/SessionStorePostgres.mjs';
 import { UserStorePostgres } from './stores/UserStorePostgres.mjs';
@@ -92,15 +93,9 @@ const QUERY_SERVICE = (function (config) {
     password: config.secrets.pg.password,
     ssl: config.db_conn.ssl
   });
-  const queryClient = new ARSClient(
-    `${config.ars_endpoint.protocol}://${config.ars_endpoint.host}`,
-    config.ars_endpoint.pull_uri,
-    config.ars_endpoint.post_uri,
-    config.ars_endpoint.retain_uri,
-    config.ars_endpoint.use_ars_merging);
   return new QueryService(
     new QueryStorePostgres(dbPool),
-    queryClient,
+    new ClientxServiceAdapter(),
     new QueryServicexFEAdapter()
   );
 })(SERVER_CONFIG);
