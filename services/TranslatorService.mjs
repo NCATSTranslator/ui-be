@@ -24,10 +24,10 @@ class QueryClientError extends Error {
 
 class TranslatorService
 {
-  constructor(queryClient, outputAdapter)
+  constructor(queryClient, feAdapter)
   {
     this.queryClient = queryClient;
-    this.outputAdapter = outputAdapter;
+    this.feAdapter = feAdapter;
   }
 
   inputToQuery(input)

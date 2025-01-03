@@ -12,6 +12,9 @@ import { ARSClient } from './lib/ARSClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
+import { QueryService } from './services/QueryService.mjs';
+import { QueryServicexFEAdapter } from './adapters/QueryServicexFEAdapter.mjs';
+import { ClientxServiceAdapter } from './adapters/ClientxServiceAdapter.mjs';
 
 import { SessionStorePostgres } from './stores/SessionStorePostgres.mjs';
 import { UserStorePostgres } from './stores/UserStorePostgres.mjs';
@@ -19,6 +22,7 @@ import { pg } from './lib/postgres_preamble.mjs';
 import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgres.mjs';
 import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
 import { UserWorkspaceStorePostgres } from './stores/UserWorkspaceStorePostgres.mjs';
+import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
 
 
 // Load the config asap as basically everything depends on it
@@ -83,10 +87,23 @@ const USER_SERVICE = (function (config) {
   );
 })(SERVER_CONFIG);
 
+const QUERY_SERVICE = (function (config) {
+  const dbPool = new pg.Pool({
+    ...config.storage.pg,
+    password: config.secrets.pg.password,
+    ssl: config.db_conn.ssl
+  });
+  return new QueryService(
+    new QueryStorePostgres(dbPool),
+    new ClientxServiceAdapter(),
+    new QueryServicexFEAdapter()
+  );
+})(SERVER_CONFIG);
 logger.info(SERVER_CONFIG, "Server configuration");
 
 httpserver.startServer(SERVER_CONFIG, {
   translatorService: TRANSLATOR_SERVICE,
   authService: AUTH_SERVICE,
-  userService: USER_SERVICE
+  userService: USER_SERVICE,
+  queryService: QUERY_SERVICE
 });
