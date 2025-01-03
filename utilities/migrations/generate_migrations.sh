@@ -36,6 +36,8 @@ export { Migration_${epoch} };
 
 class Migration_${epoch} extends BaseMigration {
 
+  static identifier = '${epoch}';
+
   constructor(dbPool) {
       super();
       this.sql = ['put', 'statements', 'here'];
@@ -57,10 +59,6 @@ class Migration_${epoch} extends BaseMigration {
 
   failureMessage(obj=null) {
       return \`Failed to run successfully\`;
-  }
-
-  identifier() {
-      return '$epoch';
   }
 }
 EOF

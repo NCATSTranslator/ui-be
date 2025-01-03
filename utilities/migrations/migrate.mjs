@@ -47,13 +47,15 @@ const cli = meow(`
                 default: false,
                 isRequired: false
             },
-            startAt: {
+            first: {
                 type: 'number',
-                isRequired: false
+                isRequired: false,
+                default: 0
             },
-            stopAfter: {
+            last: {
                 type: 'number',
-                isRequired: false
+                isRequired: false,
+                default: Infinity // does not seem to work
             }
         }
     }
@@ -63,7 +65,7 @@ logger.info(cli.flags);
 
 
 
-async function getMigrationFiles(dir, after_timestamp=0, suffix='.mjs') {
+async function getMigrationFiles(dir, first_timestamp=0, last_timestamp=Infinity, suffix='.mjs') {
     let match_rx = new RegExp(`^(\\d+)\\..*${suffix}\$`); // Note doubled \\
     logger.info(match_rx);
     let all_files = await readdir(dir);
@@ -71,8 +73,8 @@ async function getMigrationFiles(dir, after_timestamp=0, suffix='.mjs') {
     let migration_files = all_files.filter(e => e.match(match_rx));
     logger.debug(migration_files);
     let target_files = migration_files.filter((e) => {
-        let file_timestamp = e.match(match_rx)[1];
-        return parseInt(file_timestamp, 10) > after_timestamp;
+        let file_timestamp = parseInt(e.match(match_rx)[1], 10);
+        return file_timestamp >= first_timestamp && file_timestamp <= last_timestamp;
     });
     return target_files.sort((a, b) => {
         let a_timestamp = parseInt(a.match(match_rx)[1], 10);
@@ -100,6 +102,15 @@ const dbPool = new pg.Pool({
 
 logger.trace(dbPool);
 
-let target = await getMigrationFiles('utilities/migrations', cli.flags.startAt, '.mjs');
+let target = await getMigrationFiles('utilities/migrations',
+    cli.flags.first ?? 0, cli.flags.last ?? Infinity,
+    '.mjs');
 logger.info(target);
 
+for (let migration of target) {
+    console.log(`loading ${migration}`);
+    let imp = await import('./' + migration);
+    let cur_migration_class = Object.values(imp)[0];
+    let cur_migration = new cur_migration_class(dbPool);
+    console.log(`i ran: ${cur_migration_class.identifier}`);
+}
