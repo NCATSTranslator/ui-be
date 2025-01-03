@@ -58,7 +58,10 @@ class Migration_${epoch} extends BaseMigration {
   failureMessage(obj=null) {
       return \`Failed to run successfully\`;
   }
-  
+
+  identifier() {
+      return '$epoch';
+  }
 }
 EOF
 

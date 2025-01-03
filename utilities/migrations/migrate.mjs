@@ -63,8 +63,9 @@ logger.info(cli.flags);
 
 
 
-async function getMigrationFiles(dir, after_timestamp=0, suffix='.mjs.') {
-    let match_rx = new RegExp(`^(\\d+)${suffix}`); // Note doubled \\
+async function getMigrationFiles(dir, after_timestamp=0, suffix='.mjs') {
+    let match_rx = new RegExp(`^(\\d+)\\..*${suffix}\$`); // Note doubled \\
+    logger.info(match_rx);
     let all_files = await readdir(dir);
     logger.debug(all_files);
     let migration_files = all_files.filter(e => e.match(match_rx));
@@ -99,6 +100,6 @@ const dbPool = new pg.Pool({
 
 logger.trace(dbPool);
 
-let target = await getMigrationFiles('utilities/migrations', 1, '.sql');
+let target = await getMigrationFiles('utilities/migrations', cli.flags.startAt, '.mjs');
 logger.info(target);
 
