@@ -12,7 +12,7 @@ export { getMigrationFiles };
 
 const run_id = uuidv4();
 const migration_logger = logger.child({run_id: run_id});
-migration_logger.level = 'info';
+migration_logger.level = 'debug';
 
 const program_name = path.basename(process.argv[1]);
 const cli = meow(`
@@ -95,15 +95,16 @@ async function update_migrations_table(applied_migrations) {
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
 migration_logger.debug(CONFIG);
 
-const dbPool = new pg.Pool({
-  ...CONFIG.storage.pg,
-  password: CONFIG.secrets.pg.password,
-  ssl: CONFIG.db_conn.ssl
-});
+let dbconfs = {
+    ...CONFIG.storage.pg,
+    password: CONFIG.secrets.pg.password,
+    ssl: CONFIG.db_conn.ssl
+  };
+migration_logger.debug(dbconfs);
+const dbPool = new pg.Pool(dbconfs);
 
 
-
-migration_logger.trace(dbPool);
+migration_logger.debug(dbPool);
 
 let target = await getMigrationFiles('utilities/migrations',
     cli.flags.first ?? 0, cli.flags.last ?? Infinity,
@@ -111,10 +112,45 @@ let target = await getMigrationFiles('utilities/migrations',
 migration_logger.info({target_migrations: target});
 
 for (let migration of target) {
-    migration_logger.debug(`loading ${migration}`);
-    let imp = await import('./' + migration);
-    let cur_migration_class = Object.values(imp)[0];
-    let cur_migration = new cur_migration_class(dbPool);
-    let cur_migration_id = cur_migration_class.identifier;
+    let imp;
+    // Load the migration file
+    try {
+        migration_logger.debug(`loading ${migration}`);
+        imp = await import('./' + migration);
+    } catch (err) {
+        migration_logger.error({error_str: err.toString(), error_obj: err}, `Error importing ${migration}`);
+        throw err;
+    }
+    // Instantiate the migration class
+    let cur_migration_class, cur_migration, cur_migration_id;
+    try {
+        cur_migration_class = Object.values(imp)[0];
+        migration_logger.debug({class: cur_migration_class});
+        cur_migration = new cur_migration_class(dbPool);
+        cur_migration_id = cur_migration_class.identifier;
+    } catch (err) {
+        migration_logger.error({error_str: err.toString(), error_obj: err}, `Error instantiating class for ${cur_migration_class}`);
+        throw err;
+    }
+    // Run the migration
+    let execute_result = false;
+    migration_logger.info(`executing ${cur_migration_id}`);
+    try {
+        execute_result = await cur_migration.execute();
+        console.log(`ok result: ${execute_result}`);
+        // throw new Error('silly error');
+    } catch (err) {
+        migration_logger.error({error_str: err.toString(), error_obj: err}, `Error running execute() for ${cur_migration_id}`);
+        throw err;
+    }
+
+
+    // If the migrations failed, simply abort
+
+    // If the verification fails, try the undo procedure, then abort
+
+    // If verification succeeds, record the success
+
+
 
 }
