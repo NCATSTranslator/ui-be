@@ -5,11 +5,14 @@ import path from 'path';
 import { bootstrapConfig } from '../../lib/config.mjs';
 import { pg } from '../../lib/postgres_preamble.mjs';
 import { logger } from '../../lib/logger.mjs';
+import { v4 as uuidv4 } from 'uuid';
 import meow from 'meow';
 
 export { getMigrationFiles };
 
-logger.level = 'info';
+const run_id = uuidv4();
+const migration_logger = logger.child({run_id: run_id});
+migration_logger.level = 'info';
 
 const program_name = path.basename(process.argv[1]);
 const cli = meow(`
@@ -21,8 +24,8 @@ const cli = meow(`
       --local-overrides, -l: optional
       --one-big-tx, -b: boolean
       --force-dangerous-things: true
-      --start-at: number, optional
-      --stop-after: number, optional
+      --first: number, optional
+      --last: number, optional
     `, {
         importMeta: import.meta,
         allowUnknownFlags: false,
@@ -61,17 +64,17 @@ const cli = meow(`
     }
 );
 
-logger.info(cli.flags);
+migration_logger.info({flags: cli.flags});
 
 
 
 async function getMigrationFiles(dir, first_timestamp=0, last_timestamp=Infinity, suffix='.mjs') {
     let match_rx = new RegExp(`^(\\d+)\\..*${suffix}\$`); // Note doubled \\
-    logger.info(match_rx);
+    migration_logger.info(match_rx);
     let all_files = await readdir(dir);
-    logger.debug(all_files);
+    migration_logger.debug(all_files);
     let migration_files = all_files.filter(e => e.match(match_rx));
-    logger.debug(migration_files);
+    migration_logger.debug(migration_files);
     let target_files = migration_files.filter((e) => {
         let file_timestamp = parseInt(e.match(match_rx)[1], 10);
         return file_timestamp >= first_timestamp && file_timestamp <= last_timestamp;
@@ -79,7 +82,7 @@ async function getMigrationFiles(dir, first_timestamp=0, last_timestamp=Infinity
     return target_files.sort((a, b) => {
         let a_timestamp = parseInt(a.match(match_rx)[1], 10);
         let b_timestamp = parseInt(b.match(match_rx)[1], 10);
-        logger.trace(`timestamps: ${a_timestamp}, ${b_timestamp}`);
+        migration_logger.trace(`timestamps: ${a_timestamp}, ${b_timestamp}`);
         return a_timestamp - b_timestamp;
     });
 }
@@ -90,7 +93,7 @@ async function update_migrations_table(applied_migrations) {
 
 
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
-logger.debug(CONFIG);
+migration_logger.debug(CONFIG);
 
 const dbPool = new pg.Pool({
   ...CONFIG.storage.pg,
@@ -100,17 +103,18 @@ const dbPool = new pg.Pool({
 
 
 
-logger.trace(dbPool);
+migration_logger.trace(dbPool);
 
 let target = await getMigrationFiles('utilities/migrations',
     cli.flags.first ?? 0, cli.flags.last ?? Infinity,
     '.mjs');
-logger.info(target);
+migration_logger.info({target_migrations: target});
 
 for (let migration of target) {
-    console.log(`loading ${migration}`);
+    migration_logger.debug(`loading ${migration}`);
     let imp = await import('./' + migration);
     let cur_migration_class = Object.values(imp)[0];
     let cur_migration = new cur_migration_class(dbPool);
-    console.log(`i ran: ${cur_migration_class.identifier}`);
+    let cur_migration_id = cur_migration_class.identifier;
+
 }
