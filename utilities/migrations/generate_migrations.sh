@@ -39,18 +39,22 @@ class Migration_${epoch} extends BaseMigration {
   static identifier = '${epoch}';
 
   constructor(dbPool) {
-      super();
-      this.sql = ['put', 'statements', 'here'];
+      super(dbPool);
+      this.sql = [
+        'put',
+        'statements',
+        'here'
+      ];
   }
 
   // override execute() only if you must
 
   async verify(obj=null) {
-      return true; 
+      return true;
   }
 
   async undo(obj=null) {
-      return true; 
+      return true;
   }
 
   successMessage(obj=null) {
