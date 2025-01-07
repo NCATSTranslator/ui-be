@@ -1,12 +1,18 @@
-export { QueryService };
+export { QueryService, QUERY_SERVICE_MSG };
 import { Query, QueryMetadata } from '../models/Query.mjs';
 import * as cmn from '../lib/common.mjs';
 
+const QUERY_SERVICE_MSG = Object.freeze({
+  UPDATE_SUCCESS:  0,
+  QUERY_NOT_FOUND: 1,
+  QUERY_COMPLETE:  2,
+  UPDATE_IGNORED:  3
+});
+
 class QueryService {
-  constructor(queryStore, clientAdapter, feAdapter) {
+  constructor(queryStore, clientAdapter) {
     this._queryStore = queryStore;
     this._clientAdapter = clientAdapter;
-    this.feAdapter = feAdapter;
   }
 
   async getQueryById(qid) {
@@ -21,12 +27,9 @@ class QueryService {
     update = this._clientAdapter.processQueryUpdate(update);
     switch(update.status) {
       case cmn.QUERY_STATUS.RUNNING:
-      case cmn.QUERY_STATUS.COMPLETE:
-        return this._handleUpdate(update);
-      case cmn.QUERY_STATUS.ERROR:
-        return this._handleUpdateError(update);
-      default:
-        return _CALLBACK_RESPONSE.SUCCESS // Ignore the message by default
+      case cmn.QUERY_STATUS.COMPLETE: return this._handleUpdate(update);
+      case cmn.QUERY_STATUS.ERROR:    return this._handleUpdateError(update);
+      default: return QUERY_SERVICE_MSG.UPDATE_IGNORED
     }
   }
 
@@ -40,8 +43,8 @@ class QueryService {
   async _handleUpdate(update) {
     const pk = update.pk;
     let storeQueryModel = await this.getQueryByPk(pk);
-    if (storeQueryModel === null) return _CALLBACK_RESPONSE.NOT_FOUND;
-    if (storeQueryModel.status !== cmn.QUERY_STATUS.RUNNING) return _CALLBACK_RESPONSE.SUCCESS; // Ignore updates to finished queries
+    if (storeQueryModel === null) return QUERY_SERVICE_MSG.QUERY_NOT_FOUND;
+    if (storeQueryModel.status !== cmn.QUERY_STATUS.RUNNING) return QUERY_SERVICE_MSG.QUERY_COMPLETE
     if (update.status === cmn.QUERY_STATUS.COMPLETE ||
         update.aras.length > storeQueryModel.metadata.aras.length) {
       // TODO: Optimize to only update the metadata if needed
@@ -51,25 +54,17 @@ class QueryService {
       if (storeQueryModel === null) throw new Error(`Failed to update database for PK: ${pk}`);
     }
 
-    return _CALLBACK_RESPONSE.SUCCESS;
+    return QUERY_SERVICE_MSG.UPDATE_SUCCESS;
   }
 
   async _handleUpdateError(update) {
     const pk = update.pk
     let storeQueryModel = await this.getQueryByPk(pk);
-    if (storeQueryModel === null) return _CALLBACK_RESPONSE.NOT_FOUND;
+    if (storeQueryModel === null) return QUERY_SERVICE_MSG.QUERY_NOT_FOUND;
     storeQueryModel.setStatus(cmn.QUERY_STATUS.ERROR);
     storeQueryModel = await this._queryStore.updateQuery(storeQueryModel);
     if (storeQueryModel === null) throw new Error(`Failed to update database for PK: ${pk}`);
-    return _CALLBACK_RESPONSE.SUCCESS;
+    return QUERY_SERVICE_MSG.UPDATE_SUCCESS;
   }
 }
 
-const _CALLBACK_RESPONSE = Object.freeze({
-  SUCCESS: 200,
-  BAD_REQUEST: 400,
-  VERIFICATION_FAILED: 401,
-  NOT_FOUND: 404,
-  GONE: 410,
-  INTERNAL_FAILURE: 500
-});

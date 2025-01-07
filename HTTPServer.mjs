@@ -17,6 +17,10 @@ import { LoginController } from './controllers/LoginController.mjs';
 import { SessionController } from './controllers/SessionController.mjs';
 import { UserAPIController } from './controllers/UserAPIController.mjs';
 
+// Adapters
+import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
+import { QueryServicexFEAdapter } from './adapters/QueryServicexFEAdapter.mjs';
+
 export function startServer(config, services) {
 
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config file
@@ -27,10 +31,17 @@ export function startServer(config, services) {
   const translatorService = services.translatorService;
   const queryService = services.queryService;
   const demoQueries = config.frontend.cached_queries.filter(e => e.allow_inbound);
+  const translatorServicexFEAdapter = new TranslatorServicexFEAdapter();
+  const queryServicexFEAdapter = new QueryServicexFEAdapter();
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();
   const loginController = new LoginController(config, authService);
-  const queryAPIController = new QueryAPIController(config, translatorService, queryService, filters);
+  const queryAPIController = new QueryAPIController(config,
+    translatorService,
+    translatorServicexFEAdapter,
+    queryService,
+    queryServicexFEAdapter,
+    filters);
   const configAPIController = new ConfigAPIController(config);
   const userAPIController = new UserAPIController(config, userService, translatorService);
   const sessionController = new SessionController(config, authService);

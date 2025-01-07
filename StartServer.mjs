@@ -7,13 +7,11 @@ import { loadBiolink } from './lib/biolink-model.mjs';
 import { loadChebi } from './lib/chebi.mjs';
 import { loadTrapi } from './lib/trapi.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
-import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
 import { QueryService } from './services/QueryService.mjs';
-import { QueryServicexFEAdapter } from './adapters/QueryServicexFEAdapter.mjs';
 import { ClientxServiceAdapter } from './adapters/ClientxServiceAdapter.mjs';
 
 import { SessionStorePostgres } from './stores/SessionStorePostgres.mjs';
@@ -52,8 +50,7 @@ const TRANSLATOR_SERVICE = (function (config) {
     config.ars_endpoint.post_uri,
     config.ars_endpoint.retain_uri,
     config.ars_endpoint.use_ars_merging);
-  const outputAdapter = new TranslatorServicexFEAdapter();
-  return new TranslatorService(queryClient, outputAdapter);
+  return new TranslatorService(queryClient);
 })(SERVER_CONFIG);
 
 // Bootstrap the auth service
@@ -93,11 +90,8 @@ const QUERY_SERVICE = (function (config) {
     password: config.secrets.pg.password,
     ssl: config.db_conn.ssl
   });
-  return new QueryService(
-    new QueryStorePostgres(dbPool),
-    new ClientxServiceAdapter(),
-    new QueryServicexFEAdapter()
-  );
+  return new QueryService(new QueryStorePostgres(dbPool),
+                          new ClientxServiceAdapter());
 })(SERVER_CONFIG);
 logger.info(SERVER_CONFIG, "Server configuration");
 

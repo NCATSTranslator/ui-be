@@ -12,7 +12,7 @@ class ClientxServiceAdapter {
       aras: []
     };
     switch (eventType) {
-      case _CALLBACK_EVENT.MV_AVAILABLE:
+      case _UPDATE_EVENT.MV_AVAILABLE:
         update.aras = cmn.jsonGet(queryUpdate, 'merged_versions_list').map(idAraPair => idAraPair[1]);
         update.aras.reverse();
         if (cmn.jsonGet(queryUpdate, 'complete')) {
@@ -21,10 +21,10 @@ class ClientxServiceAdapter {
           update.status = cmn.QUERY_STATUS.RUNNING;
         }
         break;
-      case _CALLBACK_EVENT.MV_BEGUN:
-      case _CALLBACK_EVENT.ARA_COMPLETE:
+      case _UPDATE_EVENT.MV_BEGUN:
+      case _UPDATE_EVENT.ARA_COMPLETE:
         break; // We can ignore these events for now
-      case _CALLBACK_EVENT.ERROR:
+      case _UPDATE_EVENT.ERROR:
         logger.error(`Received ARS callback error for query with PK ${update.pk}: ${queryUpdate.message}`);
         update.status = cmn.QUERY_STATUS.ERROR;
         break;
@@ -36,7 +36,7 @@ class ClientxServiceAdapter {
 }
 
 
-const _CALLBACK_EVENT = Object.freeze({
+const _UPDATE_EVENT = Object.freeze({
   MV_AVAILABLE: 'merged_version_available',
   MV_BEGUN: 'merged_version_begun',
   ARA_COMPLETE: 'ara_response_complete',
