@@ -7,19 +7,20 @@ import * as trapi from '../lib/trapi.mjs';
 
 class QueryAPIController {
   constructor(config, translatorService, translatorServicexFEAdapter,
-      queryService, queryServicexFEAdapter, filters) {
+      queryService, queryServicexFEAdapter, userService, filters) {
     this.config = config;
     this.apiKey = config.secrets.hmac.key;
     this.translatorService = translatorService;
     this.translatorServicexFEAdapter = translatorServicexFEAdapter;
     this.queryService = queryService;
     this.queryServicexFEAdapter = queryServicexFEAdapter;
+    this.userService = userService;
     this.filters = filters;
   }
 
   async submitQuery(req, res, next) {
     this._logQuerySubmissionRequest(req);
-    if (!this._isValidQuerySubmissionRequest(req.body)) {
+    if (!this._isValidQuerySubmissionRequest(req)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
     }
     try {
@@ -29,8 +30,13 @@ class QueryAPIController {
       req.log.info({arsqueryresp: arsResp});
       const pk = trapi.getPk(arsResp);
       if (!pk) throw new Error(`ARS query submission response has no PK: ${arsResp}`);
-      const storeQueryModel = await this.queryService.createQuery(pk, req.body);
-      return res.status(200).json(this.queryServicexFEAdapter.querySubmitToFE(storeQueryModel));
+      const queryModel = await this.queryService.createQuery(pk, req.body);
+      const uid = req.sessionData.user.id;
+      const userQueryModel = await this.userService.createUserQuery(uid, queryModel);
+      if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
+      const isTransactionComplete = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
+      if (!isTransactionComplete) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
+      return res.status(200).json(this.queryServicexFEAdapter.querySubmitToFE(queryModel));
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
@@ -43,8 +49,8 @@ class QueryAPIController {
     }
     try {
       const uuid = req.params.qid;
-      const storeQueryModel = await this.queryService.getQueryByPk(uuid);
-      const status = this.queryServicexFEAdapter.queryStatusToFE(storeQueryModel);
+      const queryModel = await this.queryService.getQueryByPk(uuid);
+      const status = this.queryServicexFEAdapter.queryStatusToFE(queryModel);
       return res.status(cmn.HTTP_CODE.SUCCESS).json(status);
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -85,8 +91,8 @@ class QueryAPIController {
     }
   }
 
-  _isValidQuerySubmissionRequest(body) {
-    return cmn.isObject(body);
+  _isValidQuerySubmissionRequest(req) {
+    return cmn.isObject(req.body) && req.sessionData.user.id;
   }
 
   _isValidQueryResultRequest(req) {

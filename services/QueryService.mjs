@@ -40,6 +40,10 @@ class QueryService {
     return storeQueryModel;
   }
 
+  async addQueryUserRelationship(queryModel, userQueryModel) {
+    return this._queryStore.addQueryUserRelationship(queryModel, userQueryModel);
+  }
+
   async _handleUpdate(update) {
     const pk = update.pk;
     let storeQueryModel = await this.getQueryByPk(pk);

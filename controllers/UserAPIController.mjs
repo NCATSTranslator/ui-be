@@ -60,6 +60,19 @@ class UserAPIController {
     }
   }
 
+  // Queries
+  async getUserQueries(req, res, next) {
+    //TODO
+  }
+
+  async updateUserQueries(req, res, next) {
+    //TODO
+  }
+
+  async deleteUserQueryById(req, res, next) {
+    //TODO
+  }
+
   // Saves
   async getUserSaves(req, res, next) {
     let user_id = req.sessionData.user.id;

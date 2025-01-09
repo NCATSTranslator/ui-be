@@ -41,6 +41,7 @@ export function startServer(config, services) {
     translatorServicexFEAdapter,
     queryService,
     queryServicexFEAdapter,
+    userService,
     filters);
   const configAPIController = new ConfigAPIController(config);
   const userAPIController = new UserAPIController(config, userService, translatorService);
@@ -111,6 +112,9 @@ export function startServer(config, services) {
   app.get(`${API_PATH_V1}/users/me`, userAPIController.getUser.bind(userAPIController));
   app.get(`${API_PATH_V1}/users/me/preferences`, userAPIController.getUserPrefs.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/preferences`, userAPIController.updateUserPrefs.bind(userAPIController));
+  //app.get(`${API_PATH_V2}/users/me/queries`, userAPIController.getUserQueries.bind(userAPIController));
+  //app.post(`${API_PATH_V2}/users/me/queries`, userAPIController.updateUserQueries.bind(userAPIController));
+  //app.delete(`${API_PATH_V2}/users/me/queries/:query_id`, userAPIController.deleteUserQueryById.bind(userAPIController);
   app.get(`${API_PATH_V1}/users/me/saves`, userAPIController.getUserSaves.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/saves`, userAPIController.updateUserSaves.bind(userAPIController));
   app.get(`${API_PATH_V1}/users/me/saves/:save_id`, userAPIController.getUserSaveById.bind(userAPIController));

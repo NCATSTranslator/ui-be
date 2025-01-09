@@ -1,10 +1,9 @@
 'use strict';
-
-import { UserPreference } from "../models/UserPreference.mjs";
-import { UserWorkspace } from "../models/UserWorkspace.mjs";
-
-
 export { UserService };
+import { UserPreference } from '../models/UserPreference.mjs';
+import { UserWorkspace } from '../models/UserWorkspace.mjs';
+import { UserSavedData } from '../models/UserSavedData.mjs';
+import { UserQueryData } from '../models/UserQuery.mjs';
 
 class UserService {
   constructor(userStore, userPreferenceStore, userSavedDataStore, userWorkspaceStore) {
@@ -33,13 +32,24 @@ class UserService {
     return this.preferenceStore.updateUserPreferences(uid, prefArray);
   }
 
+  // Queries
+  async createUserQuery(uid, queryModel) {
+    const userSavedDataModel = new UserSavedData({
+      user_id: uid,
+      save_type: 'query',
+      ars_pkey: queryModel.pk,
+      data: new UserQueryData(queryModel.metadata.query)
+    });
+    return this.saveUserData(userSavedDataModel);
+  }
+
   // Saves
   async getUserSavesByUid(uid, includeDeleted=false, saveType=null) {
     return this.savedDataStore.retrieveUserSavedDataByUserId(uid, includeDeleted, saveType);
   }
 
-  async saveUserData(userData) {
-    return this.savedDataStore.createUserSavedData(userData);
+  async saveUserData(userSavedDataModel) {
+    return this.savedDataStore.createUserSavedData(userSavedDataModel);
   }
 
   async getUserSavesBy(uid, fields, includeDeleted=false) {
