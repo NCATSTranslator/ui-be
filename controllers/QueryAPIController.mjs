@@ -82,7 +82,7 @@ class QueryAPIController {
     try {
       const update = req.body;
       const queryServiceMsg = await this.queryService.processQueryUpdate(update);
-      res.set(_HEADERS.X_EVENT_SIG, cmn.generateHMACSignature(JSON.stringify(res.body), this.apiKey));
+      res.set(_CUSTOM_HEADERS.X_EVENT_SIG, cmn.generateHMACSignature(JSON.stringify(res.body), this.apiKey));
       return res.status(this._queryServiceMsgToHTTPCode(queryServiceMsg)).send();
     } catch (err) {
       // TODO: Send errors at more granular level
@@ -105,7 +105,7 @@ class QueryAPIController {
       errorCode: null,
       errorMsg: ''
     };
-    const signature = req.headers[_HEADERS.X_EVENT_SIG];
+    const signature = req.headers[_CUSTOM_HEADERS.X_EVENT_SIG];
     if (!signature) {
       reqVerification.valid = false;
       reqVerification.errorCode = cmn.HTTP_CODE.BAD_REQUEST;
@@ -133,6 +133,6 @@ class QueryAPIController {
   }
 }
 
-const _HEADERS = Object.freeze({
+const _CUSTOM_HEADERS = Object.freeze({
   X_EVENT_SIG: 'x-event-signature'
 });

@@ -10,7 +10,7 @@ class Query {
     time_created = new Date(),
     time_updated = new Date(),
     deleted = false,
-    metadata = new QueryMetadata()
+    metadata = new QueryMetadata(null)
   } = {}) {
     if (!pk) {
       throw new Error('PK is required');

@@ -4,7 +4,7 @@ import * as cmn from '../lib/common.mjs';
 
 class ClientxServiceAdapter {
   processQueryUpdate(queryUpdate) {
-    const eventType = cmn.jsonGet(queryUpdate, 'event type');
+    const eventType = cmn.jsonGet(queryUpdate, 'event_type');
     const update = {
       pk: cmn.jsonGet(queryUpdate, 'pk'),
       timestamp: cmn.jsonGet(queryUpdate, 'timestamp'),
