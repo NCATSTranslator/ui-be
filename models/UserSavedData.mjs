@@ -1,6 +1,10 @@
 'use strict';
+export { UserSavedData, SAVE_TYPE };
 
-export { UserSavedData };
+const SAVE_TYPE = Object.freeze({
+  QUERY: 'query',
+  BOOKMARK: 'bookmark
+});
 
 class UserSavedData {
   constructor({
