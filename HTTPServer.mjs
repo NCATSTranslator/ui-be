@@ -115,9 +115,24 @@ export function startServer(config, services) {
   app.use(`${API_PATH_V2}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
 
   // User queries
+  // Creation of user queries is done on submission. See the /query endpoint
   app.get(`${API_PATH_V2}/users/me/queries`, userAPIController.getUserQueries.bind(userAPIController));
   app.post(`${API_PATH_V2}/users/me/queries/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete(`${API_PATH_V2}/users/me/queries/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController);
+  app.delete(`${API_PATH_V2}/users/me/queries/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+
+  // User bookmarks
+  app.get(`${API_PATH_V2}/users/me/bookmarks`, userAPIController.getUserBookmarks.bind(userAPIController));
+  app.post(`${API_PATH_V2}/users/me/bookmarks`, userAPIController.updateUserSaves.bind(userAPIController));
+  app.post(`${API_PATH_V2}/users/me/bookmarks/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
+  app.delete(`${API_PATH_V2}/users/me/bookmarks/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+
+  // User tags
+  app.get(`${API_PATH_V2}/users/me/tags`, userAPIController.getUserTags.bind(userAPIController));
+  app.post(`${API_PATH_V2}/users/me/tags`, userAPIController.updateUserSaves.bind(userAPIController));
+  app.post(`${API_PATH_V2}/users/me/tags/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
+  app.delete(`${API_PATH_V2}/users/me/tags/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+
+  // User saves
   app.get(`${API_PATH_V1}/users/me/saves`, userAPIController.getUserSaves.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/saves`, userAPIController.updateUserSaves.bind(userAPIController));
   app.get(`${API_PATH_V1}/users/me/saves/:save_id`, userAPIController.getUserSaveById.bind(userAPIController));

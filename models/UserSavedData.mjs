@@ -3,7 +3,8 @@ export { UserSavedData, SAVE_TYPE };
 
 const SAVE_TYPE = Object.freeze({
   QUERY: 'query',
-  BOOKMARK: 'bookmark
+  BOOKMARK: 'bookmark',
+  TAG: 'tag'
 });
 
 class UserSavedData {

@@ -67,6 +67,24 @@ class UserAPIController {
     return getUserSaves(req, res, next);
   }
 
+  // Bookmarks
+  async getUserBookmarks(req, res, next) {
+    req = wutil.injectQueryParams(req, {type: SAVE_TYPE.BOOKMARK});
+    if (req.query.type !== SAVE_TYPE.BOOKMARK) {
+      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
+    }
+    return getUserSaves(req, res, next);
+  }
+
+  // Tags
+  async getUserTags(req, res, next) {
+    req = wutil.injectQueryParams(req, {type: SAVE_TYPE.TAG});
+    if (req.query.type !== SAVE_TYPE.TAG) {
+      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
+    }
+    return getUserSaves(req, res, next);
+  }
+
   // Saves
   async getUserSaves(req, res, next) {
     let user_id = req.sessionData.user.id;
