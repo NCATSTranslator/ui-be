@@ -2,7 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserWorkspace } from '../models/UserWorkspace.mjs';
-import { UserSavedData } from '../models/UserSavedData.mjs';
+import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 import { UserQueryData } from '../models/UserQuery.mjs';
 
 class UserService {
@@ -34,13 +34,13 @@ class UserService {
 
   // Queries
   async createUserQuery(uid, queryModel) {
-    const userSavedDataModel = new UserSavedData({
+    const userSavedData = new UserSavedData({
       user_id: uid,
-      save_type: 'query',
+      save_type: SAVE_TYPE.QUERY,
       ars_pkey: queryModel.pk,
       data: new UserQueryData(queryModel.metadata.query)
     });
-    return this.saveUserData(userSavedDataModel);
+    return this.saveUserData(userSavedData);
   }
 
   // Saves
@@ -48,8 +48,8 @@ class UserService {
     return this.savedDataStore.retrieveUserSavedDataByUserId(uid, includeDeleted, saveType);
   }
 
-  async saveUserData(userSavedDataModel) {
-    return this.savedDataStore.createUserSavedData(userSavedDataModel);
+  async saveUserData(userSavedData) {
+    return this.savedDataStore.createUserSavedData(userSavedData);
   }
 
   async getUserSavesBy(uid, fields, includeDeleted=false) {
