@@ -2,8 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserWorkspace } from '../models/UserWorkspace.mjs';
-import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserQueryData } from '../models/UserQueryData.mjs';
+import { UserSavedData, UserQueryData, UserTagData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 
 class UserService {
   constructor(userStore, userPreferenceStore, userSavedDataStore, userWorkspaceStore) {

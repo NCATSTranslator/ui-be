@@ -58,7 +58,7 @@ class TranslatorService
       const resp = await this.queryClient.retainQuery(queryId);
       return resp;
     } catch (err) {
-      logger.log(err);
+      logger.error(err);
       throw new QueryClientError(`Error retaining query for ${queryId}`, queryId, 'retain', err);
     }
   }

@@ -64,7 +64,7 @@ class UserAPIController {
     if (req.query.type !== SAVE_TYPE.QUERY) {
       return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
     }
-    return getUserSaves(req, res, next);
+    return this.getUserSaves(req, res, next);
   }
 
   // Bookmarks
@@ -73,7 +73,7 @@ class UserAPIController {
     if (req.query.type !== SAVE_TYPE.BOOKMARK) {
       return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
     }
-    return getUserSaves(req, res, next);
+    return this.getUserSaves(req, res, next);
   }
 
   // Tags
@@ -82,7 +82,7 @@ class UserAPIController {
     if (req.query.type !== SAVE_TYPE.TAG) {
       return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
     }
-    return getUserSaves(req, res, next);
+    return this.getUserSaves(req, res, next);
   }
 
   // Saves

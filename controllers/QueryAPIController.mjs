@@ -125,7 +125,7 @@ class QueryAPIController {
 
   _queryServiceMsgToHTTPCode(msg) {
     switch (msg) {
-      case QUERY_SERVICE_SMG.UPDATE_IGNORED:
+      case QUERY_SERVICE_MSG.UPDATE_IGNORED:
       case QUERY_SERVICE_MSG.UPDATE_SUCCESS:  return cmn.HTTP_CODE.SUCCESS;
       case QUERY_SERVICE_MSG.QUERY_NOT_FOUND: return cmn.HTTP_CODE.BAD_REQUEST;
       case QUERY_SERVICE_MSG.QUERY_COMPLETE:  return cmn.HTTP_CODE.GONE;

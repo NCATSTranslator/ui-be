@@ -1,5 +1,5 @@
 'use strict';
-export { UserSavedData, SAVE_TYPE };
+export { UserSavedData, UserQueryData, UserTagData, SAVE_TYPE };
 
 const SAVE_TYPE = Object.freeze({
   QUERY: 'query',
@@ -51,5 +51,21 @@ class UserSavedData {
     this.deleted = true;
     this.time_updated = new Date();
     return this;
+  }
+}
+
+class UserQueryData {
+  constructor(description) {
+    if (!description) throw new Error('description is required');
+    this.description = description;
+    this.bookmark_ids = [];
+    this.tag_ids = [];
+  }
+}
+
+class UserTagData {
+  constructor(label) {
+    if (!label) throw new Error('label is required');
+    this.label = label;
   }
 }
