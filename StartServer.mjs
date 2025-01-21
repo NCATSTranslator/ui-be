@@ -12,7 +12,7 @@ import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
 import { QueryService } from './services/QueryService.mjs';
-import { ClientxServiceAdapter } from './adapters/ClientxServiceAdapter.mjs';
+import { ARSCallbackxQueryServiceAdapter } from './adapters/ARSCallbackxQueryServiceAdapter.mjs';
 
 import { SessionStorePostgres } from './stores/SessionStorePostgres.mjs';
 import { UserStorePostgres } from './stores/UserStorePostgres.mjs';
@@ -91,7 +91,7 @@ const QUERY_SERVICE = (function (config) {
     ssl: config.db_conn.ssl
   });
   return new QueryService(new QueryStorePostgres(dbPool),
-                          new ClientxServiceAdapter());
+                          new ARSCallbackxQueryServiceAdapter());
 })(SERVER_CONFIG);
 logger.info(SERVER_CONFIG, "Server configuration");
 

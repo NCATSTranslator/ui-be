@@ -47,7 +47,6 @@ export function startServer(config, services) {
   const userAPIController = new UserAPIController(config, userService, translatorService);
   const sessionController = new SessionController(config, authService);
   const API_PATH_V1 = '/api/v1';
-  const API_PATH_V2 = '/api/v2';
   const SITE_PATH_PREFIX = '';
   app.use(pinoHttp({logger: logger}));
   app.use(express.json({ limit: config.json_payload_limit }));
@@ -105,32 +104,32 @@ export function startServer(config, services) {
     sessionController.authenticateUnprivilegedRequest.bind(sessionController),
     queryAPIController.getQueryResult.bind(queryAPIController));
   // Query callback route: behind hmac
-  app.post(`${API_PATH_V2}/query/update`, queryAPIController.updateQuery.bind(queryAPIController));
+  app.post(`${API_PATH_V1}/query/update`, queryAPIController.updateQuery.bind(queryAPIController));
 
   // User routes: privileged
   app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
   app.get(`${API_PATH_V1}/users/me`, userAPIController.getUser.bind(userAPIController));
   app.get(`${API_PATH_V1}/users/me/preferences`, userAPIController.getUserPrefs.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/preferences`, userAPIController.updateUserPrefs.bind(userAPIController));
-  app.use(`${API_PATH_V2}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
+  app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
 
   // User queries
   // Creation of user queries is done on submission. See the /query endpoint
-  app.get(`${API_PATH_V2}/users/me/queries`, userAPIController.getUserQueries.bind(userAPIController));
-  app.post(`${API_PATH_V2}/users/me/queries/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete(`${API_PATH_V2}/users/me/queries/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/queries`, userAPIController.getUserQueries.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
+  app.delete(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
 
   // User bookmarks
-  app.get(`${API_PATH_V2}/users/me/bookmarks`, userAPIController.getUserBookmarks.bind(userAPIController));
-  app.post(`${API_PATH_V2}/users/me/bookmarks`, userAPIController.updateUserSaves.bind(userAPIController));
-  app.post(`${API_PATH_V2}/users/me/bookmarks/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete(`${API_PATH_V2}/users/me/bookmarks/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/bookmarks`, userAPIController.getUserBookmarks.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/bookmarks`, userAPIController.updateUserSaves.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/bookmarks/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
+  app.delete(`${API_PATH_V1}/users/me/bookmarks/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
 
   // User tags
-  app.get(`${API_PATH_V2}/users/me/tags`, userAPIController.getUserTags.bind(userAPIController));
-  app.post(`${API_PATH_V2}/users/me/tags`, userAPIController.updateUserSaves.bind(userAPIController));
-  app.post(`${API_PATH_V2}/users/me/tags/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete(`${API_PATH_V2}/users/me/tags/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/tags`, userAPIController.getUserTags.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/tags`, userAPIController.updateUserSaves.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/tags/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
+  app.delete(`${API_PATH_V1}/users/me/tags/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
 
   // User saves
   app.get(`${API_PATH_V1}/users/me/saves`, userAPIController.getUserSaves.bind(userAPIController));

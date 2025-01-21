@@ -1,8 +1,8 @@
-export { ClientxServiceAdapter };
+export { ARSCallbackxQueryServiceAdapter };
 import { logger } from '../lib/logger.mjs';
 import * as cmn from '../lib/common.mjs';
 
-class ClientxServiceAdapter {
+class ARSCallbackxQueryServiceAdapter {
   processQueryUpdate(queryUpdate) {
     const eventType = cmn.jsonGet(queryUpdate, 'event_type');
     const update = {
@@ -34,7 +34,6 @@ class ClientxServiceAdapter {
     return update;
   }
 }
-
 
 const _UPDATE_EVENT = Object.freeze({
   MV_AVAILABLE: 'merged_version_available',
