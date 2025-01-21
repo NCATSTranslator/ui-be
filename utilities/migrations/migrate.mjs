@@ -91,6 +91,24 @@ async function update_migrations_table(applied_migrations) {
 
 }
 
+async function execMigrationMethod(migrationObj, methodName, args=null) {
+    let retval = {
+        success: false,
+        err_data: null
+    }
+
+    let method = migrationObj[methodName];
+    if (!method || typeof method !== 'function') {
+        throw new Error(`Could not find method ${methodName} on provided object`);
+    }
+
+    try {
+        retval.success = await method.apply(migrationObj, args);
+    } catch (err) {
+        retval = { success: false, err_data: err};
+    }
+    return retval;
+}
 
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
 migration_logger.debug(CONFIG);
@@ -132,16 +150,43 @@ for (let migration of target) {
         migration_logger.error({error_str: err.toString(), error_obj: err}, `Error instantiating class for ${cur_migration_class}`);
         throw err;
     }
+
+    let res = await execMigrationMethod(cur_migration, 'execute');
+    if (res.success) {
+        migration_logger.info(`Total fucking success for ${cur_migration_id}`);
+        // try the verification. if verification succeeds keep going.
+        // if fails, try undo. Report on undo status, then abort
+    } else {
+        migration_logger.error({err_data: res}, `Total fucking disaster for ${cur_migration_id}: ${res.err_data.toString()}`);
+    }
+    if (!res.success) console.log(`aiiieeeee`);
+    if (!res.success) console.log(res.err_data.toString());
+    /**
     // Run the migration
-    let execute_result = false;
+    let execute_success = false;
+    let execute_exception_data = null;
     migration_logger.info(`executing ${cur_migration_id}`);
     try {
-        execute_result = await cur_migration.execute();
-        console.log(`ok result: ${execute_result}`);
+        execute_success = await cur_migration.execute();
         // throw new Error('silly error');
     } catch (err) {
-        migration_logger.error({error_str: err.toString(), error_obj: err}, `Error running execute() for ${cur_migration_id}`);
-        throw err;
+        migration_logger.error({error_str: err.toString(), error_obj: err}, `Error running execute() for ${cur_migration_class}`);                  execute_exception_data = err;
+        execute_success = false;
+        execute_exception_data = err;
+    }
+
+    if (!execute_success) {
+        let remediate_info = { success: false, err_data: null};
+        try {
+            remediate_info.success = await cur_migration.undo();
+        } catch (err) {
+            migration_logger.error({error_str: err.toString(), error_obj: err}, `Error running undo() for ${cur_migration_class}`);
+            remediate_info = { success: false, err_data: err};
+        }
+
+    } else {
+        // run verification
+
     }
 
 
@@ -150,7 +195,7 @@ for (let migration of target) {
     // If the verification fails, try the undo procedure, then abort
 
     // If verification succeeds, record the success
-
+    * **/
 
 
 }
