@@ -41,9 +41,9 @@ class Migration_${epoch} extends BaseMigration {
   constructor(dbPool) {
       super(dbPool);
       this.sql = [
-        'put',
-        'statements',
-        'here'
+        //'put',
+        //'statements',
+        //'here'
       ];
   }
 
