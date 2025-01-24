@@ -1,11 +1,9 @@
 'use strict';
-
-import * as wutil from '../lib/webutils.mjs';
-import { UserSavedData } from '../models/UserSavedData.mjs';
-
-import { UserWorkspace } from '../models/UserWorkspace.mjs';
-
 export { UserAPIController };
+import * as wutil from '../lib/webutils.mjs';
+import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
+import { UserWorkspace } from '../models/UserWorkspace.mjs';
+import { HTTP_CODE } from '../lib/common.mjs';
 
 class UserAPIController {
   constructor(config, userService, translatorService) {
@@ -60,6 +58,33 @@ class UserAPIController {
     }
   }
 
+  // Queries
+  async getUserQueries(req, res, next) {
+    req = wutil.injectQueryParams(req, {type: SAVE_TYPE.QUERY});
+    if (req.query.type !== SAVE_TYPE.QUERY) {
+      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
+    }
+    return this.getUserSaves(req, res, next);
+  }
+
+  // Bookmarks
+  async getUserBookmarks(req, res, next) {
+    req = wutil.injectQueryParams(req, {type: SAVE_TYPE.BOOKMARK});
+    if (req.query.type !== SAVE_TYPE.BOOKMARK) {
+      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
+    }
+    return this.getUserSaves(req, res, next);
+  }
+
+  // Tags
+  async getUserTags(req, res, next) {
+    req = wutil.injectQueryParams(req, {type: SAVE_TYPE.TAG});
+    if (req.query.type !== SAVE_TYPE.TAG) {
+      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
+    }
+    return this.getUserSaves(req, res, next);
+  }
+
   // Saves
   async getUserSaves(req, res, next) {
     let user_id = req.sessionData.user.id;
@@ -82,7 +107,7 @@ class UserAPIController {
     try {
       let data = {...req.body};
       // TODO: generalize saving object behavior when we start saving more types
-      if (data.save_type === 'bookmark') {
+      if (data.save_type === SAVE_TYPE.BOOKMARK) {
         const pk = data.ars_pkey
         if (!pk) {
           const error = 'No PK in save for result';
@@ -270,5 +295,4 @@ class UserAPIController {
       return wutil.sendInternalServerError(res);
     }
   }
-
 }

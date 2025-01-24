@@ -7,11 +7,12 @@ import { loadBiolink } from './lib/biolink-model.mjs';
 import { loadChebi } from './lib/chebi.mjs';
 import { loadTrapi } from './lib/trapi.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
-import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
+import { QueryService } from './services/QueryService.mjs';
+import { ARSCallbackxQueryServiceAdapter } from './adapters/ARSCallbackxQueryServiceAdapter.mjs';
 
 import { SessionStorePostgres } from './stores/SessionStorePostgres.mjs';
 import { UserStorePostgres } from './stores/UserStorePostgres.mjs';
@@ -19,6 +20,7 @@ import { pg } from './lib/postgres_preamble.mjs';
 import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgres.mjs';
 import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
 import { UserWorkspaceStorePostgres } from './stores/UserWorkspaceStorePostgres.mjs';
+import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
 
 
 // Load the config asap as basically everything depends on it
@@ -43,13 +45,16 @@ await loadChebi();
 // All these bootstraps feel kludgy.
 const TRANSLATOR_SERVICE = (function (config) {
   const queryClient = new ARSClient(
+    config.ars_endpoint.client_id,
+    config.secrets.hmac.key,
     `${config.ars_endpoint.protocol}://${config.ars_endpoint.host}`,
     config.ars_endpoint.pull_uri,
     config.ars_endpoint.post_uri,
     config.ars_endpoint.retain_uri,
+    config.ars_endpoint.subscribe_uri,
+    config.ars_endpoint.unsubscribe_uri,
     config.ars_endpoint.use_ars_merging);
-  const outputAdapter = new TranslatorServicexFEAdapter();
-  return new TranslatorService(queryClient, outputAdapter);
+  return new TranslatorService(queryClient);
 })(SERVER_CONFIG);
 
 // Bootstrap the auth service
@@ -83,10 +88,20 @@ const USER_SERVICE = (function (config) {
   );
 })(SERVER_CONFIG);
 
+const QUERY_SERVICE = (function (config) {
+  const dbPool = new pg.Pool({
+    ...config.storage.pg,
+    password: config.secrets.pg.password,
+    ssl: config.db_conn.ssl
+  });
+  return new QueryService(new QueryStorePostgres(dbPool),
+                          new ARSCallbackxQueryServiceAdapter());
+})(SERVER_CONFIG);
 logger.info(SERVER_CONFIG, "Server configuration");
 
 httpserver.startServer(SERVER_CONFIG, {
   translatorService: TRANSLATOR_SERVICE,
   authService: AUTH_SERVICE,
-  userService: USER_SERVICE
+  userService: USER_SERVICE,
+  queryService: QUERY_SERVICE
 });
