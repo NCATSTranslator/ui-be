@@ -49,6 +49,7 @@ class TranslatorService
       }
     } catch (err)
     {
+      logger.error(`An error occured while attempting to post a query: ${err}`);
       throw new QueryClientError(`Error posting query`, null, 'query', err);
     }
   }
@@ -87,6 +88,24 @@ class TranslatorService
     {
       logger.error(`Error retrieving results for ${queryId}: '${err}'`);
       throw new QueryClientError(`Error retrieving results for ${queryId}`, queryId, 'result', err);
+    }
+  }
+
+  async subscribeQuery(queryId) {
+    try {
+      const res = await this.queryClient.subscribeQuery(queryId);
+    } catch (err) {
+      logger.error(`Error subscribing to query ${queryId}: '${err}'`);
+      throw new QueryClientError(`Error subscribing to query ${queryId}`, queryId, 'subscribe', err);
+    }
+  }
+
+  async unsubscribeQuery(queryId) {
+    try {
+      const res = await this.queryClient.unsubscribeQuery(queryId);
+    } catch (err) {
+      logger.error(`Error unsubscribing to query ${queryId}: '${err}'`);
+      throw new QueryClientError(`Error unsubscribing to query ${queryId}`, queryId, 'unsubscribe', err);
     }
   }
 }
