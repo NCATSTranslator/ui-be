@@ -18,12 +18,12 @@ function cleanupKnowledgeLevel(rawKL) {
 }
 
 const filePath = process.argv[2];
+const patchPath = process.argv[3];
 const inforesCatalog = await cmn.readJson(filePath);
 const inforesEntries = inforesCatalog.information_resources;
 const inforesMini = {};
 inforesEntries.forEach((inforesEntry) => {
-  if (inforesEntry.id)
-  {
+  if (inforesEntry.id) {
     inforesMini[inforesEntry.id] = {
       name: inforesEntry.name || inforesEntry.id,
       wiki: (inforesEntry.xref && inforesEntry.xref.length > 0) ? inforesEntry.xref[0] : null,
@@ -31,5 +31,18 @@ inforesEntries.forEach((inforesEntry) => {
     };
   }
 });
+
+if (patchPath) {
+  const patchFile = await cmn.readJson(patchPath);
+  for (const entryPatch of patchFile) {
+    const entry = inforesMini[entryPatch.id];
+    if (entry) {
+      for (const key in entryPatch) {
+        if (key === 'id') continue;
+        entry[key] = entryPatch[key];
+      }
+    }
+  }
+}
 
 console.log(JSON.stringify(inforesMini));
