@@ -337,5 +337,6 @@
        "id": "PUBCHEM.COMPOUND:2162"
      }
   ],
-  "include_pathfinder": true
+  "include_pathfinder": true,
+  "include_summarization": true
 }

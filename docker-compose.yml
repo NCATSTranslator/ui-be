@@ -3,11 +3,14 @@ services:
   app:
     image: translator-app:latest
     environment:
-      APP_ENVIRONMENT: test
+      APP_ENVIRONMENT: production
+      NEW_RELIC_LICENSE_KEY: foo
+      NEW_RELIC_APP_NAME: translator-ui
     ports:
       - "8386:8386"
     depends_on:
       - pgdb
+    command: ["configurations/production.json", "configurations/local-overrides.json"]
   pgdb:
     image: postgres:15.5
     environment:

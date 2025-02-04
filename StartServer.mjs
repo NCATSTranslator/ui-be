@@ -1,9 +1,11 @@
 'use strict'
+import { logger } from './lib/logger.mjs';
 
 import { bootstrapConfig } from './lib/config.mjs';
 
 import { loadBiolink } from './lib/biolink-model.mjs';
 import { loadChebi } from './lib/chebi.mjs';
+import { loadTrapi } from './lib/trapi.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
@@ -33,10 +35,8 @@ const SERVER_CONFIG = await (async function() {
   return bootstrapConfig(basefile, overrides);
 })();
 
-await loadBiolink(SERVER_CONFIG.biolink.version,
-                  SERVER_CONFIG.biolink.support_deprecated_predicates,
-                  SERVER_CONFIG.biolink.infores_catalog,
-                  SERVER_CONFIG.biolink.prefix_catalog);
+await loadBiolink(SERVER_CONFIG.biolink);
+await loadTrapi(SERVER_CONFIG.trapi);
 await loadChebi();
 
 // Bootstrap the translator service.
@@ -83,9 +83,7 @@ const USER_SERVICE = (function (config) {
   );
 })(SERVER_CONFIG);
 
-let log_config = { ...SERVER_CONFIG};
-log_config.secrets = '[REDACTED]'
-console.log(log_config);
+logger.info(SERVER_CONFIG, "Server configuration");
 
 httpserver.startServer(SERVER_CONFIG, {
   translatorService: TRANSLATOR_SERVICE,

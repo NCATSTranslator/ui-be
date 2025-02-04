@@ -20,15 +20,14 @@ import * as tsmy from './lib/summarization.mjs';
 import { loadBiolink } from '../lib/biolink-model.mjs';
 import { loadChebi } from '../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../adapters/TranslatorServicexFEAdapter.mjs';
+import { loadTrapi } from '../lib/trapi.mjs';
 
 // We have to do this because the 'before' hook does not seem to work
 async function loadConfig() {
-  const config = await cfg.bootstrapConfig('test/data/regression/config.json')
-  await loadBiolink(config.biolink.version,
-                    config.biolink.support_deprecated_predicates,
-                    config.biolink.infores_catalog,
-                    config.biolink.prefix_catalog);
+  const config = await cfg.bootstrapConfig('./configurations/production.json')
+  await loadBiolink(config.biolink);
   await loadChebi();
+  loadTrapi(config.trapi);
 }
 
 async function regressionTest(testFile) {

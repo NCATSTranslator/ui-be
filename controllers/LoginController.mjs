@@ -93,13 +93,13 @@ class LoginController {
     // Second, kill the session internally
     let session = await this.authService.retrieveSessionByToken(cookieToken);
     if (!session) {
-      console.error(`%% %% %% no session found for ${cookieToken} when logging out`);
+      req.log.error(`%% %% %% no session found for ${cookieToken} when logging out`);
     }
     session = await this.authService.expireSessionByToken(cookieToken);
     if (!session) {
-      console.error(`%% %% %% error expiring session for ${cookieToken} when logging out`);
+      req.log.error(`%% %% %% error expiring session for ${cookieToken} when logging out`);
     }
-    console.log(`Logout successful, redirecting to /`);
+    req.log.info(`Logout successful, redirecting to /`);
     return res.redirect(302, `/`);
   }
 }
