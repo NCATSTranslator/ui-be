@@ -3,15 +3,10 @@
 import * as cmn from '../../lib/common.mjs';
 
 function cleanupKnowledgeLevel(rawKL) {
-  if (rawKL === 'curated') {
+  if (rawKL === 'knowledge_assertion') {
     return 'trusted';
-  } else if (rawKL === 'correlation' ||
-             rawKL === 'predicted' ||
-             rawKL === 'prediction' ||
-             rawKL === 'observation') {
+  } else if (rawKL === 'prediction' || rawKL === 'statistical_association') {
     return 'inferred';
-  } else if (rawKL === 'text_mined') {
-    return 'ml';
   } else {
     return 'unknown';
   }
