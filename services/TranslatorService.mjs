@@ -22,34 +22,28 @@ class QueryClientError extends Error {
   }
 }
 
-class TranslatorService
-{
-  constructor(queryClient, outputAdapter)
-  {
+class TranslatorService {
+  constructor(queryClient, geneClusterClient, uiClientAdapter, geneClusterClientAdapter) {
     this.queryClient = queryClient;
-    this.outputAdapter = outputAdapter;
+    this.geneClusterClient = geneClusterClient;
+    this.uiClientAdapter = uiClientAdapter;
+    this.geneClusterClientAdapter = geneClusterClientAdapter;
   }
 
-  inputToQuery(input)
-  {
+  inputToQuery(input) {
     return trapi.clientReqToTrapiQuery(input);
   }
 
-  async submitQuery(query)
-  {
-    try
-    {
-      let [meta, res] = await this.queryClient.postQuery(query);
-      if (arsmsg.isAcceptedQuery(res))
-      {
+  async submitQuery(query) {
+    try {
+      const [meta, res] = await this.queryClient.postQuery(query);
+      if (arsmsg.isAcceptedQuery(res)) {
         return res;
       }
-      else
-      {
+      else {
         throw new QueryClientError(`Upstream service rejected query with response: ${JSON.stringify(res)}`, null, 'query', null);
       }
-    } catch (err)
-    {
+    } catch (err) {
       throw new QueryClientError(`Error posting query`, null, 'query', err);
     }
   }
@@ -64,30 +58,32 @@ class TranslatorService
     }
   }
 
-  async getQueryStatus(queryId, filters={})
-  {
-    try
-    {
-      let res = await this.queryClient.getQueryStatus(queryId, filters);
+  async getQueryStatus(queryId, filters={}) {
+    try {
+      const res = await this.queryClient.getQueryStatus(queryId, filters);
       return res;
-    }
-    catch (err)
-    {
+    } catch (err) {
       throw new QueryClientError(`Error querying status for ${queryId}`, queryId, 'status', err);
     }
   }
 
-  async getResults(queryId, filters={})
-  {
-    try
-    {
-      let res = await this.queryClient.getQueryResults(queryId, filters);
+  async getResults(queryId, filters={}) {
+    try {
+      const res = await this.queryClient.getQueryResults(queryId, filters);
       return res;
-    }
-    catch (err)
-    {
+    } catch (err) {
       logger.error(`Error retrieving results for ${queryId}: '${err}'`);
       throw new QueryClientError(`Error retrieving results for ${queryId}`, queryId, 'result', err);
+    }
+  }
+
+  async getGeneClusters(genes) {
+    try {
+      const geneClusters = await this.geneClusterClient.getGeneClusters(genes);
+      return geneClusters;
+    } catch (err) {
+      logger.error(`Error retrieving gene clusters: '${err}'`);
+      throw new Error('Error retrieving gene clusters', 'clusters', err);
     }
   }
 }

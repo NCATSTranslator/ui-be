@@ -45,7 +45,7 @@ class TranslatorServicexFEAdapter {
     }).map(e => {
       return {
         agent: e.agent,
-        message: e.data
+        trapi: e.data
       }
     });
 

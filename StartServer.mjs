@@ -8,7 +8,9 @@ import { loadChebi } from './lib/chebi.mjs';
 import { loadTrapi } from './lib/trapi.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
+import { TranslatorServicexGeneClusterAdapter } from './adapters/TranslatorServicexGeneClusterAdapter.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
+import { GeneClusterClient } from './lib/GeneClusterClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
 import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
@@ -48,8 +50,10 @@ const TRANSLATOR_SERVICE = (function (config) {
     config.ars_endpoint.post_uri,
     config.ars_endpoint.retain_uri,
     config.ars_endpoint.use_ars_merging);
-  const outputAdapter = new TranslatorServicexFEAdapter();
-  return new TranslatorService(queryClient, outputAdapter);
+  const geneClusterClient = new GeneClusterClient(config.gene_cluster_endpoint);
+  const uiClientAdapter = new TranslatorServicexFEAdapter();
+  const geneClusterClientAdapter = new TranslatorServicexGeneClusterAdapter();
+  return new TranslatorService(queryClient, geneClusterClient, uiClientAdapter, geneClusterClientAdapter);
 })(SERVER_CONFIG);
 
 // Bootstrap the auth service

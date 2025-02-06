@@ -15,6 +15,7 @@
     "protocol": "https",
     "use_ars_merging": true
   },
+  "gene_cluster_endpoint": "https://translator.broadinstitute.org/genetics_provider/bayes_gene/query",
   "annotation_endpoint": {
     "host": "biothings.ci.transltr.io",
     "fields": [

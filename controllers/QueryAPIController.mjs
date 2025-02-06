@@ -34,7 +34,7 @@ class QueryAPIController {
       let query = this.translatorService.inputToQuery(req.body);
       let resp = await this.translatorService.submitQuery(query);
       req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: resp}, 'Query submission and response');
-      return res.status(200).json(this.translatorService.outputAdapter.querySubmitToFE(resp));
+      return res.status(200).json(this.translatorService.uiClientAdapter.querySubmitToFE(resp));
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
@@ -49,7 +49,7 @@ class QueryAPIController {
       let uuid = req.params.qid;
       let statusRes = await this.translatorService.getQueryStatus(uuid, this.filters);
       logger.debug({ltype: 'query-status from service', statusRes: statusRes});
-      let retval = this.translatorService.outputAdapter.queryStatusToFE(statusRes)
+      let retval = this.translatorService.uiClientAdapter.queryStatusToFE(statusRes)
       logger.debug({ltype: 'query-status after adapter', value: retval});
       return res.status(200).json(retval);
     } catch (err) {
@@ -63,15 +63,18 @@ class QueryAPIController {
       return wutil.sendError(res, 400, 'Malformed Request');
     }
     try {
-      let uuid = req.params.qid;
-      let svcRes = await this.translatorService.getResults(uuid, this.filters);
-      let retval = await this.translatorService.outputAdapter.queryResultsToFE(
-        svcRes, this.config.max_hops, this.config.ara_to_infores_map);
-      return res.status(200).json(retval);
+      const uuid = req.params.qid;
+      const results = await this.translatorService.getResults(uuid, this.filters);
+      const genes = this.translatorService.geneClusterClientAdapter.getGenes(results);
+      const geneClusterPromise = this.translatorService.getGeneClusters(genes);
+      const summary = await this.translatorService.uiClientAdapter.queryResultsToFE(
+        results, this.config.max_hops, this.config.ara_to_infores_map);
+      const geneClusters = await geneClusterPromise;
+      // TODO: Enrich summary with gene clusters
+      return res.status(200).json(summary);
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
     }
   }
-
 }
