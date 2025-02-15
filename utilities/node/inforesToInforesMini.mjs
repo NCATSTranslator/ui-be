@@ -20,6 +20,7 @@ const inforesMini = {};
 inforesEntries.forEach((inforesEntry) => {
   if (inforesEntry.id) {
     inforesMini[inforesEntry.id] = {
+      id: inforesEntry.id,
       name: inforesEntry.name || inforesEntry.id,
       wiki: (inforesEntry.xref && inforesEntry.xref.length > 0) ? inforesEntry.xref[0] : null,
       knowledge_level: cleanupKnowledgeLevel(inforesEntry['knowledge_level'])
