@@ -3,7 +3,7 @@
 import { readdir } from 'node:fs/promises';
 import path from 'path';
 import { bootstrapConfig } from '../../lib/config.mjs';
-import { pg } from '../../lib/postgres_preamble.mjs';
+import { pg, pgExec } from '../../lib/postgres_preamble.mjs';
 import { logger } from '../../lib/logger.mjs';
 import { v4 as uuidv4 } from 'uuid';
 import meow from 'meow';
@@ -71,11 +71,11 @@ migration_logger.info({flags: cli.flags});
 
 async function getMigrationFiles(dir, first_timestamp=0, last_timestamp=Infinity, suffix='.mjs') {
     let match_rx = new RegExp(`^(\\d+)\\..*${suffix}\$`); // Note doubled \\
-    migration_logger.info(match_rx);
+    migration_logger.trace(match_rx);
     let all_files = await readdir(dir);
-    migration_logger.debug(all_files);
+    migration_logger.trace(all_files);
     let migration_files = all_files.filter(e => e.match(match_rx));
-    migration_logger.debug(migration_files);
+    migration_logger.trace(migration_files);
     let target_files = migration_files.filter((e) => {
         let file_timestamp = parseInt(e.match(match_rx)[1], 10);
         return file_timestamp >= first_timestamp && file_timestamp <= last_timestamp;
@@ -88,17 +88,47 @@ async function getMigrationFiles(dir, first_timestamp=0, last_timestamp=Infinity
     });
 }
 
-async function instantiateMigration(dir, file) {
+async function instantiateMigration(file) {
     migration_logger.debug(`importing ${file}`);
     const imp = await import('./' + file);
     const cur_migration_class = Object.values(imp)[0];
-    migration_logger.debug({class: cur_migration_class});
     return {
         migration: new cur_migration_class(dbPool),
         migration_id: cur_migration_class.identifier
     }
 }
 
+async function biggy(targetFiles, dbPool, oneBigTx=true) {
+    if (oneBigTx) {
+        migration_logger.info('beginning big tx');
+        await pgExec(dbPool, 'BEGIN');
+    }
+    try {
+        for (const f of targetFiles) {
+            let {migration, migration_id} = await instantiateMigration(f);
+            migration_logger.info(migration_id);
+            if (!oneBigTx) {
+                await pgExec(dbPool, 'BEGIN');
+            }
+            let res = await migration.execute();
+            migration_logger.info(res);
+            if (!oneBigTx) {
+                await pgExec(dbPool, 'COMMIT');
+            }
+        }
+    } catch (err) {
+        migration_logger.error("We got problems. Executing rollback");
+        let rb = await pgExec(dbPool, 'ROLLBACK');
+        console.log(rb);
+        throw err;
+    }
+    if (oneBigTx) {
+        await pgExec(dbPool, 'COMMIT');
+        migration_logger.info("Completed big tx");
+    }
+    migration_logger.info("yeah complete");
+
+}
 
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
 migration_logger.trace(CONFIG);
@@ -108,22 +138,21 @@ let dbconfs = {
     password: CONFIG.secrets.pg.password,
     ssl: CONFIG.db_conn.ssl
   };
-migration_logger.debug(dbconfs);
+migration_logger.trace(dbconfs);
 const dbPool = new pg.Pool(dbconfs);
 
 
-migration_logger.debug(dbPool);
+migration_logger.trace(dbPool);
 
 let target = await getMigrationFiles(MIGRATIONS_DIR,
     cli.flags.first ?? 0, cli.flags.last ?? Infinity,
     '.mjs');
-migration_logger.info({target_migrations: target});
-let m0 = target[0];
-migration_logger.info(m0);
-let mc = await instantiateMigration(MIGRATIONS_DIR, m0);
-console.log(mc);
-migration_logger.info(mc);
+await biggy(target, dbPool, cli.flags.oneBigTx);
 throw 42;
+
+
+
+
 async function update_migrations_table(applied_migrations) {
 
 }
