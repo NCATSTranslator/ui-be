@@ -10,6 +10,7 @@ import meow from 'meow';
 
 export { getMigrationFiles };
 
+const MIGRATIONS_DIR = 'utilities/migrations';
 const run_id = uuidv4();
 const migration_logger = logger.child({run_id: run_id});
 migration_logger.level = 'debug';
@@ -87,6 +88,42 @@ async function getMigrationFiles(dir, first_timestamp=0, last_timestamp=Infinity
     });
 }
 
+async function instantiateMigration(dir, file) {
+    migration_logger.debug(`importing ${file}`);
+    const imp = await import('./' + file);
+    const cur_migration_class = Object.values(imp)[0];
+    migration_logger.debug({class: cur_migration_class});
+    return {
+        migration: new cur_migration_class(dbPool),
+        migration_id: cur_migration_class.identifier
+    }
+}
+
+
+const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
+migration_logger.trace(CONFIG);
+
+let dbconfs = {
+    ...CONFIG.storage.pg,
+    password: CONFIG.secrets.pg.password,
+    ssl: CONFIG.db_conn.ssl
+  };
+migration_logger.debug(dbconfs);
+const dbPool = new pg.Pool(dbconfs);
+
+
+migration_logger.debug(dbPool);
+
+let target = await getMigrationFiles(MIGRATIONS_DIR,
+    cli.flags.first ?? 0, cli.flags.last ?? Infinity,
+    '.mjs');
+migration_logger.info({target_migrations: target});
+let m0 = target[0];
+migration_logger.info(m0);
+let mc = await instantiateMigration(MIGRATIONS_DIR, m0);
+console.log(mc);
+migration_logger.info(mc);
+throw 42;
 async function update_migrations_table(applied_migrations) {
 
 }
@@ -110,24 +147,35 @@ async function execMigrationMethod(migrationObj, methodName, args=null) {
     return retval;
 }
 
-const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
-migration_logger.debug(CONFIG);
+function main() {
+    if (ONE_BIG_TX) {
+        // start transaction
+    }
+    for (f in migration_files) {
+        try {        
+            m = instantiate_migration(m);
+            if (!ONE_BIG_TX) {
+                // begin trans
+            }
+            m.exec();
+            if (!m.verify()) {
+                throw ERROR;
+            }
+            RECORD();            
+            if (!ONE_BIG_TX) {
+                // commit transaction
+            }
 
-let dbconfs = {
-    ...CONFIG.storage.pg,
-    password: CONFIG.secrets.pg.password,
-    ssl: CONFIG.db_conn.ssl
-  };
-migration_logger.debug(dbconfs);
-const dbPool = new pg.Pool(dbconfs);
+        } catch (err) {
+            // ROLLBACK TRANS
+            // ATTEMPT TO RECORD ?? 
+        }
+    }
+    if (ONE_BIG_TX) {
+        // commit transaction
+    }
+}
 
-
-migration_logger.debug(dbPool);
-
-let target = await getMigrationFiles('utilities/migrations',
-    cli.flags.first ?? 0, cli.flags.last ?? Infinity,
-    '.mjs');
-migration_logger.info({target_migrations: target});
 
 for (let migration of target) {
     let imp;
