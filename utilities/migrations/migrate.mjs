@@ -100,20 +100,28 @@ async function instantiateMigration(file) {
 
 async function biggy(targetFiles, dbPool, oneBigTx=true) {
     if (oneBigTx) {
-        migration_logger.info('beginning big tx');
         await pgExec(dbPool, 'BEGIN');
+        migration_logger.info('Beginning big tx');
     }
     try {
         for (const f of targetFiles) {
             let {migration, migration_id} = await instantiateMigration(f);
-            migration_logger.info(migration_id);
+            migration_logger.info(`Executing ${migration_id}`);
             if (!oneBigTx) {
-                await pgExec(dbPool, 'BEGIN');
+                await pgExec(dbPool, 'BEGIN')
+                migration_logger.info(`Beginning single Tx for ${migration_id}`);
             }
             let res = await migration.execute();
-            migration_logger.info(res);
+            if (!res) {
+                throw new Error(`Migration ${migration_id} execute() returned false. Aborting`);
+            }
+            res = await migration.verify();
+            if (!res) {
+                throw new Error(`Migration ${migration_id} verification failed. Aborting.`)
+            }
             if (!oneBigTx) {
                 await pgExec(dbPool, 'COMMIT');
+                migration_logger.info(`Committed single Tx for ${migration_id}`);
             }
         }
     } catch (err) {
@@ -181,7 +189,7 @@ function main() {
         // start transaction
     }
     for (f in migration_files) {
-        try {        
+        try {
             m = instantiate_migration(m);
             if (!ONE_BIG_TX) {
                 // begin trans
@@ -190,14 +198,14 @@ function main() {
             if (!m.verify()) {
                 throw ERROR;
             }
-            RECORD();            
+            RECORD();
             if (!ONE_BIG_TX) {
                 // commit transaction
             }
 
         } catch (err) {
             // ROLLBACK TRANS
-            // ATTEMPT TO RECORD ?? 
+            // ATTEMPT TO RECORD ??
         }
     }
     if (ONE_BIG_TX) {

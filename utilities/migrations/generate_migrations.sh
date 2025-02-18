@@ -53,17 +53,10 @@ class Migration_${epoch} extends BaseMigration {
       return true;
   }
 
-  async undo(obj=null) {
-      return true;
-  }
-
   successMessage(obj=null) {
       return \`Ran successfully\`;
   }
 
-  failureMessage(obj=null) {
-      return \`Failed to run successfully\`;
-  }
 }
 EOF
 
