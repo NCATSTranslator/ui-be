@@ -46,7 +46,7 @@ class MigrationStorePostgres {
                 n_rows: 0
             };
         }
-        const n_rows = await pgExec(this.pool, `select count(*) n_rows from migrations;`);
+        const n_rows = await pgExec(this.pool, `select count(*) as n_rows from migrations;`);
         return {
             exists: true,
             n_rows: n_rows.rows[0].n_rows

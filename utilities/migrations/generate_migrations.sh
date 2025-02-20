@@ -9,12 +9,9 @@ fi
 # Replace spaces in the first argument with underscores
 arg1=$(echo "$1" | sed 's/ /_/g')
 
-# Use the provided epoch timestamp or generate the current one
-if [ -z "$2" ]; then
-    epoch=$(date +%s)
-else
-    epoch=$2
-fi
+# Generate the timestamp with milliseconds 
+epoch=$(date +%s%3N)
+
 
 # Define the file name
 filename="${epoch}.${arg1}.mjs"
