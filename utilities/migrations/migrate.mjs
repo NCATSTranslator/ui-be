@@ -16,7 +16,7 @@ const MIGRATION_FILES_RX = new RegExp(`^(\\d+)\\..*\\.mjs\$`); // Note doubled \
 const MIGRATIONS_DIR = 'utilities/migrations';
 const RUN_ID = uuidv4();
 const migration_logger = logger.child({run_id: RUN_ID});
-migration_logger.level = 'debug';
+migration_logger.level = 'info';
 
 const program_name = path.basename(process.argv[1]);
 const cli = meow(`
@@ -63,14 +63,20 @@ const cli = meow(`
                 type: 'number',
                 isRequired: false,
                 default: Infinity // does not seem to work
+            },
+            logLevel: {
+                type: 'string',
+                choices: ['trace', 'debug', 'info'],
+                default: 'info',
+                isRequired: false
             }
+
         }
     }
 );
 
 migration_logger.info({flags: cli.flags});
-
-
+migration_logger.level = cli.flags.logLevel;
 
 async function getMigrationFiles(dir, firstTimestamp=0, lastTimestamp=Infinity) {
     migration_logger.trace(MIGRATION_FILES_RX);
