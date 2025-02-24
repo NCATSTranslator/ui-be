@@ -10,20 +10,17 @@ class MigrationStorePostgres {
       this.pool = pool ? pool : new pg.Pool(config);
     }
 
-
     async saveMigrationRecord(migration) {
         const res = await pgExec(this.pool, `
-            INSERT INTO migrations (migration_id, time_begun, time_complete, message, run_id)
+            INSERT INTO migrations (migration_id, time_begun, time_complete, run_id, message)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *;
-        `, [migration.migration_id, migration.time_begun, migration.time_complete, migration.message,
-            migration.run_id]);
+        `, [migration.migration_id, migration.time_begun, migration.time_complete, migration.run_id, migration.message]);
         return res.rows.length > 0 ? new Migration(res.rows[0]) : null;
     }
 
     async getMostRecentMigration() {
         const res = await pgExec(this.pool, `SELECT * FROM migrations ORDER BY migration_id DESC LIMIT 1;`);
-        console.log(res);
         return res.rows.length > 0 ? new Migration(res.rows[0]) : null;
     }
 
@@ -40,13 +37,12 @@ class MigrationStorePostgres {
          */
         const exists = await pgExec(this.pool, `SELECT to_regclass('migrations') IS NOT NULL as exists;`);
         if (!exists || !exists.rows[0].exists) {
-            console.log('wha');
             return {
                 exists: false,
                 n_rows: 0
             };
         }
-        const n_rows = await pgExec(this.pool, `select count(*) as n_rows from migrations;`);
+        const n_rows = await pgExec(this.pool, `select count(id) as n_rows from migrations;`);
         return {
             exists: true,
             n_rows: n_rows.rows[0].n_rows
