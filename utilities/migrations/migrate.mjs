@@ -127,6 +127,7 @@ async function biggy(targetFiles, dbPool, migrationStore, oneBigTx=true) {
     try {
         for (const f of targetFiles) {
             let {migration, migration_id} = await instantiateMigration(f);
+            // This check may be superfluous but you can't be too careful, right?
             let alreadyRun = await migrationAlreadyRun(migrationStore, migration_id);
             if (alreadyRun) {
                 throw new Error(`Migration already run: ${migration_id}`);
@@ -161,7 +162,7 @@ async function biggy(targetFiles, dbPool, migrationStore, oneBigTx=true) {
             }
         }
     } catch (err) {
-        migration_logger.error("We got problems. Executing rollback");
+        migration_logger.error(err, "We got problems. Executing rollback");
         let rb = await pgExec(dbPool, 'ROLLBACK');
         console.log(rb);
         throw err;
@@ -170,8 +171,6 @@ async function biggy(targetFiles, dbPool, migrationStore, oneBigTx=true) {
         await pgExec(dbPool, 'COMMIT');
         migration_logger.info("Completed big tx");
     }
-    migration_logger.info("Completed run");
-
 }
 
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
@@ -210,13 +209,12 @@ if (migration_table_status.n_rows > 0) {
         target_files = await getMigrationFiles(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
     } else {
         // If an explicit first file was provided, then two checks are necessary:
-        //
-        //  First, it must not predate the most recent run:
+        //  First, it must not predate the most recent run.
         if (file_first <= latest_db_migration_id) {
             throw new Error(`The proposed starting point (${file_first}) is not later than `
                 + `the most recent run recorded in the DB (${latest_db_migration_id}). Aborting.`);
         }
-        // Second, it must not skip ahead past any migrations that exist as files, unless this is explicitly requested
+        // Second, it must not skip ahead past any migrations that exist as files, unless this is explicitly requested.
         let db_relative_migrations = await getMigrationFiles(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
         target_files = await getMigrationFiles(MIGRATIONS_DIR, file_first, file_last);
         if (db_relative_migrations[0] !== target_files[0] && !cli.flags.forceDangerousThings) {
