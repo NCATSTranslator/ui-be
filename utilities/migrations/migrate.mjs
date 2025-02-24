@@ -109,43 +109,6 @@ async function retrieveLatestMigrationRecord(migrationStore) {
     return retval;
  }
 
- async function runSanityChecks(migrationStore, first_file_timestamp, arg_first_timestamp,
-    force_dangerous_things) {
-    // If the migrations table doesn't exist, bail.
-    let migration_table_status = await migrationStore.getMigrationTableStatus();
-    migration_logger.debug(migration_table_status);
-    if (!migration_table_status || !migration_table_status.exists) {
-        throw new Error(`Migrations table does not exist in DB. Aborting.`);
-    }
-
-    if (migration_table_status.n_rows > 0) {
-        /* First, confirm that the first migration slated to run is strictly after the last
-         * successful run recorded in the DB */
-        let db_most_recent = await migrationStore.getMostRecentMigration();
-        if (!db_most_recent) {
-            throw new Error('Failed to retrieve latest migration record. Aborting.');
-        }
-        console.log(db_most_recent);
-        db_most_recent = db_most_recent.migration_id;
-        //console.log(`first_file: ${first_file_timestamp}; db most recent: ${db_most_recent}`);
-        if (first_file_timestamp <= db_most_recent) {
-            throw new Error(`The proposed starting point (${first_file_timestamp}) is earlier than `
-                + `the most recent run recorded in the DB (${db_most_recent}). Aborting.`);
-        }
-
-        /* Next, more complicatedly, confirm that the first migration slated to run is in fact the immediate
-         * next one after the last successful run. Don't skip migrations unless explicitly told to. */
-        let sanity_check_files = getMigrationFiles(MIGRATIONS_DIR, db_most_recent);
-        if (sanity_check_files[0] !== first_file && !force_dangerous_things) {
-            throw new Error(`The specified starting point ${arg_first_timestamp} skips some migrations, `
-                + `starting with ${sanity_check_files[0]}. Recheck your args. If you really mean to do this, `
-                + `rerun with --force-dangerous-things.`);
-        }
-    // If the migrations table is empty, don't accept a default starting arg.
-    } else if (arg_first_timestamp === 0) {
-        throw new Error(`Migrations table is empty. In this case, you must specify an explicit migration to start at. Aborting.`);
-    }
- }
 
  async function migrationAlreadyRun(migrationStore, migrationId) {
      const res = await migrationStore.getMigrationByMigrationId(migrationId);
@@ -216,6 +179,9 @@ migration_logger.trace(CONFIG);
 let file_first = cli.flags.first;
 let file_last = cli.flags.last;
 
+if (file_first > file_last) {
+    throw new Error(`Specified range doesn't make sense (first > last). Recheck your args. Aborting.`);
+}
 
 const dbPool = new pg.Pool({
     ...CONFIG.storage.pg,
@@ -247,7 +213,7 @@ if (migration_table_status.n_rows > 0) {
         //
         //  First, it must not predate the most recent run:
         if (file_first <= latest_db_migration_id) {
-            throw new Error(`The proposed starting point (${file_first}) is earlier than `
+            throw new Error(`The proposed starting point (${file_first}) is not later than `
                 + `the most recent run recorded in the DB (${latest_db_migration_id}). Aborting.`);
         }
         // Second, it must not skip ahead past any migrations that exist as files, unless this is explicitly requested
@@ -270,23 +236,11 @@ if (migration_table_status.n_rows > 0) {
 if (target_files.length === 0) {
     throw new Error(`No migration files found that match input params. Aborting.`);
 }
+// If we got this far, we're ready to run migrations.
 
-console.log(target_files);
+migration_logger.info(`Sanity checks passed. Proceeding with running ${target_files.length} migration(s).`);
+migration_logger.debug(target_files);
 
-throw 99;
-
-
-let first_file_timestamp = parseInt(target_files[0].match(MIGRATION_FILES_RX)[1], 10);
-migration_logger.debug(first_file_timestamp);
-await runSanityChecks(migrationStore, first_file_timestamp, cli.flags.first, cli.flags.last,
-    cli.flags.forceDangerousThings);
-migration_logger.info('Sanity checks passed.');
 await biggy(target_files, dbPool, migrationStore, cli.flags.oneBigTx);
 migration_logger.info('Completed migration run.');
 dbPool.end();
-
-
-
-
-
-
