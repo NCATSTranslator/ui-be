@@ -164,7 +164,6 @@ async function biggy(targetFiles, dbPool, migrationStore, oneBigTx=true) {
     } catch (err) {
         migration_logger.error(err, "We got problems. Executing rollback");
         let rb = await pgExec(dbPool, 'ROLLBACK');
-        console.log(rb);
         throw err;
     }
     if (oneBigTx) {
