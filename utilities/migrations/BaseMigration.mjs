@@ -12,19 +12,18 @@ class BaseMigration {
 
     async execute(obj=null) {
         for (let stmt of this.sql) {
-            console.log(`stmt mata: ${stmt}`);
             let res = await pgExec(this.dbPool, stmt);
-            console.log(`res`);
-            console.log(res.rows);
         };
         return true;
     }
 
     async verify(obj=null) {
+        // Do not implement--derived classes should override
         throw new Error('Not implemented');
     }
 
     successMessage(obj=null) {
+        // Do not implement--derived classes should override
         throw new Error('Not implemented');
     }
 }
