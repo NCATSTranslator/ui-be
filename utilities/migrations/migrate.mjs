@@ -100,14 +100,20 @@ async function instantiateMigration(file) {
     }
 }
 
+// assume the table exists
 async function retrieveLatestMigrationRecord(migrationStore) {
-    return
+    let retval = await migrationStore.getMostRecentMigration();
+    if (!retval) {
+        throw new Error('Failed to retrieve latest migration record. Aborting.');
+    }
+    return retval;
  }
 
- async function runSanityChecks(migrationStore, first_file, arg_first_timestamp, force_dangerous_things) {
-
+ async function runSanityChecks(migrationStore, first_file_timestamp, arg_first_timestamp,
+    force_dangerous_things) {
     // If the migrations table doesn't exist, bail.
     let migration_table_status = await migrationStore.getMigrationTableStatus();
+    migration_logger.debug(migration_table_status);
     if (!migration_table_status || !migration_table_status.exists) {
         throw new Error(`Migrations table does not exist in DB. Aborting.`);
     }
@@ -115,23 +121,24 @@ async function retrieveLatestMigrationRecord(migrationStore) {
     if (migration_table_status.n_rows > 0) {
         /* First, confirm that the first migration slated to run is strictly after the last
          * successful run recorded in the DB */
-        let first_file_timestamp = parseInt(first_file.match(MIGRATION_FILES_RX)[1], 10);
         let db_most_recent = await migrationStore.getMostRecentMigration();
         if (!db_most_recent) {
             throw new Error('Failed to retrieve latest migration record. Aborting.');
         }
+        console.log(db_most_recent);
         db_most_recent = db_most_recent.migration_id;
+        //console.log(`first_file: ${first_file_timestamp}; db most recent: ${db_most_recent}`);
         if (first_file_timestamp <= db_most_recent) {
             throw new Error(`The proposed starting point (${first_file_timestamp}) is earlier than `
                 + `the most recent run recorded in the DB (${db_most_recent}). Aborting.`);
         }
 
         /* Next, more complicatedly, confirm that the first migration slated to run is in fact the immediate
-         * next one after the last successful run. Don't skip migrations unless explicitly forced to. */
+         * next one after the last successful run. Don't skip migrations unless explicitly told to. */
         let sanity_check_files = getMigrationFiles(MIGRATIONS_DIR, db_most_recent);
         if (sanity_check_files[0] !== first_file && !force_dangerous_things) {
             throw new Error(`The specified starting point ${arg_first_timestamp} skips some migrations, `
-                + `starting with ${sanity_check_files[0]}. If you really want to do this, `
+                + `starting with ${sanity_check_files[0]}. Recheck your args. If you really mean to do this, `
                 + `rerun with --force-dangerous-things.`);
         }
     // If the migrations table is empty, don't accept a default starting arg.
@@ -177,8 +184,8 @@ async function biggy(targetFiles, dbPool, migrationStore, oneBigTx=true) {
                 throw new Error(`Migration ${migration_id} verification failed. Aborting.`)
             }
             end = new Date();
-            migration_record = new Migration(null, migration_id, start, end,
-                migration.successMessage(), RUN_ID);
+            migration_record = new Migration({id: null, migration_id: migration_id, time_begun: start, time_complete: end,
+                run_id: RUN_ID, message: migration.successMessage()});
             res = await migrationStore.saveMigrationRecord(migration_record);
             if (!res) {
                 throw new Error(`Could not save migration record for ${migration_id}: `
@@ -204,13 +211,11 @@ async function biggy(targetFiles, dbPool, migrationStore, oneBigTx=true) {
 
 }
 
-
-async function recordAppliedMigration(migration_id, success) {
-
-}
-
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
 migration_logger.trace(CONFIG);
+let file_first = cli.flags.first;
+let file_last = cli.flags.last;
+
 
 const dbPool = new pg.Pool({
     ...CONFIG.storage.pg,
@@ -218,18 +223,66 @@ const dbPool = new pg.Pool({
     ssl: CONFIG.db_conn.ssl
   });
 migration_logger.trace(dbPool);
-
 const migrationStore = new MigrationStorePostgres(dbPool);
 
-let target = await getMigrationFiles(MIGRATIONS_DIR,
-    cli.flags.first ?? 0, cli.flags.last ?? Infinity,
-    '.mjs');
+let target_files = [];
+
+// Cue a ton of sanity checks
+let migration_table_status = await migrationStore.getMigrationTableStatus();
+if (!migration_table_status || !migration_table_status.exists) {
+    throw new Error(`Migrations table does not exist in DB. Aborting.`);
+}
+if (migration_table_status.n_rows > 0) {
+    let latest_migration = await retrieveLatestMigrationRecord(migrationStore);
+    if (!latest_migration) {
+        throw new Error('Error retrieving latest migration. Aborting.');
+    }
+    let latest_db_migration_id = latest_migration.migration_id;
+
+    if (file_first === 0) {
+        // If no explicit start arg was given to the program, then by definition this means use the DB value as the starting point
+        target_files = await getMigrationFiles(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
+    } else {
+        // If an explicit first file was provided, then two checks are necessary:
+        //
+        //  First, it must not predate the most recent run:
+        if (file_first <= latest_db_migration_id) {
+            throw new Error(`The proposed starting point (${file_first}) is earlier than `
+                + `the most recent run recorded in the DB (${latest_db_migration_id}). Aborting.`);
+        }
+        // Second, it must not skip ahead past any migrations that exist as files, unless this is explicitly requested
+        let db_relative_migrations = await getMigrationFiles(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
+        target_files = await getMigrationFiles(MIGRATIONS_DIR, file_first, file_last);
+        if (db_relative_migrations[0] !== target_files[0] && !cli.flags.forceDangerousThings) {
+            throw new Error(`The specified starting point ${target_files[0]} skips some migrations, `
+                + `starting with ${db_relative_migrations[0]}. Recheck your args. If you really mean to do this, `
+                + `rerun with --force-dangerous-things.`);
+        }
+    }
+} else {
+    // If the migration table contains no rows, then insist on an explicit starting point (not the default)
+    if (file_first === 0) {
+        throw new Error(`Migrations table is empty. In this case, you must specify an explicit migration to start at. Aborting.`);
+    } else {
+        target_files = await getMigrationFiles(MIGRATIONS_DIR, file_first, file_last);
+    }
+}
+if (target_files.length === 0) {
+    throw new Error(`No migration files found that match input params. Aborting.`);
+}
+
+console.log(target_files);
+
+throw 99;
 
 
-console.log(foo);
-throw 42;
-await biggy(target, dbPool, migrationStore, cli.flags.oneBigTx);
-
+let first_file_timestamp = parseInt(target_files[0].match(MIGRATION_FILES_RX)[1], 10);
+migration_logger.debug(first_file_timestamp);
+await runSanityChecks(migrationStore, first_file_timestamp, cli.flags.first, cli.flags.last,
+    cli.flags.forceDangerousThings);
+migration_logger.info('Sanity checks passed.');
+await biggy(target_files, dbPool, migrationStore, cli.flags.oneBigTx);
+migration_logger.info('Completed migration run.');
 dbPool.end();
 
 
