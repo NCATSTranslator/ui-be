@@ -9,9 +9,12 @@ fi
 # Replace spaces in the first argument with underscores
 arg1=$(echo "$1" | sed 's/ /_/g')
 
-# Generate the timestamp with milliseconds 
+# Generate the timestamp with milliseconds
 epoch=$(date +%s%3N)
-
+if [[ "$epoch" == *N ]]; then
+    echo "Please rerun in a modern shell that supports the additional millisecond-level in the date command. Exiting."
+    exit 1
+fi
 
 # Define the file name
 filename="${epoch}.${arg1}.mjs"
