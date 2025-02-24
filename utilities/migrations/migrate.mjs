@@ -26,10 +26,11 @@ const cli = meow(`
     Options:
       --config-file, -c: required
       --local-overrides, -l: optional
-      --one-big-tx, -b: boolean
+      --one-big-tx: boolean
       --force-dangerous-things: true
       --first: number, optional
       --last: number, optional
+      --log-level: string, optional
     `, {
         importMeta: import.meta,
         allowUnknownFlags: false,
@@ -121,7 +122,7 @@ async function retrieveLatestMigrationRecord(migrationStore) {
      return res ? true : false;
  }
 
-async function biggy(targetFiles, dbPool, migrationStore, oneBigTx=true) {
+async function runMigrations(targetFiles, dbPool, migrationStore, oneBigTx=true) {
     let start;
     let end;
     let migration_record;
@@ -136,14 +137,14 @@ async function biggy(targetFiles, dbPool, migrationStore, oneBigTx=true) {
             // This check may be superfluous but you can't be too careful, right?
             let alreadyRun = await migrationAlreadyRun(migrationStore, migration_id);
             if (alreadyRun) {
-                throw new Error(`Migration already run: ${migration_id}`);
+                throw new Error(`Migration already run: ${migration_id}. Aborting.`);
             }
 
             migration_logger.info(`Executing ${migration_id}`);
             start = new Date();
             if (!oneBigTx) {
                 await pgExec(dbPool, 'BEGIN')
-                migration_logger.info(`Beginning transactions for ${migration_id}`);
+                migration_logger.info(`Beginning transaction for ${migration_id}`);
             }
             let res = await migration.execute();
             if (!res) {
@@ -168,7 +169,7 @@ async function biggy(targetFiles, dbPool, migrationStore, oneBigTx=true) {
             }
         }
     } catch (err) {
-        migration_logger.error(err, "We got problems. Executing rollback");
+        migration_logger.error(err, "Unexpected exception. Rolling back.");
         let rb = await pgExec(dbPool, 'ROLLBACK');
         throw err;
     }
@@ -229,7 +230,7 @@ if (migration_table_status.n_rows > 0) {
         }
     }
 } else {
-    // If the migration table contains no rows, then insist on an explicit starting point (not the default)
+    // If the migration table contains no rows, then insist on an explicit starting point instead of the default arg
     if (file_first === 0) {
         throw new Error(`Migrations table is empty. In this case, you must specify an explicit migration to start at. Aborting.`);
     } else {
@@ -239,11 +240,11 @@ if (migration_table_status.n_rows > 0) {
 if (target_files.length === 0) {
     throw new Error(`No migration files found that match input params. Aborting.`);
 }
-// If we got this far, we're ready to run migrations.
 
+// If we got this far, we're ready to run migrations!
 migration_logger.info(`Sanity checks passed. Proceeding with running ${target_files.length} migration(s).`);
 migration_logger.debug(target_files);
 
-await biggy(target_files, dbPool, migrationStore, cli.flags.oneBigTx);
+await runMigrations(target_files, dbPool, migrationStore, cli.flags.oneBigTx);
 migration_logger.info('Completed migration run.');
 dbPool.end();
