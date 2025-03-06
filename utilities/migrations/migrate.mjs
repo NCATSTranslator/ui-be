@@ -14,6 +14,7 @@ export { getMigrationFiles };
 
 const MIGRATION_FILES_RX = new RegExp(`^(\\d+)\\..*\\.mjs\$`); // Note doubled \\
 const MIGRATIONS_DIR = 'utilities/migrations';
+const DEFAULT_FIRST_MIGRATION_TIMESTAMP = 0;
 const RUN_ID = uuidv4();
 const migration_logger = logger.child({run_id: RUN_ID});
 migration_logger.level = 'info';
@@ -66,7 +67,7 @@ const cli = meow(`
             first: {
                 type: 'number',
                 isRequired: false,
-                default: 0
+                default: DEFAULT_FIRST_MIGRATION_TIMESTAMP
             },
             // Timestamp of the final migration to run (inclusive)
             last: {
@@ -92,7 +93,7 @@ migration_logger.level = cli.flags.logLevel;
 /* Given cli args for the timestamps for range of migrations to run, return a
  * sorted (by timestamp, ascending) list of actual files
  */
-async function getMigrationFiles(dir, firstTimestamp=0, lastTimestamp=Infinity) {
+async function getMigrationFiles(dir, firstTimestamp=DEFAULT_FIRST_MIGRATION_TIMESTAMP, lastTimestamp=Infinity) {
     migration_logger.trace(MIGRATION_FILES_RX);
     let all_files = await readdir(dir);
     migration_logger.trace(all_files);
@@ -230,7 +231,7 @@ if (migration_table_status.n_rows > 0) {
     }
     let latest_db_migration_id = latest_migration.migration_id;
 
-    if (file_first === 0) {
+    if (file_first === DEFAULT_FIRST_MIGRATION_TIMESTAMP) {
         // If no explicit start arg was given to the program, then by definition this means use the DB value as the starting point
         target_files = await getMigrationFiles(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
     } else {
@@ -251,7 +252,7 @@ if (migration_table_status.n_rows > 0) {
     }
 } else {
     // If the migration table contains no rows, then insist on an explicit starting point instead of the default arg
-    if (file_first === 0) {
+    if (file_first === DEFAULT_FIRST_MIGRATION_TIMESTAMP) {
         throw new Error(`Migrations table is empty. In this case, you must specify an explicit migration to start at. Aborting.`);
     } else {
         target_files = await getMigrationFiles(MIGRATIONS_DIR, file_first, file_last);
