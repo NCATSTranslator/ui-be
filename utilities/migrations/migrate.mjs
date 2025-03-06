@@ -18,6 +18,7 @@ const RUN_ID = uuidv4();
 const migration_logger = logger.child({run_id: RUN_ID});
 migration_logger.level = 'info';
 
+// Parse the command line args
 const program_name = path.basename(process.argv[1]);
 const cli = meow(`
     Usage:
@@ -35,36 +36,45 @@ const cli = meow(`
         importMeta: import.meta,
         allowUnknownFlags: false,
         flags: {
+            // Base configuration file
             configFile: {
                 type: 'string',
                 shortFlag: 'c',
                 isRequired: true
             },
+            // Local overrides config file (to run in local env)
             localOverrides: {
                 type: 'string',
                 shortFlag: 'l',
                 isRequired: false
             },
+            // Run all the migrations indicated by the args as one single transaction as opposed to individual
+            // per-migration transactions.
+            // Safer, and highly recommended (is the default).
             oneBigTx: {
                 type: 'boolean',
                 default: true,
                 isRequired: false
             },
+            // A general purpose flag used to override safety recommendations.
             forceDangerousThings: {
                 type: 'boolean',
                 default: false,
                 isRequired: false
             },
+            // Timestamp of the first migration to run (inclusive)
             first: {
                 type: 'number',
                 isRequired: false,
                 default: 0
             },
+            // Timestamp of the final migration to run (inclusive)
             last: {
                 type: 'number',
                 isRequired: false,
                 default: Infinity // does not seem to work
             },
+            // Logging level, should be 'info' in production
             logLevel: {
                 type: 'string',
                 choices: ['trace', 'debug', 'info'],
@@ -79,6 +89,9 @@ const cli = meow(`
 migration_logger.info({flags: cli.flags});
 migration_logger.level = cli.flags.logLevel;
 
+/* Given cli args for the timestamps for range of migrations to run, return a
+ * sorted (by timestamp, ascending) list of actual files
+ */
 async function getMigrationFiles(dir, firstTimestamp=0, lastTimestamp=Infinity) {
     migration_logger.trace(MIGRATION_FILES_RX);
     let all_files = await readdir(dir);
@@ -97,6 +110,7 @@ async function getMigrationFiles(dir, firstTimestamp=0, lastTimestamp=Infinity) 
     });
 }
 
+/* Load and instantiate the class defined in a migration file */
 async function instantiateMigration(file) {
     migration_logger.debug(`importing ${file}`);
     const imp = await import('./' + file);
@@ -107,7 +121,7 @@ async function instantiateMigration(file) {
     }
 }
 
-// assume the table exists
+/* Assuming the migrations DB table exists, retrieve the record for the most recently run migration */
 async function retrieveLatestMigrationRecord(migrationStore) {
     let retval = await migrationStore.getMostRecentMigration();
     if (!retval) {
@@ -116,12 +130,14 @@ async function retrieveLatestMigrationRecord(migrationStore) {
     return retval;
  }
 
-
+/* Given a migration id (timestamp), see if this migration has already been run, which is
+ * determined by seeing if the DB has a record for it */
  async function migrationAlreadyRun(migrationStore, migrationId) {
      const res = await migrationStore.getMigrationByMigrationId(migrationId);
      return res ? true : false;
  }
 
+/* The 'main' function that runs all the indicated migrations */
 async function runMigrations(targetFiles, dbPool, migrationStore, oneBigTx=true) {
     let start;
     let end;
@@ -179,6 +195,9 @@ async function runMigrations(targetFiles, dbPool, migrationStore, oneBigTx=true)
     }
 }
 
+// Begin executable code
+
+// Load config
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
 migration_logger.trace(CONFIG);
 let file_first = cli.flags.first;
@@ -188,6 +207,7 @@ if (file_first > file_last) {
     throw new Error(`Specified range doesn't make sense (first > last). Recheck your args. Aborting.`);
 }
 
+// Open DB connection
 const dbPool = new pg.Pool({
     ...CONFIG.storage.pg,
     password: CONFIG.secrets.pg.password,
