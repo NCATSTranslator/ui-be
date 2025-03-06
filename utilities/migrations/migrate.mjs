@@ -10,14 +10,12 @@ import { MigrationStorePostgres } from './MigrationStorePostgres.mjs';
 import { Migration } from './Migration.mjs';
 import meow from 'meow';
 
-export { getMigrationFiles };
-
 const MIGRATION_FILES_RX = new RegExp(`^(\\d+)\\..*\\.mjs\$`); // Note doubled \\
 const MIGRATIONS_DIR = 'utilities/migrations';
 const DEFAULT_FIRST_MIGRATION_TIMESTAMP = 0;
 const RUN_ID = uuidv4();
-const migration_logger = logger.child({run_id: RUN_ID});
-migration_logger.level = 'info';
+const MIGRATION_LOGGER = logger.child({run_id: RUN_ID});
+MIGRATION_LOGGER.level = 'info';
 
 // Parse the command line args
 const program_name = path.basename(process.argv[1]);
@@ -87,18 +85,18 @@ const cli = meow(`
     }
 );
 
-migration_logger.info({flags: cli.flags});
-migration_logger.level = cli.flags.logLevel;
+MIGRATION_LOGGER.info({flags: cli.flags});
+MIGRATION_LOGGER.level = cli.flags.logLevel;
 
 /* Given cli args for the timestamps for range of migrations to run, return a
  * sorted (by timestamp, ascending) list of actual files
  */
-async function getMigrationFiles(dir, firstTimestamp=DEFAULT_FIRST_MIGRATION_TIMESTAMP, lastTimestamp=Infinity) {
-    migration_logger.trace(MIGRATION_FILES_RX);
+async function get_migration_files(dir, firstTimestamp=DEFAULT_FIRST_MIGRATION_TIMESTAMP, lastTimestamp=Infinity) {
+    MIGRATION_LOGGER.trace(MIGRATION_FILES_RX);
     let all_files = await readdir(dir);
-    migration_logger.trace(all_files);
+    MIGRATION_LOGGER.trace(all_files);
     let migration_files = all_files.filter(e => e.match(MIGRATION_FILES_RX));
-    migration_logger.trace(migration_files);
+    MIGRATION_LOGGER.trace(migration_files);
     let target_files = migration_files.filter((e) => {
         let file_timestamp = parseInt(e.match(MIGRATION_FILES_RX)[1], 10);
         return file_timestamp >= firstTimestamp && file_timestamp <= lastTimestamp;
@@ -106,14 +104,14 @@ async function getMigrationFiles(dir, firstTimestamp=DEFAULT_FIRST_MIGRATION_TIM
     return target_files.sort((a, b) => {
         let a_timestamp = parseInt(a.match(MIGRATION_FILES_RX)[1], 10);
         let b_timestamp = parseInt(b.match(MIGRATION_FILES_RX)[1], 10);
-        migration_logger.trace(`timestamps: ${a_timestamp}, ${b_timestamp}`);
+        MIGRATION_LOGGER.trace(`timestamps: ${a_timestamp}, ${b_timestamp}`);
         return a_timestamp - b_timestamp;
     });
 }
 
 /* Load and instantiate the class defined in a migration file */
-async function instantiateMigration(file) {
-    migration_logger.debug(`importing ${file}`);
+async function instantiate_migration(file) {
+    MIGRATION_LOGGER.debug(`importing ${file}`);
     const imp = await import('./' + file);
     const cur_migration_class = Object.values(imp)[0];
     return {
@@ -123,7 +121,7 @@ async function instantiateMigration(file) {
 }
 
 /* Assuming the migrations DB table exists, retrieve the record for the most recently run migration */
-async function retrieveLatestMigrationRecord(migrationStore) {
+async function retrieve_latest_migration_record(migrationStore) {
     let retval = await migrationStore.getMostRecentMigration();
     if (!retval) {
         throw new Error('Failed to retrieve latest migration record. Aborting.');
@@ -133,35 +131,35 @@ async function retrieveLatestMigrationRecord(migrationStore) {
 
 /* Given a migration id (timestamp), see if this migration has already been run, which is
  * determined by seeing if the DB has a record for it */
- async function migrationAlreadyRun(migrationStore, migrationId) {
+ async function migration_already_run(migrationStore, migrationId) {
      const res = await migrationStore.getMigrationByMigrationId(migrationId);
      return res ? true : false;
  }
 
 /* The 'main' function that runs all the indicated migrations */
-async function runMigrations(targetFiles, dbPool, migrationStore, oneBigTx=true) {
+async function run_migrations(targetFiles, dbPool, migrationStore, oneBigTx=true) {
     let start;
     let end;
     let migration_record;
 
     if (oneBigTx) {
         await pgExec(dbPool, 'BEGIN');
-        migration_logger.info('Beginning big tx');
+        MIGRATION_LOGGER.info('Beginning big tx');
     }
     try {
         for (const f of targetFiles) {
-            let {migration, migration_id} = await instantiateMigration(f);
+            let {migration, migration_id} = await instantiate_migration(f);
             // This check may be superfluous but you can't be too careful, right?
-            let alreadyRun = await migrationAlreadyRun(migrationStore, migration_id);
+            let alreadyRun = await migration_already_run(migrationStore, migration_id);
             if (alreadyRun) {
                 throw new Error(`Migration already run: ${migration_id}. Aborting.`);
             }
 
-            migration_logger.info(`Executing ${migration_id}`);
+            MIGRATION_LOGGER.info(`Executing ${migration_id}`);
             start = new Date();
             if (!oneBigTx) {
                 await pgExec(dbPool, 'BEGIN')
-                migration_logger.info(`Beginning transaction for ${migration_id}`);
+                MIGRATION_LOGGER.info(`Beginning transaction for ${migration_id}`);
             }
             let res = await migration.execute();
             if (!res) {
@@ -182,17 +180,17 @@ async function runMigrations(targetFiles, dbPool, migrationStore, oneBigTx=true)
 
             if (!oneBigTx) {
                 await pgExec(dbPool, 'COMMIT');
-                migration_logger.info(`Committed transactions Tx for ${migration_id}`);
+                MIGRATION_LOGGER.info(`Committed transactions Tx for ${migration_id}`);
             }
         }
     } catch (err) {
-        migration_logger.error(err, "Unexpected exception. Rolling back.");
+        MIGRATION_LOGGER.error(err, "Unexpected exception. Rolling back.");
         let rb = await pgExec(dbPool, 'ROLLBACK');
         throw err;
     }
     if (oneBigTx) {
         await pgExec(dbPool, 'COMMIT');
-        migration_logger.info("Completed big tx");
+        MIGRATION_LOGGER.info("Completed big tx");
     }
 }
 
@@ -200,7 +198,7 @@ async function runMigrations(targetFiles, dbPool, migrationStore, oneBigTx=true)
 
 // Load config
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
-migration_logger.trace(CONFIG);
+MIGRATION_LOGGER.trace(CONFIG);
 let file_first = cli.flags.first;
 let file_last = cli.flags.last;
 
@@ -214,7 +212,7 @@ const dbPool = new pg.Pool({
     password: CONFIG.secrets.pg.password,
     ssl: CONFIG.db_conn.ssl
   });
-migration_logger.trace(dbPool);
+MIGRATION_LOGGER.trace(dbPool);
 const migrationStore = new MigrationStorePostgres(dbPool);
 
 let target_files = [];
@@ -225,7 +223,7 @@ if (!migration_table_status || !migration_table_status.exists) {
     throw new Error(`Migrations table does not exist in DB. Aborting.`);
 }
 if (migration_table_status.n_rows > 0) {
-    let latest_migration = await retrieveLatestMigrationRecord(migrationStore);
+    let latest_migration = await retrieve_latest_migration_record(migrationStore);
     if (!latest_migration) {
         throw new Error('Error retrieving latest migration. Aborting.');
     }
@@ -233,7 +231,7 @@ if (migration_table_status.n_rows > 0) {
 
     if (file_first === DEFAULT_FIRST_MIGRATION_TIMESTAMP) {
         // If no explicit start arg was given to the program, then by definition this means use the DB value as the starting point
-        target_files = await getMigrationFiles(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
+        target_files = await get_migration_files(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
     } else {
         // If an explicit first file was provided, then two checks are necessary:
         //  First, it must not predate the most recent run.
@@ -242,8 +240,8 @@ if (migration_table_status.n_rows > 0) {
                 + `the most recent run recorded in the DB (${latest_db_migration_id}). Aborting.`);
         }
         // Second, it must not skip ahead past any migrations that exist as files, unless this is explicitly requested.
-        let db_relative_migrations = await getMigrationFiles(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
-        target_files = await getMigrationFiles(MIGRATIONS_DIR, file_first, file_last);
+        let db_relative_migrations = await get_migration_files(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
+        target_files = await get_migration_files(MIGRATIONS_DIR, file_first, file_last);
         if (db_relative_migrations[0] !== target_files[0] && !cli.flags.forceDangerousThings) {
             throw new Error(`The specified starting point ${target_files[0]} skips some migrations, `
                 + `starting with ${db_relative_migrations[0]}. Recheck your args. If you really mean to do this, `
@@ -255,7 +253,7 @@ if (migration_table_status.n_rows > 0) {
     if (file_first === DEFAULT_FIRST_MIGRATION_TIMESTAMP) {
         throw new Error(`Migrations table is empty. In this case, you must specify an explicit migration to start at. Aborting.`);
     } else {
-        target_files = await getMigrationFiles(MIGRATIONS_DIR, file_first, file_last);
+        target_files = await get_migration_files(MIGRATIONS_DIR, file_first, file_last);
     }
 }
 if (target_files.length === 0) {
@@ -263,9 +261,9 @@ if (target_files.length === 0) {
 }
 
 // If we got this far, we're ready to run migrations!
-migration_logger.info(`Sanity checks passed. Proceeding with running ${target_files.length} migration(s).`);
-migration_logger.debug(target_files);
+MIGRATION_LOGGER.info(`Sanity checks passed. Proceeding with running ${target_files.length} migration(s).`);
+MIGRATION_LOGGER.debug(target_files);
 
-await runMigrations(target_files, dbPool, migrationStore, cli.flags.oneBigTx);
-migration_logger.info('Completed migration run.');
+await run_migrations(target_files, dbPool, migrationStore, cli.flags.oneBigTx);
+MIGRATION_LOGGER.info('Completed migration run.');
 dbPool.end();
