@@ -10,7 +10,7 @@ class MigrationStorePostgres {
       this.pool = pool ? pool : new pg.Pool(config);
     }
 
-    async saveMigrationRecord(migration) {
+    async save_migration_record(migration) {
         const res = await pgExec(this.pool, `
             INSERT INTO migrations (migration_id, time_begun, time_complete, run_id, message)
             VALUES ($1, $2, $3, $4, $5)
@@ -19,18 +19,18 @@ class MigrationStorePostgres {
         return res.rows.length > 0 ? new Migration(res.rows[0]) : null;
     }
 
-    async getMostRecentMigration() {
+    async get_most_recent_migration() {
         const res = await pgExec(this.pool, `SELECT * FROM migrations ORDER BY migration_id DESC LIMIT 1;`);
         return res.rows.length > 0 ? new Migration(res.rows[0]) : null;
     }
 
-    async getMigrationByMigrationId(migration_id) {
+    async get_migration_by_migration_id(migration_id) {
         const res = await pgExec(this.pool, `SELECT * FROM migrations where migration_id = $1;`,
             [migration_id]);
         return res.rows.length > 0 ? new Migration(res.rows[0]) : null;
     }
 
-    async getMigrationTableStatus() {
+    async get_migration_table_status() {
         /* This mysterious-seeming query is courtesy chatgpt: "to_regclass('public.migrations') returns
          * the table's OID (object identifier) if it exists or NULL if it doesn't. This is the most
          * efficient way to check table existence when you don’t need extra metadata."

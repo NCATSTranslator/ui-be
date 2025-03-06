@@ -122,7 +122,7 @@ async function instantiate_migration(file) {
 
 /* Assuming the migrations DB table exists, retrieve the record for the most recently run migration */
 async function retrieve_latest_migration_record(migration_store) {
-    const retval = await migration_store.getMostRecentMigration();
+    const retval = await migration_store.get_most_recent_migration();
     if (!retval) {
         throw new Error('Failed to retrieve latest migration record. Aborting.');
     }
@@ -132,7 +132,7 @@ async function retrieve_latest_migration_record(migration_store) {
 /* Given a migration id (timestamp), see if this migration has already been run, which is
  * determined by seeing if the DB has a record for it */
  async function migration_already_run(migration_store, migration_id) {
-     const res = await migration_store.getMigrationByMigrationId(migration_id);
+     const res = await migration_store.get_migration_by_migration_id(migration_id);
      return res ? true : false;
  }
 
@@ -172,7 +172,7 @@ async function run_migrations(target_files, db_pool, migration_store, one_big_tx
             end = new Date();
             migration_record = new Migration({id: null, migration_id: migration_id, time_begun: start, time_complete: end,
                 run_id: RUN_ID, message: migration.successMessage()});
-            res = await migration_store.saveMigrationRecord(migration_record);
+            res = await migration_store.save_migration_record(migration_record);
             if (!res) {
                 throw new Error(`Could not save migration record for ${migration_id}: `
                     + `${JSON.stringify(migration_record)}. Aborting`);
@@ -213,17 +213,17 @@ const DB_POOL = new pg.Pool({
     ssl: CONFIG.db_conn.ssl
   });
 MIGRATION_LOGGER.trace(DB_POOL);
-const migrationStore = new MigrationStorePostgres(DB_POOL);
+const MIGRATION_STORE = new MigrationStorePostgres(DB_POOL);
 
 let target_files = [];
 
 // Cue a ton of sanity checks
-const migration_table_status = await migrationStore.getMigrationTableStatus();
+const migration_table_status = await MIGRATION_STORE.get_migration_table_status();
 if (!migration_table_status || !migration_table_status.exists) {
     throw new Error(`Migrations table does not exist in DB. Aborting.`);
 }
 if (migration_table_status.n_rows > 0) {
-    const latest_migration = await retrieve_latest_migration_record(migrationStore);
+    const latest_migration = await retrieve_latest_migration_record(MIGRATION_STORE);
     if (!latest_migration) {
         throw new Error('Error retrieving latest migration. Aborting.');
     }
@@ -264,6 +264,6 @@ if (target_files.length === 0) {
 MIGRATION_LOGGER.info(`Sanity checks passed. Proceeding with running ${target_files.length} migration(s).`);
 MIGRATION_LOGGER.debug(target_files);
 
-await run_migrations(target_files, DB_POOL, migrationStore, cli.flags.oneBigTx);
+await run_migrations(target_files, DB_POOL, MIGRATION_STORE, cli.flags.oneBigTx);
 MIGRATION_LOGGER.info('Completed migration run.');
 DB_POOL.end();
