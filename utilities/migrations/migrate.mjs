@@ -93,17 +93,17 @@ MIGRATION_LOGGER.level = cli.flags.logLevel;
  */
 async function get_migration_files(dir, first_timestamp=DEFAULT_FIRST_MIGRATION_TIMESTAMP, last_timestamp=Infinity) {
     MIGRATION_LOGGER.trace(MIGRATION_FILES_RX);
-    let all_files = await readdir(dir);
+    const all_files = await readdir(dir);
     MIGRATION_LOGGER.trace(all_files);
-    let migration_files = all_files.filter(e => e.match(MIGRATION_FILES_RX));
+    const migration_files = all_files.filter(e => e.match(MIGRATION_FILES_RX));
     MIGRATION_LOGGER.trace(migration_files);
-    let target_files = migration_files.filter((e) => {
-        let file_timestamp = parseInt(e.match(MIGRATION_FILES_RX)[1], 10);
+    const target_files = migration_files.filter((e) => {
+        const file_timestamp = parseInt(e.match(MIGRATION_FILES_RX)[1], 10);
         return file_timestamp >= first_timestamp && file_timestamp <= last_timestamp;
     });
     return target_files.sort((a, b) => {
-        let a_timestamp = parseInt(a.match(MIGRATION_FILES_RX)[1], 10);
-        let b_timestamp = parseInt(b.match(MIGRATION_FILES_RX)[1], 10);
+        const a_timestamp = parseInt(a.match(MIGRATION_FILES_RX)[1], 10);
+        const b_timestamp = parseInt(b.match(MIGRATION_FILES_RX)[1], 10);
         MIGRATION_LOGGER.trace(`timestamps: ${a_timestamp}, ${b_timestamp}`);
         return a_timestamp - b_timestamp;
     });
@@ -122,7 +122,7 @@ async function instantiate_migration(file) {
 
 /* Assuming the migrations DB table exists, retrieve the record for the most recently run migration */
 async function retrieve_latest_migration_record(migration_store) {
-    let retval = await migration_store.getMostRecentMigration();
+    const retval = await migration_store.getMostRecentMigration();
     if (!retval) {
         throw new Error('Failed to retrieve latest migration record. Aborting.');
     }
@@ -148,9 +148,9 @@ async function run_migrations(target_files, db_pool, migration_store, one_big_tx
     }
     try {
         for (const f of target_files) {
-            let {migration, migration_id} = await instantiate_migration(f);
+            const {migration, migration_id} = await instantiate_migration(f);
             // This check may be superfluous but you can't be too careful, right?
-            let alreadyRun = await migration_already_run(migration_store, migration_id);
+            const alreadyRun = await migration_already_run(migration_store, migration_id);
             if (alreadyRun) {
                 throw new Error(`Migration already run: ${migration_id}. Aborting.`);
             }
@@ -185,7 +185,7 @@ async function run_migrations(target_files, db_pool, migration_store, one_big_tx
         }
     } catch (err) {
         MIGRATION_LOGGER.error(err, "Unexpected exception. Rolling back.");
-        let rb = await pgExec(db_pool, 'ROLLBACK');
+        const rb = await pgExec(db_pool, 'ROLLBACK');
         throw err;
     }
     if (one_big_tx) {
@@ -199,8 +199,8 @@ async function run_migrations(target_files, db_pool, migration_store, one_big_tx
 // Load config
 const CONFIG = await bootstrapConfig(cli.flags.configFile, cli.flags.localOverrides ?? null);
 MIGRATION_LOGGER.trace(CONFIG);
-let file_first = cli.flags.first;
-let file_last = cli.flags.last;
+const file_first = cli.flags.first;
+const file_last = cli.flags.last;
 
 if (file_first > file_last) {
     throw new Error(`Specified range doesn't make sense (first > last). Recheck your args. Aborting.`);
@@ -218,16 +218,16 @@ const migrationStore = new MigrationStorePostgres(DB_POOL);
 let target_files = [];
 
 // Cue a ton of sanity checks
-let migration_table_status = await migrationStore.getMigrationTableStatus();
+const migration_table_status = await migrationStore.getMigrationTableStatus();
 if (!migration_table_status || !migration_table_status.exists) {
     throw new Error(`Migrations table does not exist in DB. Aborting.`);
 }
 if (migration_table_status.n_rows > 0) {
-    let latest_migration = await retrieve_latest_migration_record(migrationStore);
+    const latest_migration = await retrieve_latest_migration_record(migrationStore);
     if (!latest_migration) {
         throw new Error('Error retrieving latest migration. Aborting.');
     }
-    let latest_db_migration_id = latest_migration.migration_id;
+    const latest_db_migration_id = latest_migration.migration_id;
 
     if (file_first === DEFAULT_FIRST_MIGRATION_TIMESTAMP) {
         // If no explicit start arg was given to the program, then by definition this means use the DB value as the starting point
@@ -240,7 +240,7 @@ if (migration_table_status.n_rows > 0) {
                 + `the most recent run recorded in the DB (${latest_db_migration_id}). Aborting.`);
         }
         // Second, it must not skip ahead past any migrations that exist as files, unless this is explicitly requested.
-        let db_relative_migrations = await get_migration_files(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
+        const db_relative_migrations = await get_migration_files(MIGRATIONS_DIR, latest_db_migration_id + 1, file_last);
         target_files = await get_migration_files(MIGRATIONS_DIR, file_first, file_last);
         if (db_relative_migrations[0] !== target_files[0] && !cli.flags.forceDangerousThings) {
             throw new Error(`The specified starting point ${target_files[0]} skips some migrations, `
