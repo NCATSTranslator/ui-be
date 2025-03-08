@@ -53,7 +53,7 @@ class Migration_${epoch} extends BaseMigration {
       return true;
   }
 
-  successMessage(obj=null) {
+  success_message(obj=null) {
       return \`Ran successfully\`;
   }
 

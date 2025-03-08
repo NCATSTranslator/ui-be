@@ -150,8 +150,8 @@ async function run_migrations(target_files, db_pool, migration_store, one_big_tx
         for (const f of target_files) {
             const {migration, migration_id} = await instantiate_migration(f);
             // This check may be superfluous but you can't be too careful, right?
-            const alreadyRun = await migration_already_run(migration_store, migration_id);
-            if (alreadyRun) {
+            const already_run = await migration_already_run(migration_store, migration_id);
+            if (already_run) {
                 throw new Error(`Migration already run: ${migration_id}. Aborting.`);
             }
 
@@ -171,7 +171,7 @@ async function run_migrations(target_files, db_pool, migration_store, one_big_tx
             }
             end = new Date();
             migration_record = new Migration({id: null, migration_id: migration_id, time_begun: start, time_complete: end,
-                run_id: RUN_ID, message: migration.successMessage()});
+                run_id: RUN_ID, message: migration.success_message()});
             res = await migration_store.save_migration_record(migration_record);
             if (!res) {
                 throw new Error(`Could not save migration record for ${migration_id}: `

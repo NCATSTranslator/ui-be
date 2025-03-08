@@ -22,7 +22,7 @@ class BaseMigration {
         throw new Error('Not implemented');
     }
 
-    successMessage(obj=null) {
+    success_message(obj=null) {
         // Do not implement--derived classes should override
         throw new Error('Not implemented');
     }
