@@ -1,13 +1,14 @@
 #!/bin/bash
 
-# Check if at least one argument is provided
-if [ -z "$1" ]; then
-    echo "Error: Argument 1 (string) is required."
+
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 \"exactly one arg that can be a string\""
     exit 1
 fi
+descr="$1"
 
 # Replace spaces in the first argument with underscores
-arg1=$(echo "$1" | sed 's/ /_/g')
+descr_filename=$(echo "$1" | sed 's/ /_/g')
 
 # Generate the timestamp with milliseconds
 epoch=$(date +%s%3N)
@@ -17,7 +18,7 @@ if [[ "$epoch" == *N ]]; then
 fi
 
 # Define the file name
-filename="${epoch}.${arg1}.mjs"
+filename="${epoch}.${descr_filename}.mjs"
 
 if ls "${epoch}."* 1> /dev/null 2>&1; then
     echo "Error: A file with the prefix '${epoch}.' already exists."
@@ -54,7 +55,7 @@ class Migration_${epoch} extends BaseMigration {
   }
 
   success_message(obj=null) {
-      return \`Ran successfully\`;
+      return \`${descr}\`;
   }
 
 }
