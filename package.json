@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "prod": "node StartServer.mjs configurations/production.json configurations/local-overrides.json",
+    "local": "node StartServer.mjs configurations/production.json configurations/local-overrides.json | npx pino-pretty",
     "test": "node StartServer.mjs configurations/test.json configurations/local-overrides.json",
     "ci": "node StartServer.mjs configurations/ci.json configurations/local-overrides.json",
     "dev": "node StartServer.mjs configurations/dev.json configurations/local-overrides.json",
