@@ -21,23 +21,23 @@ class UserSavedDataStorePostgres {
     return data.length > 0 ? data : null;
   }
 
-  async createUserSavedData(userSavedData) {
-    userSavedData.time_updated = new Date();
+  async createUserSavedData(userSavedDataModel) {
+    userSavedDataModel.time_updated = new Date();
     const res = await pgExec(this.pool, `
       INSERT INTO user_saved_data
         (user_id, save_type, label, notes, ars_pkey, object_ref,
         time_created, time_updated, data, deleted)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *
-    `, [userSavedData.user_id, userSavedData.save_type, userSavedData.label,
-        userSavedData.notes, userSavedData.ars_pkey, userSavedData.object_ref,
-        userSavedData.time_created, userSavedData.time_updated,
-        userSavedData.data, userSavedData.deleted]);
+    `, [userSavedDataModel.user_id, userSavedDataModel.save_type, userSavedDataModel.label,
+        userSavedDataModel.notes, userSavedDataModel.ars_pkey, userSavedDataModel.object_ref,
+        userSavedDataModel.time_created, userSavedDataModel.time_updated,
+        userSavedDataModel.data, userSavedDataModel.deleted]);
     return res.rows.length > 0 ? new UserSavedData(res.rows[0]) : null;
   }
 
-  async updateUserSavedData(userSavedData) {
-    userSavedData.time_updated = new Date();
+  async updateUserSavedData(userSavedDataModel) {
+    userSavedDataModel.time_updated = new Date();
     const res = await pgExec(this.pool, `
       UPDATE user_saved_data SET
         user_id = $1, save_type = $2, label = $3, notes = $4,
@@ -45,10 +45,10 @@ class UserSavedDataStorePostgres {
         time_updated = $8, data = $9, deleted = $10
       WHERE id = $11
       RETURNING *
-    `, [userSavedData.user_id, userSavedData.save_type, userSavedData.label,
-        userSavedData.notes, userSavedData.ars_pkey, userSavedData.object_ref,
-        userSavedData.time_created, userSavedData.time_updated,
-        userSavedData.data, userSavedData.deleted, userSavedData.id]);
+    `, [userSavedDataModel.user_id, userSavedDataModel.save_type, userSavedDataModel.label,
+        userSavedDataModel.notes, userSavedDataModel.ars_pkey, userSavedDataModel.object_ref,
+        userSavedDataModel.time_created, userSavedDataModel.time_updated,
+        userSavedDataModel.data, userSavedDataModel.deleted, userSavedDataModel.id]);
     return res.rows.length > 0 ? new UserSavedData(res.rows[0]) : null;
   }
 
@@ -69,25 +69,25 @@ class UserSavedDataStorePostgres {
     return data.length > 0 ? data : null;
   }
 
-  async updateUserSavedDataPartial(userSavedData, includeDeleted=false) {
+  async updateUserSavedDataPartial(userSavedDataModel, includeDeleted=false) {
     const withDel = includeDeleted ? '' : ' AND deleted = false ';
-    if (!userSavedData.id) {
+    if (!userSavedDataModel.id) {
       throw new Error("id must be provided for update");
     }
-    userSavedData.time_updated = new Date();
+    userSavedDataModel.time_updated = new Date();
     let sql = `UPDATE user_saved_data SET `;
     let updates = [];
     let values = [];
     let count = 1;
-    for (let field in userSavedData) {
-      if (userSavedData.hasOwnProperty(field) && field !== 'id') {
+    for (let field in userSavedDataModel) {
+      if (userSavedDataModel.hasOwnProperty(field) && field !== 'id') {
         updates.push(`${field} = $${count}`);
-        values.push(userSavedData[field]);
+        values.push(userSavedDataModel[field]);
         count++;
       }
     }
 
-    values.push(userSavedData.id);
+    values.push(userSavedDataModel.id);
     sql += updates.join(', ');
     sql += ` WHERE id = $${count} ${withDel} RETURNING *`;
     const res = await pgExec(this.pool, sql, values);
