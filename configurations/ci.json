@@ -13,8 +13,8 @@
     "post_uri": "/ars/api/submit",
     "pull_uri": "/ars/api/messages",
     "retain_uri": "/ars/api/retain",
-    "subscribe_uri": "/ars/api/subscribe",
-    "unsubscribe_uri": "/ars/api/unsubscribe",
+    "subscribe_uri": "/ars/api/query_event_subscribe",
+    "unsubscribe_uri": "/ars/api/query_event_unsubscribe",
     "protocol": "https",
     "use_ars_merging": true
   },
