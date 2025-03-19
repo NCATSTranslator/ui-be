@@ -113,7 +113,7 @@ class QueryAPIController {
       reqVerification.valid = false;
       reqVerification.errorCode = cmn.HTTP_CODE.BAD_REQUEST;
       reqVerification.errorMsg = 'Signature not provided';
-    } else if (!cmn.verifyHMACSignature(signature, JSON.stringify(req.body), this.apiKey)) {
+    } else if (!cmn.verifyHMACSignature(signature, req.rawBody, this.apiKey)) {
       reqVerification.valid = false;
       reqVerification.errorCode = cmn.HTTP_CODE.UNAUTHORIZED;
       reqVerification.errorMsg = 'Invalid signature provided';

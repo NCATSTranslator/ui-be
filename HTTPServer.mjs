@@ -49,7 +49,10 @@ export function startServer(config, services) {
   const API_PATH_V1 = '/api/v1';
   const SITE_PATH_PREFIX = '';
   app.use(pinoHttp({logger: logger}));
-  app.use(express.json({ limit: config.json_payload_limit }));
+  app.use(express.json({
+    limit: config.json_payload_limit,
+    verify: (req, res, buf, encoding) => {req.rawBody = buf;}
+  }));
   app.use(cookieParser());
 
   app.use(express.static('./build'));
