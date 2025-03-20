@@ -33,7 +33,7 @@ class QueryAPIController {
       if (!pk) throw new Error(`ARS query submission response has no PK: ${submitResp}`);
       const queryModel = await this.queryService.createQuery(pk, req.body);
       if (!queryModel) throw new Error(`Failed to create query with PK: ${pk}`);
-      const subscribeResp = await this.translatorService.subscribeQuery(pk, this.apiKey);
+      const subscribeResp = await this.translatorService.subscribeQuery(pk);
       const uid = req.sessionData.user.id;
       const userQueryModel = await this.userService.createUserQuery(uid, queryModel);
       if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
