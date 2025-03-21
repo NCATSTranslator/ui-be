@@ -24,6 +24,9 @@ class ARSCallbackxQueryServiceAdapter {
       case _UPDATE_EVENT.MV_BEGUN:
       case _UPDATE_EVENT.ARA_COMPLETE:
         break; // We can ignore these events for now
+      case _UPDATE_EVENT.ADMIN:
+        update.status = cmn.QUERY_STATUS.COMPLETE;
+        break;
       case _UPDATE_EVENT.ERROR:
         logger.error(`Received ARS callback error for query with PK ${update.pk}: ${queryUpdate.message}`);
         update.status = cmn.QUERY_STATUS.ERROR;
@@ -39,5 +42,6 @@ const _UPDATE_EVENT = Object.freeze({
   MV_AVAILABLE: 'merged_version_available',
   MV_BEGUN: 'merged_version_begun',
   ARA_COMPLETE: 'ara_response_complete',
+  ADMIN: 'admin',
   ERROR: 'ars_error'
 });
