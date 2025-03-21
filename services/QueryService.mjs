@@ -52,7 +52,9 @@ class QueryService {
     if (update.status === cmn.QUERY_STATUS.COMPLETE ||
         update.aras.length > storeQueryModel.metadata.aras.length) {
       // TODO: Optimize to only update the metadata if needed
-      storeQueryModel.setAras(update.aras);
+      if (!cmn.isArrayEmpty(update.aras)) {
+        storeQueryModel.setAras(update.aras);
+      }
       storeQueryModel.setStatus(update.status);
       storeQueryModel = await this._queryStore.updateQuery(storeQueryModel);
       if (storeQueryModel === null) throw new Error(`Failed to update database for PK: ${pk}`);
