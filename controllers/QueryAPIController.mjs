@@ -53,7 +53,13 @@ class QueryAPIController {
     try {
       const uuid = req.params.qid;
       const queryModel = await this.queryService.getQueryByPk(uuid);
-      const status = this.queryServicexFEAdapter.queryStatusToFE(queryModel);
+      let status = null;
+      if (queryModel) {
+        status = this.queryServicexFEAdapter.queryStatusToFE(queryModel);
+      } else {
+        const translatorResp = await this.translatorService.getQueryStatus(uuid, this.filters);
+        status = this.translatorServicexFEAdapter.queryStatusToFE(translatorResp);
+      }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(status);
     } catch (err) {
       wutil.logInternalServerError(req, err);
