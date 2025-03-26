@@ -13,7 +13,8 @@
     "pull_uri": "/ars/api/messages",
     "retain_uri": "/ars/api/retain",
     "protocol": "https",
-    "use_ars_merging": true
+    "use_ars_merging": true,
+    "use_pubsub": false
   },
   "annotation_endpoint": {
     "host": "biothings.test.transltr.io",
