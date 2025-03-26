@@ -12,7 +12,7 @@ class QueryServicexFEAdapter {
 
   queryStatusToFE(queryModel) {
     return {
-      status: queryModel.status,
+      status: queryModel.status === 'complete' ? 'success' : queryModel.status,
       data: {
         qid: queryModel.pk,
         aras: queryModel.metadata.aras,
