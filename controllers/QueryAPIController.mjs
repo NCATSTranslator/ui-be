@@ -17,54 +17,15 @@ class QueryAPIController {
     this.queryServicexFEAdapter = queryServicexFEAdapter;
     this.userService = userService;
     this.filters = filters;
-  }
-
-  async submitQuery(req, res, next) {
-    this._logQuerySubmissionRequest(req);
-    if (!this._isValidQuerySubmissionRequest(req)) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
+    if (this.config.ars_endpoint.use_pubsub) {
+      this.submitQuery = this._submitQueryViaPubSub;
+      this.getQueryStatus = this._getQueryStatusViaPubSub;
+    } else {
+      this.submitQuery = this._submitQueryViaPolling;
+      this.getQueryStatus = this._getQueryStatusViaPolling;
     }
-    try {
-      const trapiQuery = this.translatorService.inputToQuery(req.body);
-      req.log.info({query: trapiQuery});
-      const submitResp = await this.translatorService.submitQuery(trapiQuery);
-      req.log.info({arsqueryresp: submitResp});
-      const pk = trapi.getPk(submitResp);
-      if (!pk) throw new Error(`ARS query submission response has no PK: ${submitResp}`);
-      const queryModel = await this.queryService.createQuery(pk, req.body);
-      if (!queryModel) throw new Error(`Failed to create query with PK: ${pk}`);
-      const subscribeResp = await this.translatorService.subscribeQuery(pk);
-      const uid = req.sessionData.user.id;
-      const userQueryModel = await this.userService.createUserQuery(uid, queryModel);
-      if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
-      const isTransactionComplete = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
-      if (!isTransactionComplete) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
-      return res.status(200).json(this.queryServicexFEAdapter.querySubmitToFE(queryModel));
-    } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
-    }
-  }
-
-  async getQueryStatus(req, res, next) {
-    if (!this._isValidQueryResultRequest(req)) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed Request');
-    }
-    try {
-      const uuid = req.params.qid;
-      const queryModel = await this.queryService.getQueryByPk(uuid);
-      let status = null;
-      if (queryModel) {
-        status = this.queryServicexFEAdapter.queryStatusToFE(queryModel);
-      } else {
-        const translatorResp = await this.translatorService.getQueryStatus(uuid, this.filters);
-        status = this.translatorServicexFEAdapter.queryStatusToFE(translatorResp);
-      }
-      return res.status(cmn.HTTP_CODE.SUCCESS).json(status);
-    } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, err);
-    }
+    this.submitQuery.bind(this);
+    this.getQueryStatus.bind(this);
   }
 
   async getQueryResult(req, res, next) {
@@ -95,6 +56,88 @@ class QueryAPIController {
       return res.status(this._queryServiceMsgToHTTPCode(queryServiceMsg)).send();
     } catch (err) {
       // TODO: Send errors at more granular level
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res, err);
+    }
+  }
+
+  async _submitQueryViaPubSub(req, res, next) {
+    this._logQuerySubmissionRequest(req);
+    if (!this._isValidQuerySubmissionRequest(req)) {
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
+    }
+    try {
+      const trapiQuery = this.translatorService.inputToQuery(req.body);
+      req.log.info({query: trapiQuery});
+      const submitResp = await this.translatorService.submitQuery(trapiQuery);
+      req.log.info({arsqueryresp: submitResp});
+      const pk = trapi.getPk(submitResp);
+      if (!pk) throw new Error(`ARS query submission response has no PK: ${submitResp}`);
+      const queryModel = await this.queryService.createQuery(pk, req.body);
+      if (!queryModel) throw new Error(`Failed to create query with PK: ${pk}`);
+      //TODO: verify subscribe response
+      const subscribeResp = await this.translatorService.subscribeQuery(pk);
+      const uid = req.sessionData.user.id;
+      const userQueryModel = await this.userService.createUserQuery(uid, queryModel);
+      if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
+      const isTransactionComplete = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
+      if (!isTransactionComplete) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
+      return res.status(200).json(this.queryServicexFEAdapter.querySubmitToFE(queryModel));
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
+
+  async _getQueryStatusViaPubSub(req, res, next) {
+    if (!this._isValidQueryResultRequest(req)) {
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed Request');
+    }
+    try {
+      const uuid = req.params.qid;
+      const queryModel = await this.queryService.getQueryByPk(uuid);
+      let status = null;
+      if (queryModel) {
+        status = this.queryServicexFEAdapter.queryStatusToFE(queryModel);
+      } else {
+        const statusResp = await this.translatorService.getQueryStatus(uuid, this.filters);
+        status = this.translatorServicexFEAdapter.queryStatusToFE(statusResp);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(status);
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res, err);
+    }
+  }
+
+  async _submitQueryViaPolling(req, res, next) {
+    this._logQuerySubmissionRequest(req);
+    if (!this._isValidQuerySubmissionRequest(req)) {
+      return wutil.sendError(res, 400, 'Malformed request');
+    }
+    try {
+      let query = this.translatorService.inputToQuery(req.body);
+      let submitResp = await this.translatorService.submitQuery(query);
+      req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submitResp}, 'Query submission and response');
+      return res.status(200).json(this.translatorServicexFEAdapter.querySubmitToFE(submitResp));
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
+
+  async _getQueryStatusViaPolling(req, res, next) {
+    if (!this._isValidQueryResultRequest(req)) {
+      return wutil.sendError(res, 400, 'Malformed Request');
+    }
+    try {
+      let uuid = req.params.qid;
+      let statusResp = await this.translatorService.getQueryStatus(uuid, this.filters);
+      logger.debug({ltype: 'query-status from service', statusResp: statusResp});
+      let retval = this.translatorServicexFEAdapter.queryStatusToFE(statusResp);
+      logger.debug({ltype: 'query-status after adapter', value: retval});
+      return res.status(200).json(retval);
+    } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
     }
