@@ -1,7 +1,7 @@
 'use strict';
 
 import * as arsmsg from '../lib/ARSMessages.mjs';
-import * as sm from '../lib/summarization.mjs';
+import * as sm from '../lib/summarization/summarization.mjs';
 
 /* Translate messages coming from the Translator Service into the formats that the Frontend (FE) app expects */
 /* This module should not contain logic that goes beyond message transformations */
