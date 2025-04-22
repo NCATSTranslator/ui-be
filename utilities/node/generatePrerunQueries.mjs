@@ -1,6 +1,7 @@
 'use strict';
 import fs from 'fs';
 import * as cmn from '../../lib/common.mjs';
+import { loadTrapi } from '../../lib/trapi.mjs';
 import { ARSClient } from '../../lib/ARSClient.mjs';
 import { TranslatorServicexFEAdapter } from '../../adapters/TranslatorServicexFEAdapter.mjs';
 import { TranslatorService } from '../../services/TranslatorService.mjs';
@@ -86,27 +87,28 @@ async function main() {
   }
 
   let queryList = initializeQueryList(inputFile, startIndex);
-  console.log(JSON.stringify(queryList, null, 4));
-  console.log(envs);
-
-  /*
-  queryList = queryList.slice(0, 2);
-  console.log(JSON.stringify(queryList, null, 4));
-  */
 
   // Begin actual work
+  loadTrapi({
+    query_subject_key: 'sn',
+    query_object_key: 'on',
+  });
+  const timeBetweenQueries = 300000; // milliseconds -> 5 minutes
   const configRoot = '../../configurations';
-  const outputAdapter = new TranslatorServicexFEAdapter(null);
-
   const preRunQueries = {};
   for (const env of envs) {
     const config = await cmn.readJson(`${configRoot}/${env}.json`);
-    const client = new ARSClient(`${config.ars_endpoint.protocol}://${config.ars_endpoint.host}`,
-                                 '',
-                                 config.ars_endpoint.post_uri,
-                                 '',
-                                 config.use_ars_merging);
-    const service = new TranslatorService(client, outputAdapter);
+    const client = new ARSClient(
+      config.ars_endpoint.client_id,
+      '',
+      `${config.ars_endpoint.protocol}://${config.ars_endpoint.host}`,
+      '',
+      config.ars_endpoint.post_uri,
+      '',
+      '',
+      '',
+      config.use_ars_merging);
+    const service = new TranslatorService(client);
     preRunQueries[env] = [];
     let qc = 0;
     for (const query of queryList) {
@@ -121,10 +123,9 @@ async function main() {
         preRunQueries[env].push(qElem);
         qc += 1;
         console.log(`[${env}] ${qc}/${queryList.length} queries submitted [${qElem.id} -- ${qElem.uuid}]`);
-        await new Promise(r => setTimeout(r, 300000));
+        await new Promise(r => setTimeout(r, timeBetweenQueries));
       } catch (err) {
         console.error(err);
-        //process.exit();
       }
     }
   }
