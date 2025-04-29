@@ -2,7 +2,7 @@
   "document_root": false,
   "port": 8386,
   "response_timeout": 300,
-  "json_payload_limit": "1mb",
+  "json_payload_limit": "10mb",
   "trapi": {
     "query_subject_key": "sn",
     "query_object_key": "on"
