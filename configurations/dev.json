@@ -10,7 +10,6 @@
   "ars_endpoint": {
     "client_id": "ui.dev",
     "host": "ars-dev.transltr.io",
-    "host": "ars.ci.transltr.io",
     "post_uri": "/ars/api/submit",
     "pull_uri": "/ars/api/messages",
     "retain_uri": "/ars/api/retain",
@@ -56,21 +55,18 @@
     "path": "/"
   },
   "db_conn": {
-    "ssl": {
-      "rejectUnauthorized": false
+    "ssl": false
     }
   },
   "google_analytics_id": "G-7EBCDRY7DX",
   "google_tag_manager_id": "GTM-5SGQTGPF",
-  "_load_frontend": "configurations/frontend/ci.json",
+  "_load_frontend": "configurations/frontend/dev.json",
   "max_hops": 4,
   "log_level": "all",
   "log_format": "common",
-  "_load_auth": "configurations/auth/auth.ci.json",
+  "_load_auth": "configurations/auth/auth.dev.json",
   "_load_sessions": "configurations/sessions.json",
   "_load_storage": "configurations/storage.json",
   "_load_secrets": "configurations/secrets/secrets.json",
-  "mainsite_path": "/main",
-  "demosite_path": "/demo",
-  "pg_host": "transltr-ci-rds-ui-postgresql.ceyknq0yekb3.us-east-1.rds.amazonaws.com"
+  "pg_host": "pgdb"
 }
