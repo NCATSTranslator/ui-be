@@ -1,4 +1,4 @@
-[
+{
    "name_resolver": {
      "endpoint": "https://name-lookup.ci.transltr.io"
    },
@@ -354,7 +354,7 @@
         "uuid": "8c60eca5-03e0-4716-9b53-0525742268f7",
         "id": "PUBCHEM.COMPOUND:2162"
     }
-  ]
+  ],
   "include_pathfinder": true,
   "include_summarization": true
-]
+}
