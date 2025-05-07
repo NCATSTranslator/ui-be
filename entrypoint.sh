@@ -11,7 +11,7 @@ export APP_ENVIRONMENT
 # definitions. To mitigate the impact of this, we expect only a single
 # env var defining the environment, and set our required variables on
 # the basis of that. This is not an ideal pattern but will do for now.
-#
+mem_limit=8192
 case "$APP_ENVIRONMENT" in
     production)
         config_file="configurations/production.json"
@@ -21,6 +21,7 @@ case "$APP_ENVIRONMENT" in
         ;;
     ci)
         config_file="configurations/ci.json"
+        mem_limit=4096
         ;;
     dev)
         config_file="configurations/dev.json"
@@ -39,7 +40,7 @@ fi
 
 if [ $# -eq 2 ]; then
     echo "Using additional override file $2"
-    node --max-old-space-size=8192 -r newrelic StartServer.mjs "$config_file" "$2"
+    node --max-old-space-size="$mem_limit" -r newrelic StartServer.mjs "$config_file" "$2"
 else
-    node --max-old-space-size=8192 -r newrelic StartServer.mjs "$config_file"
+    node --max-old-space-size="$mem_limit" -r newrelic StartServer.mjs "$config_file"
 fi
