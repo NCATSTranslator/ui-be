@@ -39,7 +39,7 @@ fi
 
 if [ $# -eq 2 ]; then
     echo "Using additional override file $2"
-    node -r newrelic StartServer.mjs "$config_file" "$2"
+    node --max-old-space-size=8192 -r newrelic StartServer.mjs "$config_file" "$2"
 else
-    node -r newrelic StartServer.mjs "$config_file"
+    node --max-old-space-size=8192 -r newrelic StartServer.mjs "$config_file"
 fi
