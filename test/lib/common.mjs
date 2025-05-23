@@ -8,7 +8,7 @@ export async function functionalTest(testFunc, testCases, configLoader) {
     console.log(`--- Running test case ${caseName}`);
     const tc = testCases[caseName];
     if (tc.config) {
-      await configLoader(tc.config);
+      await configLoader(await _expand(tc.config));
     }
     const actual = await testFunc(...tc.args);
     testDeep(actual, tc.expected);
@@ -24,7 +24,7 @@ export async function classTest(klass, testCases, configLoader) {
     console.log(`--- Running test case ${caseName}`);
     const tc = testCases[caseName];
     if (tc.config) {
-      await configLoader(tc.config);
+      await configLoader(await _expand(tc.config));
     }
     let obj = klass;
     if (tc.constructor !== undefined) {
@@ -56,7 +56,11 @@ function _testDeep(ac, ex, permissive=false) {
     if (cmn.isArray(ac) && cmn.isArray(ex)) {
       testArray(ac, ex);
     } else if (cmn.isObject(ac) && cmn.isObject(ex)) {
-      testObject(ac, ex);
+      let aco = ac;
+      if (Symbol.iterator in aco) {
+        aco = Object.fromEntries(aco);
+      }
+      testObject(aco, ex);
     } else {
       if (typeof(ex) === 'string' && ex.startsWith('*')) return true;
       ast.strictEqual(ac, ex);
@@ -142,4 +146,11 @@ function removeTrace(err) {
   err.depth = undefined;
   err.trace = undefined;
   return err;
+}
+
+async function _expand(x) {
+  if (typeof(x) === 'string' && x.length > 0 && x[0] === '$') {
+    return cmn.readJson(x.slice(1,));
+  }
+  return x;
 }
