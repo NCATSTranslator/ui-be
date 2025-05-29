@@ -7,8 +7,8 @@ async function test_summary_analysis(root_path) {
   await test.functionalTest(sa.analysis_to_summary_analysis,
                             await cmn.readJson(`${root_path}/analysis_to_summary_analysis.json`),
                             bl.loadBiolink);
-  await test.functionalTest(sa.gen_analysis_summary_paths,
-                            await cmn.readJson(`${root_path}/gen_analysis_summary_paths.json`),
+  await test.functionalTest(sa.gen_analysis_paths,
+                            await cmn.readJson(`${root_path}/gen_analysis_paths.json`),
                             null,
                             async (args) => {
                               const key = args[0];
