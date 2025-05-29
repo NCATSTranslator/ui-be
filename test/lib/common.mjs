@@ -1,20 +1,28 @@
 import * as ast from 'node:assert';
 import * as cmn from '../../lib/common.mjs';
 
-export async function functionalTest(testFunc, testCases, configLoader) {
+export async function functionalTest(testFunc, testCases, configLoader, argsLoader) {
   const testName = testFunc.name;
   console.log(`Running tests for ${testName}`);
   for (let caseName of Object.keys(testCases)) {
-    console.log(`--- Running test case ${caseName}`);
     const tc = testCases[caseName];
-    if (tc.config) {
-      await configLoader(tc.config);
-    }
-    const actual = await testFunc(...tc.args);
+    console.log(`--- Running test case ${caseName}`);
+    const actual = await runCase(testFunc, testCases, caseName, configLoader, argsLoader);
     testDeep(actual, tc.expected);
     console.log(`--- Test case ${caseName} passed`);
   }
   console.log(`${testName} passed`);
+}
+
+export async function runCase(testFunc, testCases, caseName, configLoader, argsLoader) {
+  const tc = testCases[caseName];
+  if (tc.config) {
+    await configLoader(await _expand(tc.config));
+  }
+  if (argsLoader === undefined) {
+    argsLoader = cmn.identity;
+  }
+  return await testFunc(...await argsLoader(tc.args));
 }
 
 export async function classTest(klass, testCases, configLoader) {
@@ -24,7 +32,7 @@ export async function classTest(klass, testCases, configLoader) {
     console.log(`--- Running test case ${caseName}`);
     const tc = testCases[caseName];
     if (tc.config) {
-      await configLoader(tc.config);
+      await configLoader(await _expand(tc.config));
     }
     let obj = klass;
     if (tc.constructor !== undefined) {
@@ -51,12 +59,20 @@ export function testDeep(ac, ex) {
   }
 }
 
+export function classLoader(func, args) {
+
+}
+
 function _testDeep(ac, ex, permissive=false) {
   try {
     if (cmn.isArray(ac) && cmn.isArray(ex)) {
       testArray(ac, ex);
     } else if (cmn.isObject(ac) && cmn.isObject(ex)) {
-      testObject(ac, ex);
+      let aco = ac;
+      if (Symbol.iterator in aco) {
+        aco = Object.fromEntries(aco);
+      }
+      testObject(aco, ex);
     } else {
       if (typeof(ex) === 'string' && ex.startsWith('*')) return true;
       ast.strictEqual(ac, ex);
@@ -142,4 +158,11 @@ function removeTrace(err) {
   err.depth = undefined;
   err.trace = undefined;
   return err;
+}
+
+async function _expand(x) {
+  if (typeof(x) === 'string' && x.length > 0 && x[0] === '$') {
+    return cmn.readJson(x.slice(1,));
+  }
+  return x;
 }
