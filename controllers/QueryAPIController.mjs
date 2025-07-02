@@ -28,6 +28,10 @@ class QueryAPIController {
     this.getQueryStatus.bind(this);
   }
 
+  async getQueriesStatus(req, res, next) {
+    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+  }
+
   async getQueryResult(req, res, next) {
     if (!this._isValidQueryResultRequest(req)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed Request');
@@ -59,6 +63,14 @@ class QueryAPIController {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
     }
+  }
+
+  async deleteUserQueries(req, res, next) {
+    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+  }
+
+  async restoreUserQueries(req, res, next) {
+    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
   }
 
   async _submitQueryViaPubSub(req, res, next) {

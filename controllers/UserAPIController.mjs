@@ -67,6 +67,23 @@ class UserAPIController {
     return this.getUserSaves(req, res, next);
   }
 
+  // Projects
+  async getUserProjects(req, res, next) {
+    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+  }
+  async createUserProject(req, res, next) {
+    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+  }
+  async updateUserProjects(req, res, next) {
+    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+  }
+  async deleteUserProjects(req, res, next) {
+    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+  }
+  async restoreUserProjects(req, res, next) {
+    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+  }
+
   // Bookmarks
   async getUserBookmarks(req, res, next) {
     req = wutil.injectQueryParams(req, {type: SAVE_TYPE.BOOKMARK});

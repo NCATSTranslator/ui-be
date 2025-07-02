@@ -119,8 +119,18 @@ export function startServer(config, services) {
   // User queries
   // Creation of user queries is done on submission. See the /query endpoint
   app.get(`${API_PATH_V1}/users/me/queries`, userAPIController.getUserQueries.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/queries/status`, queryAPIController.getUserQueriesStatus.bind(queryAPIController));
+  app.put(`${API_PATH_V1}/users/me/queries/delete`, queryAPIController.deleteUserQueries.bind(queryAPIController));
+  app.put(`${API_PATH_V1}/users/me/queries/restore`, queryAPIController.restoreUserQueries.bind(queryAPIController));
   app.post(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
   app.delete(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+
+  // User projects
+  app.get(`${API_PATH_V1}/users/me/projects`, userAPIController.getUserProjects.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/projects`, userAPIController.createUserProject.bind(userAPIController));
+  app.put(`${API_PATH_V1}/users/me/projects/update`, userAPIController.updateUserProjects.bind(userAPIController));
+  app.put(`${API_PATH_V1}/users/me/projects/delete`, userAPIController.deleteUserProjects.bind(userAPIController));
+  app.put(`${API_PATH_V1}/users/me/projects/restore`, userAPIController.restoreUserProjects.bind(userAPIController));
 
   // User bookmarks
   app.get(`${API_PATH_V1}/users/me/bookmarks`, userAPIController.getUserBookmarks.bind(userAPIController));
