@@ -29,7 +29,64 @@ class QueryAPIController {
   }
 
   async getQueriesStatus(req, res, next) {
-    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    return res.status(200).json(_stub_queries_status());
+  }
+
+  _stub_queries_status() {
+    return [
+      {
+        status: 'success',
+        data: {
+          qid: 'qryex1',
+          aras: ['ara-1'],
+          title: 'Example Query 1',
+          bookmark_count: 10,
+          note_count: 6,
+          time_created: '1900-01-01 00:00:00.000000Z',
+          time_updated: '1900-01-01 00:00:00.000000Z',
+          deleted: false
+        }
+      },
+      {
+        status: 'running',
+        data: {
+          qid: 'qryex2',
+          aras: ['ara-1', 'ara-2', 'ara-3'],
+          title: 'Example Query 2',
+          bookmark_count: 5,
+          note_count: 5,
+          time_created: '1901-01-01 00:00:00.000000Z',
+          time_updated: '1901-01-01 00:00:00.000000Z',
+          deleted: false
+        }
+      },
+      {
+        status: 'running',
+        data: {
+          qid: 'qryex3',
+          aras: ['ara-1', 'ara-2', 'ara-3'],
+          title: 'Example Query 3',
+          bookmark_count: 3,
+          note_count: 1,
+          time_created: '1902-01-01 00:00:00.000000Z',
+          time_updated: '1902-01-01 00:00:00.000000Z',
+          deleted: true
+        }
+      },
+      {
+        status: 'error',
+        data: {
+          qid: 'qryex4',
+          aras: [],
+          title: 'Example Query 4',
+          bookmark_count: 0,
+          note_count: 0,
+          time_created: '1903-01-01 00:00:00.000000Z',
+          time_updated: '1903-01-01 00:00:00.000000Z',
+          deleted: false
+        }
+      }
+    ];
   }
 
   async getQueryResult(req, res, next) {

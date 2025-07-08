@@ -69,8 +69,38 @@ class UserAPIController {
 
   // Projects
   async getUserProjects(req, res, next) {
-    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    return res.status(200).json(_stub_project_objects());
   }
+
+  _stub_project_objects() {
+    return [
+      {
+        id: 'project_example_1',
+        title: 'Project Example 1',
+        qids: ['qryex1', 'qryex2'],
+        time_created: '1900-01-01 00:00:00.000000Z',
+        time_updated: '1900-01-01 00:00:00.000000Z',
+        deleted: false
+      },
+      {
+        id: 'project_example_2',
+        title: 'Project Example 2',
+        qids: ['qryex1', 'qryex3', 'qryex4'],
+        time_created: '1901-01-01 00:00:00.000000Z',
+        time_updated: '1900-01-01 00:00:00.000000Z',
+        deleted: false
+      },
+      {
+        id: 'project_example_3',
+        title: 'Project Example 3',
+        qids: ['qryex2', 'qryex3'],
+        time_created: '1902-01-01 00:00:00.000000Z',
+        time_updated: '1902-01-01 00:00:00.000000Z',
+        deleted: true
+      },
+    ];
+  }
+
   async createUserProject(req, res, next) {
     return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
   }
