@@ -17,7 +17,8 @@
     "unsubscribe_uri": "/ars/api/query_event_unsubscribe",
     "protocol": "https",
     "use_ars_merging": true,
-    "use_pubsub": true
+    "use_pubsub": true,
+    "use_trapi_validation": true
   },
   "annotation_endpoint": {
     "host": "biothings.test.transltr.io",
