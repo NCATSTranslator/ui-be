@@ -114,7 +114,6 @@ export function startServer(config, services) {
   app.get(`${API_PATH_V1}/users/me`, userAPIController.getUser.bind(userAPIController));
   app.get(`${API_PATH_V1}/users/me/preferences`, userAPIController.getUserPrefs.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/preferences`, userAPIController.updateUserPrefs.bind(userAPIController));
-  app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
 
   // User queries
   // Creation of user queries is done on submission. See the /query endpoint

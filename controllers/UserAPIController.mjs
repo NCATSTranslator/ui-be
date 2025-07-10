@@ -102,7 +102,7 @@ class UserAPIController {
   }
 
   async createUserProject(req, res, next) {
-    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    return this.updateUserSaves(req, res, next);
   }
   async updateUserProjects(req, res, next) {
     return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
