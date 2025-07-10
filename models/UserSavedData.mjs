@@ -1,7 +1,8 @@
 'use strict';
-export { UserSavedData, UserQueryData, UserTagData, SAVE_TYPE };
+export { UserSavedData, UserQueryData, UserTagData, SAVE_TYPE, as_project };
 
 const SAVE_TYPE = Object.freeze({
+  PROJECT: 'project',
   QUERY: 'query',
   BOOKMARK: 'bookmark',
   TAG: 'tag'
@@ -51,6 +52,20 @@ class UserSavedData {
     this.deleted = true;
     this.time_updated = new Date();
     return this;
+  }
+}
+
+function as_project(user_save) {
+  if (!user_save.data.title || !user_save.data.pks) {
+    throw Error(`Error constructing Project from: ${JSON.stringify(user_save)}`);
+  }
+  return {
+    id: user_save.id,
+    title: user_save.data.title,
+    qids: user_save.data.pks,
+    time_created: user_save.time_created,
+    time_update: user_save.time_updated,
+    deleted: user_save.deleted
   }
 }
 

@@ -1,7 +1,7 @@
 'use strict';
 export { UserAPIController };
 import * as wutil from '../lib/webutils.mjs';
-import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
+import { UserSavedData, SAVE_TYPE, as_project } from '../models/UserSavedData.mjs';
 import { UserWorkspace } from '../models/UserWorkspace.mjs';
 import { HTTP_CODE } from '../lib/common.mjs';
 
@@ -69,39 +69,28 @@ class UserAPIController {
 
   // Projects
   async getUserProjects(req, res, next) {
-    return res.status(HTTP_CODE.SUCCESS).json(_stub_project_objects());
+    req = wutil.injectQueryParams(req, {type: SAVE_TYPE.PROJECT});
+    if (req.query.type !== SAVE_TYPE.PROJECT) {
+      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
+    }
+    const user_id = req.sessionData.user.id;
+    const include_deleted = req.query.include_deleted === 'true';
+    const projects = await this._get_user_saves_data(user_id, include_deleted, SAVE_TYPE.PROJECT);
+    if (projects === null) {
+      wutil.logInternalServerError(req, 'Database Error');
+      return wutil.sendInternalServerError(res, 'Database Error');
+    }
+    return res.status(HTTP_CODE.SUCCESS).json(projects.map(as_project));
   }
-
-  _stub_project_objects() {
-    return [
-      {
-        id: 'project_example_1',
-        title: 'Project Example 1',
-        qids: ['qryex1', 'qryex2'],
-        time_created: '1900-01-01 00:00:00.000000Z',
-        time_updated: '1900-01-01 00:00:00.000000Z',
-        deleted: false
-      },
-      {
-        id: 'project_example_2',
-        title: 'Project Example 2',
-        qids: ['qryex1', 'qryex3', 'qryex4'],
-        time_created: '1901-01-01 00:00:00.000000Z',
-        time_updated: '1900-01-01 00:00:00.000000Z',
-        deleted: false
-      },
-      {
-        id: 'project_example_3',
-        title: 'Project Example 3',
-        qids: ['qryex2', 'qryex3'],
-        time_created: '1902-01-01 00:00:00.000000Z',
-        time_updated: '1902-01-01 00:00:00.000000Z',
-        deleted: true
-      },
-    ];
-  }
-
   async createUserProject(req, res, next) {
+    const project = await req.body;
+    if (!project.title) return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, 'Missing "title" field');
+    if (!project.pks) return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, 'Missing "pks" field');
+    const user_save = {
+      save_type: SAVE_TYPE.PROJECT,
+      data: project
+    };
+    req.body = user_save;
     return this.updateUserSaves(req, res, next);
   }
   async updateUserProjects(req, res, next) {
@@ -147,6 +136,16 @@ class UserAPIController {
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
+    }
+  }
+
+  async _get_user_saves_data(user_id, include_deleted, save_type) {
+    try {
+      const result = this.userService.getUserSavesByUid(user_id, include_deleted, save_type);
+      if (!result || result.length === 0) return [];
+      return result;
+    } catch (err) {
+      return null;
     }
   }
 
