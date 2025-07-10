@@ -28,7 +28,7 @@ class QueryAPIController {
     this.getQueryStatus.bind(this);
   }
 
-  async getQueriesStatus(req, res, next) {
+  async getUserQueriesStatus(req, res, next) {
     return res.status(200).json(_stub_queries_status());
   }
 
