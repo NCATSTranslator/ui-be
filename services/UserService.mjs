@@ -59,6 +59,10 @@ class UserService {
     return this.savedDataStore.updateUserSavedDataPartial(saveData, includeDeleted);
   }
 
+  async updateUserSaveBatch(saveData) {
+    return this.savedDataStore.updateUserSavedDataBatch(saveData);
+  }
+
   async deleteUserSave(save_id) {
     return this.savedDataStore.deleteUserSavedDataById(save_id);
   }

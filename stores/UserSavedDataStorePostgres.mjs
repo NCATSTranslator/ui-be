@@ -36,6 +36,40 @@ class UserSavedDataStorePostgres {
     return res.rows.length > 0 ? new UserSavedData(res.rows[0]) : null;
   }
 
+  async updateUserSavedDataBatch(userSavedDataModels) {
+    const args = [];
+    const params = [];
+    const keyCount = Object.keys(userSavedDataModels[0]).length
+    for (let i = 0; i < userSavedDataModels.length; i++) {
+      const model = userSavedDataModels[i];
+      model.time_updated = new Date();
+      const template = [];
+      for (let j = 0; j < keyCount; j++) {
+        template.push(`$${i*keyCount+j+1}::${_SAVED_DATA_TYPES[j]}`);
+      }
+      args.push(`(${template.join(',')})`);
+      params.push(
+        model.id, model.user_id, model.save_type, model.label,
+        model.notes, model.ars_pkey, model.object_ref, model.time_created,
+        model.time_updated, model.data, model.deleted
+      );
+    }
+    const res = await pgExec(this.pool, `
+      UPDATE user_saved_data AS usd
+      SET user_id = up.user_id, save_type = up.save_type, label = up.label, notes = up.notes,
+          ars_pkey = up.ars_pkey, object_ref = up.object_ref, time_created = up.time_created,
+          time_updated = up.time_updated, data = up.data, deleted = up.deleted
+      FROM (
+        VALUES ${args.join(',')}
+      ) AS up(id, user_id, save_type, label,
+              notes, ars_pkey, object_ref, time_created,
+              time_updated, data, deleted)
+      WHERE usd.id = up.id
+      RETURNING *
+    `, params);
+    return res.rows.length > 0 ? new UserSavedData(res.rows[0]) : null;
+  }
+
   async updateUserSavedData(userSavedDataModel) {
     userSavedDataModel.time_updated = new Date();
     const res = await pgExec(this.pool, `
@@ -98,3 +132,5 @@ class UserSavedDataStorePostgres {
     return this.updateUserSavedDataPartial({id: id, deleted: true});
   }
 }
+
+const _SAVED_DATA_TYPES = ['INT', 'UUID', 'TEXT', 'TEXT', 'TEXT', 'UUID', 'TEXT', 'DATE', 'DATE', 'JSONB', 'BOOLEAN'];

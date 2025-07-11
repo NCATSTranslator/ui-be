@@ -3,7 +3,7 @@ export { UserAPIController };
 import * as wutil from '../lib/webutils.mjs';
 import { UserSavedData, SAVE_TYPE, as_project } from '../models/UserSavedData.mjs';
 import { UserWorkspace } from '../models/UserWorkspace.mjs';
-import { HTTP_CODE } from '../lib/common.mjs';
+import * as cmn from '../lib/common.mjs';
 
 class UserAPIController {
   constructor(config, userService, translatorService) {
@@ -15,7 +15,7 @@ class UserAPIController {
   getUser(req, res, next) {
     let sessionData = req.sessionData;
     if (sessionData && sessionData.user) {
-      return res.status(HTTP_CODE.SUCCESS).json(sessionData.user);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(sessionData.user);
     } else {
       wutil.sendInternalServerError(res, 'Server error: couldn\'t find attached user');
     }
@@ -27,9 +27,9 @@ class UserAPIController {
     try {
       let result = await this.userService.getUserPreferences(user_id);
       if (!result) {
-        return wutil.sendError(res, HTTP_CODE.NOT_FOUND, `No preference data for user ${user_id}`);
+        return wutil.sendError(res, cmn.HTTP_CODE.NOT_FOUND, `No preference data for user ${user_id}`);
       } else {
-        return res.status(HTTP_CODE.SUCCESS).json(result);
+        return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -43,13 +43,13 @@ class UserAPIController {
     try {
       let result = await this.userService.updateUserPreferences(user_id, preferences);
       if (!result || result.length === 0) {
-        return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Nothing was updated`);
+        return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Nothing was updated`);
       } else {
         result = await this.userService.getUserPreferences(user_id);
         if (!result) {
-          return wutil.sendError(res, HTTP_CODE.INTERNAL_ERROR, `Error retrieving preferences after apparently successful update`);
+          return wutil.sendError(res, cmn.HTTP_CODE.INTERNAL_ERROR, `Error retrieving preferences after apparently successful update`);
         } else {
-          return res.status(HTTP_CODE.SUCCESS).json(result);
+          return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
         }
       }
     } catch (err) {
@@ -62,17 +62,13 @@ class UserAPIController {
   async getUserQueries(req, res, next) {
     req = wutil.injectQueryParams(req, {type: SAVE_TYPE.QUERY});
     if (req.query.type !== SAVE_TYPE.QUERY) {
-      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
     }
     return this.getUserSaves(req, res, next);
   }
 
   // Projects
   async getUserProjects(req, res, next) {
-    req = wutil.injectQueryParams(req, {type: SAVE_TYPE.PROJECT});
-    if (req.query.type !== SAVE_TYPE.PROJECT) {
-      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
-    }
     const user_id = req.sessionData.user.id;
     const include_deleted = req.query.include_deleted === 'true';
     const projects = await this._get_user_saves_data(user_id, include_deleted, SAVE_TYPE.PROJECT);
@@ -80,12 +76,12 @@ class UserAPIController {
       wutil.logInternalServerError(req, 'Database Error');
       return wutil.sendInternalServerError(res, 'Database Error');
     }
-    return res.status(HTTP_CODE.SUCCESS).json(projects.map(as_project));
+    return res.status(cmn.HTTP_CODE.SUCCESS).json(projects.map(as_project));
   }
   async createUserProject(req, res, next) {
     const project = await req.body;
-    if (!project.title) return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, 'Missing "title" field');
-    if (!project.pks) return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, 'Missing "pks" field');
+    if (!project.title) return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing "title" field');
+    if (!project.pks) return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing "pks" field');
     const user_save = {
       save_type: SAVE_TYPE.PROJECT,
       data: project
@@ -94,20 +90,60 @@ class UserAPIController {
     return this.updateUserSaves(req, res, next);
   }
   async updateUserProjects(req, res, next) {
-    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    const project_updates = await req.body;
+    if (!cmn.isArray(project_updates)) {
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_updates)}`);
+    }
+    for (const update of project_updates) {
+      if (!update.id) {
+        return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'All project updates require an ID');
+      }
+    }
+    const user_id = req.sessionData.user.id;
+    const include_deleted = req.query.include_deleted === 'true';
+    let projects = null;
+    try {
+      projects = await this._get_user_saves_data(user_id, include_deleted, SAVE_TYPE.PROJECT);
+    } catch (err) {
+      return wutil.sendInternalServerError(res, `Failed to fetch projects from the database. Got error: ${err}`);
+    }
+    const database_updates = [];
+    for (const update of project_updates) {
+      for (const project of projects) {
+        if (project.id === update.id) {
+          if (update.title) {
+            project.data.title = update.title;
+          }
+          if (update.pks) {
+            project.data.pks = update.pks;
+          }
+          database_updates.push(project);
+        }
+      }
+    }
+    try {
+      const result = await this.userService.updateUserSaveBatch(database_updates);
+      if (!result) {
+        return res.status(cmn.HTTP_CODE.SUCCESS).json([]);
+      } else {
+        return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
+      }
+    } catch (err) {
+      return wutil.sendInternalServerError(res, `Error commiting projects updates to database. Got: ${err}`);
+    }
   }
   async deleteUserProjects(req, res, next) {
-    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
   }
   async restoreUserProjects(req, res, next) {
-    return wutil.sendError(res, HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
   }
 
   // Bookmarks
   async getUserBookmarks(req, res, next) {
     req = wutil.injectQueryParams(req, {type: SAVE_TYPE.BOOKMARK});
     if (req.query.type !== SAVE_TYPE.BOOKMARK) {
-      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
     }
     return this.getUserSaves(req, res, next);
   }
@@ -116,7 +152,7 @@ class UserAPIController {
   async getUserTags(req, res, next) {
     req = wutil.injectQueryParams(req, {type: SAVE_TYPE.TAG});
     if (req.query.type !== SAVE_TYPE.TAG) {
-      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected no save type, got: ${req.query.type}`);
     }
     return this.getUserSaves(req, res, next);
   }
@@ -129,9 +165,9 @@ class UserAPIController {
     try {
       let result = await this.userService.getUserSavesByUid(user_id, includeDeleted, saveType);
       if (!result || result.length === 0) {
-        return res.status(HTTP_CODE.SUCCESS).json([]);
+        return res.status(cmn.HTTP_CODE.SUCCESS).json([]);
       } else {
-        return res.status(HTTP_CODE.SUCCESS).json(result);
+        return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -158,7 +194,7 @@ class UserAPIController {
         if (!pk) {
           const error = 'No PK in save for result';
           wutil.logInternalServerError(req, error);
-          return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, error);
+          return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, error);
         } else {
           req.log.info(`Retaining ${pk}`);
           await this.translatorService.retainQuery(pk);
@@ -169,9 +205,9 @@ class UserAPIController {
       let saveData = new UserSavedData(data);
       let result = await this.userService.saveUserData(saveData);
       if (!result) {
-        return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `Error saving user data`);
+        return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Error saving user data`);
       } else {
-        return res.status(HTTP_CODE.SUCCESS).json(result);
+        return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -186,9 +222,9 @@ class UserAPIController {
     try {
       let result = await this.userService.getUserSavesBy(user_id, {id: save_id}, includeDeleted);
       if (!result) {
-        return wutil.sendError(res, HTTP_CODE.NOT_FOUND, `No saved data found for id ${save_id}`);
+        return wutil.sendError(res, cmn.HTTP_CODE.NOT_FOUND, `No saved data found for id ${save_id}`);
       } else {
-        return res.status(HTTP_CODE.SUCCESS).json(result[0]);
+        return res.status(cmn.HTTP_CODE.SUCCESS).json(result[0]);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -206,13 +242,13 @@ class UserAPIController {
     try {
       let exists = await this.userService.getUserSavesBy(user_id, {id: save_id}, includeDeleted);
       if (!exists) {
-        return wutil.sendError(res, HTTP_CODE.NOT_FOUND, `No saved data found for id ${save_id}`);
+        return wutil.sendError(res, cmn.HTTP_CODE.NOT_FOUND, `No saved data found for id ${save_id}`);
       } else {
         let result = await this.userService.updateUserSave(req.body, includeDeleted);
         if (!result) {
-          return wutil.sendError(res, HTTP_CODE.INTERNAL_ERROR, `Error saving data`);
+          return wutil.sendError(res, cmn.HTTP_CODE.INTERNAL_ERROR, `Error saving data`);
         } else {
-          return res.status(HTTP_CODE.SUCCESS).json(result);
+          return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
         }
       }
     } catch (err) {
@@ -227,13 +263,13 @@ class UserAPIController {
     try {
       let exists = await this.userService.getUserSavesBy(user_id, {id: save_id});
       if (!exists) {
-        return wutil.sendError(res, HTTP_CODE.NOT_FOUND, `No saved data found for id ${save_id}`);
+        return wutil.sendError(res, cmn.HTTP_CODE.NOT_FOUND, `No saved data found for id ${save_id}`);
       } else {
         let result = await this.userService.deleteUserSave(save_id);
         if (!result) {
-          return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, `No saved data found for id ${save_id}`);
+          return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `No saved data found for id ${save_id}`);
         } else {
-          return res.status(HTTP_CODE.NO_CONTENT).end();
+          return res.status(cmn.HTTP_CODE.NO_CONTENT).end();
         }
       }
     } catch (err) {
@@ -249,9 +285,9 @@ class UserAPIController {
     try {
       let workspaces = await this.userService.getUserWorkspaces(user_id, includeData, includeDeleted);
       if (!workspaces) {
-        return wutil.sendError(res, HTTP_CODE.NOT_FOUND, `No workspace data found for user id ${user_id}`);
+        return wutil.sendError(res, cmn.HTTP_CODE.NOT_FOUND, `No workspace data found for user id ${user_id}`);
       } else {
-        return res.status(HTTP_CODE.SUCCESS).json(workspaces);
+        return res.status(cmn.HTTP_CODE.SUCCESS).json(workspaces);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -266,12 +302,12 @@ class UserAPIController {
     try {
       let workspace = await this.userService.getUserWorkspaceById(ws_id, includeDeleted);
       if (!workspace) {
-        return wutil.sendError(res, HTTP_CODE.NOT_FOUND, `No workspace data found for user id ${user_id}`);
+        return wutil.sendError(res, cmn.HTTP_CODE.NOT_FOUND, `No workspace data found for user id ${user_id}`);
       } else if (user_id !== workspace.user_id) {
         // TODO: logic around is_public
-        return wutil.sendError(res, HTTP_CODE.FORBIDDEN, `User ${user_id} does not have permission to access this workspace`);
+        return wutil.sendError(res, cmn.HTTP_CODE.FORBIDDEN, `User ${user_id} does not have permission to access this workspace`);
       } else {
-        return res.status(HTTP_CODE.SUCCESS).json(workspace);
+        return res.status(cmn.HTTP_CODE.SUCCESS).json(workspace);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -283,9 +319,9 @@ class UserAPIController {
     try {
       let workspace = await this.userService.createUserWorkspace(new UserWorkspace(req.body));
       if (!workspace) {
-        return wutil.sendError(res, HTTP_CODE.INTERNAL_ERROR, `Server error creating workspace`);
+        return wutil.sendError(res, cmn.HTTP_CODE.INTERNAL_ERROR, `Server error creating workspace`);
       } else {
-        return res.status(HTTP_CODE.SUCCESS).json(workspace);
+        return res.status(cmn.HTTP_CODE.SUCCESS).json(workspace);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -301,17 +337,17 @@ class UserAPIController {
     try {
       let workspace = await this.userService.getUserWorkspaceById(ws_id, includeDeleted);
       if (!workspace) {
-        return wutil.sendError(res, HTTP_CODE.NOT_FOUND, `Could not find workspace id ${ws_id}`);
+        return wutil.sendError(res, cmn.HTTP_CODE.NOT_FOUND, `Could not find workspace id ${ws_id}`);
       }
       if (user_id !== workspace.user_id) {
-        return wutil.sendError(res, HTTP_CODE.FORBIDDEN, `User ${user_id} does not have permission to update this workspace`);
+        return wutil.sendError(res, cmn.HTTP_CODE.FORBIDDEN, `User ${user_id} does not have permission to update this workspace`);
       }
       workspace = new UserWorkspace({...workspace, ...req.body});
       workspace = await this.userService.updateUserWorkspace(workspace);
       if (!workspace) {
-        return wutil.sendError(res, HTTP_CODE.INTERNAL_ERROR, `Server error updating workspace`);
+        return wutil.sendError(res, cmn.HTTP_CODE.INTERNAL_ERROR, `Server error updating workspace`);
       } else {
-        return res.status(HTTP_CODE.SUCCESS).json(workspace);
+        return res.status(cmn.HTTP_CODE.SUCCESS).json(workspace);
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -325,16 +361,16 @@ class UserAPIController {
     try {
       let workspace = await this.userService.getUserWorkspaceById(ws_id, true);
       if (!workspace) {
-        return wutil.sendError(res, HTTP_CODE.NOT_FOUND, `Could not find workspace id ${ws_id}`);
+        return wutil.sendError(res, cmn.HTTP_CODE.NOT_FOUND, `Could not find workspace id ${ws_id}`);
       }
       if (user_id !== workspace.user_id) {
-        return wutil.sendError(res, HTTP_CODE.FORBIDDEN, `User ${user_id} does not have permission to delete this workspace`);
+        return wutil.sendError(res, cmn.HTTP_CODE.FORBIDDEN, `User ${user_id} does not have permission to delete this workspace`);
       }
       let success = await this.userService.deleteUserWorkspace(ws_id);
       if (!success) {
-        return wutil.sendError(res, HTTP_CODE.INTERNAL_ERROR, `Server error deleting workspace`);
+        return wutil.sendError(res, cmn.HTTP_CODE.INTERNAL_ERROR, `Server error deleting workspace`);
       } else {
-        return res.status(HTTP_CODE.NO_CONTENT).end();
+        return res.status(cmn.HTTP_CODE.NO_CONTENT).end();
       }
     } catch (err) {
       wutil.logInternalServerError(req, err);
