@@ -29,7 +29,7 @@ class QueryAPIController {
   }
 
   async getUserQueriesStatus(req, res, next) {
-    return res.status(200).json(_stub_queries_status());
+    return res.status(200).json(this._stub_queries_status());
   }
 
   _stub_queries_status() {
