@@ -69,7 +69,7 @@ class UserAPIController {
 
   // Projects
   async getUserProjects(req, res, next) {
-    return res.status(200).json(_stub_project_objects());
+    return res.status(200).json(this._stub_project_objects());
   }
 
   _stub_project_objects() {
