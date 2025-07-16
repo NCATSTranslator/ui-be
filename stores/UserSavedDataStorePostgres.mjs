@@ -1,6 +1,6 @@
 import { pg, pgExec } from '../lib/postgres_preamble.mjs';
 import { UserSavedData } from '../models/UserSavedData.mjs'; // assuming UserSavedData is exported from this module
-
+import { gen_query_status } from '../models/Query.mjs';
 export { UserSavedDataStorePostgres };
 
 class UserSavedDataStorePostgres {
@@ -19,6 +19,20 @@ class UserSavedDataStorePostgres {
     const res = await pgExec(this.pool, sql, args);
     const data = res.rows.map(row => new UserSavedData(row));
     return data.length > 0 ? data : null;
+  }
+
+  async retrieve_queries_status(uid, include_deleted=false) {
+    // TODO: include_deleted is unused
+    const res = await pgExec(this.pool, `
+      SELECT status, pk, metadata, usd.time_created, usd.time_updated,
+             data, usd.deleted
+      FROM user_saved_data AS usd
+      INNER JOIN query_to_user AS qtu on usd.user_id = qtu.uid
+      INNER JOIN queries on qtu.qid = queries.id
+      WHERE usd.user_id = $1 AND usd.save_type = 'query'
+    `, [uid]);
+    if (res === null || res.rows.length === 0) return [];
+    return res.rows.map(gen_query_status);
   }
 
   async createUserSavedData(userSavedDataModel) {

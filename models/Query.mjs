@@ -1,4 +1,4 @@
-export { Query, QueryMetadata };
+export { Query, QueryMetadata, gen_query_status};
 
 import * as cmn from '../lib/common.mjs';
 
@@ -48,4 +48,39 @@ class QueryMetadata {
     this.query = query;
     this.aras = aras;
   }
+}
+
+class QueryStatus {
+  constructor(kwargs) {
+    const {
+      status,
+      pk,
+      metadata,
+      time_created,
+      time_updated,
+      data,
+      deleted
+    } = kwargs;
+    const is_invalid = !status
+      || !data
+      || !pk
+      || metadata.aras === undefined
+      || deleted === undefined
+    if (is_invalid) throw Error(`Invalid data when trying to construct QueryStatus: ${kwargs}`);
+    this.status = (status === 'complete' ? 'success' : status);
+    this.data = {
+      qid: pk,
+      aras: metadata.aras,
+      title: 'dummy',
+      bookmark_ids: data.bookmark_ids,
+      note_ids: data.note_ids,
+      time_created: time_created,
+      time_updated: time_updated,
+      deleted: deleted
+    }
+  }
+}
+
+function gen_query_status(data) {
+  return new QueryStatus(data);
 }

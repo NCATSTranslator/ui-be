@@ -42,6 +42,10 @@ class UserService {
     return this.saveUserData(userSavedData);
   }
 
+  async get_queries_status(uid, include_deleted) {
+    return this.savedDataStore.retrieve_queries_status(uid, include_deleted);
+  }
+
   // Saves
   async getUserSavesByUid(uid, includeDeleted=false, saveType=null) {
     return this.savedDataStore.retrieveUserSavedDataByUserId(uid, includeDeleted, saveType);
