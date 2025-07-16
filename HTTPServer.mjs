@@ -96,7 +96,7 @@ export function startServer(config, services) {
   /** All routes below this point MUST use one of authenticate[Un]PrivilegedRequest() **/
 
   // Submit query route: privileged session
-  app.post(`${API_PATH_V1}/query`,
+  app.post(`${API_PATH_V1}/query`, // TODO: Update to include title
     sessionController.authenticatePrivilegedRequest.bind(sessionController),
     queryAPIController.submitQuery.bind(queryAPIController));
   // Query request routes: unprivileged session
@@ -119,7 +119,6 @@ export function startServer(config, services) {
   // User queries
   // Creation of user queries is done on submission. See the /query endpoint
   app.get(`${API_PATH_V1}/users/me/queries`, userAPIController.getUserQueries.bind(userAPIController));
-  // TODO
   app.get(`${API_PATH_V1}/users/me/queries/status`, queryAPIController.getUserQueriesStatus.bind(queryAPIController));
   // TODO
   app.put(`${API_PATH_V1}/users/me/queries/delete`, queryAPIController.deleteUserQueries.bind(queryAPIController));
@@ -140,9 +139,9 @@ export function startServer(config, services) {
 
   // User bookmarks
   app.get(`${API_PATH_V1}/users/me/bookmarks`, userAPIController.getUserBookmarks.bind(userAPIController));
+  // TODO update to add bookmark to qid
   app.post(`${API_PATH_V1}/users/me/bookmarks`, userAPIController.updateUserSaves.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/bookmarks/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete(`${API_PATH_V1}/users/me/bookmarks/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
 
   // User tags
   app.get(`${API_PATH_V1}/users/me/tags`, userAPIController.getUserTags.bind(userAPIController));
