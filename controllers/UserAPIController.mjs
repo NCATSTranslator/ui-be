@@ -71,10 +71,10 @@ class UserAPIController {
   async getUserProjects(req, res, next) {
     const user_id = req.sessionData.user.id;
     const include_deleted = req.query.include_deleted === 'true';
-    const projects = await this._get_user_saves_data(user_id, include_deleted, SAVE_TYPE.PROJECT);
-    if (projects === null) {
-      wutil.logInternalServerError(req, 'Database Error');
-      return wutil.sendInternalServerError(res, 'Database Error');
+    const [projects, err] = await this._get_user_saves_data(user_id, include_deleted, SAVE_TYPE.PROJECT);
+    if (err !== null) {
+      wutil.logInternalServerError(req, `Failed to fetch projects from the database. Got error: ${err}`);
+      return wutil.sendInternalServerError(res, 'Failed to fetch projects from the database');
     }
     return res.status(cmn.HTTP_CODE.SUCCESS).json(projects.map(as_project));
   }
@@ -101,11 +101,10 @@ class UserAPIController {
     }
     const user_id = req.sessionData.user.id;
     const include_deleted = req.query.include_deleted === 'true';
-    let projects = null;
-    try {
-      projects = await this._get_user_saves_data(user_id, include_deleted, SAVE_TYPE.PROJECT);
-    } catch (err) {
-      return wutil.sendInternalServerError(res, `Failed to fetch projects from the database. Got error: ${err}`);
+    const [projects, err] = await this._get_user_saves_data(user_id, include_deleted, SAVE_TYPE.PROJECT);
+    if (err !== null) {
+      wutil.logInternalServerError(res, `Failed to fetch projects from the database. Got error: ${err}`);
+      return wutil.sendInternalServerError(res, 'Failed to fetch projects from the database');
     }
     const database_updates = [];
     for (const update of project_updates) {
@@ -133,10 +132,34 @@ class UserAPIController {
     }
   }
   async deleteUserProjects(req, res, next) {
-    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    const project_ids = await req.body;
+    if (!cmn.isArray(project_ids)) {
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
+    }
+    const user_id = req.sessionData.user.id;
+    let projects = null;
+    try {
+      projects = await this.userService.deleteUserSaveBatch(user_id, project_ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(projects);
+    } catch (err) {
+      wutil.logInternalServerError(req, `Failed to update projects from the database. Got error: ${err}`);
+      return wutil.sendInternalServerError(res, 'Failed to update projects from the database');
+    }
   }
   async restoreUserProjects(req, res, next) {
-    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    const project_ids = await req.body;
+    if (!cmn.isArray(project_ids)) {
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
+    }
+    const user_id = req.sessionData.user.id;
+    let projects = null;
+    try {
+      projects = await this.userService.restoreUserSaveBatch(user_id, project_ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(projects);
+    } catch (err) {
+      wutil.logInternalServerError(req, `Failed to update projects from the database. Got error: ${err}`);
+      return wutil.sendInternalServerError(res, 'Failed to update projects from the database');
+    }
   }
 
   // Bookmarks
@@ -172,16 +195,6 @@ class UserAPIController {
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
-    }
-  }
-
-  async _get_user_saves_data(user_id, include_deleted, save_type) {
-    try {
-      const result = this.userService.getUserSavesByUid(user_id, include_deleted, save_type);
-      if (!result || result.length === 0) return [];
-      return result;
-    } catch (err) {
-      return null;
     }
   }
 
@@ -375,6 +388,16 @@ class UserAPIController {
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res);
+    }
+  }
+
+  async _get_user_saves_data(user_id, include_deleted, save_type) {
+    try {
+      const result = this.userService.getUserSavesByUid(user_id, include_deleted, save_type);
+      if (!result || result.length === 0) return [[], null];
+      return [result, null];
+    } catch (err) {
+      return [null, err];
     }
   }
 }

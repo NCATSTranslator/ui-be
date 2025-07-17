@@ -130,11 +130,8 @@ export function startServer(config, services) {
   // User projects
   app.get(`${API_PATH_V1}/users/me/projects`, userAPIController.getUserProjects.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/projects`, userAPIController.createUserProject.bind(userAPIController));
-  // TODO
   app.put(`${API_PATH_V1}/users/me/projects/update`, userAPIController.updateUserProjects.bind(userAPIController));
-  // TODO
   app.put(`${API_PATH_V1}/users/me/projects/delete`, userAPIController.deleteUserProjects.bind(userAPIController));
-  // TODO
   app.put(`${API_PATH_V1}/users/me/projects/restore`, userAPIController.restoreUserProjects.bind(userAPIController));
 
   // User bookmarks

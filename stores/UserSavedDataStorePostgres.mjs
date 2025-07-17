@@ -169,6 +169,41 @@ class UserSavedDataStorePostgres {
   async deleteUserSavedDataById(id) {
     return this.updateUserSavedDataPartial({id: id, deleted: true});
   }
+
+  async deleteUserSavedDataBatch(uid, sids) {
+    return this._set_user_saved_data_deleted_batch(uid, sids, true);
+  }
+
+  async restoreUserSavedDataBatch(uid, sids) {
+    return this._set_user_saved_data_deleted_batch(uid, sids, false);
+  }
+
+  async _set_user_saved_data_deleted_batch(uid, sids, state) {
+    const args = [];
+    const params = [];
+    const types = ['INT', 'UUID', 'DATE', 'BOOLEAN'];
+    for (let i = 0; i < sids.length; i++) {
+      const template = [];
+      for (let j = 0; j < types.length ; j++) {
+        template.push(`$${i*types.length+j+1}::${types[j]}`);
+      }
+      args.push(`(${template.join(',')})`);
+      params.push(sids[i], uid, new Date(), state);
+    }
+    const res = await pgExec(this.pool, `
+      UPDATE user_saved_data AS usd
+      SET deleted = p.deleted,
+          time_updated = p.time_updated
+      FROM (
+        VALUES ${args}
+      ) AS p(id, uid, time_updated, deleted)
+      WHERE user_id = p.uid AND
+            usd.id = p.id
+      RETURNING *
+    `, params);
+    if (res === null || res.rows.length === 0) return [];
+    return res.rows;
+  }
 }
 
 const _SAVED_DATA_TYPES = ['INT', 'UUID', 'TEXT', 'TEXT', 'TEXT', 'UUID', 'TEXT', 'DATE', 'DATE', 'JSONB', 'BOOLEAN'];

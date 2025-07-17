@@ -71,6 +71,14 @@ class UserService {
     return this.savedDataStore.deleteUserSavedDataById(save_id);
   }
 
+  async deleteUserSaveBatch(uid, sids) {
+    return this.savedDataStore.deleteUserSavedDataBatch(uid, sids);
+  }
+
+  async restoreUserSaveBatch(uid, sids) {
+    return this.savedDataStore.restoreUserSavedDataBatch(uid, sids);
+  }
+
   // Workspaces
   async getUserWorkspaces(uid, includeData=false, includeDeleted=false) {
     return this.userWorkspaceStore.retrieveWorkspacesByUserId(uid, includeData, includeDeleted);
