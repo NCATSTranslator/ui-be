@@ -136,7 +136,6 @@ export function startServer(config, services) {
 
   // User bookmarks
   app.get(`${API_PATH_V1}/users/me/bookmarks`, userAPIController.getUserBookmarks.bind(userAPIController));
-  // TODO update to add bookmark to qid
   app.post(`${API_PATH_V1}/users/me/bookmarks`, userAPIController.updateUserSaves.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/bookmarks/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
 

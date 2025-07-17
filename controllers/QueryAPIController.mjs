@@ -74,11 +74,35 @@ class QueryAPIController {
   }
 
   async deleteUserQueries(req, res, next) {
-    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    const query_ids = await req.body;
+    if (!cmn.isArray(query_ids)) {
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
+    }
+    const user_id = req.sessionData.user.id;
+    let queries = null;
+    try {
+      queries = await this.userService.deleteUserSaveBatch(user_id, query_ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(queries);
+    } catch (err) {
+      wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
+      return wutil.sendInternalServerError(res, 'Failed to update queries from the database');
+    }
   }
 
   async restoreUserQueries(req, res, next) {
-    return wutil.sendError(res, cmn.HTTP_CODE.NOT_IMPLEMENTED, 'Not implemented');
+    const query_ids = await req.body;
+    if (!cmn.isArray(query_ids)) {
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
+    }
+    const user_id = req.sessionData.user.id;
+    let queries = null;
+    try {
+      queries = await this.userService.restoreUserSaveBatch(user_id, query_ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(queries);
+    } catch (err) {
+      wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
+      return wutil.sendInternalServerError(res, 'Failed to update queries from the database');
+    }
   }
 
   async _submitQueryViaPubSub(req, res, next) {
