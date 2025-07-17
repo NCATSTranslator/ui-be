@@ -58,11 +58,9 @@ class QueryStatus {
       metadata,
       time_created,
       time_updated,
-      data,
       deleted
     } = kwargs;
     const is_invalid = !status
-      || !data
       || !pk
       || metadata.aras === undefined
       || deleted === undefined
@@ -72,12 +70,21 @@ class QueryStatus {
       qid: pk,
       aras: metadata.aras,
       title: 'dummy',
-      bookmark_ids: data.bookmark_ids,
-      note_ids: data.note_ids,
+      query: metadata.query,
+      bookmark_ids: [],
+      note_count: 0,
       time_created: time_created,
       time_updated: time_updated,
       deleted: deleted
     }
+  }
+
+  push_bookmark(bid) {
+    this.data.bookmark_ids.push(bid);
+  }
+
+  add_note() {
+    this.data.note_count += 1;
   }
 }
 

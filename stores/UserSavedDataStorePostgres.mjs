@@ -24,15 +24,39 @@ class UserSavedDataStorePostgres {
   async retrieve_queries_status(uid, include_deleted=false) {
     // TODO: include_deleted is unused
     const res = await pgExec(this.pool, `
-      SELECT status, pk, metadata, usd.time_created, usd.time_updated,
-             data, usd.deleted
-      FROM user_saved_data AS usd
-      INNER JOIN query_to_user AS qtu on usd.user_id = qtu.uid
-      INNER JOIN queries on qtu.qid = queries.id
-      WHERE usd.user_id = $1 AND usd.save_type = 'query'
+      SELECT qs.pk, qs.status, qs.metadata, usd1.time_created,
+             usd1.time_updated, usd1.deleted, usd2.notes, usd2.id AS bid
+      FROM query_to_user AS qtu
+      INNER JOIN queries AS qs ON qtu.qid = qs.id
+      INNER JOIN user_saved_data AS usd1 ON qtu.uid = usd1.user_id
+      LEFT JOIN (
+        SELECT id, user_id, ars_pkey, notes
+        FROM user_saved_data
+        WHERE save_type = 'bookmark'
+      ) usd2 ON usd1.user_id = usd2.user_id
+             AND usd1.ars_pkey = usd2.ars_pkey
+      WHERE qtu.uid = $1
+        AND qs.pk = usd1.ars_pkey
+        AND usd1.save_type = 'query'
     `, [uid]);
     if (res === null || res.rows.length === 0) return [];
-    return res.rows.map(gen_query_status);
+    const query_status = new Map();
+    for (const q_stat of res.rows) {
+      if (!query_status.has(q_stat.pk)) {
+        query_status.set(q_stat.pk, gen_query_status(q_stat));
+      }
+      if (q_stat.bid !== null) {
+        try {
+          query_status.get(q_stat.pk).push_bookmark(q_stat.bid);
+        } catch (err) {
+          throw err;
+        }
+        if (q_stat.notes !== null && q_stat.notes !== "") {
+          query_status.get(q_stat.pk).add_note();
+        }
+      }
+    }
+    return [...query_status.values()];
   }
 
   async createUserSavedData(userSavedDataModel) {
