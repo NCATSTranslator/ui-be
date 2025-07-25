@@ -8,13 +8,17 @@
     "query_object_key": "on"
   },
   "ars_endpoint": {
+    "client_id": "ui.prod",
     "host": "ars-prod.transltr.io",
     "post_uri": "/ars/api/submit",
     "pull_uri": "/ars/api/messages",
     "retain_uri": "/ars/api/retain",
+    "subscribe_uri": "/ars/api/query_event_subscribe",
+    "unsubscribe_uri": "/ars/api/query_event_unsubscribe",
     "protocol": "https",
     "use_ars_merging": true,
-    "use_pubsub": false
+    "use_pubsub": false,
+    "use_trapi_validation": true
   },
   "annotation_endpoint": {
     "host": "biothings.ncats.io",
