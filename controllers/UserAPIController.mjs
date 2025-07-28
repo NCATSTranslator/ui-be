@@ -393,7 +393,7 @@ class UserAPIController {
 
   async _get_user_saves_data(user_id, include_deleted, save_type) {
     try {
-      const result = this.userService.getUserSavesByUid(user_id, include_deleted, save_type);
+      const result = await this.userService.getUserSavesByUid(user_id, include_deleted, save_type);
       if (!result || result.length === 0) return [[], null];
       return [result, null];
     } catch (err) {
