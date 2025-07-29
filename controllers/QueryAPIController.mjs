@@ -111,7 +111,17 @@ class QueryAPIController {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
     }
     try {
-      const trapiQuery = this.translatorService.inputToQuery(req.body);
+      const queryRequest = req.body;
+      const pid = queryRequest.pid;
+      let project = null;
+      if (pid) {
+        project = (await this.userService.getUserSavesBy(uid, {id: pid}))[0];
+        if (!project) {
+          throw new Error(`Submitted query includes unknown PID: ${pid}`);
+        }
+        req.log.info({project: project});
+      }
+      const trapiQuery = this.translatorService.inputToQuery(queryRequest);
       req.log.info({query: trapiQuery});
       const submitResp = await this.translatorService.submitQuery(trapiQuery);
       req.log.info({arsqueryresp: submitResp});
@@ -124,8 +134,15 @@ class QueryAPIController {
       const uid = req.sessionData.user.id;
       const userQueryModel = await this.userService.createUserQuery(uid, queryModel);
       if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
-      const isTransactionComplete = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
-      if (!isTransactionComplete) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
+      const isUserAssignedQuery = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
+      if (!isUserAssignedQUery) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
+      if (pid) {
+        project.data.pks.push(pk);
+        const updatedProject = await this.userService.updateUserSavePartial(project);
+        if (!updatedProject) {
+          throw new Error(`Error updating project: ${pid} with PK: ${pk}`);
+        }
+      }
       return res.status(200).json(this.queryServicexFEAdapter.querySubmitToFE(queryModel));
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -157,12 +174,31 @@ class QueryAPIController {
   async _submitQueryViaPolling(req, res, next) {
     this._logQuerySubmissionRequest(req);
     if (!this._isValidQuerySubmissionRequest(req)) {
-      return wutil.sendError(res, 400, 'Malformed request');
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
     }
     try {
-      let query = this.translatorService.inputToQuery(req.body);
-      let submitResp = await this.translatorService.submitQuery(query);
+      const queryRequest = req.body;
+      const pid = parseInt(queryRequest.pid, 10);
+      let project = null;
+      if (pid) {
+        const uid = req.sessionData.user.id;
+        project = (await this.userService.getUserSavesBy(uid, {id: pid}))[0];
+        if (!project) {
+          throw new Error(`Submitted query includes unknown PID: ${pid}`);
+        }
+        req.log.info({project: project});
+      }
+      const trapiQuery = this.translatorService.inputToQuery(req.body);
+      const submitResp = await this.translatorService.submitQuery(trapiQuery);
       req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submitResp}, 'Query submission and response');
+      if (pid) {
+        const pk = trapi.getPk(submitResp);
+        project.data.pks.push(pk);
+        const updatedProject = await this.userService.updateUserSave(project);
+        if (!updatedProject) {
+          throw new Error(`Error updating project: ${pid} with PK: ${pk}`);
+        }
+      }
       return res.status(200).json(this.translatorServicexFEAdapter.querySubmitToFE(submitResp));
     } catch (err) {
       wutil.logInternalServerError(req, err);
