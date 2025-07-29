@@ -64,7 +64,7 @@ function as_project(user_save) {
     title: user_save.data.title,
     qids: user_save.data.pks,
     time_created: user_save.time_created,
-    time_update: user_save.time_updated,
+    time_updated: user_save.time_updated,
     deleted: user_save.deleted
   }
 }
