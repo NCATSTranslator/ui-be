@@ -96,7 +96,7 @@ export function startServer(config, services) {
   /** All routes below this point MUST use one of authenticate[Un]PrivilegedRequest() **/
 
   // Submit query route: privileged session
-  app.post(`${API_PATH_V1}/query`, // TODO: Update to include title
+  app.post(`${API_PATH_V1}/query`,
     sessionController.authenticatePrivilegedRequest.bind(sessionController),
     queryAPIController.submitQuery.bind(queryAPIController));
   // Query request routes: unprivileged session
