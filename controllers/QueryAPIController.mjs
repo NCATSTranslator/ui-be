@@ -17,18 +17,20 @@ class QueryAPIController {
     this.queryServicexFEAdapter = queryServicexFEAdapter;
     this.userService = userService;
     this.filters = filters;
-    if (this.config.ars_endpoint.use_pubsub) {
-      this.submitQuery = this._submitQueryViaPubSub;
-      this.getQueryStatus = this._getQueryStatusViaPubSub;
-    } else {
-      this.submitQuery = this._submitQueryViaPolling;
-      this.getQueryStatus = this._getQueryStatusViaPolling;
+    this.updateModel = config.ars_endpoint.use_pubsub ? UPDATE_MODEL.PUBSUB : UPDATE_MODEL.POLLING;
+    switch (this.updateModel) {
+      case UPDATE_MODEL.PUBSUB:
+        this.getQueryStatus = this._getQueryStatusViaPubSub;
+        break;
+      case UPDATE_MODEL.POLLING:
+        this.getQueryStatus = this._getQueryStatusViaPolling;
+        break;
+      default:
+        throw Error(`Unknown update model for QueryAPIController: ${this.updateModel}`);
     }
-    this.submitQuery.bind(this);
-    this.getQueryStatus.bind(this);
   }
 
-  async getUserQueriesStatus(req, res, next) {
+  async getUserQueries(req, res, next) {
     const user_id = req.sessionData.user.id;
     const include_deleted = req.query.include_deleted === 'true';
     try {
@@ -38,6 +40,10 @@ class QueryAPIController {
       wutil.logInternalServerError(req, `Failed to get queries status for the current user: ${user_id}`);
       return wutil.sendInternalServerError(res, 'Failed to get queries status for the current user');
     }
+  }
+
+  async updateUserQueries(req, res, next) {
+    throw new Error('updateUserQueries is not implemented');
   }
 
   async getQueryResult(req, res, next) {
@@ -105,7 +111,7 @@ class QueryAPIController {
     }
   }
 
-  async _submitQueryViaPubSub(req, res, next) {
+  async submitQuery(req, res, next) {
     this._logQuerySubmissionRequest(req);
     if (!this._isValidQuerySubmissionRequest(req)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
@@ -129,10 +135,14 @@ class QueryAPIController {
       if (!pk) throw new Error(`ARS query submission response has no PK: ${submitResp}`);
       const queryModel = await this.queryService.createQuery(pk, req.body);
       if (!queryModel) throw new Error(`Failed to create query with PK: ${pk}`);
-      //TODO: verify subscribe response
-      const subscribeResp = await this.translatorService.subscribeQuery(pk);
+      if (this.updateModel === UPDATE_MODEL.PUBSUB) {
+        const subscribeResp = await this.translatorService.subscribeQuery(pk);
+        if (!subscribeResp) {
+          throw new Error(`Failed to subscribe to query: ${pk}`);
+        }
+      }
       const uid = req.sessionData.user.id;
-      const userQueryModel = await this.userService.createUserQuery(uid, queryModel);
+      const userQueryModel = await this.userService.createUserQuery(uid, queryModel.metadata.query);
       if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
       const isUserAssignedQuery = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
       if (!isUserAssignedQUery) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
@@ -168,41 +178,6 @@ class QueryAPIController {
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
-    }
-  }
-
-  async _submitQueryViaPolling(req, res, next) {
-    this._logQuerySubmissionRequest(req);
-    if (!this._isValidQuerySubmissionRequest(req)) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
-    }
-    try {
-      const queryRequest = req.body;
-      const pid = parseInt(queryRequest.pid, 10);
-      let project = null;
-      if (pid) {
-        const uid = req.sessionData.user.id;
-        project = (await this.userService.getUserSavesBy(uid, {id: pid}))[0];
-        if (!project) {
-          throw new Error(`Submitted query includes unknown PID: ${pid}`);
-        }
-        req.log.info({project: project});
-      }
-      const trapiQuery = this.translatorService.inputToQuery(req.body);
-      const submitResp = await this.translatorService.submitQuery(trapiQuery);
-      req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submitResp}, 'Query submission and response');
-      if (pid) {
-        const pk = trapi.getPk(submitResp);
-        project.data.pks.push(pk);
-        const updatedProject = await this.userService.updateUserSave(project);
-        if (!updatedProject) {
-          throw new Error(`Error updating project: ${pid} with PK: ${pk}`);
-        }
-      }
-      return res.status(200).json(this.translatorServicexFEAdapter.querySubmitToFE(submitResp));
-    } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
     }
   }
 
@@ -267,4 +242,9 @@ class QueryAPIController {
 
 const _CUSTOM_HEADERS = Object.freeze({
   X_EVENT_SIG: 'x-event-signature'
+});
+
+const UPDATE_MODEL = Object.freeze({
+  PUBSUB: 'pubsub',
+  POLLING: 'polling'
 });
