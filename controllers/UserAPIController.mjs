@@ -1,7 +1,7 @@
 'use strict';
 export { UserAPIController };
 import * as wutil from '../lib/webutils.mjs';
-import { UserSavedData, SAVE_TYPE, as_project } from '../models/UserSavedData.mjs';
+import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 import { UserWorkspace } from '../models/UserWorkspace.mjs';
 import * as cmn from '../lib/common.mjs';
 
@@ -76,7 +76,7 @@ class UserAPIController {
       wutil.logInternalServerError(req, `Failed to fetch projects from the database. Got error: ${err}`);
       return wutil.sendInternalServerError(res, 'Failed to fetch projects from the database');
     }
-    return res.status(cmn.HTTP_CODE.SUCCESS).json(projects.map(as_project));
+    return res.status(cmn.HTTP_CODE.SUCCESS).json(projects);
   }
   async createUserProject(req, res, next) {
     const project = await req.body;
