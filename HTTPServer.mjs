@@ -100,7 +100,6 @@ export function startServer(config, services) {
     sessionController.authenticatePrivilegedRequest.bind(sessionController),
     queryAPIController.submitQuery.bind(queryAPIController));
   // Query request routes: unprivileged session
-  // TODO: add DB status updates and retroactive query insertion
   app.get(`${API_PATH_V1}/query/:qid/status`,
     sessionController.authenticateUnprivilegedRequest.bind(sessionController),
     queryAPIController.getQueryStatus.bind(queryAPIController));
@@ -119,10 +118,10 @@ export function startServer(config, services) {
 
   // User queries
   // Creation of user queries is done on submission. See the /query endpoint
-  app.get(`${API_PATH_V1}/users/me/queries`, queryAPIController.getUserQueries.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/queries`, userAPIController.getUserQueries.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/queries/status`, queryAPIController.getUserQueriesStatus.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/delete`, queryAPIController.deleteUserQueries.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/restore`, queryAPIController.restoreUserQueries.bind(queryAPIController));
-  // TODO: modify update user save to take in representation FE sends and convert it to Save
   app.post(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
   app.delete(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
 

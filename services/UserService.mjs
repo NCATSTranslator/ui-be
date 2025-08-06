@@ -32,12 +32,12 @@ class UserService {
   }
 
   // Queries
-  async createUserQuery(uid, queryMessage) {
+  async createUserQuery(uid, queryModel) {
     const userSavedData = new UserSavedData({
       user_id: uid,
       save_type: SAVE_TYPE.QUERY,
       ars_pkey: queryModel.pk,
-      data: new UserQueryData(querymessage)
+      data: new UserQueryData(queryModel.metadata.query)
     });
     return this.saveUserData(userSavedData);
   }

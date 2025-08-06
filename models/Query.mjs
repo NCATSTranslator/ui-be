@@ -1,4 +1,4 @@
-export { Query, QueryMetadata, gen_user_query};
+export { Query, QueryMetadata, gen_query_status};
 
 import * as cmn from '../lib/common.mjs';
 
@@ -50,10 +50,9 @@ class QueryMetadata {
   }
 }
 
-class UserQuery {
+class QueryStatus {
   constructor(kwargs) {
     const {
-      sid,
       status,
       pk,
       metadata,
@@ -63,16 +62,14 @@ class UserQuery {
     } = kwargs;
     const is_invalid = !status
       || !pk
-      || !sid
       || metadata.aras === undefined
-      || deleted === undefined;
-    if (is_invalid) throw Error(`Invalid data when trying to construct UserQuery: ${kwargs}`);
-    this.sid = sid;
+      || deleted === undefined
+    if (is_invalid) throw Error(`Invalid data when trying to construct QueryStatus: ${kwargs}`);
     this.status = (status === 'complete' ? 'success' : status);
     this.data = {
       qid: pk,
       aras: metadata.aras,
-      title: null,
+      title: 'dummy',
       query: metadata.query,
       bookmark_ids: [],
       note_count: 0,
@@ -91,6 +88,6 @@ class UserQuery {
   }
 }
 
-function gen_user_query(data) {
-  return new UserQuery(data);
+function gen_query_status(data) {
+  return new QueryStatus(data);
 }

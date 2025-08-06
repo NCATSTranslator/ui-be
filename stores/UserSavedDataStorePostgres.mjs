@@ -1,6 +1,6 @@
 import { pg, pgExec } from '../lib/postgres_preamble.mjs';
 import { UserSavedData } from '../models/UserSavedData.mjs'; // assuming UserSavedData is exported from this module
-import { gen_user_query } from '../models/Query.mjs';
+import { gen_query_status } from '../models/Query.mjs';
 export { UserSavedDataStorePostgres };
 
 class UserSavedDataStorePostgres {
@@ -24,7 +24,7 @@ class UserSavedDataStorePostgres {
   async retrieve_queries_status(uid, include_deleted=false) {
     // TODO: include_deleted is unused
     const res = await pgExec(this.pool, `
-      SELECT usd1.id AS sid, qs.pk, qs.status, qs.metadata, usd1.time_created,
+      SELECT qs.pk, qs.status, qs.metadata, usd1.time_created,
              usd1.time_updated, usd1.deleted, usd2.notes, usd2.id AS bid
       FROM query_to_user AS qtu
       INNER JOIN queries AS qs ON qtu.qid = qs.id
@@ -40,23 +40,23 @@ class UserSavedDataStorePostgres {
         AND usd1.save_type = 'query'
     `, [uid]);
     if (res === null || res.rows.length === 0) return [];
-    const user_query = new Map();
+    const query_status = new Map();
     for (const q_stat of res.rows) {
-      if (!user_query.has(q_stat.pk)) {
-        user_query.set(q_stat.pk, gen_user_query(q_stat));
+      if (!query_status.has(q_stat.pk)) {
+        query_status.set(q_stat.pk, gen_query_status(q_stat));
       }
       if (q_stat.bid !== null) {
         try {
-          user_query.get(q_stat.pk).push_bookmark(q_stat.bid);
+          query_status.get(q_stat.pk).push_bookmark(q_stat.bid);
         } catch (err) {
           throw err;
         }
         if (q_stat.notes !== null && q_stat.notes !== "") {
-          user_query.get(q_stat.pk).add_note();
+          query_status.get(q_stat.pk).add_note();
         }
       }
     }
-    return [...user_query.values()];
+    return [...query_status.values()];
   }
 
   async createUserSavedData(userSavedDataModel) {

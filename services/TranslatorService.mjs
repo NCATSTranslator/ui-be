@@ -94,10 +94,9 @@ class TranslatorService
   async subscribeQuery(queryId) {
     try {
       const res = await this.queryClient.subscribeQuery(queryId);
-      return res;
     } catch (err) {
       logger.error(`Error subscribing to query ${queryId}: '${err}'`);
-      return null;
+      throw new QueryClientError(`Error subscribing to query ${queryId}`, queryId, 'subscribe', err);
     }
   }
 
