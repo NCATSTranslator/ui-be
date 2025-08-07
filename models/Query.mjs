@@ -99,7 +99,7 @@ function gen_user_query(data) {
   if (data.status && data.metadata.aras ) {
     status = data.status;
     aras = data.metadata.aras;
-  } else if (data.status === undefined && data.data.description) {
+  } else if (data.status === undefined) {
     status = cmn.QUERY_STATUS.RUNNING;
     aras = [];
   } else {
@@ -110,7 +110,7 @@ function gen_user_query(data) {
     status: status,
     pk: data.pk,
     aras: aras,
-    query: data.data.query,
+    query: data.data.description,
     title: data.data.title || null,
     time_created: data.time_created,
     time_updated: data.time_updated,
