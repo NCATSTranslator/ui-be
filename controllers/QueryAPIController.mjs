@@ -65,6 +65,36 @@ class QueryAPIController {
     }
   }
 
+  async update_user_query(req, res, next) {
+    const user_query = req.body;
+    if (!user_query) {
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to contain user query. Got: ${JSON.stringify(user_query)}`);
+    }
+    const uid = req.sessionData.user.id;
+    const is_deleted = user_query.data.deleted;
+    try {
+      let user_saved_data = await this.userService.getUserSavesBy(uid,
+        {id: parseInt(user_query.sid, 10)},
+        is_deleted);
+      if (!user_saved_data) {
+        return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Failed to update user query. Does not exist');
+      }
+      user_saved_data = user_saved_data[0];
+      user_saved_data.data.bookmark_ids = user_query.data.bookmark_ids;
+      user_saved_data.data.title = user_query.data.title;
+      user_saved_data = await this.userService.updateUserSave(user_saved_data, is_deleted);
+      if (!user_saved_data) {
+        throw Error('PANIC: Database failed to update user query but did not throw');
+      }
+      user_query.data.time_updated = user_saved_data.time_updated;
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(user_query);
+    }
+    catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res, `Database failed to update given usery query: ${JSON.stringify(user_query)}`);
+    }
+  }
+
   async deleteUserQueries(req, res, next) {
     const query_ids = await req.body;
     if (!cmn.isArray(query_ids)) {

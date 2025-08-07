@@ -58,6 +58,7 @@ class UserSavedData {
 class UserQueryData {
   constructor(query) {
     this.description = query;
+    this.title = null;
     this.bookmark_ids = [];
     this.tag_ids = [];
   }

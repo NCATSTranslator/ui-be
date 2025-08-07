@@ -121,8 +121,7 @@ export function startServer(config, services) {
   app.get(`${API_PATH_V1}/users/me/queries`, queryAPIController.getUserQueries.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/delete`, queryAPIController.deleteUserQueries.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/restore`, queryAPIController.restoreUserQueries.bind(queryAPIController));
-  app.post(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/queries`, queryAPIController.update_user_query.bind(queryAPIController));
 
   // User projects
   app.get(`${API_PATH_V1}/users/me/projects`, userAPIController.getUserProjects.bind(userAPIController));
