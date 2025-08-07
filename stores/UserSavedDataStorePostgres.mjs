@@ -1,6 +1,8 @@
 import { pg, pgExec } from '../lib/postgres_preamble.mjs';
 import { UserSavedData } from '../models/UserSavedData.mjs'; // assuming UserSavedData is exported from this module
-import { gen_query_status } from '../models/Query.mjs';
+import { gen_user_query } from '../models/Query.mjs';
+import * as cmn from '../lib/common.mjs';
+
 export { UserSavedDataStorePostgres };
 
 class UserSavedDataStorePostgres {
@@ -21,42 +23,32 @@ class UserSavedDataStorePostgres {
     return data.length > 0 ? data : null;
   }
 
-  async retrieve_queries_status(uid, include_deleted=false) {
-    // TODO: include_deleted is unused
-    const res = await pgExec(this.pool, `
-      SELECT qs.pk, qs.status, qs.metadata, usd1.time_created,
-             usd1.time_updated, usd1.deleted, usd2.notes, usd2.id AS bid
-      FROM query_to_user AS qtu
-      INNER JOIN queries AS qs ON qtu.qid = qs.id
-      INNER JOIN user_saved_data AS usd1 ON qtu.uid = usd1.user_id
-      LEFT JOIN (
-        SELECT id, user_id, ars_pkey, notes
-        FROM user_saved_data
-        WHERE save_type = 'bookmark'
-      ) usd2 ON usd1.user_id = usd2.user_id
-             AND usd1.ars_pkey = usd2.ars_pkey
-      WHERE qtu.uid = $1
-        AND qs.pk = usd1.ars_pkey
-        AND usd1.save_type = 'query'
-    `, [uid]);
-    if (res === null || res.rows.length === 0) return [];
-    const query_status = new Map();
-    for (const q_stat of res.rows) {
-      if (!query_status.has(q_stat.pk)) {
-        query_status.set(q_stat.pk, gen_query_status(q_stat));
+  async retrieve_queries_map(uid, include_deleted, use_status) {
+    // TODO: use include_deleted
+    let res = null;
+    if (use_status) {
+      res = await this._retrieve_queries_status(uid, include_deleted);
+    } else {
+      res = await this._retrieve_queries(uid, include_deleted);
+    }
+    if (cmn.isArrayEmpty(res.rows)) return res;
+    const user_query_data = res.rows;
+    const user_queries = new Map();
+    for (const uq_data of user_query_data) {
+      const uq_id = uq_data.pk;
+      if (!user_queries.has(uq_id)) {
+        user_queries.set(uq_id, gen_user_query(uq_data));
       }
-      if (q_stat.bid !== null) {
-        try {
-          query_status.get(q_stat.pk).push_bookmark(q_stat.bid);
-        } catch (err) {
-          throw err;
-        }
-        if (q_stat.notes !== null && q_stat.notes !== "") {
-          query_status.get(q_stat.pk).add_note();
+      const uq = user_queries.get(uq_id);
+      const bookmark_id = uq_data.bid;
+      if (bookmark_id !== null) {
+        uq.push_bookmark(bookmark_id);
+        if (uq_data.notes !== null && uq_data.notes !== '') {
+          uq.add_note(); // This just increments a count
         }
       }
     }
-    return [...query_status.values()];
+    return user_queries;
   }
 
   async createUserSavedData(userSavedDataModel) {
@@ -203,6 +195,47 @@ class UserSavedDataStorePostgres {
     `, params);
     if (res === null || res.rows.length === 0) return [];
     return res.rows;
+  }
+
+  async _retrieve_queries(uid, include_deleted) {
+    // TODO: always includes deleted
+    const res = await pgExec(this.pool, `
+      SELECT usd1.id AS sid, usd1.ars_pkey AS pk, usd1.data, usd1.time_created,
+             usd1.time_updated, usd1.deleted, usd2.notes, usd2.id AS bid
+      FROM user_saved_data AS usd1
+      LEFT JOIN (
+        SELECT id, user_id, ars_pkey, notes
+        FROM user_saved_data
+        WHERE save_type = 'bookmark'
+      ) usd2 ON usd1.user_id = usd2.user_id
+             AND usd1.ars_pkey = usd2.ars_pkey
+      WHERE usd1.user_id = $1
+            AND usd1.save_type = 'query'
+    `, [uid]);
+    if (res === null || res.rows.length === 0) return [];
+    return res;
+  }
+
+  async _retrieve_queries_status(uid, include_deleted) {
+    // TODO: always includes deleted
+    const res = await pgExec(this.pool, `
+      SELECT usd1.id AS sid, usd1.ars_pkey, qs.status, qs.metadata, usd1.time_created,
+             usd1.data, usd1.time_updated, usd1.deleted, usd2.notes, usd2.id AS bid
+      FROM query_to_user AS qtu
+      INNER JOIN queries AS qs ON qtu.qid = qs.id
+      INNER JOIN user_saved_data AS usd1 ON qtu.uid = usd1.user_id
+      LEFT JOIN (
+        SELECT id, user_id, ars_pkey, notes
+        FROM user_saved_data
+        WHERE save_type = 'bookmark'
+      ) usd2 ON usd1.user_id = usd2.user_id
+             AND usd1.ars_pkey = usd2.ars_pkey
+      WHERE qtu.uid = $1
+        AND qs.pk = usd1.ars_pkey
+        AND usd1.save_type = 'query'
+    `, [uid]);
+    if (res === null || res.rows.length === 0) return [];
+    return res;
   }
 }
 

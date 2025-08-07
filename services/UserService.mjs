@@ -32,18 +32,18 @@ class UserService {
   }
 
   // Queries
-  async createUserQuery(uid, queryModel) {
+  async createUserQuery(uid, pk, query) {
     const userSavedData = new UserSavedData({
       user_id: uid,
       save_type: SAVE_TYPE.QUERY,
-      ars_pkey: queryModel.pk,
-      data: new UserQueryData(queryModel.metadata.query)
+      ars_pkey: pk,
+      data: new UserQueryData(query)
     });
     return this.saveUserData(userSavedData);
   }
 
-  async get_queries_status(uid, include_deleted) {
-    return this.savedDataStore.retrieve_queries_status(uid, include_deleted);
+  async get_user_queries_map(uid, include_deleted, use_status) {
+    return this.savedDataStore.retrieve_queries_map(uid, include_deleted, use_status);
   }
 
   // Saves

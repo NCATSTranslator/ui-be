@@ -1,4 +1,4 @@
-export { Query, QueryMetadata, gen_query_status};
+export { Query, QueryMetadata, gen_user_query };
 
 import * as cmn from '../lib/common.mjs';
 
@@ -50,27 +50,32 @@ class QueryMetadata {
   }
 }
 
-class QueryStatus {
+class UserQuery {
   constructor(kwargs) {
     const {
+      sid,
       status,
       pk,
-      metadata,
+      aras,
+      query,
+      title,
       time_created,
       time_updated,
       deleted
     } = kwargs;
-    const is_invalid = !status
+    const is_invalid = !sid
+      || !status
       || !pk
-      || metadata.aras === undefined
-      || deleted === undefined
-    if (is_invalid) throw Error(`Invalid data when trying to construct QueryStatus: ${kwargs}`);
-    this.status = (status === 'complete' ? 'success' : status);
+      || aras === undefined
+      || deleted === undefined;
+    if (is_invalid) throw Error(`Invalid data when trying to construct UserQuery: ${kwargs}`);
+    this.sid = sid;
+    this.status = status;
     this.data = {
       qid: pk,
-      aras: metadata.aras,
-      title: 'dummy',
-      query: metadata.query,
+      aras: aras,
+      title: title,
+      query: query,
       bookmark_ids: [],
       note_count: 0,
       time_created: time_created,
@@ -88,6 +93,27 @@ class QueryStatus {
   }
 }
 
-function gen_query_status(data) {
-  return new QueryStatus(data);
+function gen_user_query(data) {
+  let status = null;
+  let aras = null;
+  if (data.status && data.metadata.aras ) {
+    status = data.status;
+    aras = data.metadata.aras;
+  } else if (data.status === undefined && data.data.description) {
+    status = cmn.QUERY_STATUS.RUNNING;
+    aras = [];
+  } else {
+    throw new Error(`Could not generate UserQuery from given data: ${data}`);
+  }
+  return new UserQuery({
+    sid: data.sid,
+    status: status,
+    pk: data.pk,
+    aras: aras,
+    query: data.data.query,
+    title: data.data.title || null,
+    time_created: data.time_created,
+    time_updated: data.time_updated,
+    deleted: data.deleted
+  });
 }

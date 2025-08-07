@@ -17,27 +17,19 @@ class QueryAPIController {
     this.queryServicexFEAdapter = queryServicexFEAdapter;
     this.userService = userService;
     this.filters = filters;
-    if (this.config.ars_endpoint.use_pubsub) {
+    this.using_pubsub = this.config.ars_endpoint.use_pubsub;
+    if (this.using_pubsub) {
       this.submitQuery = this._submitQueryViaPubSub;
       this.getQueryStatus = this._getQueryStatusViaPubSub;
+      this.getUserQueries = this._getUserQueriesViaPubSub;
     } else {
       this.submitQuery = this._submitQueryViaPolling;
       this.getQueryStatus = this._getQueryStatusViaPolling;
+      this.getUserQueries = this._getUserQueriesViaPolling;
     }
     this.submitQuery.bind(this);
     this.getQueryStatus.bind(this);
-  }
-
-  async getUserQueriesStatus(req, res, next) {
-    const user_id = req.sessionData.user.id;
-    const include_deleted = req.query.include_deleted === 'true';
-    try {
-      const query_status_data = await this.userService.get_queries_status(user_id, include_deleted);
-      return res.status(cmn.HTTP_CODE.SUCCESS).json(query_status_data);
-    } catch (err) {
-      wutil.logInternalServerError(req, `Failed to get queries status for the current user: ${user_id}`);
-      return wutil.sendInternalServerError(res, 'Failed to get queries status for the current user');
-    }
+    this.getUserQueries.bind(this);
   }
 
   async getQueryResult(req, res, next) {
@@ -78,10 +70,10 @@ class QueryAPIController {
     if (!cmn.isArray(query_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
-    const user_id = req.sessionData.user.id;
+    const uid = req.sessionData.user.id;
     let queries = null;
     try {
-      queries = await this.userService.deleteUserSaveBatch(user_id, query_ids);
+      queries = await this.userService.deleteUserSaveBatch(uid, query_ids);
       return res.status(cmn.HTTP_CODE.SUCCESS).json(queries);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
@@ -94,10 +86,10 @@ class QueryAPIController {
     if (!cmn.isArray(query_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
-    const user_id = req.sessionData.user.id;
+    const uid = req.sessionData.user.id;
     let queries = null;
     try {
-      queries = await this.userService.restoreUserSaveBatch(user_id, query_ids);
+      queries = await this.userService.restoreUserSaveBatch(uid, query_ids);
       return res.status(cmn.HTTP_CODE.SUCCESS).json(queries);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
@@ -132,7 +124,7 @@ class QueryAPIController {
       //TODO: verify subscribe response
       const subscribeResp = await this.translatorService.subscribeQuery(pk);
       const uid = req.sessionData.user.id;
-      const userQueryModel = await this.userService.createUserQuery(uid, queryModel);
+      const userQueryModel = await this.userService.createUserQuery(uid, pk, queryModel.metadata.query);
       if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
       const isUserAssignedQuery = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
       if (!isUserAssignedQUery) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
@@ -171,6 +163,18 @@ class QueryAPIController {
     }
   }
 
+  async _getUserQueriesViaPubSub(req, res, next) {
+    const uid = req.sessionData.user.id;
+    const include_deleted = req.query.include_deleted === 'true';
+    try {
+      const user_queries = await this.userService.get_user_queries_map(uid, include_deleted, this.using_pubsub);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(user_queries.values());
+    } catch (err) {
+      wutil.logInternalServerError(req, `Failed to get queries status for the current user: ${uid}`);
+      return wutil.sendInternalServerError(res, 'Failed to get queries status for the current user');
+    }
+  }
+
   async _submitQueryViaPolling(req, res, next) {
     this._logQuerySubmissionRequest(req);
     if (!this._isValidQuerySubmissionRequest(req)) {
@@ -179,20 +183,23 @@ class QueryAPIController {
     try {
       const queryRequest = req.body;
       const pid = parseInt(queryRequest.pid, 10);
+      const uid = req.sessionData.user.id;
       let project = null;
       if (pid) {
-        const uid = req.sessionData.user.id;
-        project = (await this.userService.getUserSavesBy(uid, {id: pid}))[0];
-        if (!project) {
+        const projects = await this.userService.getUserSavesBy(uid, {id: pid});
+        if (!projects) {
           throw new Error(`Submitted query includes unknown PID: ${pid}`);
         }
-        req.log.info({project: project});
+        req.log.info({projects: projects});
+        project = projects[0];
       }
       const trapiQuery = this.translatorService.inputToQuery(req.body);
       const submitResp = await this.translatorService.submitQuery(trapiQuery);
       req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submitResp}, 'Query submission and response');
+      const pk = trapi.getPk(submitResp);
+      const userQueryModel = this.userService.createUserQuery(uid, pk, req.body);
+      if (!userQueryModel) throw new Error(`User service failed to create entry for query ${pk} and user ${uid}`);
       if (pid) {
-        const pk = trapi.getPk(submitResp);
         project.data.pks.push(pk);
         const updatedProject = await this.userService.updateUserSave(project);
         if (!updatedProject) {
@@ -220,6 +227,27 @@ class QueryAPIController {
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
+    }
+  }
+
+  async _getUserQueriesViaPolling(req, res, next) {
+    const uid = req.sessionData.user.id;
+    const include_deleted = req.query.include_deleted === 'true';
+    try {
+      const user_queries = await this.userService.get_user_queries_map(uid, include_deleted, this.using_pubsub);
+      const pks = [...user_queries.keys()];
+      const resps = await Promise.all(pks.map(pk => this.translatorService.getQueryStatus(pk, this.filters)));
+      for (const resp of resps) {
+        const status_model = this.translatorServicexFEAdapter.queryStatusToFE(resp);
+        const user_query = user_queries.get(status_model.data.qid);
+        user_query.status = status_model.status;
+        user_query.data.aras = status_model.data.aras;
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json([...user_queries.values()]);
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      wutil.logInternalServerError(req, `Failed to get queries status for the current user: ${uid}`);
+      return wutil.sendInternalServerError(res, 'Failed to get queries status for the current user');
     }
   }
 
