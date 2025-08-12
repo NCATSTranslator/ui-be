@@ -356,5 +356,5 @@
     }
   ],
   "include_pathfinder": true,
-  "include_summarization": true
+  "include_summarization": false
 }
