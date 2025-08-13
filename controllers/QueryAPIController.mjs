@@ -137,10 +137,11 @@ class QueryAPIController {
       const pid = queryRequest.pid;
       let project = null;
       if (pid) {
-        project = (await this.userService.getUserSavesBy(uid, {id: pid}))[0];
-        if (!project) {
+        const projects = await this.userService.getUserSavesBy(uid, {id: pid});
+        if (!projects || cmn.isArrayEmpty(projects)) {
           throw new Error(`Submitted query includes unknown PID: ${pid}`);
         }
+        project = projects[0];
         req.log.info({project: project});
       }
       const trapiQuery = this.translatorService.inputToQuery(queryRequest);
@@ -168,7 +169,7 @@ class QueryAPIController {
       return res.status(200).json(this.queryServicexFEAdapter.querySubmitToFE(queryModel));
     } catch (err) {
       wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
+      return wutil.sendInternalServerError(res, err);
     }
   }
 
@@ -240,7 +241,7 @@ class QueryAPIController {
       return res.status(200).json(this.translatorServicexFEAdapter.querySubmitToFE(submitResp));
     } catch (err) {
       wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res);
+      return wutil.sendInternalServerError(res, err);
     }
   }
 
