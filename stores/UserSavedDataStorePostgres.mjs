@@ -31,8 +31,8 @@ class UserSavedDataStorePostgres {
     } else {
       res = await this._retrieve_queries(uid, include_deleted);
     }
-    if (cmn.isArrayEmpty(res.rows)) return res;
-    const user_query_data = res.rows;
+    if (cmn.isArrayEmpty(res)) return res;
+    const user_query_data = res;
     const user_queries = new Map();
     for (const uq_data of user_query_data) {
       const uq_id = uq_data.pk;
@@ -213,7 +213,7 @@ class UserSavedDataStorePostgres {
             AND usd1.save_type = 'query'
     `, [uid]);
     if (res === null || res.rows.length === 0) return [];
-    return res;
+    return res.rows;
   }
 
   async _retrieve_queries_status(uid, include_deleted) {
@@ -235,7 +235,7 @@ class UserSavedDataStorePostgres {
         AND usd1.save_type = 'query'
     `, [uid]);
     if (res === null || res.rows.length === 0) return [];
-    return res;
+    return res.rows;
   }
 }
 
