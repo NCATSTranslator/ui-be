@@ -25,15 +25,14 @@ class UserSavedDataStorePostgres {
 
   async retrieve_queries_map(uid, include_deleted, use_status) {
     // TODO: use include_deleted
-    let res = null;
+    let user_query_data = null;
     if (use_status) {
-      res = await this._retrieve_queries_status(uid, include_deleted);
+      user_query_data = await this._retrieve_queries_status(uid, include_deleted);
     } else {
-      res = await this._retrieve_queries(uid, include_deleted);
+      user_query_data = await this._retrieve_queries(uid, include_deleted);
     }
-    if (cmn.isArrayEmpty(res)) return res;
-    const user_query_data = res;
     const user_queries = new Map();
+    if (cmn.isArrayEmpty(user_query_data)) return user_queries;
     for (const uq_data of user_query_data) {
       const uq_id = uq_data.pk;
       if (!user_queries.has(uq_id)) {
@@ -219,7 +218,7 @@ class UserSavedDataStorePostgres {
   async _retrieve_queries_status(uid, include_deleted) {
     // TODO: always includes deleted
     const res = await pgExec(this.pool, `
-      SELECT usd1.id AS sid, usd1.ars_pkey, qs.status, qs.metadata, usd1.time_created,
+      SELECT usd1.id AS sid, usd1.ars_pkey AS pk, qs.status, qs.metadata, usd1.time_created,
              usd1.data, usd1.time_updated, usd1.deleted, usd2.notes, usd2.id AS bid
       FROM query_to_user AS qtu
       INNER JOIN queries AS qs ON qtu.qid = qs.id

@@ -1,6 +1,8 @@
 'use strict';
 export { QueryServicexFEAdapter };
 
+import * as cmn from '../lib/common.mjs';
+
 class QueryServicexFEAdapter {
 
   querySubmitToFE(queryModel) {

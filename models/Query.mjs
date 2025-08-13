@@ -68,7 +68,7 @@ class UserQuery {
       || !pk
       || aras === undefined
       || deleted === undefined;
-    if (is_invalid) throw Error(`Invalid data when trying to construct UserQuery: ${kwargs}`);
+    if (is_invalid) throw Error(`Invalid data when trying to construct UserQuery: ${JSON.stringify(kwargs)}`);
     this.sid = sid;
     this.status = status;
     this.data = {

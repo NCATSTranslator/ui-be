@@ -158,7 +158,7 @@ class QueryAPIController {
       const userQueryModel = await this.userService.createUserQuery(uid, pk, queryModel.metadata.query);
       if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
       const isUserAssignedQuery = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
-      if (!isUserAssignedQUery) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
+      if (!isUserAssignedQuery) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
       if (pid) {
         project.data.pks.push(pk);
         const updatedProject = await this.userService.updateUserSavePartial(project);
@@ -199,7 +199,7 @@ class QueryAPIController {
     const include_deleted = req.query.include_deleted === 'true';
     try {
       const user_queries = await this.userService.get_user_queries_map(uid, include_deleted, this.using_pubsub);
-      return res.status(cmn.HTTP_CODE.SUCCESS).json(user_queries.values());
+      return res.status(cmn.HTTP_CODE.SUCCESS).json([...user_queries.values()]);
     } catch (err) {
       wutil.logInternalServerError(req, err);
       wutil.logInternalServerError(req, `Failed to get queries status for the current user: ${uid}`);
