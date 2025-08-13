@@ -200,6 +200,7 @@ class QueryAPIController {
       const user_queries = await this.userService.get_user_queries_map(uid, include_deleted, this.using_pubsub);
       return res.status(cmn.HTTP_CODE.SUCCESS).json(user_queries.values());
     } catch (err) {
+      wutil.logInternalServerError(req, err);
       wutil.logInternalServerError(req, `Failed to get queries status for the current user: ${uid}`);
       return wutil.sendInternalServerError(res, 'Failed to get queries status for the current user');
     }
