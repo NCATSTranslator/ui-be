@@ -110,23 +110,30 @@ export function startServer(config, services) {
   app.post(`${API_PATH_V1}/query/update`, queryAPIController.updateQuery.bind(queryAPIController));
 
   // User routes: privileged
+  //app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
   app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
   app.get(`${API_PATH_V1}/users/me`, userAPIController.getUser.bind(userAPIController));
   app.get(`${API_PATH_V1}/users/me/preferences`, userAPIController.getUserPrefs.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/preferences`, userAPIController.updateUserPrefs.bind(userAPIController));
-  app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
 
   // User queries
   // Creation of user queries is done on submission. See the /query endpoint
-  app.get(`${API_PATH_V1}/users/me/queries`, userAPIController.getUserQueries.bind(userAPIController));
-  app.post(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete(`${API_PATH_V1}/users/me/queries/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/queries`, queryAPIController.getUserQueries.bind(queryAPIController));
+  app.put(`${API_PATH_V1}/users/me/queries`, queryAPIController.update_user_query.bind(queryAPIController));
+  app.put(`${API_PATH_V1}/users/me/queries/delete`, queryAPIController.deleteUserQueries.bind(queryAPIController));
+  app.put(`${API_PATH_V1}/users/me/queries/restore`, queryAPIController.restoreUserQueries.bind(queryAPIController));
+
+  // User projects
+  app.get(`${API_PATH_V1}/users/me/projects`, userAPIController.getUserProjects.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/projects`, userAPIController.createUserProject.bind(userAPIController));
+  app.put(`${API_PATH_V1}/users/me/projects/update`, userAPIController.updateUserProjects.bind(userAPIController));
+  app.put(`${API_PATH_V1}/users/me/projects/delete`, userAPIController.deleteUserProjects.bind(userAPIController));
+  app.put(`${API_PATH_V1}/users/me/projects/restore`, userAPIController.restoreUserProjects.bind(userAPIController));
 
   // User bookmarks
   app.get(`${API_PATH_V1}/users/me/bookmarks`, userAPIController.getUserBookmarks.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/bookmarks`, userAPIController.updateUserSaves.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/bookmarks/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
-  app.delete(`${API_PATH_V1}/users/me/bookmarks/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
 
   // User tags
   app.get(`${API_PATH_V1}/users/me/tags`, userAPIController.getUserTags.bind(userAPIController));

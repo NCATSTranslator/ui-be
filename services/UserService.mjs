@@ -32,14 +32,18 @@ class UserService {
   }
 
   // Queries
-  async createUserQuery(uid, queryModel) {
+  async createUserQuery(uid, pk, query) {
     const userSavedData = new UserSavedData({
       user_id: uid,
       save_type: SAVE_TYPE.QUERY,
-      ars_pkey: queryModel.pk,
-      data: new UserQueryData(queryModel.metadata.query)
+      ars_pkey: pk,
+      data: new UserQueryData(query)
     });
     return this.saveUserData(userSavedData);
+  }
+
+  async get_user_queries_map(uid, include_deleted, use_status) {
+    return this.savedDataStore.retrieve_queries_map(uid, include_deleted, use_status);
   }
 
   // Saves
@@ -59,8 +63,20 @@ class UserService {
     return this.savedDataStore.updateUserSavedDataPartial(saveData, includeDeleted);
   }
 
+  async updateUserSaveBatch(saveData) {
+    return this.savedDataStore.updateUserSavedDataBatch(saveData);
+  }
+
   async deleteUserSave(save_id) {
     return this.savedDataStore.deleteUserSavedDataById(save_id);
+  }
+
+  async deleteUserSaveBatch(uid, sids) {
+    return this.savedDataStore.deleteUserSavedDataBatch(uid, sids);
+  }
+
+  async restoreUserSaveBatch(uid, sids) {
+    return this.savedDataStore.restoreUserSavedDataBatch(uid, sids);
   }
 
   // Workspaces
