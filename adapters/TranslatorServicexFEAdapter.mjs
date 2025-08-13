@@ -1,5 +1,6 @@
 'use strict';
 
+import * as cmn from '../lib/common.mjs';
 import * as arsmsg from '../lib/ARSMessages.mjs';
 import * as sm from '../lib/summarization/summarization.mjs';
 
@@ -10,10 +11,10 @@ export { TranslatorServicexFEAdapter };
 
 function determineStatus(msg) {
   if (msg.queuing) {
-    return "running";
+    return cmn.QUERY_STATUS.RUNNING;
   }
   else {
-    return msg.running.length > 0 ? "running" : "success";
+    return msg.running.length > 0 ? cmn.QUERY_STATUS.RUNNING : cmn.QUERY_STATUS.COMPLETE;
   }
 }
 
@@ -21,7 +22,7 @@ class TranslatorServicexFEAdapter {
 
   querySubmitToFE(msg) {
     return {
-      status: 'success',
+      status: cmn.QUERY_STATUS.COMPLETE,
       data: arsmsg.msgId(msg)
     }
   }

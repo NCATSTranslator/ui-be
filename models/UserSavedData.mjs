@@ -2,6 +2,7 @@
 export { UserSavedData, UserQueryData, UserTagData, SAVE_TYPE };
 
 const SAVE_TYPE = Object.freeze({
+  PROJECT: 'project',
   QUERY: 'query',
   BOOKMARK: 'bookmark',
   TAG: 'tag'
@@ -55,9 +56,9 @@ class UserSavedData {
 }
 
 class UserQueryData {
-  constructor(description) {
-    if (!description) throw new Error('description is required');
-    this.description = description;
+  constructor(query) {
+    this.description = query;
+    this.title = null;
     this.bookmark_ids = [];
     this.tag_ids = [];
   }
