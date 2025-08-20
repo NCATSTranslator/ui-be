@@ -101,10 +101,9 @@ class QueryAPIController {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const uid = req.sessionData.user.id;
-    let queries = null;
     try {
-      queries = await this.userService.deleteUserSaveBatch(uid, query_ids);
-      return res.status(cmn.HTTP_CODE.SUCCESS).json(queries);
+      const _ = await this.userService.deleteUserSaveBatch(uid, query_ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
       return wutil.sendInternalServerError(res, 'Failed to update queries from the database');
@@ -119,8 +118,8 @@ class QueryAPIController {
     const uid = req.sessionData.user.id;
     let queries = null;
     try {
-      queries = await this.userService.restoreUserSaveBatch(uid, query_ids);
-      return res.status(cmn.HTTP_CODE.SUCCESS).json(queries);
+      const _ = await this.userService.restoreUserSaveBatch(uid, query_ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
       return wutil.sendInternalServerError(res, 'Failed to update queries from the database');
