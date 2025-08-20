@@ -139,7 +139,7 @@ class UserAPIController {
     const user_id = req.sessionData.user.id;
     try {
       const _ = await this.userService.deleteUserSaveBatch(user_id, project_ids);
-      return res.status(cmn.HTTP_CODE.SUCCESS);
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update projects from the database. Got error: ${err}`);
       return wutil.sendInternalServerError(res, 'Failed to update projects from the database');
@@ -153,7 +153,7 @@ class UserAPIController {
     const user_id = req.sessionData.user.id;
     try {
       const _ = await this.userService.restoreUserSaveBatch(user_id, project_ids);
-      return res.status(cmn.HTTP_CODE.SUCCESS);
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update projects from the database. Got error: ${err}`);
       return wutil.sendInternalServerError(res, 'Failed to update projects from the database');
