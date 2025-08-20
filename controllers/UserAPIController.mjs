@@ -152,7 +152,7 @@ class UserAPIController {
     }
     const user_id = req.sessionData.user.id;
     try {
-      const projects = await this.userService.restoreUserSaveBatch(user_id, project_ids);
+      const _ = await this.userService.restoreUserSaveBatch(user_id, project_ids);
       return res.status(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update projects from the database. Got error: ${err}`);
