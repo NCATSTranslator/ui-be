@@ -103,7 +103,7 @@ class QueryAPIController {
     const uid = req.sessionData.user.id;
     try {
       const _ = await this.userService.deleteUserSaveBatch(uid, query_ids);
-      return res.status(cmn.HTTP_CODE.SUCCESS);
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
       return wutil.sendInternalServerError(res, 'Failed to update queries from the database');
@@ -119,7 +119,7 @@ class QueryAPIController {
     let queries = null;
     try {
       const _ = await this.userService.restoreUserSaveBatch(uid, query_ids);
-      return res.status(cmn.HTTP_CODE.SUCCESS);
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
       return wutil.sendInternalServerError(res, 'Failed to update queries from the database');
