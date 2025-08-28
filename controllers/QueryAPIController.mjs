@@ -135,6 +135,7 @@ class QueryAPIController {
       const queryRequest = req.body;
       const pid = queryRequest.pid;
       let project = null;
+      const uid = req.sessionData.user.id;
       if (pid) {
         const projects = await this.userService.getUserSavesBy(uid, {id: pid});
         if (!projects || cmn.isArrayEmpty(projects)) {
@@ -153,14 +154,13 @@ class QueryAPIController {
       if (!queryModel) throw new Error(`Failed to create query with PK: ${pk}`);
       //TODO: verify subscribe response
       const subscribeResp = await this.translatorService.subscribeQuery(pk);
-      const uid = req.sessionData.user.id;
       const userQueryModel = await this.userService.createUserQuery(uid, pk, queryModel.metadata.query);
       if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
       const isUserAssignedQuery = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
       if (!isUserAssignedQuery) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
       if (pid) {
         project.data.pks.push(pk);
-        const updatedProject = await this.userService.updateUserSavePartial(project);
+        const updatedProject = await this.userService.updateUserSave(project);
         if (!updatedProject) {
           throw new Error(`Error updating project: ${pid} with PK: ${pk}`);
         }
