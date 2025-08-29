@@ -7,6 +7,7 @@ ui-fe
 **/*.swp
 **/*.swo
 *.log
+mock/mock-data/*
 junk
 *~
 configurations/secrets

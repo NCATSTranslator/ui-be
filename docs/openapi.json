@@ -1,0 +1,2823 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "UI Backend API",
+    "description": "REST API for the UI Backend service providing query submission, user management, and session handling",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8386",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check endpoint",
+        "description": "Returns server status",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "OK"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/config": {
+      "get": {
+        "summary": "Get application configuration",
+        "description": "Returns public configuration data for the frontend application",
+        "responses": {
+          "200": {
+            "description": "Configuration data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Config"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/session/status": {
+      "get": {
+        "summary": "Get session status",
+        "description": "Returns current user session status",
+        "responses": {
+          "200": {
+            "description": "Session status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatus",
+                  "_GDP": "Check Session Status"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error retrieving session status"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update session status",
+        "description": "Update or expire the current session",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessionUpdateRequest"
+                "_GDP": "Check SessionUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated session status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request payload"
+          },
+          "401": {
+            "description": "Invalid session status"
+          },
+          "500": {
+            "description": "Server error updating session"
+          }
+        }
+      }
+    },
+    "/oauth2/redir/{provider}": {
+      "get": {
+        "summary": "OAuth2 redirect handler",
+        "description": "Handles OAuth2 authentication redirects from social providers",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "OAuth provider name"
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Authorization code from OAuth provider"
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "State parameter for CSRF protection"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to application after successful authentication"
+          },
+          "400": {
+            "description": "Bad request - invalid login parameters"
+          },
+          "403": {
+            "description": "Authentication failed or login request expired"
+          }
+        }
+      }
+    },
+    "/login": {
+      "get": {
+        "summary": "Initiate login flow",
+        "description": "Redirects to OAuth provider for authentication",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": "/"
+            },
+            "description": "Redirect path after successful login"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to OAuth provider or application if already authenticated"
+          },
+          "500": {
+            "description": "Error creating login state session"
+          }
+        }
+      }
+    },
+    "/logout": {
+      "get": {
+        "summary": "Logout user",
+        "description": "Expires session and redirects to home page",
+        "responses": {
+          "302": {
+            "description": "Redirect to home page after logout"
+          }
+        }
+      }
+    },
+    "/api/v1/query": {
+      "post": {
+        "summary": "Submit a query",
+        "description": "Submit a new query for processing",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuerySubmitResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/query/{qid}/status": {
+      "get": {
+        "summary": "Get query status",
+        "description": "Get the current status of a submitted query",
+        "parameters": [
+          {
+            "name": "qid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Query ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/query/{qid}/result": {
+      "get": {
+        "summary": "Get query results",
+        "description": "Get the results of a completed query",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "qid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Query ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResults"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/query/update": {
+      "post": {
+        "summary": "Update query status (callback)",
+        "description": "Webhook endpoint for external services to update query status",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Update processed successfully"
+          },
+          "400": {
+            "description": "Bad request - signature not provided"
+          },
+          "401": {
+            "description": "Unauthorized - invalid signature"
+          },
+          "410": {
+            "description": "Query already complete"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me": {
+      "get": {
+        "summary": "Get current user",
+        "description": "Get information about the currently authenticated user",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User information",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/preferences": {
+      "get": {
+        "summary": "Get user preferences",
+        "description": "Get current user's preferences",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferences"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "No preference data found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update user preferences",
+        "description": "Update current user's preferences",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserPreferences"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPreferences"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Nothing was updated"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/queries": {
+      "get": {
+        "summary": "Get user queries",
+        "description": "Get all queries for the current user",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted queries"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User queries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserQuery"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update user query",
+        "description": "Update a user query",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserQuery"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserQuery"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/queries/delete": {
+      "put": {
+        "summary": "Delete user queries",
+        "description": "Delete multiple user queries",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Queries deleted successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/queries/restore": {
+      "put": {
+        "summary": "Restore user queries",
+        "description": "Restore deleted user queries",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Queries restored successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/projects": {
+      "get": {
+        "summary": "Get user projects",
+        "description": "Get all projects for the current user",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted projects"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User projects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserProject"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create user project",
+        "description": "Create a new project for the current user",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Project created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProject"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing required fields"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/projects/update": {
+      "put": {
+        "summary": "Update user projects",
+        "description": "Update multiple user projects",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ProjectUpdateRequest"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Projects updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserProject"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/projects/delete": {
+      "put": {
+        "summary": "Delete user projects",
+        "description": "Delete multiple user projects",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Projects deleted successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/projects/restore": {
+      "put": {
+        "summary": "Restore user projects",
+        "description": "Restore deleted user projects",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Projects restored successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/bookmarks": {
+      "get": {
+        "summary": "Get user bookmarks",
+        "description": "Get all bookmarks for the current user",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted bookmarks"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User bookmarks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSavedData"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update user bookmarks",
+        "description": "Update user bookmarks",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSavedData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bookmark updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSavedData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/bookmarks/{save_id}": {
+      "post": {
+        "summary": "Update user bookmark by ID",
+        "description": "Update a specific user bookmark",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "save_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Bookmark ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSavedData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bookmark updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSavedData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "Bookmark not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/tags": {
+      "get": {
+        "summary": "Get user tags",
+        "description": "Get all tags for the current user",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted tags"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User tags",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSavedData"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update user tags",
+        "description": "Update user tags",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSavedData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSavedData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/tags/{save_id}": {
+      "post": {
+        "summary": "Update user tag by ID",
+        "description": "Update a specific user tag",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "save_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Tag ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSavedData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSavedData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "Tag not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete user tag by ID",
+        "description": "Delete a specific user tag",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "save_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Tag ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Tag deleted"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "Tag not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/saves": {
+      "get": {
+        "summary": "Get user saves",
+        "description": "Get all saved data for the current user",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted saves"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["project", "query", "bookmark", "tag"]
+            },
+            "description": "Filter by save type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User saves",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSavedData"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Update user saves",
+        "description": "Create or update user saved data",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSavedData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Save updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSavedData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/saves/{save_id}": {
+      "get": {
+        "summary": "Get user save by ID",
+        "description": "Get a specific user saved data item",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "save_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Save ID"
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted saves"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User save",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSavedData"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "Save not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update user save by ID",
+        "description": "Update a specific user saved data item",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "save_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Save ID"
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted saves"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSavedData"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Save updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSavedData"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "Save not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete user save by ID",
+        "description": "Delete a specific user saved data item",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "save_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Save ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Save deleted"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "Save not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/workspaces": {
+      "get": {
+        "summary": "Get user workspaces",
+        "description": "Get all workspaces for the current user",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "include_data",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include workspace data"
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted workspaces"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User workspaces",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserWorkspace"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "No workspaces found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create user workspace",
+        "description": "Create a new workspace for the current user",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workspace created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWorkspace"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/v1/users/me/workspaces/{ws_id}": {
+      "get": {
+        "summary": "Get user workspace by ID",
+        "description": "Get a specific user workspace",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Workspace ID"
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted workspaces"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWorkspace"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Permission denied"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update user workspace by ID",
+        "description": "Update a specific user workspace",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Workspace ID"
+          },
+          {
+            "name": "include_deleted",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include deleted workspaces"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserWorkspace"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workspace updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWorkspace"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Permission denied"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete user workspace by ID",
+        "description": "Delete a specific user workspace",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Workspace ID"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Workspace deleted"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Permission denied"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/demo/disease/{disease_id}": {
+      "get": {
+        "summary": "Demo disease query",
+        "description": "Execute a demo query for a specific disease",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "disease_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Disease ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Demo query executed"
+          },
+          "400": {
+            "description": "Invalid demo query"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/demo/gene/{gene_id}": {
+      "get": {
+        "summary": "Demo gene query",
+        "description": "Execute a demo query for a specific gene",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "gene_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Gene ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Demo query executed"
+          },
+          "400": {
+            "description": "Invalid demo query"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/demo/chemical/{chemical_id}": {
+      "get": {
+        "summary": "Demo chemical query",
+        "description": "Execute a demo query for a specific chemical",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "chemical_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Chemical ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Demo query executed"
+          },
+          "400": {
+            "description": "Invalid demo query"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
+      }
+    },
+    "schemas": {
+      "Config": {
+        "type": "object",
+        "properties": {
+          "gaID": {
+            "type": "string",
+            "description": "Google Analytics ID"
+          },
+          "cached_queries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CachedQuery"
+            },
+            "description": "Cached queries available to frontend"
+          },
+          "name_resolver": {
+            "type": "string",
+            "description": "Name resolver endpoint"
+          },
+          "social_providers": {
+            "type": "object",
+            "description": "Social authentication providers configuration"
+          },
+          "include_pathfinder": {
+            "type": "boolean",
+            "description": "Whether to include pathfinder functionality"
+          },
+          "include_summarization": {
+            "type": "boolean",
+            "description": "Whether to include summarization functionality"
+          }
+        }
+      },
+      "SessionStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["valid", "token_expired", "invalid", "not_found"],
+            "description": "Session status"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      },
+      "SessionUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "update": {
+            "type": "boolean",
+            "description": "Update session timestamp"
+          },
+          "expire": {
+            "type": "boolean",
+            "description": "Expire the session"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "User name"
+          },
+          "email": {
+            "type": "string",
+            "description": "User email"
+          }
+        }
+      },
+      "UserPreferences": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "preferences": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/UserPreferenceValue"
+            },
+            "description": "Map of preference names to preference value objects"
+          }
+        },
+        "required": ["user_id", "preferences"],
+        "description": "User preferences response object"
+      },
+      "UserPreferenceValue": {
+        "type": "object",
+        "properties": {
+          "pref_value": {
+            "description": "The preference value (can be any type based on pref_data_type)"
+          },
+          "pref_data_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Data type of the preference value"
+          },
+          "time_created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the preference was created"
+          },
+          "time_updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the preference was last updated"
+          }
+        },
+        "required": ["pref_value"],
+        "description": "Individual preference value with metadata"
+      },
+      "QueryRequest": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SmartQuery"
+          },
+          {
+            "$ref": "#/components/schemas/PathfinderQuery"
+          }
+        ],
+        "description": "Query submission request - can be either a smart query or pathfinder query"
+      },
+      "SmartQuery": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "integer",
+            "description": "Project ID to associate with the query",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "enum": ["drug", "gene", "chemical"],
+            "description": "Query type - determines what to find for the given entity"
+          },
+          "curie": {
+            "type": "string",
+            "description": "CURIE identifier for the entity (e.g., MONDO:0007254 for drug queries, NCBIGene:55768 for gene queries, PUBCHEM.COMPOUND:5486971 for chemical queries)"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["increased", "decreased"],
+            "description": "Direction of effect - required for gene and chemical queries, not applicable for drug queries",
+            "nullable": true
+          }
+        },
+        "required": ["type", "curie"],
+        "description": "Smart query for finding drugs, genes affected by chemicals, or chemicals affecting genes"
+      },
+      "PathfinderQuery": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "integer",
+            "description": "Project ID to associate with the query",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "enum": ["pathfinder"],
+            "description": "Query type for pathfinder queries"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/PathfinderEntity",
+            "description": "Subject entity for pathfinder queries"
+          },
+          "object": {
+            "$ref": "#/components/schemas/PathfinderEntity",
+            "description": "Object entity for pathfinder queries"
+          },
+          "constraint": {
+            "type": "string",
+            "description": "Constraint category for pathfinding (optional intermediate category)",
+            "nullable": true
+          }
+        },
+        "required": ["type", "subject", "object"],
+        "description": "Pathfinder query for finding paths between two entities"
+      },
+      "QuerySubmitResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["running", "complete", "error"],
+            "description": "Query status - typically 'complete' for successful submissions"
+          },
+          "data": {
+            "type": "string",
+            "description": "Query primary key (PK) - unique identifier for the submitted query"
+          }
+        },
+        "required": ["status", "data"],
+        "description": "Response from query submission containing status and query PK"
+      },
+      "QueryStatus": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["running", "complete", "error"],
+            "description": "Query status"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "qid": {
+                "type": "string",
+                "description": "Query primary key (PK)"
+              },
+              "aras": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Array of ARA (Autonomous Relay Agent) names that have completed processing"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Last update timestamp"
+              }
+            },
+            "required": ["qid", "aras", "timestamp"],
+            "description": "Query status data"
+          }
+        },
+        "required": ["status", "data"],
+        "description": "Query status response with processing information"
+      },
+      "QueryResults": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["running", "complete", "error"],
+            "description": "Query status"
+          },
+          "data": {
+            "$ref": "#/components/schemas/QuerySummary"
+          }
+        },
+        "required": ["status", "data"],
+        "description": "Query results response containing summarized data"
+      },
+      "UserQuery": {
+        "type": "object",
+        "properties": {
+          "sid": {
+            "type": "string",
+            "description": "Save ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["running", "complete", "error"],
+            "description": "Query status"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "qid": {
+                "type": "string",
+                "description": "Query primary key"
+              },
+              "aras": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Array of ARA agent names"
+              },
+              "title": {
+                "type": "string",
+                "nullable": true,
+                "description": "Query title"
+              },
+              "query": {
+                "type": "object",
+                "description": "Original query object/description"
+              },
+              "bookmark_ids": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "Associated bookmark IDs"
+              },
+              "note_count": {
+                "type": "integer",
+                "description": "Number of notes associated with this query"
+              },
+              "time_created": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the query was created"
+              },
+              "time_updated": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the query was last updated"
+              },
+              "deleted": {
+                "type": "boolean",
+                "description": "Whether the query is deleted"
+              }
+            },
+            "required": ["qid", "aras", "bookmark_ids", "note_count", "time_created", "time_updated", "deleted"]
+          }
+        },
+        "required": ["sid", "status", "data"],
+        "description": "User query object with status and metadata"
+      },
+      "UserProject": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UserSavedData"
+          }
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Project title"
+              },
+              "pks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Query PKs associated with the project"
+              }
+            },
+            "required": ["title", "pks"]
+          }
+        }
+      },
+      "CreateProjectRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Project title"
+          },
+          "pks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Query PKs to associate with the project"
+          }
+        },
+        "required": ["title", "pks"]
+      },
+      "ProjectUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Project ID"
+          },
+          "title": {
+            "type": "string",
+            "description": "Project title"
+          },
+          "pks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Query PKs to associate with the project"
+          }
+        },
+        "required": ["id"]
+      },
+      "UserSavedData": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Save ID",
+            "nullable": true
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "User ID"
+          },
+          "save_type": {
+            "type": "string",
+            "enum": ["project", "query", "bookmark", "tag"],
+            "description": "Type of saved data"
+          },
+          "label": {
+            "type": "string",
+            "description": "Label for the saved data",
+            "nullable": true
+          },
+          "notes": {
+            "type": "string",
+            "description": "Notes for the saved data",
+            "nullable": true
+          },
+          "ars_pkey": {
+            "type": "string",
+            "description": "ARS primary key",
+            "nullable": true
+          },
+          "object_ref": {
+            "type": "string",
+            "description": "Object reference",
+            "nullable": true
+          },
+          "time_created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "time_updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "data": {
+            "type": "object",
+            "description": "Saved data content",
+            "nullable": true
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Whether the save is deleted",
+            "default": false
+          }
+        },
+        "required": ["user_id"]
+      },
+      "UserWorkspace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Workspace UUID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Workspace name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Workspace description",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "description": "Workspace label"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "Owner user ID"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Whether the workspace is deleted",
+            "default": false
+          },
+          "is_public": {
+            "type": "boolean",
+            "description": "Whether the workspace is public",
+            "default": false
+          },
+          "time_created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp"
+          },
+          "time_updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          },
+          "data": {
+            "type": "object",
+            "description": "Workspace data",
+            "nullable": true
+          }
+        },
+        "required": ["name", "user_id"]
+      },
+      "CreateWorkspaceRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Workspace name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Workspace description"
+          },
+          "user_id": {
+            "type": "integer",
+            "description": "Owner user ID"
+          },
+          "is_public": {
+            "type": "boolean",
+            "description": "Whether the workspace is public",
+            "default": false
+          },
+          "data": {
+            "type": "object",
+            "description": "Workspace data"
+          }
+        },
+        "required": ["name", "user_id"]
+      },
+      "CachedQuery": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable name of the query"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["drug", "chemical", "gene"],
+            "description": "Type of query (what to find for the given entity)"
+          },
+          "allow_inbound": {
+            "type": "boolean",
+            "description": "Whether this query can be accessed via inbound demo routes"
+          },
+          "allow_outbound": {
+            "type": "boolean",
+            "description": "Whether this query is available in the frontend query list"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["increased", "decreased"],
+            "nullable": true,
+            "description": "Direction of effect for gene/chemical queries"
+          },
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for the cached query"
+          },
+          "id": {
+            "type": "string",
+            "description": "CURIE identifier for the entity (e.g., MONDO:0007254, NCBIGene:55768, PUBCHEM.COMPOUND:5486971)"
+          }
+        },
+        "required": ["name", "type", "allow_inbound", "allow_outbound", "uuid", "id"]
+      },
+      "PathfinderEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "CURIE identifier for the entity"
+          },
+          "category": {
+            "type": "string",
+            "description": "Biolink category for the entity"
+          }
+        },
+        "required": ["id", "category"]
+      },
+      "QuerySummary": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/SummaryMetadata",
+            "description": "Metadata about the query and processing agents"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SummaryResult"
+            },
+            "description": "Array of summarized query results"
+          },
+          "paths": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SummaryPath"
+            },
+            "description": "Map of path IDs to path objects"
+          },
+          "nodes": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SummaryNode"
+            },
+            "description": "Map of node IDs to node objects from the knowledge graph"
+          },
+          "edges": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SummaryEdge"
+            },
+            "description": "Map of edge IDs to edge objects from the knowledge graph"
+          },
+          "publications": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SummaryPublication"
+            },
+            "description": "Map of publication IDs to publication objects"
+          },
+          "trials": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ClinicalTrial"
+            },
+            "description": "Map of clinical trial IDs to trial objects"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TagDescription"
+            },
+            "description": "Map of tag labels to tag descriptions for faceting"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "Map of agent names to arrays of error messages"
+          }
+        },
+        "required": ["meta", "results", "paths", "nodes", "edges", "publications", "trials", "tags", "errors"],
+        "description": "Comprehensive summary of query results with all supporting data"
+      },
+      "SummaryMetadata": {
+        "type": "object",
+        "properties": {
+          "qid": {
+            "type": "string",
+            "description": "Query ID"
+          },
+          "aras": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of ARA agent names that processed this query"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of when results were processed"
+          }
+        },
+        "required": ["qid", "aras"]
+      },
+      "SummaryResult": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this result"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Subject node ID"
+          },
+          "object": {
+            "type": "string",
+            "description": "Object node ID"
+          },
+          "drug_name": {
+            "type": "string",
+            "description": "Human-readable name for the result"
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of path IDs that support this result"
+          },
+          "scores": {
+            "type": "object",
+            "properties": {
+              "confidence": {
+                "type": "number",
+                "description": "Confidence score"
+              },
+              "novelty": {
+                "type": "number",
+                "description": "Novelty score"
+              },
+              "clinical_evidence": {
+                "type": "number",
+                "description": "Clinical evidence score"
+              },
+              "normalized_score": {
+                "type": "number",
+                "description": "Normalized overall score"
+              }
+            },
+            "description": "Scoring components for result ranking"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Map of tag labels to null (tags are defined in the main tags object)"
+          }
+        },
+        "required": ["id", "subject", "object", "drug_name", "paths"]
+      },
+      "SummaryPath": {
+        "type": "object",
+        "properties": {
+          "subgraph": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array alternating between node IDs and edge IDs representing the path"
+          },
+          "aras": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of ARA agent names that contributed to this path"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TagDescription"
+            },
+            "description": "Tags associated with this path"
+          }
+        },
+        "required": ["subgraph", "aras", "tags"]
+      },
+      "SummaryNode": {
+        "type": "object",
+        "properties": {
+          "aras": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of ARA agent names"
+          },
+          "curies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of CURIE identifiers for this node"
+          },
+          "descriptions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of descriptions for this node"
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of names for this node"
+          },
+          "other_names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of alternative names"
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Array of provenance information"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TagDescription"
+            },
+            "description": "Tags associated with this node"
+          },
+          "types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of Biolink types for this node"
+          },
+          "species": {
+            "type": "string",
+            "nullable": true,
+            "description": "Species information for this node"
+          }
+        },
+        "required": ["aras", "curies", "descriptions", "names", "other_names", "provenance", "tags", "types"]
+      },
+      "SummaryEdge": {
+        "type": "object",
+        "properties": {
+          "aras": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of ARA agent names"
+          },
+          "support": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of supporting path IDs"
+          },
+          "is_root": {
+            "type": "boolean",
+            "description": "Whether this is a root path edge"
+          },
+          "knowledge_level": {
+            "type": "string",
+            "description": "Knowledge level classification"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["direct", "indirect"],
+            "description": "Edge type - direct or indirect"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Subject node ID"
+          },
+          "object": {
+            "type": "string",
+            "description": "Object node ID"
+          },
+          "predicate": {
+            "type": "string",
+            "description": "Biolink predicate"
+          },
+          "predicate_url": {
+            "type": "string",
+            "description": "URL for the predicate"
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Provenance"
+            },
+            "description": "Array of provenance information"
+          },
+          "publications": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Publication ID"
+                  },
+                  "support": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "Supporting text data"
+                  }
+                }
+              }
+            },
+            "description": "Publications grouped by knowledge level"
+          },
+          "trials": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of clinical trial IDs"
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TagDescription"
+            },
+            "description": "Tags associated with this edge"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/EdgeMetadata",
+            "nullable": true,
+            "description": "Edge metadata containing binding information"
+          }
+        },
+        "required": ["aras", "support", "is_root", "subject", "object", "predicate", "provenance", "publications", "trials", "tags"]
+      },
+      "SummaryPublication": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Publication type (e.g., PMID, PMC)"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL to the publication"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Provenance",
+            "description": "Source provenance information for the publication"
+          }
+        },
+        "required": ["type", "url", "source"]
+      },
+      "ClinicalTrial": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Clinical trial ID"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL to the clinical trial"
+          },
+          "phase": {
+            "type": "string",
+            "description": "Clinical trial phase",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "description": "Clinical trial status",
+            "nullable": true
+          },
+          "child": {
+            "type": "string",
+            "description": "Child trial information",
+            "nullable": true
+          },
+          "start_date": {
+            "type": "string",
+            "description": "Trial start date",
+            "nullable": true
+          },
+          "size": {
+            "type": "integer",
+            "description": "Study size",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "enum": ["enrolled", "anticipated"],
+            "description": "Enrollment type",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "description": "Brief title of the trial",
+            "nullable": true
+          }
+        },
+        "required": ["id", "url"]
+      },
+      "TagDescription": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "User-facing name for the tag"
+          },
+          "value": {
+            "type": "string",
+            "description": "User-facing description for the tag"
+          }
+        },
+        "required": ["name", "value"]
+      },
+      "Provenance": {
+        "type": "object",
+        "properties": {
+          "infores": {
+            "type": "string",
+            "description": "Information resource identifier (e.g., infores:drugbank, infores:chembl)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable name of the information resource"
+          },
+          "wiki": {
+            "type": "string",
+            "nullable": true,
+            "description": "Wiki URL for the information resource"
+          },
+          "knowledge_level": {
+            "type": "string",
+            "enum": ["trusted", "inferred", "unknown"],
+            "description": "Knowledge level classification of the information resource"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true,
+            "description": "Main URL for the information resource"
+          }
+        },
+        "required": ["infores", "name", "knowledge_level"]
+      },
+      "EdgeMetadata": {
+        "type": "object",
+        "properties": {
+          "edge_bindings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of edge binding IDs from the TRAPI result"
+          },
+          "inverted_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Edge ID for the inverted version of this edge (if applicable)"
+          },
+          "is_root": {
+            "type": "boolean",
+            "description": "Whether this is a root path edge"
+          }
+        },
+        "required": ["edge_bindings", "is_root"]
+      },
+      "QueryUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "enum": ["merged_version_available", "merged_version_begun", "ara_response_complete", "admin", "ars_error"],
+            "description": "Type of ARS callback event"
+          },
+          "pk": {
+            "type": "string",
+            "description": "Query primary key identifier"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of the event"
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "Whether the query processing is complete (for merged_version_available events)",
+            "nullable": true
+          },
+          "merged_versions_list": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "string",
+                  "description": "Version identifier"
+                },
+                {
+                  "type": "string",
+                  "description": "ARA name"
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "description": "List of [id, ara_name] pairs for merged versions (for merged_version_available events)",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message (for ars_error events)",
+            "nullable": true
+          }
+        },
+        "required": ["event_type", "pk", "timestamp"],
+        "description": "ARS callback payload for query status updates"
+      }
+    }
+  }
+}
