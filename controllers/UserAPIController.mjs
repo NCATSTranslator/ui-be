@@ -122,11 +122,7 @@ class UserAPIController {
     }
     try {
       const result = await this.userService.updateUserSaveBatch(database_updates);
-      if (!result) {
-        return res.status(cmn.HTTP_CODE.SUCCESS).json([]);
-      } else {
-        return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
-      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
     } catch (err) {
       return wutil.sendInternalServerError(res, `Error commiting projects updates to database. Got: ${err}`);
     }

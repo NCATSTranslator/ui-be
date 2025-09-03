@@ -96,7 +96,7 @@ class UserSavedDataStorePostgres {
       WHERE usd.id = up.id
       RETURNING *
     `, params);
-    return res.rows.length > 0 ? new UserSavedData(res.rows[0]) : null;
+    return res.rows.length > 0 ? res.rows.map((row) => new UserSavedData(row)) : [];
   }
 
   async updateUserSavedData(userSavedDataModel) {
