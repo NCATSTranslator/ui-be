@@ -338,5 +338,6 @@
     }
   ],
   "include_pathfinder": false,
-  "include_summarization": false
+  "include_summarization": false,
+  "include_query_status_polling": true
 }

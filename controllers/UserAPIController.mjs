@@ -122,11 +122,7 @@ class UserAPIController {
     }
     try {
       const result = await this.userService.updateUserSaveBatch(database_updates);
-      if (!result) {
-        return res.status(cmn.HTTP_CODE.SUCCESS).json([]);
-      } else {
-        return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
-      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
     } catch (err) {
       return wutil.sendInternalServerError(res, `Error commiting projects updates to database. Got: ${err}`);
     }
@@ -137,10 +133,9 @@ class UserAPIController {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const user_id = req.sessionData.user.id;
-    let projects = null;
     try {
-      projects = await this.userService.deleteUserSaveBatch(user_id, project_ids);
-      return res.status(cmn.HTTP_CODE.SUCCESS).json(projects);
+      const _ = await this.userService.deleteUserSaveBatch(user_id, project_ids);
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update projects from the database. Got error: ${err}`);
       return wutil.sendInternalServerError(res, 'Failed to update projects from the database');
@@ -152,10 +147,9 @@ class UserAPIController {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const user_id = req.sessionData.user.id;
-    let projects = null;
     try {
-      projects = await this.userService.restoreUserSaveBatch(user_id, project_ids);
-      return res.status(cmn.HTTP_CODE.SUCCESS).json(projects);
+      const _ = await this.userService.restoreUserSaveBatch(user_id, project_ids);
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update projects from the database. Got error: ${err}`);
       return wutil.sendInternalServerError(res, 'Failed to update projects from the database');

@@ -14,7 +14,8 @@ class ConfigAPIController {
       name_resolver: this.config.frontend.name_resolver.endpoint,
       social_providers: this.config.auth.social_providers,
       include_pathfinder: this.config.frontend.include_pathfinder,
-      include_summarization: this.config.frontend.include_summarization
+      include_summarization: this.config.frontend.include_summarization,
+      include_query_status_polling: this.config.frontend.include_query_status_polling
     });
   }
 }
