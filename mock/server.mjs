@@ -141,15 +141,17 @@ app.put('/api/v1/users/me/queries/delete', (req, res) => {
   const sids = req.body.map(parseInt);
   console.log('PUT /api/v1/users/me/queries/delete - Received data:', JSON.stringify(sids, null, 2));
 
-  if (!Array.isArray(sids)) {
-    return res.status(400).json({ error: 'sids must be an array' });
+  if (!Array.isArray(sids)) return res.status(400).json({ error: 'data must be an array' });
+  for (let i = 0; i < sids.length; i++) {
+    const sid = sids[i];
+    if (!sid) return res.status(400).json({ error: 'data must be an array of save IDs' });
   }
 
   let data = loadMockData('api/v1/users/me/queries.json');
   if (data && Array.isArray(data)) {
     // Mark queries as deleted
     data.forEach(query => {
-      if (sids.includes(query.data?.sid)) {
+      if (sids.includes(query.sid)) {
         query.data.deleted = true;
         query.time_updated = new Date().toISOString();
       }
@@ -170,11 +172,15 @@ app.put('/api/v1/users/me/queries/restore', (req, res) => {
   if (!Array.isArray(sids)) {
     return res.status(400).json({ error: 'sids must be an array' });
   }
+  for (let i = 0; i < sids.length; i++) {
+    const sid = sids[i];
+    if (!sid) return res.status(400).json({ error: 'data must be an array of save IDs' });
+  }
 
   let data = loadMockData('api/v1/users/me/queries.json');
   if (data && Array.isArray(data)) {
     data.forEach(query => {
-      if (sids.includes(query.data?.sid)) {
+      if (sids.includes(query.sid)) {
         query.data.deleted = false;
         query.time_updated = new Date().toISOString();
       }
