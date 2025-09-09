@@ -136,10 +136,10 @@ app.get('/api/v1/users/me/queries', (req, res) => {
   }
 });
 
-// Delete user queries
-app.put('/api/v1/users/me/queries/delete', (req, res) => {
+// Trash user queries
+app.put('/api/v1/users/me/queries/trash', (req, res) => {
   const sids = req.body.map(parseInt);
-  console.log('PUT /api/v1/users/me/queries/delete - Received data:', JSON.stringify(sids, null, 2));
+  console.log('PUT /api/v1/users/me/queries/trash - Received data:', JSON.stringify(sids, null, 2));
 
   if (!Array.isArray(sids)) return res.status(400).json({ error: 'data must be an array' });
   for (let i = 0; i < sids.length; i++) {
@@ -192,6 +192,29 @@ app.put('/api/v1/users/me/queries/restore', (req, res) => {
   res.status(200).send();
 });
 
+// Permanently delete user queries
+app.delete('/api/v1/users/me/queries', (req, res) => {
+  const sids = req.body.map(parseInt);
+  console.log('DELETE /api/v1/users/me/queries - Received data:', JSON.stringify(sids, null, 2));
+
+  if (!Array.isArray(sids)) return res.status(400).json({ error: 'data must be an array' });
+  for (let i = 0; i < sids.length; i++) {
+    const sid = sids[i];
+    if (!sid) return res.status(400).json({ error: 'data must be an array of save IDs' });
+  }
+
+  let data = loadMockData('api/v1/users/me/queries.json');
+  if (data && Array.isArray(data)) {
+    // Permanently remove queries from array
+    data = data.filter(query => !sids.includes(query.sid));
+
+    // Write updated data back to file
+    writeMockData('api/v1/users/me/queries.json', data);
+  }
+
+  res.status(204).send();
+});
+
 
 // User projects
 app.get('/api/v1/users/me/projects', (req, res) => {
@@ -209,9 +232,9 @@ app.get('/api/v1/users/me/projects', (req, res) => {
 });
 
 // Update user projects
-app.put('/api/v1/users/me/projects/update', (req, res) => {
+app.put('/api/v1/users/me/projects', (req, res) => {
   const projects = req.body;
-  console.log('PUT /api/v1/users/me/projects/update - Received data:', JSON.stringify(projects, null, 2));
+  console.log('PUT /api/v1/users/me/projects - Received data:', JSON.stringify(projects, null, 2));
 
   if (!Array.isArray(projects)) {
     return res.status(400).json({ error: 'Request body must be an array of projects' });
@@ -239,10 +262,10 @@ app.put('/api/v1/users/me/projects/update', (req, res) => {
   res.status(200).json(updatedProjects);
 });
 
-// Delete user projects
-app.put('/api/v1/users/me/projects/delete', (req, res) => {
+// Trash user projects
+app.put('/api/v1/users/me/projects/trash', (req, res) => {
   const project_ids = req.body.map(parseInt);
-  console.log('PUT /api/v1/users/me/projects/delete - Received data:', JSON.stringify(project_ids, null, 2));
+  console.log('PUT /api/v1/users/me/projects/trash - Received data:', JSON.stringify(project_ids, null, 2));
   if (!Array.isArray(project_ids)) {
     return res.status(400).json({ error: 'project_ids must be an array' });
   }
@@ -288,6 +311,27 @@ app.put('/api/v1/users/me/projects/restore', (req, res) => {
   }
 
   res.status(200).send();
+});
+
+// Permanently delete user projects
+app.delete('/api/v1/users/me/projects', (req, res) => {
+  const project_ids = req.body.map(parseInt);
+  console.log('DELETE /api/v1/users/me/projects - Received data:', JSON.stringify(project_ids, null, 2));
+  
+  if (!Array.isArray(project_ids)) {
+    return res.status(400).json({ error: 'project_ids must be an array' });
+  }
+
+  let data = loadMockData('api/v1/users/me/projects.json');
+  if (data && Array.isArray(data)) {
+    // Permanently remove projects from array
+    data = data.filter(project => !project_ids.includes(project.id));
+
+    // Write updated data back to file
+    writeMockData('api/v1/users/me/projects.json', data);
+  }
+
+  res.status(204).send();
 });
 
 // User bookmarks
@@ -430,11 +474,13 @@ app.listen(PORT, () => {
   console.log('  GET /api/v1/users/me');
   console.log('  GET /api/v1/users/me/preferences');
   console.log('  GET /api/v1/users/me/queries');
-  console.log('  PUT /api/v1/users/me/queries/delete');
+  console.log('  DELETE /api/v1/users/me/queries');
+  console.log('  PUT /api/v1/users/me/queries/trash');
   console.log('  PUT /api/v1/users/me/queries/restore');
   console.log('  GET /api/v1/users/me/projects');
-  console.log('  PUT /api/v1/users/me/projects/update');
-  console.log('  PUT /api/v1/users/me/projects/delete');
+  console.log('  PUT /api/v1/users/me/projects');
+  console.log('  DELETE /api/v1/users/me/projects');
+  console.log('  PUT /api/v1/users/me/projects/trash');
   console.log('  PUT /api/v1/users/me/projects/restore');
   console.log('  GET /api/v1/users/me/bookmarks');
   console.log('  GET /api/v1/users/me/saves');

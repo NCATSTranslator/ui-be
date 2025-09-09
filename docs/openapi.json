@@ -525,12 +525,48 @@
             "description": "Internal server error"
           }
         }
+      },
+      "delete": {
+        "summary": "Permanently delete user queries",
+        "description": "Permanently delete multiple user queries (cannot be restored)",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Queries permanently deleted successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
       }
     },
-    "/api/v1/users/me/queries/delete": {
+    "/api/v1/users/me/queries/trash": {
       "put": {
-        "summary": "Delete user queries",
-        "description": "Delete multiple user queries",
+        "summary": "Trash user queries",
+        "description": "Move multiple user queries to trash",
         "security": [
           {
             "cookieAuth": []
@@ -551,7 +587,7 @@
         },
         "responses": {
           "200": {
-            "description": "Queries deleted successfully"
+            "description": "Queries trashed successfully"
           },
           "400": {
             "description": "Bad request"
@@ -684,9 +720,7 @@
             "description": "Internal server error"
           }
         }
-      }
-    },
-    "/api/v1/users/me/projects/update": {
+      },
       "put": {
         "summary": "Update user projects",
         "description": "Update multiple user projects",
@@ -732,12 +766,48 @@
             "description": "Internal server error"
           }
         }
+      },
+      "delete": {
+        "summary": "Permanently delete user projects",
+        "description": "Permanently delete multiple user projects (cannot be restored)",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Projects permanently deleted successfully"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
       }
     },
-    "/api/v1/users/me/projects/delete": {
+    "/api/v1/users/me/projects/trash": {
       "put": {
-        "summary": "Delete user projects",
-        "description": "Delete multiple user projects",
+        "summary": "Trash user projects",
+        "description": "Move multiple user projects to trash",
         "security": [
           {
             "cookieAuth": []
@@ -758,7 +828,7 @@
         },
         "responses": {
           "200": {
-            "description": "Projects deleted successfully"
+            "description": "Projects trashed successfully"
           },
           "400": {
             "description": "Bad request"
