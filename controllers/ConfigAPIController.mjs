@@ -16,7 +16,8 @@ class ConfigAPIController {
       include_pathfinder: this.config.frontend.include_pathfinder,
       include_summarization: this.config.frontend.include_summarization,
       include_query_status_polling: this.config.frontend.include_query_status_polling,
-      include_projects: this.config.frontend.include_projects
+      include_projects: this.config.frontend.include_projects,
+      include_hashed_parameters: this.config.frontend.include_hashed_parameters,
     });
   }
 }
