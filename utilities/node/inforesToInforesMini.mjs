@@ -2,16 +2,6 @@
 
 import * as cmn from '../../lib/common.mjs';
 
-function cleanupKnowledgeLevel(rawKL) {
-  if (rawKL === 'knowledge_assertion') {
-    return 'trusted';
-  } else if (rawKL === 'prediction' || rawKL === 'statistical_association') {
-    return 'inferred';
-  } else {
-    return 'unknown';
-  }
-}
-
 const filePath = process.argv[2];
 const patchPath = process.argv[3];
 const inforesCatalog = await cmn.readJson(filePath);
@@ -22,7 +12,7 @@ inforesEntries.forEach((inforesEntry) => {
     inforesMini[inforesEntry.id] = {
       name: inforesEntry.name || inforesEntry.id,
       wiki: (inforesEntry.xref && inforesEntry.xref.length > 0) ? inforesEntry.xref[0] : null,
-      knowledge_level: cleanupKnowledgeLevel(inforesEntry['knowledge_level'])
+      knowledge_level: _cleanupKnowledgeLevel(inforesEntry['knowledge_level'])
     };
   }
 });
@@ -37,6 +27,16 @@ if (patchPath) {
         entry[key] = entryPatch[key];
       }
     }
+  }
+}
+
+function _cleanupKnowledgeLevel(rawKL) {
+  if (rawKL === 'knowledge_assertion') {
+    return 'trusted';
+  } else if (rawKL === 'prediction' || rawKL === 'statistical_association') {
+    return 'inferred';
+  } else {
+    return 'unknown';
   }
 }
 
