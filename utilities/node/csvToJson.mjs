@@ -6,9 +6,9 @@ const jsonData = [];
 const lines = file.readLines();
 let header = null;
 for await (const line of lines) {
-  const entry = line.toLowerCase().split(',');
+  const entry = line.split(',');
   if (header === null) {
-    header = entry;
+    header = entry.map(entry => entry.toLowerCase());
   } else {
     const jsonEntry = {};
     for (let j = 0; j < entry.length; j++) {
