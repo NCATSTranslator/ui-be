@@ -340,6 +340,6 @@
   "include_pathfinder": true,
   "include_summarization": false,
   "include_query_status_polling": true,
-  "include_projects": false,
-  "include_hashed_parameters": false
+  "include_projects": true,
+  "include_hashed_parameters": true
 }
