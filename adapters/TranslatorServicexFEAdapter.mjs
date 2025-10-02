@@ -9,15 +9,6 @@ import * as sm from '../lib/summarization/summarization.mjs';
 export { TranslatorServicexFEAdapter };
 // msg: ARS client message with trace=y
 
-function determineStatus(msg) {
-  if (msg.queuing) {
-    return cmn.QUERY_STATUS.RUNNING;
-  }
-  else {
-    return msg.running.length > 0 ? cmn.QUERY_STATUS.RUNNING : cmn.QUERY_STATUS.COMPLETE;
-  }
-}
-
 class TranslatorServicexFEAdapter {
 
   querySubmitToFE(msg) {
@@ -29,7 +20,7 @@ class TranslatorServicexFEAdapter {
 
   queryStatusToFE(msg) {
     return {
-      status: determineStatus(msg),
+      status: _determine_status(msg),
       data: {
         qid: msg.pk,
         aras: msg.completed.map(e => e.agent),
@@ -50,20 +41,24 @@ class TranslatorServicexFEAdapter {
       }
     });
 
-    const smry = await sm.answersToSmry(
+    const summary = await sm.answers_to_summary(
       msg.pk,
       data,
       maxHops);
-    smry.meta.timestamp = msg.meta.timestamp;
+    summary.set_timestamp(msg.meta.timestamp);
 
     return {
-      status: determineStatus(msg),
-      data: smry
+      status: _determine_status(msg),
+      data: summary
     };
   }
 }
 
-// msg: an ARS client message w/ results
-
-// Currently the FE doesn't expect this message to be handling failure conditions
-// msg: The standard ARS message returned when you post a query
+function _determine_status(msg) {
+  if (msg.queuing) {
+    return cmn.QUERY_STATUS.RUNNING;
+  }
+  else {
+    return msg.running.length > 0 ? cmn.QUERY_STATUS.RUNNING : cmn.QUERY_STATUS.COMPLETE;
+  }
+}
