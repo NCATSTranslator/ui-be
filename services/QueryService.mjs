@@ -1,5 +1,7 @@
 export { QueryService, QUERY_SERVICE_MSG };
 import { Query, QueryMetadata } from '../models/Query.mjs';
+import { SAVE_TYPE, mark_user_query_unseen } from '../models/UserSavedData.mjs';
+import { logger } from '../lib/logger.mjs';
 import * as cmn from '../lib/common.mjs';
 
 const QUERY_SERVICE_MSG = Object.freeze({
@@ -10,8 +12,9 @@ const QUERY_SERVICE_MSG = Object.freeze({
 });
 
 class QueryService {
-  constructor(queryStore, clientAdapter) {
+  constructor(queryStore, userStore, clientAdapter) {
     this._queryStore = queryStore;
+    this._userStore = userStore;
     this._clientAdapter = clientAdapter;
   }
 
@@ -56,8 +59,20 @@ class QueryService {
         storeQueryModel.setAras(update.aras);
       }
       storeQueryModel.setStatus(update.status);
+
       storeQueryModel = await this._queryStore.updateQuery(storeQueryModel);
       if (storeQueryModel === null) throw new Error(`Failed to update database for PK: ${pk}`);
+      let usersQueries = await this._userStore.retrieveSavedDataBy({
+        ars_pkey: pk,
+        save_type: SAVE_TYPE.QUERY
+      });
+      if (userQueries === null) {
+        logger.warn(`Query updated that is not associated with any user\n  PK: ${pk}`);
+        return QUERY_SERVICE_MSG.UPDATE_SUCCESS;
+      }
+      userQueries.map(mark_user_query_unseen);
+      userQueries = await this._userStore.updateUserSavedDataBatch(userQueries);
+      if (userQueries === null) throw new Error(`Failed to update database for PK: ${pk}`);
     }
 
     return QUERY_SERVICE_MSG.UPDATE_SUCCESS;
