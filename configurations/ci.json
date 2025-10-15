@@ -18,7 +18,8 @@
     "protocol": "https",
     "use_ars_merging": true,
     "use_pubsub": true,
-    "use_trapi_validation": false
+    "use_trapi_validation": false,
+    "use_hmac_validation": true
   },
   "annotation_endpoint": {
     "host": "biothings.ci.transltr.io",

@@ -1,11 +1,11 @@
 'use strict';
 export {
-  SAVE_TYPE
+  SAVE_TYPE,
   mark_user_query_unseen,
   mark_user_query_seen,
   UserSavedData,
   UserQueryData,
-  UserTagData,
+  UserTagData
 };
 
 const SAVE_TYPE = Object.freeze({
@@ -15,7 +15,7 @@ const SAVE_TYPE = Object.freeze({
   TAG: 'tag'
 });
 
-const mark_user_query_unseen(saved_data) {
+function mark_user_query_unseen(saved_data) {
   if (!saved_data.save_type === SAVE_TYPE.QUERY) {
     throw Error('Developer Error in UserSavedData: mark_user_query_unseen given saved_data that does not have save_type === query');
   }
@@ -23,7 +23,7 @@ const mark_user_query_unseen(saved_data) {
   return saved_data;
 }
 
-const mark_user_query_seen(saved_data) {
+function mark_user_query_seen(saved_data) {
   if (!saved_data.save_type === SAVE_TYPE.QUERY) {
     throw Error('Developer Error in UserSavedData: mark_user_query_seen given saved_data that does not have save_type === query');
   }

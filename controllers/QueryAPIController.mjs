@@ -11,6 +11,7 @@ class QueryAPIController {
       queryService, queryServicexFEAdapter, userService, filters) {
     this.config = config;
     this.apiKey = config.secrets.hmac.key;
+    this.use_hmac = config.ars_endpoint.use_hmac_validation;
     this.translatorService = translatorService;
     this.translatorServicexFEAdapter = translatorServicexFEAdapter;
     this.queryService = queryService;
@@ -56,7 +57,9 @@ class QueryAPIController {
     try {
       const update = req.body;
       const queryServiceMsg = await this.queryService.processQueryUpdate(update);
-      res.set(_CUSTOM_HEADERS.X_EVENT_SIG, cmn.generateHMACSignature(JSON.stringify(res.body), this.apiKey));
+      if (this.use_hmac) {
+        res.set(_CUSTOM_HEADERS.X_EVENT_SIG, cmn.generateHMACSignature(JSON.stringify(res.body), this.apiKey));
+      }
       return res.status(this._queryServiceMsgToHTTPCode(queryServiceMsg)).send();
     } catch (err) {
       // TODO: Send errors at more granular level
@@ -296,6 +299,7 @@ class QueryAPIController {
       errorCode: null,
       errorMsg: ''
     };
+    if (!this.use_hmac) return reqVerification;
     const signature = req.headers[_CUSTOM_HEADERS.X_EVENT_SIG];
     if (!signature) {
       reqVerification.valid = false;
