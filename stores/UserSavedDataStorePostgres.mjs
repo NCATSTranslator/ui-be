@@ -132,6 +132,28 @@ class UserSavedDataStorePostgres {
     return data.length > 0 ? data : null;
   }
 
+  async retrieveSavedDataBy(fields, includeDeleted = false) {
+    if (Object.keys(fields).length === 0) {
+      throw Error('Developer Error in UserSavedDataStorePostgres.mjs: retrieveSavedDataBy arguement fields must have at least one entry');
+    }
+    let sql = `
+      SELECT * FROM user_saved_data
+      WHERE `;
+    let values = [];
+    let conditions = [];
+    for (let field in fields) {
+      conditions.push(`${field} = $${values.length+1}`);
+      values.push(fields[field]);
+    }
+    if (!includeDeleted) {
+      conditions.push('deleted = false');
+    }
+    sql += conditions.join(' AND ');
+    const res = await pgExec(this.pool, sql, values);
+    const data = res.rows.map(row => new UserSavedData(row));
+    return data.length > 0 ? data : null;
+  }
+
   async updateUserSavedDataPartial(userSavedDataModel, includeDeleted=false) {
     const withDel = includeDeleted ? '' : ' AND deleted = false ';
     if (!userSavedDataModel.id) {

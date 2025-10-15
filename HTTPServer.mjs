@@ -110,7 +110,6 @@ export function startServer(config, services) {
   app.post(`${API_PATH_V1}/query/update`, queryAPIController.updateQuery.bind(queryAPIController));
 
   // User routes: privileged
-  //app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
   app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
   app.get(`${API_PATH_V1}/users/me`, userAPIController.getUser.bind(userAPIController));
   app.get(`${API_PATH_V1}/users/me/preferences`, userAPIController.getUserPrefs.bind(userAPIController));
