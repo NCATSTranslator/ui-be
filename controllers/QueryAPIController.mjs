@@ -85,6 +85,7 @@ class QueryAPIController {
       user_saved_data = user_saved_data[0];
       user_saved_data.data.bookmark_ids = user_query.data.bookmark_ids;
       user_saved_data.data.title = user_query.data.title;
+      user_saved_data.data.seen = user_query.data.seen;
       user_saved_data = await this.userService.updateUserSave(user_saved_data, is_deleted);
       if (!user_saved_data) {
         throw Error('PANIC: Database failed to update user query but did not throw');
