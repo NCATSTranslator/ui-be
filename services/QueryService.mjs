@@ -66,13 +66,13 @@ class QueryService {
         ars_pkey: pk,
         save_type: SAVE_TYPE.QUERY
       });
-      if (userQueries === null) {
+      if (usersQueries === null) {
         logger.warn(`Query updated that is not associated with any user\n  PK: ${pk}`);
         return QUERY_SERVICE_MSG.UPDATE_SUCCESS;
       }
-      userQueries.map(mark_user_query_unseen);
-      userQueries = await this._userStore.updateUserSavedDataBatch(userQueries);
-      if (userQueries === null) throw new Error(`Failed to update database for PK: ${pk}`);
+      usersQueries.map(mark_user_query_unseen);
+      usersQueries = await this._userStore.updateUserSavedDataBatch(usersQueries);
+      if (usersQueries === null) throw new Error(`Failed to update database for PK: ${pk}`);
     }
 
     return QUERY_SERVICE_MSG.UPDATE_SUCCESS;

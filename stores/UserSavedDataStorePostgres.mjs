@@ -142,7 +142,7 @@ class UserSavedDataStorePostgres {
     let values = [];
     let conditions = [];
     for (let field in fields) {
-      conditions.push(`${field} = $${values.length}`);
+      conditions.push(`${field} = $${values.length+1}`);
       values.push(fields[field]);
     }
     if (!includeDeleted) {

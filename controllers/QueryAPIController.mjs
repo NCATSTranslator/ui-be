@@ -70,7 +70,7 @@ class QueryAPIController {
 
   async update_user_query(req, res, next) {
     const user_query = req.body;
-    if (!user_query) {
+    if (!user_query || !cmn.isObject(user_query)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to contain user query. Got: ${JSON.stringify(user_query)}`);
     }
     const uid = req.sessionData.user.id;
