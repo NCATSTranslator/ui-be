@@ -5,7 +5,7 @@ import { bootstrapConfig } from './lib/config.mjs';
 
 import { loadBiolink } from './lib/biolink-model.mjs';
 import { loadChebi } from './lib/chebi.mjs';
-import { loadTrapi } from './lib/trapi.mjs';
+import { load_trapi } from './lib/trapi.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
 import * as httpserver from './HTTPServer.mjs';
@@ -38,7 +38,7 @@ const SERVER_CONFIG = await (async function() {
 })();
 
 await loadBiolink(SERVER_CONFIG.biolink);
-await loadTrapi(SERVER_CONFIG.trapi);
+await load_trapi(SERVER_CONFIG.trapi);
 await loadChebi();
 
 // Bootstrap the translator service.

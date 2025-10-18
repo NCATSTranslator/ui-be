@@ -148,7 +148,7 @@ class QueryAPIController {
       req.log.info({query: trapiQuery});
       const submitResp = await this.translatorService.submitQuery(trapiQuery);
       req.log.info({arsqueryresp: submitResp});
-      const pk = trapi.getPk(submitResp);
+      const pk = trapi.get_pk(submitResp);
       if (!pk) throw new Error(`ARS query submission response has no PK: ${submitResp}`);
       const queryModel = await this.queryService.createQuery(pk, req.body);
       if (!queryModel) throw new Error(`Failed to create query with PK: ${pk}`);
@@ -227,7 +227,7 @@ class QueryAPIController {
       const trapiQuery = this.translatorService.inputToQuery(req.body);
       const submitResp = await this.translatorService.submitQuery(trapiQuery);
       req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submitResp}, 'Query submission and response');
-      const pk = trapi.getPk(submitResp);
+      const pk = trapi.get_pk(submitResp);
       const userQueryModel = this.userService.createUserQuery(uid, pk, req.body);
       if (!userQueryModel) throw new Error(`User service failed to create entry for query ${pk} and user ${uid}`);
       if (pid) {

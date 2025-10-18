@@ -4,17 +4,12 @@ import * as trapi from '../lib/trapi.mjs';
 import * as bl from '../lib/biolink-model.mjs';
 
 async function testTrapi(rootPath) {
-  await test.functionalTest(trapi.clientReqToTrapiQuery,
+  await test.functionalTest(trapi.client_request_to_trapi_query,
                             await cmn.readJson(`${rootPath}/clientReqToTrapiQuery.json`),
-                            trapi.loadTrapi);
-  await test.functionalTest(trapi.nodeIdsToTrapiMessage,
-                            await cmn.readJson(`${rootPath}/nodeIdsToTrapiMessage.json`),
-                            bl.loadBiolink);
-  await test.functionalTest(trapi.getQueryGraph,
-                            await cmn.readJson(`${rootPath}/getQueryGraph.json`));
-  await test.functionalTest(trapi.getResults,
+                            trapi.load_trapi);
+  await test.functionalTest(trapi.get_results,
                             await cmn.readJson(`${rootPath}/getResults.json`));
-  await test.functionalTest(trapi.getAuxGraphs,
+  await test.functionalTest(trapi.get_auxiliary_graphs,
                             await cmn.readJson(`${rootPath}/getAuxGraphs.json`));
   await test.functionalTest(trapi.getAuxGraph,
                             await cmn.readJson(`${rootPath}/getAuxGraph.json`));
@@ -66,7 +61,7 @@ async function testTrapi(rootPath) {
                             await cmn.readJson(`${rootPath}/messageToQueryTemplate.json`));
   await test.functionalTest(trapi.messageToEndpoints,
                             await cmn.readJson(`${rootPath}/messageToEndpoints.json`),
-                            trapi.loadTrapi);
+                            trapi.load_trapi);
   await test.functionalTest(trapi.isChemicalGeneQuery,
                             await cmn.readJson(`${rootPath}/isChemicalGeneQuery.json`));
   await test.functionalTest(trapi.isChemicalDiseaseQuery,

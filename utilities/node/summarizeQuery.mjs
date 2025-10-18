@@ -10,7 +10,7 @@ import { loadBiolink } from '../../lib/biolink-model.mjs';
 import { loadChebi } from '../../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../../adapters/TranslatorServicexFEAdapter.mjs'
 import { readJson } from '../../lib/common.mjs';
-import { loadTrapi } from '../../lib/trapi.mjs';
+import { load_trapi } from '../../lib/trapi.mjs';
 
 // TODO: config shit
 const configPath = process.argv[2];
@@ -21,7 +21,7 @@ readJson(dataPath).then(async (data) => {
   const config = await cfg.bootstrapConfig(configPath);
   await loadBiolink(config.biolink);
   await loadChebi();
-  loadTrapi(config.trapi);
+  load_trapi(config.trapi);
   const summaryMsg = await translatorAdapter.queryResultsToFE(data, maxHops);
   console.log(JSON.stringify(summaryMsg.data));
 });

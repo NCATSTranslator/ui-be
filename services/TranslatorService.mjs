@@ -31,7 +31,7 @@ class TranslatorService
 
   inputToQuery(input)
   {
-    return trapi.clientReqToTrapiQuery(input);
+    return trapi.client_request_to_trapi_query(input);
   }
 
   async submitQuery(query)

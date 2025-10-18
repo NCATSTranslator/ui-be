@@ -1,7 +1,7 @@
 'use strict';
 import fs from 'fs';
 import * as cmn from '../../lib/common.mjs';
-import { loadTrapi } from '../../lib/trapi.mjs';
+import { load_trapi } from '../../lib/trapi.mjs';
 import { ARSClient } from '../../lib/ARSClient.mjs';
 import { TranslatorServicexFEAdapter } from '../../adapters/TranslatorServicexFEAdapter.mjs';
 import { TranslatorService } from '../../services/TranslatorService.mjs';
@@ -89,7 +89,7 @@ async function main() {
   let queryList = initializeQueryList(inputFile, startIndex);
 
   // Begin actual work
-  loadTrapi({
+  load_trapi({
     query_subject_key: 'sn',
     query_object_key: 'on',
   });
