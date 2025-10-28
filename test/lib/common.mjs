@@ -1,42 +1,53 @@
 import * as ast from 'node:assert';
 import * as cmn from '../../lib/common.mjs';
 
-export async function functionalTest(testFunc, testCases, configLoader, argsLoader) {
-  const testName = testFunc.name;
-  console.log(`Running tests for ${testName}`);
-  for (let caseName of Object.keys(testCases)) {
-    const tc = testCases[caseName];
-    console.log(`--- Running test case ${caseName}`);
-    const actual = await runCase(testFunc, testCases, caseName, configLoader, argsLoader);
+export async function functional_test(kwargs) {
+  const {
+    test_func,
+    test_cases,
+    config_loader,
+    args_loader,
+    post_func = (actual) => actual.actual} = kwargs;
+  const test_name = test_func.name;
+  console.log(`Running tests for ${test_name}`);
+  for (let case_name of Object.keys(test_cases)) {
+    const tc = test_cases[case_name];
+    console.log(`--- Running test case ${case_name}`);
+    const actual = await post_func({
+        actual: await _run_case({...kwargs, case_name: case_name}),
+        case_context: tc.context,
+    })
     testDeep(actual, tc.expected);
-    console.log(`--- Test case ${caseName} passed`);
+    console.log(`--- Test case ${case_name} passed`);
   }
-  console.log(`${testName} passed`);
+  console.log(`${test_name} passed`);
 }
 
-export async function runCase(testFunc, testCases, caseName, configLoader, argsLoader) {
-  const tc = testCases[caseName];
+export async function _run_case({
+    test_func,
+    test_cases,
+    case_name,
+    config_loader,
+    args_loader = cmn.identity}) {
+  const tc = test_cases[case_name];
   if (tc.config) {
-    await configLoader(await _expand(tc.config));
+    await config_loader(await _expand(tc.config));
   }
-  if (argsLoader === undefined) {
-    argsLoader = cmn.identity;
-  }
-  return await testFunc(...await argsLoader(tc.args));
+  return await test_func(...await args_loader(tc.args));
 }
 
-export async function classTest(klass, testCases, configLoader) {
-  const className = klass.name;
-  console.log(`Running tests for ${className}`);
-  for (let caseName of Object.keys(testCases)) {
-    console.log(`--- Running test case ${caseName}`);
-    const tc = testCases[caseName];
+export async function class_test({test_class, test_cases, config_loader}) {
+  const class_name = test_class.name;
+  console.log(`Running tests for ${class_name}`);
+  for (let case_name of Object.keys(test_cases)) {
+    console.log(`--- Running test case ${case_name}`);
+    const tc = test_cases[case_name];
     if (tc.config) {
-      await configLoader(await _expand(tc.config));
+      await config_loader(await _expand(tc.config));
     }
-    let obj = klass;
+    let obj = test_class;
     if (tc.constructor !== undefined) {
-      obj = new klass(...tc.constructor.args);
+      obj = new test_class(...tc.constructor.args);
       console.log(`------ constructor passed`);
     }
     for (let step of tc.steps) {
@@ -44,9 +55,9 @@ export async function classTest(klass, testCases, configLoader) {
       testDeep(actual, step.expected);
       console.log(`------ ${step.method} passed`);
     }
-    console.log(`--- ${caseName} passed`);
+    console.log(`--- ${case_name} passed`);
   }
-  console.log(`${className} passed`);
+  console.log(`${class_name} passed`);
 }
 
 export function testDeep(ac, ex) {
