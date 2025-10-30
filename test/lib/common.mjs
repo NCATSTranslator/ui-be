@@ -1,7 +1,16 @@
+export {
+  functional_test,
+  run_case,
+  class_test,
+  test_deep,
+  gen_function_loader,
+  apply_rule
+}
+
 import * as ast from 'node:assert';
 import * as cmn from '../../lib/common.mjs';
 
-export async function functional_test(kwargs) {
+async function functional_test(kwargs) {
   const {
     test_func,
     test_cases,
@@ -14,16 +23,16 @@ export async function functional_test(kwargs) {
     const tc = test_cases[case_name];
     console.log(`--- Running test case ${case_name}`);
     const actual = await post_func({
-        actual: await _run_case({...kwargs, case_name: case_name}),
+        actual: await run_case({...kwargs, case_name: case_name}),
         case_context: tc.context,
     })
-    testDeep(actual, tc.expected);
+    test_deep(actual, tc.expected);
     console.log(`--- Test case ${case_name} passed`);
   }
   console.log(`${test_name} passed`);
 }
 
-export async function _run_case({
+async function run_case({
     test_func,
     test_cases,
     case_name,
@@ -36,7 +45,7 @@ export async function _run_case({
   return await test_func(...await args_loader(tc.args));
 }
 
-export async function class_test({test_class, test_cases, config_loader}) {
+async function class_test({test_class, test_cases, config_loader}) {
   const class_name = test_class.name;
   console.log(`Running tests for ${class_name}`);
   for (let case_name of Object.keys(test_cases)) {
@@ -52,7 +61,7 @@ export async function class_test({test_class, test_cases, config_loader}) {
     }
     for (let step of tc.steps) {
       const actual = obj[step.method](...step.args);
-      testDeep(actual, step.expected);
+      test_deep(actual, step.expected);
       console.log(`------ ${step.method} passed`);
     }
     console.log(`--- ${case_name} passed`);
@@ -60,7 +69,7 @@ export async function class_test({test_class, test_cases, config_loader}) {
   console.log(`${class_name} passed`);
 }
 
-export function testDeep(ac, ex) {
+function test_deep(ac, ex) {
   try {
     _testDeep(ac, ex);
   } catch(err) {
@@ -70,8 +79,27 @@ export function testDeep(ac, ex) {
   }
 }
 
-export function classLoader(func, args) {
+function gen_function_loader(env) {
+  return (args) => {
+    args = args[0];
+    if (typeof args.transform === 'string') {
+      args.transform = env[args.transform];
+    }
+    return [args];
+  }
+}
 
+async function apply_rule({actual, case_context}) {
+  let {source, target} = case_context;
+  const rule = actual;
+  if (!cmn.isArray(source)) {
+    source = [source];
+  }
+  for (const src of source) {
+    const transform = rule(src, src['__context__']);
+    target = transform(target);
+  }
+  return target;
 }
 
 function _testDeep(ac, ex, permissive=false) {

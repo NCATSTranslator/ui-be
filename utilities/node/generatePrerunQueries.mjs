@@ -1,7 +1,7 @@
 'use strict';
 import fs from 'fs';
 import * as cmn from '../../lib/common.mjs';
-import { load_trapi } from '../../lib/trapi.mjs';
+import { load_trapi } from '../../lib/trapi/core.mjs';
 import { ARSClient } from '../../lib/ARSClient.mjs';
 import { TranslatorServicexFEAdapter } from '../../adapters/TranslatorServicexFEAdapter.mjs';
 import { TranslatorService } from '../../services/TranslatorService.mjs';

@@ -3,7 +3,7 @@ export { QueryAPIController };
 import { QUERY_SERVICE_MSG } from '../services/QueryService.mjs';
 import * as cmn from '../lib/common.mjs';
 import * as wutil from '../lib/webutils.mjs';
-import * as trapi from '../lib/trapi.mjs';
+import * as trapi from '../lib/trapi/core.mjs';
 import { logger } from "../lib/logger.mjs";
 
 class QueryAPIController {

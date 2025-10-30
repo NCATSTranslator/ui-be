@@ -1,7 +1,7 @@
 'use strict';
 import { logger } from '../lib/logger.mjs';
 import * as arsmsg from '../lib/ARSMessages.mjs';
-import * as trapi from '../lib/trapi.mjs';
+import * as trapi from '../lib/trapi/core.mjs';
 
 export { TranslatorService };
 

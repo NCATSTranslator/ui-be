@@ -20,7 +20,7 @@ import * as tsmy from './lib/summarization.mjs';
 import { loadBiolink } from '../lib/biolink-model.mjs';
 import { loadChebi } from '../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../adapters/TranslatorServicexFEAdapter.mjs';
-import { load_trapi } from '../lib/trapi.mjs';
+import { load_trapi } from '../lib/trapi/core.mjs';
 
 // We have to do this because the 'before' hook does not seem to work
 async function loadConfig() {

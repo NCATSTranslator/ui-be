@@ -5,7 +5,7 @@ import { bootstrapConfig } from './lib/config.mjs';
 
 import { loadBiolink } from './lib/biolink-model.mjs';
 import { loadChebi } from './lib/chebi.mjs';
-import { load_trapi } from './lib/trapi.mjs';
+import { load_trapi } from './lib/trapi/core.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
 import * as httpserver from './HTTPServer.mjs';

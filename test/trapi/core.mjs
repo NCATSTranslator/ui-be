@@ -1,9 +1,10 @@
-import * as cmn from '../lib/common.mjs';
-import * as test from './lib/common.mjs';
-import * as trapi from '../lib/trapi.mjs';
-import * as bl from '../lib/biolink-model.mjs';
+import * as cmn from '../../lib/common.mjs';
+import * as test from '../lib/common.mjs';
+import * as trapi from '../../lib/trapi/core.mjs';
+import * as trapi_rules from '../../lib/trapi/property-rules.mjs';
+import * as bl from '../../lib/biolink-model.mjs';
 
-async function testTrapi(root_path) {
+async function _test_trapi(root_path) {
   await test.functional_test({
       test_func: trapi.client_request_to_trapi_query,
       test_cases: await cmn.readJson(`${root_path}/clientReqToTrapiQuery.json`),
@@ -126,50 +127,7 @@ async function testTrapi(root_path) {
       test_func: trapi.is_valid_query,
       test_cases: await cmn.readJson(`${root_path}/isValidQuery.json`)
   });
-  await test.functional_test({
-      test_func: trapi.make_rule_transform_property,
-      test_cases: await cmn.readJson(`${root_path}/make_rule_transform_property.json`),
-      args_loader: _function_loader,
-      post_func: _apply_rule
-  });
-  await test.functional_test({
-      test_func: trapi.make_rule_get_property,
-      test_cases: await cmn.readJson(`${root_path}/make_rule_get_property.json`),
-      args_loader: _function_loader,
-      post_func: _apply_rule
-  });
-  await test.functional_test({
-      test_func: trapi.make_rule_transform_and_aggregate_property,
-      test_cases: await cmn.readJson(`${root_path}/make_rule_and_aggregate_property.json`),
-      args_loader: _function_loader,
-      post_func: _apply_rule
-  });
-}
-
-async function _apply_rule({actual, case_context}) {
-  let {source, target, rule_context} = case_context;
-  const rule = actual;
-  if (!cmn.isArray(source)) {
-    source = [source];
-  }
-  for (const src of source) {
-    const transform = rule(src, rule_context);
-    target = transform(target);
-  }
-  return target;
-}
-
-function _function_loader(args) {
-  const rule_env = Object.freeze({
-    identity: (source, key) => cmn.jsonGet(source, key),
-    double: (source, key) => 2 * cmn.jsonGet(source, key)
-  });
-  args = args[0];
-  if (typeof args.transform === 'string') {
-    args.transform = rule_env[args.transform];
-  }
-  return [args];
 }
 
 const root_path = './test/data/trapi';
-await testTrapi(root_path);
+await _test_trapi(root_path);
