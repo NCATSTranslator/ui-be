@@ -15,7 +15,12 @@ async function _test_summarization_property_rules(root_path) {
   });
   await test.functional_test({
     test_func: summary_rules.make_rule_collect_semmed_sentences,
-    test_cases: await cmn.readJson(`${root_path}/make_rule_collect_semmed_sentences`),
+    test_cases: await cmn.readJson(`${root_path}/make_rule_collect_semmed_sentences.json`),
+    post_func: test.apply_rule
+  });
+  await test.functional_test({
+    test_func: summary_rules.make_rule_collect_clinical_trial_metadata,
+    test_cases: await cmn.readJson(`${root_path}/make_rule_collect_clinical_trial_metadata.json`),
     post_func: test.apply_rule
   });
 }
