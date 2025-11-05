@@ -18,7 +18,8 @@
     "protocol": "https",
     "use_ars_merging": true,
     "use_pubsub": false,
-    "use_trapi_validation": true
+    "use_trapi_validation": true,
+    "use_hmac_validation": true
   },
   "annotation_endpoint": {
     "host": "biothings.ncats.io",
