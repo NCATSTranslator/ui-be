@@ -106,7 +106,7 @@ function _testDeep(ac, ex, permissive=false) {
   try {
     if (cmn.isArray(ac) && cmn.isArray(ex)) {
       testArray(ac, ex);
-    } else if (cmn.isObject(ac) && cmn.isObject(ex)) {
+    } else if (cmn.is_object(ac) && cmn.is_object(ex)) {
       let aco = ac;
       if (Symbol.iterator in aco) {
         aco = Object.fromEntries(aco);

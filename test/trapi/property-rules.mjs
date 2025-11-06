@@ -27,8 +27,8 @@ async function _test_trapi_property_rules(root_path, env) {
       post_func: test.apply_rule
   });
   await test.functional_test({
-      test_func: trapi_rules.make_rule_transform_and_rename_attribute_value,
-      test_cases: await cmn.readJson(`${root_path}/make_rule_transform_and_rename_attribute_value.json`),
+      test_func: trapi_rules.make_rule_transform_attribute_value,
+      test_cases: await cmn.readJson(`${root_path}/make_rule_transform_attribute_value.json`),
       args_loader: test.gen_function_loader(env),
       post_func: test.apply_rule
   });

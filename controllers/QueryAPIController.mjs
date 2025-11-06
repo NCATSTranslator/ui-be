@@ -283,7 +283,7 @@ class QueryAPIController {
   }
 
   _isValidQuerySubmissionRequest(req) {
-    return cmn.isObject(req.body) && req.sessionData.user.id;
+    return cmn.is_object(req.body) && req.sessionData.user.id;
   }
 
   _isValidQueryResultRequest(req) {
