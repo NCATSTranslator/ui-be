@@ -97,7 +97,7 @@ class QueryAPIController {
 
   async deleteUserQueries(req, res, next) {
     const query_ids = await req.body;
-    if (!cmn.isArray(query_ids)) {
+    if (!cmn.is_array(query_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const uid = req.sessionData.user.id;
@@ -112,7 +112,7 @@ class QueryAPIController {
 
   async restoreUserQueries(req, res, next) {
     const query_ids = await req.body;
-    if (!cmn.isArray(query_ids)) {
+    if (!cmn.is_array(query_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const uid = req.sessionData.user.id;
@@ -138,7 +138,7 @@ class QueryAPIController {
       const uid = req.sessionData.user.id;
       if (pid) {
         const projects = await this.userService.getUserSavesBy(uid, {id: pid});
-        if (!projects || cmn.isArrayEmpty(projects)) {
+        if (!projects || cmn.is_array_empty(projects)) {
           throw new Error(`Submitted query includes unknown PID: ${pid}`);
         }
         project = projects[0];

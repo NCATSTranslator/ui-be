@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import * as cmn from '../lib/common.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -125,7 +126,7 @@ app.get('/api/v1/users/me/queries', (req, res) => {
   const { include_deleted } = req.query;
   let data = loadMockData('api/v1/users/me/queries.json');
 
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Filter based on include_deleted parameter
     if (include_deleted !== 'true') {
       data = data.filter(query => !query.data.deleted);
@@ -141,14 +142,14 @@ app.put('/api/v1/users/me/queries/trash', (req, res) => {
   const sids = req.body.map(parseInt);
   console.log('PUT /api/v1/users/me/queries/trash - Received data:', JSON.stringify(sids, null, 2));
 
-  if (!Array.isArray(sids)) return res.status(400).json({ error: 'data must be an array' });
+  if (!cmn.is_array(sids)) return res.status(400).json({ error: 'data must be an array' });
   for (let i = 0; i < sids.length; i++) {
     const sid = sids[i];
     if (!sid) return res.status(400).json({ error: 'data must be an array of save IDs' });
   }
 
   let data = loadMockData('api/v1/users/me/queries.json');
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Mark queries as deleted
     data.forEach(query => {
       if (sids.includes(query.sid)) {
@@ -169,7 +170,7 @@ app.put('/api/v1/users/me/queries/restore', (req, res) => {
   const sids = req.body.map(parseInt);
   console.log('PUT /api/v1/users/me/queries/restore - Received data:', JSON.stringify(sids, null, 2));
 
-  if (!Array.isArray(sids)) {
+  if (!cmn.is_array(sids)) {
     return res.status(400).json({ error: 'sids must be an array' });
   }
   for (let i = 0; i < sids.length; i++) {
@@ -178,7 +179,7 @@ app.put('/api/v1/users/me/queries/restore', (req, res) => {
   }
 
   let data = loadMockData('api/v1/users/me/queries.json');
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     data.forEach(query => {
       if (sids.includes(query.sid)) {
         query.data.deleted = false;
@@ -197,14 +198,14 @@ app.delete('/api/v1/users/me/queries', (req, res) => {
   const sids = req.body.map(parseInt);
   console.log('DELETE /api/v1/users/me/queries - Received data:', JSON.stringify(sids, null, 2));
 
-  if (!Array.isArray(sids)) return res.status(400).json({ error: 'data must be an array' });
+  if (!cmn.is_array(sids)) return res.status(400).json({ error: 'data must be an array' });
   for (let i = 0; i < sids.length; i++) {
     const sid = sids[i];
     if (!sid) return res.status(400).json({ error: 'data must be an array of save IDs' });
   }
 
   let data = loadMockData('api/v1/users/me/queries.json');
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Permanently remove queries from array
     data = data.filter(query => !sids.includes(query.sid));
 
@@ -221,7 +222,7 @@ app.get('/api/v1/users/me/projects', (req, res) => {
   const { include_deleted } = req.query;
   let data = loadMockData('api/v1/users/me/projects.json');
 
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     if (include_deleted !== 'true') {
       data = data.filter(project => !project.deleted);
     }
@@ -236,14 +237,14 @@ app.put('/api/v1/users/me/projects', (req, res) => {
   const projects = req.body;
   console.log('PUT /api/v1/users/me/projects - Received data:', JSON.stringify(projects, null, 2));
 
-  if (!Array.isArray(projects)) {
+  if (!cmn.is_array(projects)) {
     return res.status(400).json({ error: 'Request body must be an array of projects' });
   }
 
   let data = loadMockData('api/v1/users/me/projects.json');
   const updatedProjects = [];
 
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     projects.forEach(updateProject => {
       const index = data.findIndex(project => parseInt(project.id) === updateProject.id);
       if (index !== -1) {
@@ -266,12 +267,12 @@ app.put('/api/v1/users/me/projects', (req, res) => {
 app.put('/api/v1/users/me/projects/trash', (req, res) => {
   const project_ids = req.body.map(parseInt);
   console.log('PUT /api/v1/users/me/projects/trash - Received data:', JSON.stringify(project_ids, null, 2));
-  if (!Array.isArray(project_ids)) {
+  if (!cmn.is_array(project_ids)) {
     return res.status(400).json({ error: 'project_ids must be an array' });
   }
 
   let data = loadMockData('api/v1/users/me/projects.json');
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Mark projects as deleted
     data.forEach(project => {
       if (project_ids.includes(project.id)) {
@@ -292,12 +293,12 @@ app.put('/api/v1/users/me/projects/restore', (req, res) => {
   const project_ids = req.body.map(parseInt);
   console.log('PUT /api/v1/users/me/projects/restore - Received data:', JSON.stringify(project_ids, null, 2));
 
-  if (!Array.isArray(project_ids)) {
+  if (!cmn.is_array(project_ids)) {
     return res.status(400).json({ error: 'project_ids must be an array' });
   }
 
   let data = loadMockData('api/v1/users/me/projects.json');
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Mark projects as restored (not deleted)
     data.forEach(project => {
       if (project_ids.includes(project.id)) {
@@ -317,13 +318,13 @@ app.put('/api/v1/users/me/projects/restore', (req, res) => {
 app.delete('/api/v1/users/me/projects', (req, res) => {
   const project_ids = req.body.map(parseInt);
   console.log('DELETE /api/v1/users/me/projects - Received data:', JSON.stringify(project_ids, null, 2));
-  
-  if (!Array.isArray(project_ids)) {
+
+  if (!cmn.is_array(project_ids)) {
     return res.status(400).json({ error: 'project_ids must be an array' });
   }
 
   let data = loadMockData('api/v1/users/me/projects.json');
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Permanently remove projects from array
     data = data.filter(project => !project_ids.includes(project.id));
 
@@ -339,7 +340,7 @@ app.get('/api/v1/users/me/bookmarks', (req, res) => {
   const { include_deleted } = req.query;
   let data = loadMockData('api/v1/users/me/bookmarks.json');
 
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Filter based on include_deleted parameter
     if (include_deleted !== 'true') {
       data = data.filter(bookmark => !bookmark.deleted);
@@ -355,7 +356,7 @@ app.get('/api/v1/users/me/tags', (req, res) => {
   const { include_deleted } = req.query;
   let data = loadMockData('api/v1/users/me/tags.json');
 
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Filter based on include_deleted parameter
     if (include_deleted !== 'true') {
       data = data.filter(tag => !tag.deleted);
@@ -371,7 +372,7 @@ app.get('/api/v1/users/me/saves', (req, res) => {
   const { include_deleted, type } = req.query;
   let data = loadMockData('api/v1/users/me/saves.json');
 
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Filter based on include_deleted parameter
     if (include_deleted !== 'true') {
       data = data.filter(save => !save.deleted);
@@ -394,7 +395,7 @@ app.get('/api/v1/users/me/saves/:save_id', (req, res) => {
   const { include_deleted } = req.query;
   let data = loadMockData('api/v1/users/me/saves.json');
 
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     let save = data.find(s => s.id == save_id);
 
     if (save && (include_deleted === 'true' || !save.deleted)) {
@@ -412,7 +413,7 @@ app.get('/api/v1/users/me/workspaces', (req, res) => {
   const { include_data, include_deleted } = req.query;
   let data = loadMockData('api/v1/users/me/workspaces.json');
 
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     // Filter based on include_deleted parameter
     if (include_deleted !== 'true') {
       data = data.filter(workspace => !workspace.deleted);
@@ -438,7 +439,7 @@ app.get('/api/v1/users/me/workspaces/:ws_id', (req, res) => {
   const { include_deleted } = req.query;
   let data = loadMockData('api/v1/users/me/workspaces.json');
 
-  if (data && Array.isArray(data)) {
+  if (data && cmn.is_array(data)) {
     let workspace = data.find(w => w.id === ws_id);
 
     if (workspace && (include_deleted === 'true' || !workspace.deleted)) {

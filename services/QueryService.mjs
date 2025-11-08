@@ -52,7 +52,7 @@ class QueryService {
     if (update.status === cmn.QUERY_STATUS.COMPLETE ||
         update.aras.length > storeQueryModel.metadata.aras.length) {
       // TODO: Optimize to only update the metadata if needed
-      if (!cmn.isArrayEmpty(update.aras)) {
+      if (!cmn.is_array_empty(update.aras)) {
         storeQueryModel.setAras(update.aras);
       }
       storeQueryModel.setStatus(update.status);

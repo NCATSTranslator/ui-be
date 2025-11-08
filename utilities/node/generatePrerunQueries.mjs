@@ -132,7 +132,7 @@ async function main() {
 
   for (const [env, queries] of Object.entries(preRunQueries)) {
     try {
-      if (!cmn.isArrayEmpty(queries)) {
+      if (!cmn.is_array_empty(queries)) {
         fs.writeFileSync(`${outputPath}/${env}.json`, JSON.stringify(queries, null, 4));
       }
     } catch (err) {

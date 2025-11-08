@@ -4,29 +4,56 @@ export {
   class_test,
   test_deep,
   gen_function_loader,
-  apply_rule
+  apply_rule,
+  module_test,
+  Environment
 }
 
 import * as ast from 'node:assert';
 import * as cmn from '../../lib/common.mjs';
+
+async function module_test({suite, against, env}) {
+  for (const key of Object.keys(suite)) {
+    const test_entity = against[key];
+    if (test_entity === undefined) {
+      throw new cmn.DeveloperError('test/lib/common.mjs', 'module_test', `Error when importing ${key} from module ${JSON.stringify(against)}.`);
+    }
+    if (cmn.is_function(test_entity)) {
+      await functional_test({
+        test_func: test_entity,
+        test_cases: suite[key],
+        env: env
+      });
+    } else {
+      throw new cmn.DeveloperError('test/lib/common.mjs', 'module_test', `Unknown test entity type: ${typeof test_entity}`);
+    }
+  }
+}
 
 async function functional_test(kwargs) {
   const {
     test_func,
     test_cases,
     config_loader,
-    args_loader,
+    env,
     post_func = (actual) => actual.actual} = kwargs;
   const test_name = test_func.name;
   console.log(`Running tests for ${test_name}`);
   for (let case_name of Object.keys(test_cases)) {
     const tc = test_cases[case_name];
     console.log(`--- Running test case ${case_name}`);
-    const actual = await post_func({
+    try {
+      const actual = await post_func({
         actual: await run_case({...kwargs, case_name: case_name}),
         case_context: tc.context,
-    })
-    test_deep(actual, tc.expected);
+      })
+      test_deep(actual, _load_symbols(tc.expected, env));
+    } catch (err) {
+      const err_object = _load_symbols(tc.expected, env);
+      if (!cmn.is_function(err_object) || !(err instanceof err_object)) {
+        throw err;
+      }
+    }
     console.log(`--- Test case ${case_name} passed`);
   }
   console.log(`${test_name} passed`);
@@ -37,12 +64,12 @@ async function run_case({
     test_cases,
     case_name,
     config_loader,
-    args_loader = cmn.identity}) {
+    env}) {
   const tc = test_cases[case_name];
   if (tc.config) {
     await config_loader(await _expand(tc.config));
   }
-  return await test_func(...await args_loader(tc.args));
+  return await test_func(..._load_symbols(tc.args, env));
 }
 
 async function class_test({test_class, test_cases, config_loader}) {
@@ -92,7 +119,7 @@ function gen_function_loader(env) {
 async function apply_rule({actual, case_context}) {
   let {source, target} = case_context;
   const rule = actual;
-  if (!cmn.isArray(source)) {
+  if (!cmn.is_array(source)) {
     source = [source];
   }
   for (const src of source) {
@@ -102,9 +129,80 @@ async function apply_rule({actual, case_context}) {
   return target;
 }
 
+class Environment {
+  static UNDEFINED = Symbol('UNDEFINED');
+  static Entry(kwargs) {
+    return new _EnvironmentEntry(kwargs);
+  }
+
+  constructor(env) {
+    for (const entry of env) {
+      this.#validate_entry(entry);
+      this.#env[entry.key] = entry;
+    }
+    Object.freeze(this);
+  }
+
+  get(key) {
+    const entry = this.#env[key];
+    if (entry === undefined) return Environment.UNDEFINED;
+    return entry.eval(this);
+  }
+
+  #env = {};
+  #validate_entry(entry) {
+    if (!(entry instanceof _EnvironmentEntry)) {
+      throw cmn.DeveloperError('test/lib/common.mjs', 'Environment.validate_entry', `Expected Entry to by of type _Environment_Entry.\n  Got: ${typeof entry}`);
+    }
+  }
+}
+
+class _EnvironmentEntry {
+  constructor({key, construct, args, value}) {
+    if (cmn.is_missing(construct) && cmn.is_missing(value)) {
+      throw new cmn.DeveloperError('test/lib/common.mjs', '_EnvironmentEntry.constructor', 'construct and value key word arguments cannot both be missing');
+    }
+    this.key = key;
+    this.#construct = construct;
+    this.#args = args;
+    if (cmn.is_missing(construct)) {
+      this.#construct = () => value;
+    }
+  }
+
+  eval(env) {
+    const args = cmn.deepCopy(this.#args);
+    try {
+      return this.#construct(..._load_symbols(args, env));
+    } catch (err) {
+      return new this.#construct(..._load_symbols(args, env));
+    }
+  }
+
+  #construct = null;
+  #args = null;
+}
+
+function _load_symbols(obj, env) {
+  if (cmn.is_object(obj)) {
+    for (const [k, v] of Object.entries(obj)) {
+      obj[k] = _load_symbols(v, env);
+    }
+    return obj;
+  }
+  if (cmn.is_array(obj)) {
+    return obj.map(v => _load_symbols(v, env));
+  }
+  if (cmn.is_string(obj)) {
+    const env_obj = env.get(obj);
+    return (env_obj !== Environment.UNDEFINED) ? env_obj : obj;
+  }
+  return obj;
+}
+
 function _testDeep(ac, ex, permissive=false) {
   try {
-    if (cmn.isArray(ac) && cmn.isArray(ex)) {
+    if (cmn.is_array(ac) && cmn.is_array(ex)) {
       testArray(ac, ex);
     } else if (cmn.is_object(ac) && cmn.is_object(ex)) {
       let aco = ac;

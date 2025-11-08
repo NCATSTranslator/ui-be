@@ -91,7 +91,7 @@ class UserAPIController {
   }
   async updateUserProjects(req, res, next) {
     const project_updates = await req.body;
-    if (!cmn.isArray(project_updates)) {
+    if (!cmn.is_array(project_updates)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_updates)}`);
     }
     for (const update of project_updates) {
@@ -129,7 +129,7 @@ class UserAPIController {
   }
   async deleteUserProjects(req, res, next) {
     const project_ids = await req.body;
-    if (!cmn.isArray(project_ids)) {
+    if (!cmn.is_array(project_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const user_id = req.sessionData.user.id;
@@ -143,7 +143,7 @@ class UserAPIController {
   }
   async restoreUserProjects(req, res, next) {
     const project_ids = await req.body;
-    if (!cmn.isArray(project_ids)) {
+    if (!cmn.is_array(project_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const user_id = req.sessionData.user.id;
