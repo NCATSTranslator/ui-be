@@ -13,6 +13,10 @@
   },
   "author": "Guthrie Price",
   "license": "ISC",
+  "imports": {
+    "#lib/*": "./lib/*",
+    "#test/*": "./test/*"
+  },
   "dependencies": {
     "better-sqlite3": "^11.5.0",
     "cookie-parser": "^1.4.6",
