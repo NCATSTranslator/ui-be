@@ -1,9 +1,8 @@
 export {
   module_test,
-  functional_test,
-  run_case,
-  class_test,
-  test_deep,
+  make_function_test,
+  make_class_test,
+  make_lazy,
   apply_rule
 }
 
@@ -11,98 +10,67 @@ import * as ast from 'node:assert';
 import * as cmn from '#lib/common.mjs';
 
 async function module_test({module_path, suite_path}) {
+  console.log(`START MODULE TEST ${module_path}`);
   const module = await import(module_path);
   const suite = (await import(suite_path)).suite;
+  const warnings = {};
   for (const [k, v] of Object.entries(module)) {
-    const test_cases = suite[k];
-    if (test_cases === undefined) { console.log(`WARNING: Untested export ${k} from module ${module_path}`);
+    if (suite.skip && suite.skip[k]) continue;
+    const test = suite.tests[k];
+    if (test === undefined) {
+      if (warnings[module_path] === undefined) {
+        warnings[module_path] = [];
+      }
+      warnings[module_path].push(k);
       continue;
     }
-    if (cmn.is_class(v)) {
-      await class_test({
-        test_class: v,
-        test_cases: test_cases
-      });
-    } else if (cmn.is_function(v)) {
-      await functional_test({
-        test_func: v,
-        test_cases: test_cases
-      });
-    } else {
-      throw new cmn.DeveloperError('test/lib/common.mjs', 'module_test', `Unexpected test type for test case.\n  Test type: ${typeof v}\n  Test case: ${k}`);
-    }
-  }
-}
-
-async function functional_test({test_func, test_cases}) {
-  const test_name = test_func.name;
-  console.log(`Running tests for ${test_name}`);
-  for (let case_name of Object.keys(test_cases)) {
-    const tc = test_cases[case_name];
-    console.log(`--- Running test case ${case_name}`);
-    try {
-      let actual = await run_case({
-        test_func: test_func,
-        test_case: tc,
-        case_name: case_name
-      });
-      if (tc.post) {
-        actual = await tc.post({
-          actual: actual,
-          case_context: tc.context
+    switch (test.type) {
+      case _CONSTANTS.TEST_TYPE.CLASS:
+        await _class_test({
+          test_class: v,
+          test_cases: test.cases
         });
+        break;
+      case _CONSTANTS.TEST_TYPE.FUNCTION:
+        await _function_test({
+          test_func: v,
+          test_cases: test.cases
+        });
+        break;
+      default:
+        throw new cmn.DeveloperError('test/lib/common.mjs', 'module_test', `Unexpected test type for test case.\n  Test type: ${test.type}\n  Test case: ${k}`);
+    }
+  }
+  if (!cmn.is_array_empty(Object.keys(warnings))) {
+    console.log('WARNING: Found unhandled exports');
+    for (const [module_path, untested_exports] of Object.entries(warnings)) {
+      console.log(`-- ${module_path}`);
+      for (const untested_export of untested_exports) {
+        console.log(`---- ${untested_export}`);
       }
-      test_deep(actual, tc.expected);
-    } catch (err) {
-      const err_object = tc.expected;
-      if (!cmn.is_function(err_object) || !(err instanceof err_object)) {
-        throw err;
-      }
     }
-    console.log(`--- Test case ${case_name} passed`);
   }
-  console.log(`${test_name} passed`);
+  console.log(`END MODULE TEST ${module_path}`);
 }
 
-async function run_case({test_func, test_case, case_name}) {
-  if (test_case.config_loader) {
-    await test_case.config_loader();
-  }
-  return await test_func(...test_case.args);
+function make_function_test(test_cases) {
+  return {
+    type: _CONSTANTS.TEST_TYPE.FUNCTION,
+    cases: test_cases
+  };
 }
 
-async function class_test({test_class, test_cases, config_loader}) {
-  const class_name = test_class.name;
-  console.log(`Running tests for ${class_name}`);
-  for (let case_name of Object.keys(test_cases)) {
-    console.log(`--- Running test case ${case_name}`);
-    const tc = test_cases[case_name];
-    if (tc.config) {
-      await config_loader(tc.config);
-    }
-    let obj = test_class;
-    if (tc.constructor !== undefined) {
-      obj = new test_class(...tc.constructor.args);
-      console.log(`------ constructor passed`);
-    }
-    for (let step of tc.steps) {
-      const actual = obj[step.method](...step.args);
-      test_deep(actual, step.expected);
-      console.log(`------ ${step.method} passed`);
-    }
-    console.log(`--- ${case_name} passed`);
-  }
-  console.log(`${class_name} passed`);
+function make_class_test(test_cases) {
+  return {
+    type: _CONSTANTS.TEST_TYPE.CLASS,
+    cases: test_cases
+  };
 }
 
-function test_deep(ac, ex) {
-  try {
-    _testDeep(ac, ex);
-  } catch(err) {
-    console.log(JSON.stringify(err.trace,null,2));
-    err = removeTrace(err);
-    throw err;
-  }
+async function make_lazy({call, args}) {
+  const lazy = async () => await call(...await _delazy(args));
+  lazy.__lazy__ = _CONSTANTS.LAZY_ID;
+  return lazy;
 }
 
 async function apply_rule({actual, case_context}) {
@@ -116,6 +84,94 @@ async function apply_rule({actual, case_context}) {
     target = transform(target);
   }
   return target;
+}
+
+async function _delazy(args) {
+  return await Promise.all(args.map(async (arg) => {
+    arg = await arg;
+    if (arg.__lazy__ === _CONSTANTS.LAZY_ID) {
+      return await arg();
+    }
+    return arg;
+  }));
+}
+
+async function _class_test({test_class, test_cases}) {
+  const class_name = test_class.name;
+  console.log(`Running tests for ${class_name}`);
+  for (let case_name of Object.keys(test_cases)) {
+    console.log(`--- Running test case ${case_name}`);
+    const tc = test_cases[case_name];
+    if (tc.config) {
+      await tc.config_loader();
+    }
+    let obj = test_class;
+    if (tc.constructor !== undefined) {
+      obj = new test_class(...await _delazy(tc.constructor.args));
+      console.log(`------ constructor passed`);
+    }
+    for (let step of tc.steps) {
+      try {
+        const actual = obj[step.method](...await _delazy(step.args));
+        _test_deep(actual, step.expected);
+      } catch (err) {
+        const err_object = step.expected;
+        if (!cmn.is_function(err_object) || !(err instanceof err_object)) {
+          throw err;
+        }
+      }
+      console.log(`------ ${step.method} passed`);
+    }
+    console.log(`--- ${case_name} passed`);
+  }
+  console.log(`${class_name} passed`);
+}
+
+async function _function_test({test_func, test_cases}) {
+  const test_name = test_func.name;
+  console.log(`Running tests for ${test_name}`);
+  for (let case_name of Object.keys(test_cases)) {
+    const tc = test_cases[case_name];
+    console.log(`--- Running test case ${case_name}`);
+    try {
+      let actual = await _run_case({
+        test_func: test_func,
+        test_case: tc,
+        case_name: case_name
+      });
+      if (tc.post) {
+        actual = await tc.post({
+          actual: actual,
+          case_context: tc.context
+        });
+      }
+      _test_deep(actual, tc.expected);
+    } catch (err) {
+      const err_object = tc.expected;
+      if (!cmn.is_function(err_object) || !(err instanceof err_object)) {
+        throw err;
+      }
+    }
+    console.log(`--- Test case ${case_name} passed`);
+  }
+  console.log(`${test_name} passed`);
+}
+
+async function _run_case({test_func, test_case, case_name}) {
+  if (test_case.config_loader) {
+    await test_case.config_loader();
+  }
+  return await test_func(...await _delazy(test_case.args));
+}
+
+function _test_deep(ac, ex) {
+  try {
+    _testDeep(ac, ex);
+  } catch(err) {
+    console.log(JSON.stringify(err.trace,null,2));
+    err = removeTrace(err);
+    throw err;
+  }
 }
 
 function _testDeep(ac, ex, permissive=false) {
@@ -214,3 +270,11 @@ function removeTrace(err) {
   err.trace = undefined;
   return err;
 }
+
+const _CONSTANTS = Object.freeze({
+  LAZY_ID: Symbol('translator-test-lib'),
+  TEST_TYPE: {
+    CLASS: 'class',
+    FUNCTION: 'function'
+  }
+});

@@ -16,7 +16,7 @@ echo "'use strict'
 import * as assert from 'assert';
 import * as cfg from '../lib/config.mjs';
 import * as cmn from '../lib/common.mjs';
-import * as tsmy from './lib/summarization.mjs';
+import * as tsmy from './lib/core.mjs';
 import { loadBiolink } from '../lib/biolink-model.mjs';
 import { loadChebi } from '../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../adapters/TranslatorServicexFEAdapter.mjs';
