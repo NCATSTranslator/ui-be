@@ -1,6 +1,10 @@
-import * as cmn from '../lib/common.mjs';
-import * as test from './lib/common.mjs';
-import * as taglib from '../lib/taglib.mjs';
+export {test_taglib}
 
-const root_path = './test/data/taglib';
+import * as test from '#test/lib/common.mjs';
 
+async function test_taglib() {
+  await test.module_test({
+    module_path: "#lib/taglib.mjs",
+    suite_path: "#test/data/taglib.mjs"
+  });
+}

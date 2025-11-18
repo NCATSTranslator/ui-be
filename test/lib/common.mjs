@@ -68,7 +68,7 @@ function make_class_test(test_cases) {
 }
 
 async function make_lazy({call, args}) {
-  const lazy = async () => await call(...await _delazy(args));
+  const lazy = async () => await call(...await _delazy(cmn.deepCopy(args)));
   lazy.__lazy__ = _CONSTANTS.LAZY_ID;
   return lazy;
 }
@@ -106,13 +106,27 @@ async function _class_test({test_class, test_cases}) {
       await tc.config_loader();
     }
     let obj = test_class;
-    if (tc.constructor !== undefined) {
-      obj = new test_class(...await _delazy(tc.constructor.args));
+    if (!cmn.is_missing(tc.constructor)) {
+      try {
+        obj = new test_class(...await _delazy(cmn.deepCopy(tc.constructor.args)));
+        if (!cmn.is_missing(tc.constructor.expected)) {
+          _test_deep(obj, tc.constructor.expected);
+        }
+      } catch (err) {
+        const err_object = tc.constructor.expected;
+        if (!cmn.is_missing(err_object)
+            && (!cmn.is_function(err_object) || !(err instanceof err_object))) {
+          throw err;
+        }
+      }
       console.log(`------ constructor passed`);
+    }
+    if (cmn.is_missing(tc.steps)) {
+      tc.steps = [];
     }
     for (let step of tc.steps) {
       try {
-        const actual = obj[step.method](...await _delazy(step.args));
+        const actual = obj[step.method](...await _delazy(cmn.deepCopy(step.args)));
         _test_deep(actual, step.expected);
       } catch (err) {
         const err_object = step.expected;
@@ -161,7 +175,7 @@ async function _run_case({test_func, test_case, case_name}) {
   if (test_case.config_loader) {
     await test_case.config_loader();
   }
-  return await test_func(...await _delazy(test_case.args));
+  return await test_func(...await _delazy(cmn.deepCopy(test_case.args)));
 }
 
 function _test_deep(ac, ex) {
