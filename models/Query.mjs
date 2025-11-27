@@ -25,20 +25,20 @@ class Query {
   }
 
   setAras(aras) {
-    this.metadata.aras = aras;
-    this.time_updated = new Date();
-    return this;
+    return this._set_key(['metadata', 'aras'], aras);
   }
 
   setStatus(status) {
-    this.status = status;
-    this.time_updated = new Date();
-    return this;
+    return this._set_key(['status'], status);
   }
 
-  delete() {
-    this.deleted = true;
+  markDeleted() {
+    return this._set_key(['deleted'], true);
+  }
+
+  _set_key(key, val) {
     this.time_updated = new Date();
+    cmn.jsonSetFromKpath(this, key, val);
     return this;
   }
 }
@@ -61,13 +61,15 @@ class UserQuery {
       title,
       time_created,
       time_updated,
+      seen,
       deleted
     } = kwargs;
     const is_invalid = !sid
       || !status
       || !pk
       || aras === undefined
-      || deleted === undefined;
+      || deleted === undefined
+      || seen === undefined;
     if (is_invalid) throw Error(`Invalid data when trying to construct UserQuery: ${JSON.stringify(kwargs)}`);
     this.sid = sid;
     this.status = status;
@@ -80,6 +82,7 @@ class UserQuery {
       note_count: 0,
       time_created: time_created,
       time_updated: time_updated,
+      seen: seen,
       deleted: deleted
     }
   }
@@ -111,9 +114,10 @@ function gen_user_query(data) {
     pk: data.pk,
     aras: aras,
     query: data.data.description,
-    title: data.data.title || null,
+    title: data.data.title ?? null,
     time_created: data.time_created,
     time_updated: data.time_updated,
+    seen: data.seen ?? false,
     deleted: data.deleted
   });
 }
