@@ -1,6 +1,6 @@
 export { ARSClient };
-import { logger } from "../lib/logger.mjs";
-import * as cmn from "../lib/common.mjs";
+import { logger } from "#lib/logger.mjs";
+import * as cmn from "#lib/common.mjs";
 import * as fs from "node:fs";
 
 class ARSClient {
@@ -99,7 +99,7 @@ class ARSClient {
     let first_complete_mv_idx = null;
     let fetch_completed_meta = null;
 
-    if (cmn.isArray(mergedVersionsList) && mergedVersionsList.length > 0) {
+    if (cmn.is_array(mergedVersionsList) && mergedVersionsList.length > 0) {
       // Fetch all the merged version statuses to get the most recent version
       // that is also complete.
       mergedVersionsList.reverse(); // First element should be the most recent
