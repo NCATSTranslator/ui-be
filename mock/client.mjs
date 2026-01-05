@@ -6,14 +6,31 @@ import * as fs from "node:fs";
 class ARSClient {
   constructor(base_path) {
     this.data = {};
-    const query_dirs = fs.readdirSync(base_path);
-    for (const dir of query_dirs) {
-      this.data[dir] = {
-        trace: JSON.parse(fs.readFileSync(`${base_path}/${dir}/trace.json`)),
-        results: JSON.parse(fs.readFileSync(`${base_path}/${dir}/results.json`))
-      };
+    this._assign_data_from([base_path]);
+  }
+
+  _assign_data_from(path) {
+    if (fs.statSync(path.join("/")).isDirectory()) {
+      const files = fs.readdirSync(path.join("/"));
+      for (const file of files) {
+        this._assign_data_from(path.concat(file));
+      }
+    } else {
+      const file_name_parts = path.at(-1).split(".");
+      const extension = file_name_parts.at(-1);
+      if (extension !== "json") return;
+      const pk = path.at(-2);
+      if (this.data[pk] === undefined) {
+        this.data[pk] = {};
+      }
+      const key = file_name_parts.at(0);
+      this.data[pk][key] = JSON.parse(fs.readFileSync(path.join("/")));
+      if (path.length > 3 && key === "results") {
+        this.data[pk][key] = this.data[pk][key].fields.data;
+      }
     }
   }
+
 
   async postQuery(query) {
     throw new Error("Not implemented");
