@@ -120,7 +120,7 @@ export function startServer(config, services) {
   // Creation of user queries is done on submission. See the /query endpoint
   app.get(`${API_PATH_V1}/users/me/queries`, queryAPIController.getUserQueries.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries`, queryAPIController.update_user_query.bind(queryAPIController));
-  app.put(`${API_PATH_V1}/users/me/queries/touch/`, queryAPIController.touch_user_query.bind(queryAPIController));
+  app.put(`${API_PATH_V1}/users/me/queries/touch`, queryAPIController.touch_user_query.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/trash`, queryAPIController.deleteUserQueries.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/restore`, queryAPIController.restoreUserQueries.bind(queryAPIController));
 
