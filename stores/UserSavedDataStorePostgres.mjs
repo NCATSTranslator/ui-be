@@ -71,7 +71,7 @@ class UserSavedDataStorePostgres {
     const keyCount = Object.keys(userSavedDataModels[0]).length
     for (let i = 0; i < userSavedDataModels.length; i++) {
       const model = userSavedDataModels[i];
-      model.time_updated = new Date();
+      model.time_updated = (new Date()).toISOString();
       const template = [];
       for (let j = 0; j < keyCount; j++) {
         template.push(`$${i*keyCount+j+1}::${_SAVED_DATA_TYPES[j]}`);
@@ -238,4 +238,4 @@ class UserSavedDataStorePostgres {
   }
 }
 
-const _SAVED_DATA_TYPES = ['INT', 'UUID', 'TEXT', 'TEXT', 'TEXT', 'UUID', 'TEXT', 'DATE', 'DATE', 'JSONB', 'BOOLEAN'];
+const _SAVED_DATA_TYPES = ['INT', 'UUID', 'TEXT', 'TEXT', 'TEXT', 'UUID', 'TEXT', 'TIMESTAMP', 'TIMESTAMP', 'JSONB', 'BOOLEAN'];

@@ -639,6 +639,71 @@
         }
       }
     },
+    "/api/v1/users/me/queries/touch": {
+      "put": {
+        "summary": "Touch user query",
+        "description": "Update the last_seen timestamp for a user query",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sid": {
+                    "type": "integer",
+                    "description": "Save ID of the query to touch"
+                  }
+                },
+                "required": ["sid"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query touched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sid": {
+                      "type": "integer",
+                      "description": "Save ID"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "last_seen": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Updated last seen timestamp"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/api/v1/users/me/projects": {
       "get": {
         "summary": "Get user projects",
