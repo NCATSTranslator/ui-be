@@ -74,34 +74,39 @@ class QueryAPIController {
     const sid = parseInt(user_query.sid, 10);
     const is_deleted = user_query.data.deleted;
     try {
-      const user_saved_data = _update_user_query(uid, sid, is_deleted, (store_user_query) => {
+      const user_saved_data = await this._update_user_query(uid, sid, is_deleted, (store_user_query) => {
         store_user_query.data.bookmark_ids = user_query.data.bookmark_ids;
         store_user_query.data.title = user_query.data.title;
       });
       if (user_saved_data === null) {
         return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Failed to update user query. Does not exist');
       }
+      user_query.data.time_updated = user_saved_data.time_updated;
       return res.status(cmn.HTTP_CODE.SUCCESS).json(user_query);
     }
     catch (err) {
       wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, `Database failed to update given usery query: ${JSON.stringify(user_query)}`);
+      return wutil.sendInternalServerError(res, `Database failed to update given user query: ${JSON.stringify(user_query)}`);
     }
   }
 
   async touch_user_query(req, res, next) {
-    const sid = req.body;
+    const sid = parseInt(req.body.sid, 10);
     const uid = req.sessionData.user.id;
     const is_deleted = false;
     try {
       const user_saved_data = await this._update_user_query(uid, sid, is_deleted, (store_user_query) => {
-        user_saved_data.data.last_seen = new Date();
+        store_user_query.data.last_seen = new Date();
       });
-      if (user_saved_data === null) throw Error('PANIC: Database failed to update user query but did not throw');
-      return res.status(cmn.HTTP_CODE.SUCCESS).json(user_query);
+      if (user_saved_data === null) throw Error(`Failed to update user query. User query with id ${sid} not exist`);
+      const update = {
+        sid: sid,
+        data: { last_seen: user_saved_data.data.last_seen }
+      };
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(update);
     } catch (err) {
       wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, `Database failed to update given usery query: ${JSON.stringify(user_query)}`);
+      return wutil.sendInternalServerError(res, `Database failed to update given sid: ${sid}`);
     }
   }
 
@@ -326,7 +331,6 @@ class QueryAPIController {
     update(user_saved_data);
     user_saved_data = await this.userService.updateUserSave(user_saved_data, is_deleted);
     if (!user_saved_data) throw Error('PANIC: Database failed to update user query but did not throw');
-    user_query.data.time_updated = user_saved_data.time_updated;
     return user_saved_data;
   }
 
