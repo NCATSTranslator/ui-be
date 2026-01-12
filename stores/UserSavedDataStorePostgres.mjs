@@ -238,4 +238,4 @@ class UserSavedDataStorePostgres {
   }
 }
 
-const _SAVED_DATA_TYPES = ['INT', 'UUID', 'TEXT', 'TEXT', 'TEXT', 'UUID', 'TEXT', 'DATE', 'DATE', 'JSONB', 'BOOLEAN'];
+const _SAVED_DATA_TYPES = ['INT', 'UUID', 'TEXT', 'TEXT', 'TEXT', 'UUID', 'TEXT', 'TIMESTAMP', 'TIMESTAMP', 'JSONB', 'BOOLEAN'];
