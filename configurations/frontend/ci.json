@@ -338,7 +338,7 @@
      }
   ],
   "include_pathfinder": true,
-  "include_summarization": false,
+  "include_summarization": true,
   "include_query_status_polling": true,
   "include_projects": true,
   "include_hashed_parameters": true
