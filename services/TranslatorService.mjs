@@ -109,6 +109,15 @@ class TranslatorService
       throw new QueryClientError(`Error unsubscribing to query ${queryId}`, queryId, 'unsubscribe', err);
     }
   }
+
+  async get_notification_statuses(pks) {
+    try {
+      return await this.queryClient.get_notification_statuses(pks);
+    } catch (err) {
+      logger.error(`Error getting notification statuses. Got error:'${err}'`);
+      throw new QueryClientError(`Error getting notfication statuses for pks: ${pks}`);
+    }
+  }
 }
 /*
   // testing stuff
