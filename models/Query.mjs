@@ -36,6 +36,13 @@ class Query {
     return this;
   }
 
+  setStatistics(statistics) {
+    this.metadata.stats.result_count = statistics.results ?? null;
+    this.metadata.stats.aux_graph_count = statistics.auxiliary_graphs ?? null;
+    this.time_updated = new Date();
+    return this;
+  }
+
   delete() {
     this.deleted = true;
     this.time_updated = new Date();
@@ -47,6 +54,10 @@ class QueryMetadata {
   constructor(query, aras = []) {
     this.query = query;
     this.aras = aras;
+    this.stats = {
+      result_count: null,
+      aux_graph_count: null
+    };
   }
 }
 
