@@ -43,7 +43,7 @@ const _UPDATE_EVENT = Object.freeze({
   MV_AVAILABLE: 'merged_version_available',
   MV_BEGUN: 'merged_version_begun',
   ARA_COMPLETE: 'ara_response_complete',
-  ARS_COMPLETE: 'last_merged_complete',
+  ARS_COMPLETE: 'last_merged_completed',
   ADMIN: 'admin',
   ERROR: 'ars_error'
 });
