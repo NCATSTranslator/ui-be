@@ -56,7 +56,7 @@ class QueryService {
         storeQueryModel.setAras(update.aras);
       }
       storeQueryModel.setStatus(update.status);
-      if (update.stats !== undefined && update.stats !== null) {
+      if (update.stats !== null) {
         storeQueryModel.setStatistics(update.stats);
       }
       storeQueryModel = await this._queryStore.updateQuery(storeQueryModel);
