@@ -36,6 +36,13 @@ class Query {
     return this;
   }
 
+  setStatistics(statistics) {
+    this.metadata.stats.result_count = statistics.results ?? null;
+    this.metadata.stats.aux_graph_count = statistics.auxiliary_graphs ?? null;
+    this.time_updated = new Date();
+    return this;
+  }
+
   delete() {
     this.deleted = true;
     this.time_updated = new Date();
@@ -47,6 +54,14 @@ class QueryMetadata {
   constructor(query, aras = []) {
     this.query = query;
     this.aras = aras;
+    this.stats = new QueryStatistics();
+  }
+}
+
+class QueryStatistics {
+  constructor() {
+    this.result_count = null;
+    this.aux_graph_count = null;
   }
 }
 
@@ -59,6 +74,7 @@ class UserQuery {
       aras,
       query,
       title,
+      statistics,
       time_created,
       time_updated,
       deleted
@@ -75,6 +91,7 @@ class UserQuery {
       qid: pk,
       aras: aras,
       title: title,
+      statistics: statistics || new QueryStatistics(),
       query: query,
       bookmark_ids: [],
       note_count: 0,
@@ -112,6 +129,7 @@ function gen_user_query(data) {
     aras: aras,
     query: data.data.description,
     title: data.data.title || null,
+    statistics: data.metadata.statistics,
     time_created: data.time_created,
     time_updated: data.time_updated,
     deleted: data.deleted
