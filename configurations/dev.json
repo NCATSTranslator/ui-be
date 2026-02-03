@@ -15,6 +15,7 @@
     "retain_uri": "/ars/api/retain",
     "subscribe_uri": "/ars/api/query_event_subscribe",
     "unsubscribe_uri": "/ars/api/query_event_unsubscribe",
+    "notification_uri": "/ars/api/get_status",
     "protocol": "https",
     "use_ars_merging": true,
     "use_pubsub": true

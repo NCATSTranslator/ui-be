@@ -45,7 +45,7 @@ class QueryService {
   }
 
   async get_stale_queries() {
-    const queries = this._queryStore.get_stale_queries();
+    return this._queryStore.get_stale_queries();
   }
 
   // Query writes should normally occur due to the ARS publishing an update. Only use this function

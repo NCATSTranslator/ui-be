@@ -39,19 +39,26 @@ async function main() {
     const query = stale_queries[i];
     map_pk_queries.set(query.pk, query);
   }
-  const stale_pks = map_pk_queries.keys();
+  const stale_pks = [...map_pk_queries.keys()];
   if (cmn.isArrayEmpty(stale_pks)) {
     return;
   }
-  const notifications = await translator_service.get_notification_statuses(stale_pks);
+  const [_, notifications] = await translator_service.get_notification_statuses(stale_pks);
   const updates = []
   for (let notification of notifications) {
-    const query = map_pk_queries.get(notification.pk);
-    if (notification.status !== query.status || notification.aras.length !== query.metadata.aras.length) {
-      query.status = notification.status;
-      query.metadata.aras = notification.aras;
+    if (notification.status === null) {
+      console.error(`ARS does has no record of pk: ${query.pk}`);
+      continue;
     }
-    updates.push(query);
+    const query = map_pk_queries.get(notification.pk);
+    if (notification.status !== query.status
+        || notification.merged_list.length !== query.metadata.aras.length) {
+      query.status = notification.status;
+      query.metadata.aras = notification.merged_list.map(merged_entry => {
+        return merged_entry[1];
+      });
+      updates.push(query);
+    }
   }
   if (!cmn.isArrayEmpty(updates)) {
     const success = await query_service.UNSAFE_batch_write(updates);
@@ -61,5 +68,6 @@ async function main() {
 try {
   await main();
 } catch (err) {
-  console.warn(`Error occured: ${err}`);
+  console.error(`Error occured: ${err}`);
+  process.exitCode = 1;
 }
