@@ -17,7 +17,7 @@
     "unsubscribe_uri": "/ars/api/query_event_unsubscribe",
     "protocol": "https",
     "use_ars_merging": true,
-    "use_pubsub": false,
+    "use_pubsub": true,
     "use_trapi_validation": true
   },
   "annotation_endpoint": {
@@ -40,7 +40,7 @@
   "biolink": {
     "version": "4.2.1",
     "support_deprecated_predicates": false,
-    "infores_catalog": "infores-catalog-v1.1.1.json",
+    "infores_catalog": "infores-catalog-v1.1.4.json",
     "prefix_catalog": {
       "path": "prefix-catalog.json",
       "exclude": [
@@ -63,7 +63,7 @@
   "google_analytics_id": "G-MQ5SCJJ6Q3",
   "google_tag_manager_id": "GTM-5SGQTGPF",
   "_load_frontend": "configurations/frontend/production.json",
-  "max_hops": 3,
+  "max_hops": 4,
   "log_level": "info",
   "log_format": "common",
   "_load_auth": "configurations/auth/auth.production.json",
