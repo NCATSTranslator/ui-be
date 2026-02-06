@@ -80,7 +80,7 @@ class UserAPIController {
   }
   async createUserProject(req, res, next) {
     const project = await req.body;
-    if (!project.title) return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing "title" field');
+    if (project.title === undefined) return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing "title" field');
     if (!project.pks) return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing "pks" field');
     const user_save = {
       save_type: SAVE_TYPE.PROJECT,

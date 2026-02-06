@@ -43,9 +43,16 @@ await loadChebi();
 
 // Bootstrap the translator service.
 // All these bootstraps feel kludgy.
-const TRANSLATOR_SERVICE = (function (config) {
-  const queryClient = new ARSClient(config.ars_endpoint, config.secrets.hmac.key);
-  return new TranslatorService(queryClient);
+
+const TRANSLATOR_SERVICE = await (async function (config) {
+  let query_client = null;
+  if (config.ars_endpoint.host === "mock") {
+    const client_module = await import("./mock/client.mjs");
+    query_client = new client_module.ARSClient(config.ars_endpoint.data_path);
+  } else {
+    query_client = new ARSClient(config.ars_endpoint, config.secrets.hmac.key);
+  }
+  return new TranslatorService(query_client);
 })(SERVER_CONFIG);
 
 // Bootstrap the auth service

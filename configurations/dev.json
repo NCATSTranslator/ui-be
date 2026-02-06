@@ -39,7 +39,7 @@
   "biolink": {
     "version": "4.2.1",
     "support_deprecated_predicates": false,
-    "infores_catalog": "infores-catalog-v1.0.0.json",
+    "infores_catalog": "infores-catalog-v1.1.4.json",
     "prefix_catalog": {
       "path": "prefix-catalog.json",
       "exclude": [
