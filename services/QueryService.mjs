@@ -56,6 +56,9 @@ class QueryService {
         storeQueryModel.setAras(update.aras);
       }
       storeQueryModel.setStatus(update.status);
+      if (update.stats !== null) {
+        storeQueryModel.setStatistics(update.stats);
+      }
       storeQueryModel = await this._queryStore.updateQuery(storeQueryModel);
       if (storeQueryModel === null) throw new Error(`Failed to update database for PK: ${pk}`);
     }
