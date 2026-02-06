@@ -60,10 +60,13 @@
       "rejectUnauthorized": false
     }
   },
+  "feature_config": {
+    "pull_source_records": false,
+    "max_hops": 4
+  },
   "google_analytics_id": "G-MQ5SCJJ6Q3",
   "google_tag_manager_id": "GTM-5SGQTGPF",
   "_load_frontend": "configurations/frontend/production.json",
-  "max_hops": 4,
   "log_level": "info",
   "log_format": "common",
   "_load_auth": "configurations/auth/auth.production.json",
