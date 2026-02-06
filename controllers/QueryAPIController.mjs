@@ -11,6 +11,7 @@ class QueryAPIController {
       queryService, queryServicexFEAdapter, userService, filters) {
     this.config = config;
     this.apiKey = config.secrets.hmac.key;
+    this.use_hmac = config.ars_endpoint.use_hmac_validation;
     this.translatorService = translatorService;
     this.translatorServicexFEAdapter = translatorServicexFEAdapter;
     this.queryService = queryService;
@@ -56,7 +57,9 @@ class QueryAPIController {
     try {
       const update = req.body;
       const queryServiceMsg = await this.queryService.processQueryUpdate(update);
-      res.set(_CUSTOM_HEADERS.X_EVENT_SIG, cmn.generateHMACSignature(JSON.stringify(res.body), this.apiKey));
+      if (this.use_hmac) {
+        res.set(_CUSTOM_HEADERS.X_EVENT_SIG, cmn.generateHMACSignature(JSON.stringify(res.body), this.apiKey));
+      }
       return res.status(this._queryServiceMsgToHTTPCode(queryServiceMsg)).send();
     } catch (err) {
       // TODO: Send errors at more granular level
@@ -67,7 +70,7 @@ class QueryAPIController {
 
   async update_user_query(req, res, next) {
     const user_query = req.body;
-    if (!user_query) {
+    if (!user_query || !cmn.isObject(user_query)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to contain user query. Got: ${JSON.stringify(user_query)}`);
     }
     const uid = req.sessionData.user.id;
@@ -80,6 +83,14 @@ class QueryAPIController {
       });
       if (user_saved_data === null) {
         return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Failed to update user query. Does not exist');
+      }
+      user_saved_data = user_saved_data[0];
+      user_saved_data.data.bookmark_ids = user_query.data.bookmark_ids;
+      user_saved_data.data.title = user_query.data.title;
+      user_saved_data.data.seen = user_query.data.seen;
+      user_saved_data = await this.userService.updateUserSave(user_saved_data, is_deleted);
+      if (!user_saved_data) {
+        throw Error('PANIC: Database failed to update user query but did not throw');
       }
       user_query.data.time_updated = user_saved_data.time_updated;
       return res.status(cmn.HTTP_CODE.SUCCESS).json(user_query);
@@ -311,6 +322,7 @@ class QueryAPIController {
       errorCode: null,
       errorMsg: ''
     };
+    if (!this.use_hmac) return reqVerification;
     const signature = req.headers[_CUSTOM_HEADERS.X_EVENT_SIG];
     if (!signature) {
       reqVerification.valid = false;

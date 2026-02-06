@@ -25,27 +25,25 @@ class Query {
   }
 
   setAras(aras) {
-    this.metadata.aras = aras;
-    this.time_updated = new Date();
-    return this;
+    return this._set_key(['metadata', 'aras'], aras);
   }
 
   setStatus(status) {
-    this.status = status;
-    this.time_updated = new Date();
-    return this;
+    return this._set_key(['status'], status);
+  }
+
+  setDeleted() {
+    return this._set_key(['deleted'], true);
   }
 
   setStatistics(statistics) {
-    this.metadata.stats.result_count = statistics.results ?? null;
-    this.metadata.stats.aux_graph_count = statistics.auxiliary_graphs ?? null;
-    this.time_updated = new Date();
-    return this;
+    this._set_key(['metadata', 'stats', 'result_count'], statistics.results ?? null);
+    return this._set_key(['metadata', 'stats', 'aux_graph_count'], statistics.auxiliary_graphs ?? null);
   }
 
-  delete() {
-    this.deleted = true;
+  _set_key(key, val) {
     this.time_updated = new Date();
+    cmn.jsonSetFromKpath(this, key, val);
     return this;
   }
 }
@@ -77,13 +75,15 @@ class UserQuery {
       statistics,
       time_created,
       time_updated,
+      seen,
       deleted
     } = kwargs;
     const is_invalid = !sid
       || !status
       || !pk
       || aras === undefined
-      || deleted === undefined;
+      || deleted === undefined
+      || seen === undefined;
     if (is_invalid) throw Error(`Invalid data when trying to construct UserQuery: ${JSON.stringify(kwargs)}`);
     this.sid = sid;
     this.status = status;
@@ -97,6 +97,7 @@ class UserQuery {
       note_count: 0,
       time_created: time_created,
       time_updated: time_updated,
+      seen: seen,
       deleted: deleted
     }
   }
@@ -128,10 +129,11 @@ function gen_user_query(data) {
     pk: data.pk,
     aras: aras,
     query: data.data.description,
-    title: data.data.title || null,
+    title: data.data.title ?? null,
     statistics: data.metadata.statistics,
     time_created: data.time_created,
     time_updated: data.time_updated,
+    seen: data.seen ?? false,
     deleted: data.deleted
   });
 }

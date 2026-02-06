@@ -93,6 +93,7 @@ const QUERY_SERVICE = (function (config) {
     ssl: config.db_conn.ssl
   });
   return new QueryService(new QueryStorePostgres(dbPool),
+                          new UserSavedDataStorePostgres(dbPool),
                           new ARSCallbackxQueryServiceAdapter());
 })(SERVER_CONFIG);
 logger.info(SERVER_CONFIG, "Server configuration");

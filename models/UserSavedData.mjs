@@ -1,5 +1,12 @@
 'use strict';
-export { UserSavedData, UserQueryData, UserTagData, SAVE_TYPE };
+export {
+  SAVE_TYPE,
+  mark_user_query_unseen,
+  mark_user_query_seen,
+  UserSavedData,
+  UserQueryData,
+  UserTagData
+};
 
 const SAVE_TYPE = Object.freeze({
   PROJECT: 'project',
@@ -7,6 +14,22 @@ const SAVE_TYPE = Object.freeze({
   BOOKMARK: 'bookmark',
   TAG: 'tag'
 });
+
+function mark_user_query_unseen(saved_data) {
+  if (!saved_data.save_type === SAVE_TYPE.QUERY) {
+    throw Error('Developer Error in UserSavedData: mark_user_query_unseen given saved_data that does not have save_type === query');
+  }
+  saved_data.data.seen = false;
+  return saved_data;
+}
+
+function mark_user_query_seen(saved_data) {
+  if (!saved_data.save_type === SAVE_TYPE.QUERY) {
+    throw Error('Developer Error in UserSavedData: mark_user_query_seen given saved_data that does not have save_type === query');
+  }
+  saved_data.data.seen = true;
+  return saved_data
+}
 
 class UserSavedData {
   constructor({
@@ -62,6 +85,7 @@ class UserQueryData {
     this.title = null;
     this.bookmark_ids = [];
     this.tag_ids = [];
+    this.seen = false;
   }
 }
 
