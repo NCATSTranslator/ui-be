@@ -129,7 +129,7 @@ function gen_user_query(data) {
     aras: aras,
     query: data.data.description,
     title: data.data.title ?? null,
-    statistics: data.metadata.statistics ?? new QueryMetadata(),
+    statistics: data.metadata.statistics ?? new QueryStatistics(),
     time_created: data.time_created,
     time_updated: data.time_updated,
     deleted: data.deleted
