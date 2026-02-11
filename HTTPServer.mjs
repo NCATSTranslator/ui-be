@@ -31,7 +31,7 @@ export function startServer(config, services) {
   const translatorService = services.translatorService;
   const queryService = services.queryService;
   const demoQueries = config.frontend.cached_queries.filter(e => e.allow_inbound);
-  const translatorServicexFEAdapter = new TranslatorServicexFEAdapter();
+  const translatorServicexFEAdapter = new TranslatorServicexFEAdapter(config.feature_config);
   const queryServicexFEAdapter = new QueryServicexFEAdapter();
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();

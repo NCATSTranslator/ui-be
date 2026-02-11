@@ -9,12 +9,15 @@ class ARSCallbackxQueryServiceAdapter {
       pk: cmn.jsonGet(queryUpdate, 'pk'),
       timestamp: cmn.jsonGet(queryUpdate, 'timestamp'),
       status: null,
+      stats: null,
       aras: []
     };
     switch (eventType) {
       case _UPDATE_EVENT.MV_AVAILABLE:
+      case _UPDATE_EVENT.ARS_COMPLETE:
         update.aras = cmn.jsonGet(queryUpdate, 'merged_versions_list').map(idAraPair => idAraPair[1]);
         update.aras.reverse();
+        update.stats = cmn.jsonGet(queryUpdate, 'stats', null);
         if (cmn.jsonGet(queryUpdate, 'complete')) {
           update.status = cmn.QUERY_STATUS.COMPLETE;
         } else {
@@ -42,6 +45,7 @@ const _UPDATE_EVENT = Object.freeze({
   MV_AVAILABLE: 'merged_version_available',
   MV_BEGUN: 'merged_version_begun',
   ARA_COMPLETE: 'ara_response_complete',
+  ARS_COMPLETE: 'last_merged_completed',
   ADMIN: 'admin',
   ERROR: 'ars_error'
 });
