@@ -1,6 +1,7 @@
 'use strict';
 
 import * as cmn from '../lib/common.mjs';
+import * as trapi from '../lib/trapi.mjs';
 import * as arsmsg from '../lib/ARSMessages.mjs';
 import * as sm from '../lib/summarization/summarization.mjs';
 
@@ -26,6 +27,7 @@ class TranslatorServicexFEAdapter {
       status: _determine_status(msg),
       data: {
         qid: msg.pk,
+        query: trapi.query_graph_to_client_request(msg.query_graph),
         aras: msg.completed.map(e => e.agent),
         timestamp: msg.meta.timestamp
       }
