@@ -68,19 +68,19 @@ class QueryStorePostgres {
     let p = 1;
     for (let query of queries) {
       query.time_updated = new Date();
-      sql_values.push(`($${p++}, $${p++}, $${p++}::jsonb`);
+      sql_values.push(`($${p++}::UUID, $${p++}, $${p++}::TIMESTAMPTZ, $${p++}::JSONB)`);
       params.push(query.pk, query.status, query.time_updated, query.metadata);
     }
-    const res = await pgExec(this.pool `
+    const res = await pgExec(this.pool, `
       UPDATE queries AS q
       SET
         status = v.status,
-        time_updated = v.time_updates,
+        time_updated = v.time_updated,
         metadata = v.metadata
       FROM (
         VALUES ${sql_values.join(",\n")}
-      ) AS v (pk, status, time_updated, metadata)
-      WHERE q.pk = v.pk`);
+      ) AS v(pk, status, time_updated, metadata)
+      WHERE q.pk = v.pk`, params);
     return true;
   }
 

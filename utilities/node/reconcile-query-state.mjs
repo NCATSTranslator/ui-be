@@ -45,24 +45,33 @@ async function main() {
   }
   const [_, notifications] = await translator_service.get_notification_statuses(stale_pks);
   const updates = []
-  for (let notification of notifications) {
-    if (notification.status === null) {
-      console.error(`ARS does has no record of pk: ${query.pk}`);
+  for (let n of notifications) {
+    if (n.status === null) {
+      console.error(`ARS does has no record of pk: ${n.pk}`);
       continue;
     }
-    const query = map_pk_queries.get(notification.pk);
-    if (notification.status !== query.status
-        || notification.merged_list.length !== query.metadata.aras.length) {
-      query.status = notification.status;
-      query.metadata.aras = notification.merged_list.map(merged_entry => {
+    const query = map_pk_queries.get(n.pk);
+    if (n.status !== query.status
+        || n.merged_list.length !== query.metadata.aras.length) {
+      query.status = _ars_status_to_query_status(n.status);
+      query.metadata.aras = n.merged_list.map(merged_entry => {
         return merged_entry[1];
       });
       updates.push(query);
     }
   }
   if (!cmn.isArrayEmpty(updates)) {
-    const success = await query_service.UNSAFE_batch_write(updates);
+    const success = await query_service.UNSAFE_batch_update(updates);
   }
+}
+
+function _ars_status_to_query_status(ars_status) {
+  switch(ars_status) {
+    case "Done": return cmn.QUERY_STATUS.COMPLETE;
+    case "Running": return cmn.QUERY_STATUS.RUNNING;
+    case "Error": return cmn.QUERY_STATUS.ERROR;
+  }
+  throw RangeError(`Unexpected ARS status: ${ars_status}`);
 }
 
 try {
