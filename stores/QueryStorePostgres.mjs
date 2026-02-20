@@ -81,7 +81,7 @@ class QueryStorePostgres {
         VALUES ${sql_values.join(",\n")}
       ) AS v(pk, status, time_updated, metadata)
       WHERE q.pk = v.pk`, params);
-    return true;
+    return res.rowCount;
   }
 
   async _retrieveQueryById(id, idType = 'id') {

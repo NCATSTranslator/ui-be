@@ -13,7 +13,7 @@ async function main() {
       basefile = process.argv[2];
     } else if (process.argv.length === 4) {
       basefile = process.argv[2];
-      overrides = process.argv[3]
+      overrides = process.argv[3];
     } else {
       throw new Error(`Unsupported number of args (${process.argv.length}) at startup. Exiting.`);
     }
@@ -44,10 +44,14 @@ async function main() {
     return;
   }
   const [_, notifications] = await translator_service.get_notification_statuses(stale_pks);
-  const updates = []
+  const updates = [];
   for (let n of notifications) {
+    if (n.pk === null || n.pk === undefined) {
+      console.error(`ARS sent a record with no pk: ${n}`);
+      continue;
+    }
     if (n.status === null) {
-      console.error(`ARS does has no record of pk: ${n.pk}`);
+      console.error(`ARS has no record of pk: ${n.pk}`);
       continue;
     }
     const query = map_pk_queries.get(n.pk);
@@ -60,9 +64,11 @@ async function main() {
       updates.push(query);
     }
   }
+  let update_count = 0;
   if (!cmn.isArrayEmpty(updates)) {
-    const success = await query_service.UNSAFE_batch_update(updates);
+    update_count = await query_service.UNSAFE_batch_update(updates);
   }
+  return update_count;
 }
 
 function _ars_status_to_query_status(ars_status) {
@@ -75,8 +81,11 @@ function _ars_status_to_query_status(ars_status) {
 }
 
 try {
-  await main();
+  const update_count = await main();
+  console.log(`Updated ${update_count} rows`);
 } catch (err) {
-  console.error(`Error occured: ${err}`);
+  console.error(`Error occurred: ${err}`);
   process.exitCode = 1;
+} finally {
+  await query_service.stop();
 }

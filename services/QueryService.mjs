@@ -15,6 +15,10 @@ class QueryService {
     this._clientAdapter = clientAdapter;
   }
 
+  async stop() {
+    this._queryStore.pool.end();
+  }
+
   async getQueryById(qid) {
     return this._queryStore.retrieveQueryById(qid);
   }

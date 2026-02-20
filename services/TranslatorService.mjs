@@ -115,7 +115,7 @@ class TranslatorService
       return await this.queryClient.get_notification_statuses(pks);
     } catch (err) {
       logger.error(`Error getting notification statuses. Got error:'${err}'`);
-      throw new QueryClientError(`Error getting notfication statuses for pks: ${pks}`);
+      throw new QueryClientError(`Error getting notification statuses for pks: ${pks}`);
     }
   }
 }
