@@ -15,6 +15,10 @@ class QueryService {
     this._clientAdapter = clientAdapter;
   }
 
+  async stop() {
+    this._queryStore.pool.end();
+  }
+
   async getQueryById(qid) {
     return this._queryStore.retrieveQueryById(qid);
   }
@@ -42,6 +46,16 @@ class QueryService {
 
   async addQueryUserRelationship(queryModel, userQueryModel) {
     return this._queryStore.addQueryUserRelationship(queryModel, userQueryModel);
+  }
+
+  async get_stale_queries() {
+    return this._queryStore.get_stale_queries();
+  }
+
+  // Query writes should normally occur due to the ARS publishing an update. Only use this function
+  // in very special cases.
+  async UNSAFE_batch_update(queries) {
+    return this._queryStore.UNSAFE_batch_update(queries);
   }
 
   async _handleUpdate(update) {
