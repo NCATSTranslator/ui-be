@@ -11,6 +11,10 @@ services:
     depends_on:
       - pgdb
     command: ["configurations/production.json", "configurations/local-overrides.json"]
+  pubsub:
+    image: pubsub:latest
+    environment:
+      APP_ENVIRONMENT: production
   pgdb:
     image: postgres:15.5
     environment:

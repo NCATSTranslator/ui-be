@@ -54,6 +54,9 @@ async function main() {
       console.error(`ARS has no record of pk: ${n.pk}`);
       continue;
     }
+    if (n.merged_list === null) {
+      continue;
+    }
     const query = map_pk_queries.get(n.pk);
     if (n.status !== query.status
         || n.merged_list.length !== query.metadata.aras.length) {
