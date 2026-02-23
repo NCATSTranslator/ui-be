@@ -1,0 +1,3 @@
+SHELL=/bin/sh
+
+*/5 * * * * root node /app/utilities/reconcile-query-state.mjs /app/utilities/configurations/dev.json /app/utilities/configurations/local-overrides.json >> /var/log/cron.log 2>&1

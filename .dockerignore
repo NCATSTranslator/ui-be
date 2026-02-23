@@ -1,6 +1,7 @@
 **/.git*
 test/
 build/
+mock/
 **/node_modules/
 **/*~
 ui-build/
