@@ -51,8 +51,8 @@ if [ $# -eq 3 ]; then
     override_file="$3"
 fi
 
-if [[ "$app" == "ui-be" ]]; then
-    node --max-old-space-size="$mem_limit" StartServer.mjs "$config_file" "$3"
+if [[ "$app" == "app" ]]; then
+    node --max-old-space-size="$mem_limit" StartServer.mjs "$config_file" "$override_file"
 elif [[ "$app" == "cron" ]]; then
     utilities/gen-pubsub-cron-entry.sh
     cron -f
