@@ -20,7 +20,7 @@ RUN cd ui-fe \
 
 EXPOSE 8386
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh", "ui-be"]
 
 FROM base AS cron
 RUN apt-get update \
@@ -32,4 +32,4 @@ RUN apt-get update \
 COPY ./utilities/cron/pubsub-handler.cron /etc/cron.d/pubsub-handler
 RUN chmod 0644 /etc/cron.d/pubsub-handler
 
-CMD ["cron", "-f"]
+ENTRYPOINT ["/app/entrypoint.sh", "cron"]

@@ -31,16 +31,32 @@ case "$APP_ENVIRONMENT" in
         ;;
 esac
 
-# If a cmdline arg is provided, override the env var-sourced
-# configuration file.
-if [ $# -ge 1 ]; then
-    echo "Overriding env var-driven config file with explicitly supplied file"
-    config_file="$1"
+if [[ $# -eq 0 ]]; then
+  echo "Usage: $0 <app> [<config_file>] [<override_file>]"
+  exit 1
 fi
 
-if [ $# -eq 2 ]; then
-    echo "Using additional override file $2"
-    node --max-old-space-size="$mem_limit" -r newrelic StartServer.mjs "$config_file" "$2"
+app=$1
+
+# If a cmdline arg is provided, override the env var-sourced
+# configuration file.
+if [ $# -ge 2 ]; then
+    echo "Overriding env var-driven config file with explicitly supplied file"
+    config_file="$2"
+fi
+
+override_file=""
+if [ $# -eq 3 ]; then
+    echo "Using additional override file $3"
+    override_file="$3"
+fi
+
+if [[ "$app" == "ui-be" ]]; then
+    node --max-old-space-size="$mem_limit" StartServer.mjs "$config_file" "$3"
+elif [[ "$app" == "cron" ]]; then
+    utilities/gen-pubsub-cron-entry.sh
+    cron -f
 else
-    node --max-old-space-size="$mem_limit" -r newrelic StartServer.mjs "$config_file"
+  echo "Unknown application parameter: $1"
+  exit 1
 fi
