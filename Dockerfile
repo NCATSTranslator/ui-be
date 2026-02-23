@@ -23,8 +23,9 @@ EXPOSE 8386
 ENTRYPOINT ["/app/entrypoint.sh"]
 
 FROM base AS cron
-RUN apt update && apt install -y --no-install-recommends cron \
-  && rm -rf /var/lib/apt/lists/*
+RUN apt update \
+  && apt install -y --no-install-recommends cron \
+  && rm -rf /var/lib/apt/lists/* \
   && rm -rf ui-fe \
   && rm -rf /root/.cache/*
 
