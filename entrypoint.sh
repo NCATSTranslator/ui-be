@@ -14,17 +14,17 @@ export APP_ENVIRONMENT
 mem_limit=8192
 case "$APP_ENVIRONMENT" in
     production)
-        config_file="configurations/production.json"
+        config_file="/app/configurations/production.json"
         ;;
     test)
-        config_file="configurations/test.json"
+        config_file="/app/configurations/test.json"
         ;;
     ci)
-        config_file="configurations/ci.json"
+        config_file="/app/configurations/ci.json"
         mem_limit=4096
         ;;
     dev)
-        config_file="configurations/dev.json"
+        config_file="/app/configurations/dev.json"
         ;;
     *)
         echo "Unexpected value $APP_ENVIRONMENT for APP_ENVIRONMENT"
