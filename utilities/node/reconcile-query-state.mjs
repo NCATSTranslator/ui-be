@@ -6,33 +6,7 @@ import { TranslatorService } from "../../services/TranslatorService.mjs";
 import { QueryStorePostgres } from "../../stores/QueryStorePostgres.mjs";
 import { QueryService } from "../../services/QueryService.mjs";
 
-async function main() {
-  const SERVER_CONFIG = await (async function() {
-    let basefile, overrides = null;
-    if (process.argv.length === 3) {
-      basefile = process.argv[2];
-    } else if (process.argv.length === 4) {
-      basefile = process.argv[2];
-      overrides = process.argv[3];
-    } else {
-      throw new Error(`Unsupported number of args (${process.argv.length}) at startup. Exiting.`);
-    }
-    return bootstrapConfig(basefile, overrides);
-  })();
-
-  const translator_service = await (async function (config) {
-    return new TranslatorService(new ARSClient(config.ars_endpoint, config.secrets.hmac.key));
-  })(SERVER_CONFIG);
-
-  const query_service = (function (config) {
-    const dbPool = new pg.Pool({
-      ...config.storage.pg,
-      password: config.secrets.pg.password,
-      ssl: config.db_conn.ssl
-    });
-    return new QueryService(new QueryStorePostgres(dbPool), null);
-  })(SERVER_CONFIG);
-
+async function main(translator_service, query_service) {
   const stale_queries = await query_service.get_stale_queries();
   const map_pk_queries = new Map();
   for (let i = 0; i < stale_queries.length; i++) {
@@ -83,8 +57,34 @@ function _ars_status_to_query_status(ars_status) {
   throw RangeError(`Unexpected ARS status: ${ars_status}`);
 }
 
+const SERVER_CONFIG = await (async function() {
+  let basefile, overrides = null;
+  if (process.argv.length === 3) {
+    basefile = process.argv[2];
+  } else if (process.argv.length === 4) {
+    basefile = process.argv[2];
+    overrides = process.argv[3];
+  } else {
+    throw new Error(`Unsupported number of args (${process.argv.length}) at startup. Exiting.`);
+  }
+  return bootstrapConfig(basefile, overrides);
+})();
+
+const translator_service = await (async function (config) {
+  return new TranslatorService(new ARSClient(config.ars_endpoint, config.secrets.hmac.key));
+})(SERVER_CONFIG);
+
+const query_service = (function (config) {
+  const dbPool = new pg.Pool({
+    ...config.storage.pg,
+    password: config.secrets.pg.password,
+    ssl: config.db_conn.ssl
+  });
+  return new QueryService(new QueryStorePostgres(dbPool), null);
+})(SERVER_CONFIG);
+
 try {
-  const update_count = await main();
+  const update_count = await main(translator_service, query_service);
   console.log(`Updated ${update_count} rows`);
 } catch (err) {
   console.error(`Error occurred: ${err}`);
