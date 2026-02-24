@@ -36,8 +36,6 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-app=$1
-
 # If a cmdline arg is provided, override the env var-sourced
 # configuration file.
 if [ $# -ge 2 ]; then
@@ -51,10 +49,11 @@ if [ $# -eq 3 ]; then
     override_file="$3"
 fi
 
+app=$1
 if [[ "$app" == "app" ]]; then
     node --max-old-space-size="$mem_limit" StartServer.mjs "$config_file" "$override_file"
 elif [[ "$app" == "cron" ]]; then
-    utilities/gen-pubsub-cron-entry.sh
+    utilities/gen-pubsub-cron-entry.sh "$config_file" "$override_file"
     cron -f
 else
   echo "Unknown application parameter: $1"
