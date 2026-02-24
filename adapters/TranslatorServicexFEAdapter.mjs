@@ -10,6 +10,9 @@ export { TranslatorServicexFEAdapter };
 // msg: ARS client message with trace=y
 
 class TranslatorServicexFEAdapter {
+  constructor(feature_config) {
+    this.feature_config = feature_config;
+  }
 
   querySubmitToFE(msg) {
     return {
@@ -44,7 +47,7 @@ class TranslatorServicexFEAdapter {
     const summary = await sm.answers_to_summary(
       msg.pk,
       data,
-      maxHops);
+      this.feature_config);
     summary.set_timestamp(msg.meta.timestamp);
 
     return {

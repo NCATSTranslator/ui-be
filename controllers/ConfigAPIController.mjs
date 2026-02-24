@@ -18,6 +18,7 @@ class ConfigAPIController {
       include_query_status_polling: this.config.frontend.include_query_status_polling,
       include_projects: this.config.frontend.include_projects,
       include_hashed_parameters: this.config.frontend.include_hashed_parameters,
+      show_novelty_boost: this.config.frontend.show_novelty_boost
     });
   }
 }
