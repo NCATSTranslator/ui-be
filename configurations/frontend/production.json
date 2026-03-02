@@ -341,5 +341,6 @@
   "include_summarization": false,
   "include_query_status_polling": true,
   "include_projects": true,
-  "include_hashed_parameters": true
+  "include_hashed_parameters": true,
+  "show_novelty_boost": false
 }
