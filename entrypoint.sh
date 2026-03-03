@@ -52,7 +52,7 @@ fi
 app=$1
 if [[ "$app" == "app" ]]; then
     node --max-old-space-size="$mem_limit" StartServer.mjs "$config_file" "$override_file"
-elif [[ "$app" == "cron" ]]; then
+elif [[ "$app" == "pubsub" ]]; then
     utilities/gen-pubsub-cron-entry.sh "$config_file" "$override_file"
     cron -f
 else

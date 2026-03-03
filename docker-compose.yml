@@ -15,7 +15,7 @@ services:
       APP_ENVIRONMENT: production
     depends_on:
       - pgdb
-    command: ["cron"]
+    command: ["pubsub"]
   pgdb:
     image: postgres:15.5
     environment:
