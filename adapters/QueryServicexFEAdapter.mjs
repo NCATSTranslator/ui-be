@@ -17,6 +17,7 @@ class QueryServicexFEAdapter {
       status: queryModel.status,
       data: {
         qid: queryModel.pk,
+        query: queryModel.metadata.query,
         aras: queryModel.metadata.aras,
         timestamp: queryModel.time_updated
       }
