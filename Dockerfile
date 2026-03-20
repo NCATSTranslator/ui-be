@@ -33,3 +33,4 @@ COPY ./utilities/cron/pubsub-handler.cron /etc/cron.d/pubsub-handler
 RUN chmod 0644 /etc/cron.d/pubsub-handler
 
 ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["app"]
