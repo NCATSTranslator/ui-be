@@ -4,6 +4,17 @@ COPY . ./
 RUN npm install \
   && rm -rf node_modules/resolve/test
 
+FROM base AS cron
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends cron \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf ui-fe \
+  && rm -rf /root/.cache/* \
+  && touch /var/log/cron.log
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["pubsub"]
+
 FROM base AS app
 # Assumes parent script has cloned ui-fe repo and checked out right branch
 # This script assumes no git actions
@@ -19,18 +30,6 @@ RUN cd ui-fe \
   && rm -rf /root/.cache/*
 
 EXPOSE 8386
-
-ENTRYPOINT ["/app/entrypoint.sh"]
-
-FROM base AS cron
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends cron \
-  && rm -rf /var/lib/apt/lists/* \
-  && rm -rf ui-fe \
-  && rm -rf /root/.cache/*
-
-COPY ./utilities/cron/pubsub-handler.cron /etc/cron.d/pubsub-handler
-RUN chmod 0644 /etc/cron.d/pubsub-handler
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["app"]

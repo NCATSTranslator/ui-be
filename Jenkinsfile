@@ -16,6 +16,7 @@ pipeline {
     }
     environment {
         IMAGE_NAME = "853771734544.dkr.ecr.us-east-1.amazonaws.com/translator-ui"
+        PUBSUB_IMAGE_NAME = "853771734544.dkr.ecr.us-east-1.amazonaws.com/translator-ui-pubsub"
         KUBERNETES_BLUE_CLUSTER_NAME = "translator-eks-ci-blue-cluster"
         DEPLOY_ENV="ci"
         NAMESPACE='ui'
@@ -49,8 +50,10 @@ pipeline {
                     source build-docker-container.sh -b main -f main 
                     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin  853771734544.dkr.ecr.us-east-1.amazonaws.com
                     docker image tag $image_name:$version_tag $IMAGE_NAME
+                    docker image tag pubsub $PUBSUB_IMAGE_NAME
                     '''
                     docker.image(env.IMAGE_NAME).push("${BUILD_VERSION}")
+                    docker.image(env.PUBSUB_IMAGE_NAME).push("${BUILD_VERSION}")
                 }
             }
         }
