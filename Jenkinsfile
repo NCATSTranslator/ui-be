@@ -47,7 +47,7 @@ pipeline {
             steps {
                 script {
                     sh '''#!/bin/bash
-                    source build-docker-container.sh -b main -f main 
+                    source build-docker-container.sh -b feat/pubsub-failure -f main 
                     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin  853771734544.dkr.ecr.us-east-1.amazonaws.com
                     docker image tag $image_name:$version_tag $IMAGE_NAME
                     docker image tag pubsub $PUBSUB_IMAGE_NAME
