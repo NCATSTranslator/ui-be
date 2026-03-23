@@ -55,7 +55,14 @@ export function startServer(config, services) {
   }));
   app.use(cookieParser());
 
-  app.use(express.static('./build'));
+  const buildDir = path.join(__root, 'build');
+  app.use(express.static(buildDir, {
+    setHeaders(res, filePath) {
+      if (path.basename(filePath) === 'index.html') {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    },
+  }));
 
   app.get('/health', (req, res, next) => {
     res.send('OK');
@@ -183,7 +190,8 @@ export function startServer(config, services) {
 
   // Any route not explicitly handled above should simply return the page skeleton and allow the FE to handle it
   app.all('*', (req, res, next) => {
-    res.sendFile(path.join(__root, 'build/index.html'));
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(path.join(buildDir, 'index.html'));
   });
 
   app.listen(8386);
