@@ -1,5 +1,5 @@
 {
-  "document_root": false,
+  "document_root": "/app",
   "port": 8386,
   "response_timeout": 300,
   "json_payload_limit": "10mb",
