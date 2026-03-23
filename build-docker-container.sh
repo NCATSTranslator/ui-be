@@ -45,6 +45,8 @@ version_tag="FE.${fe_tag}_BE.${be_tag}_$timestamp"
 echo "VITE_BUILD_INFO=$version_tag" > .env
 cd ..
 # Removing latest tag
-docker build --no-cache -t "$image_name:$version_tag" -t "$image_name" .
+docker build --no-cache -t "$image_name:$version_tag" -t "$image_name" --target app .
+docker build --no-cache -t pubsub --target cron .
+# Build pubsub cron job container
 echo "restoring branch $save_branch"
 git checkout $save_branch
