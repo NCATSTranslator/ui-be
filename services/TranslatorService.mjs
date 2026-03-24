@@ -1,7 +1,7 @@
 'use strict';
 import { logger } from '../lib/logger.mjs';
 import * as arsmsg from '../lib/ARSMessages.mjs';
-import * as trapi from '../lib/trapi.mjs';
+import * as trapi from '../lib/trapi/core.mjs';
 
 export { TranslatorService };
 
@@ -31,7 +31,7 @@ class TranslatorService
 
   inputToQuery(input)
   {
-    return trapi.clientReqToTrapiQuery(input);
+    return trapi.client_request_to_trapi_query(input);
   }
 
   async submitQuery(query)
