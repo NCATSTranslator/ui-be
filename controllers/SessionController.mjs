@@ -181,7 +181,7 @@ class SessionController {
   _validateStatusUpdatePayload(body) {
     if (!body) {
       return [false, 'No payload found']; // res.status(400).send('No payload found');
-    } else if (!cmn.isObject(body)) {
+    } else if (!cmn.is_object(body)) {
       return [false, 'Payload is not an object']; // res.status(400).send('Payload is not an object');
     }
     let keys = Object.keys(body);

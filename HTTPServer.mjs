@@ -16,6 +16,7 @@ import { QueryAPIController } from './controllers/QueryAPIController.mjs';
 import { LoginController } from './controllers/LoginController.mjs';
 import { SessionController } from './controllers/SessionController.mjs';
 import { UserAPIController } from './controllers/UserAPIController.mjs';
+import { BiolinkAPIController } from './controllers/BiolinkAPIController.mjs';
 
 // Adapters
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
@@ -46,6 +47,7 @@ export function startServer(config, services) {
   const configAPIController = new ConfigAPIController(config);
   const userAPIController = new UserAPIController(config, userService, translatorService);
   const sessionController = new SessionController(config, authService);
+  const biolinkAPIController = new BiolinkAPIController();
   const API_PATH_V1 = '/api/v1';
   const SITE_PATH_PREFIX = '';
   app.use(pinoHttp({logger: logger}));
@@ -101,6 +103,11 @@ export function startServer(config, services) {
   app.use(`${API_PATH_V1}/config`, configAPIController.getConfig.bind(configAPIController));
 
   /** All routes below this point MUST use one of authenticate[Un]PrivilegedRequest() **/
+
+  // Biolink routes: open
+  app.post(`${API_PATH_V1}/biolink/node/description`,
+    sessionController.authenticateUnprivilegedRequest.bind(sessionController),
+    biolinkAPIController.get_node_descriptions.bind(biolinkAPIController));
 
   // Submit query route: privileged session
   app.post(`${API_PATH_V1}/query`,

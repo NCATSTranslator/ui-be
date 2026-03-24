@@ -2,7 +2,7 @@
 
 import * as cmn from '../lib/common.mjs';
 import * as arsmsg from '../lib/ARSMessages.mjs';
-import * as sm from '../lib/summarization/summarization.mjs';
+import * as sm from '../lib/summarization/core.mjs';
 
 /* Translate messages coming from the Translator Service into the formats that the Frontend (FE) app expects */
 /* This module should not contain logic that goes beyond message transformations */

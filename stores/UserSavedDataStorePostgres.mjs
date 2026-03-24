@@ -32,7 +32,7 @@ class UserSavedDataStorePostgres {
       user_query_data = await this._retrieve_queries(uid, include_deleted);
     }
     const user_queries = new Map();
-    if (cmn.isArrayEmpty(user_query_data)) return user_queries;
+    if (cmn.is_array_empty(user_query_data)) return user_queries;
     for (const uq_data of user_query_data) {
       const uq_id = uq_data.pk;
       if (!user_queries.has(uq_id)) {

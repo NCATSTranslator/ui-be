@@ -1,7 +1,7 @@
 'use strict';
 import fs from 'fs';
 import * as cmn from '../../lib/common.mjs';
-import { loadTrapi } from '../../lib/trapi.mjs';
+import { load_trapi } from '../../lib/trapi/core.mjs';
 import { ARSClient } from '../../lib/ARSClient.mjs';
 import { TranslatorServicexFEAdapter } from '../../adapters/TranslatorServicexFEAdapter.mjs';
 import { TranslatorService } from '../../services/TranslatorService.mjs';
@@ -89,7 +89,7 @@ async function main() {
   let queryList = initializeQueryList(inputFile, startIndex);
 
   // Begin actual work
-  loadTrapi({
+  load_trapi({
     query_subject_key: 'sn',
     query_object_key: 'on',
   });
@@ -132,7 +132,7 @@ async function main() {
 
   for (const [env, queries] of Object.entries(preRunQueries)) {
     try {
-      if (!cmn.isArrayEmpty(queries)) {
+      if (!cmn.is_array_empty(queries)) {
         fs.writeFileSync(`${outputPath}/${env}.json`, JSON.stringify(queries, null, 4));
       }
     } catch (err) {

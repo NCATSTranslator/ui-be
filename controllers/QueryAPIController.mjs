@@ -3,7 +3,7 @@ export { QueryAPIController };
 import { QUERY_SERVICE_MSG } from '../services/QueryService.mjs';
 import * as cmn from '../lib/common.mjs';
 import * as wutil from '../lib/webutils.mjs';
-import * as trapi from '../lib/trapi.mjs';
+import * as trapi from '../lib/trapi/core.mjs';
 import { logger } from "../lib/logger.mjs";
 
 class QueryAPIController {
@@ -112,7 +112,7 @@ class QueryAPIController {
 
   async deleteUserQueries(req, res, next) {
     const query_ids = await req.body;
-    if (!cmn.isArray(query_ids)) {
+    if (!cmn.is_array(query_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const uid = req.sessionData.user.id;
@@ -127,7 +127,7 @@ class QueryAPIController {
 
   async restoreUserQueries(req, res, next) {
     const query_ids = await req.body;
-    if (!cmn.isArray(query_ids)) {
+    if (!cmn.is_array(query_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const uid = req.sessionData.user.id;
@@ -153,7 +153,7 @@ class QueryAPIController {
       const uid = req.sessionData.user.id;
       if (pid) {
         const projects = await this.userService.getUserSavesBy(uid, {id: pid});
-        if (!projects || cmn.isArrayEmpty(projects)) {
+        if (!projects || cmn.is_array_empty(projects)) {
           throw new Error(`Submitted query includes unknown PID: ${pid}`);
         }
         project = projects[0];
@@ -163,7 +163,7 @@ class QueryAPIController {
       req.log.info({query: trapiQuery});
       const submitResp = await this.translatorService.submitQuery(trapiQuery);
       req.log.info({arsqueryresp: submitResp});
-      const pk = trapi.getPk(submitResp);
+      const pk = trapi.get_pk(submitResp);
       if (!pk) throw new Error(`ARS query submission response has no PK: ${submitResp}`);
       const queryModel = await this.queryService.createQuery(pk, req.body);
       if (!queryModel) throw new Error(`Failed to create query with PK: ${pk}`);
@@ -242,7 +242,7 @@ class QueryAPIController {
       const trapiQuery = this.translatorService.inputToQuery(req.body);
       const submitResp = await this.translatorService.submitQuery(trapiQuery);
       req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submitResp}, 'Query submission and response');
-      const pk = trapi.getPk(submitResp);
+      const pk = trapi.get_pk(submitResp);
       const userQueryModel = this.userService.createUserQuery(uid, pk, req.body);
       if (!userQueryModel) throw new Error(`User service failed to create entry for query ${pk} and user ${uid}`);
       if (pid) {
@@ -298,7 +298,7 @@ class QueryAPIController {
   }
 
   _isValidQuerySubmissionRequest(req) {
-    return cmn.isObject(req.body) && req.sessionData.user.id;
+    return cmn.is_object(req.body) && req.sessionData.user.id;
   }
 
   _isValidQueryResultRequest(req) {

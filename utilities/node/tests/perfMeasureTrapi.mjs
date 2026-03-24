@@ -2,7 +2,7 @@
 
 import * as cmn from '../../../lib/common.mjs';
 import { validate as isUuid } from 'uuid';
-import * as trapi from '../../../lib/trapi.mjs';
+import * as trapi from '../../../lib/trapi/core.mjs';
 import { loadConfigFromFile, postProcessConfig }  from '../../../lib/config.mjs';
 import { loadBiolink } from '../../../lib/biolink-model.mjs';
 
