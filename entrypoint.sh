@@ -14,33 +14,48 @@ export APP_ENVIRONMENT
 mem_limit=8192
 case "$APP_ENVIRONMENT" in
     production)
-        config_file="configurations/production.json"
+        config_file="/app/configurations/production.json"
         ;;
     test)
-        config_file="configurations/test.json"
+        config_file="/app/configurations/test.json"
         ;;
     ci)
-        config_file="configurations/ci.json"
+        config_file="/app/configurations/ci.json"
         mem_limit=4096
         ;;
     dev)
-        config_file="configurations/dev.json"
+        config_file="/app/configurations/dev.json"
         ;;
     *)
         echo "Unexpected value $APP_ENVIRONMENT for APP_ENVIRONMENT"
         ;;
 esac
 
-# If a cmdline arg is provided, override the env var-sourced
-# configuration file.
-if [ $# -ge 1 ]; then
-    echo "Overriding env var-driven config file with explicitly supplied file"
-    config_file="$1"
+if [[ $# -eq 0 ]]; then
+  echo "Usage: $0 <app> [<config_file>] [<override_file>]"
+  exit 1
 fi
 
-if [ $# -eq 2 ]; then
-    echo "Using additional override file $2"
-    node --max-old-space-size="$mem_limit" -r newrelic StartServer.mjs "$config_file" "$2"
+# If a cmdline arg is provided, override the env var-sourced
+# configuration file.
+if [ $# -ge 2 ]; then
+    echo "Overriding env var-driven config file with explicitly supplied file"
+    config_file="$2"
+fi
+
+override_file=""
+if [ $# -eq 3 ]; then
+    echo "Using additional override file $3"
+    override_file="$3"
+fi
+
+app=$1
+if [[ "$app" == "app" ]]; then
+    node --max-old-space-size="$mem_limit" StartServer.mjs "$config_file" "$override_file"
+elif [[ "$app" == "pubsub" ]]; then
+    utilities/gen-pubsub-cron-entry.sh "$config_file" "$override_file"
+    cron -f
 else
-    node --max-old-space-size="$mem_limit" -r newrelic StartServer.mjs "$config_file"
+  echo "Unknown application parameter: $1"
+  exit 1
 fi

@@ -1,12 +1,24 @@
-FROM node:22
+FROM node:25 AS base
 WORKDIR /app
-
-# Assumes parent script has cloned ui-fe repo and checked out right branch
-# This script assumes no git actions
 COPY . ./
 RUN npm install \
-  && rm -rf node_modules/resolve/test \
-  && cd ui-fe \
+  && rm -rf node_modules/resolve/test
+
+FROM base AS cron
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends cron \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf ui-fe \
+  && rm -rf /root/.cache/* \
+  && touch /var/log/cron.log
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["pubsub"]
+
+FROM base AS app
+# Assumes parent script has cloned ui-fe repo and checked out right branch
+# This script assumes no git actions
+RUN cd ui-fe \
   && npm install \
   && npm run build \
   && npm prune \
@@ -20,3 +32,4 @@ RUN npm install \
 EXPOSE 8386
 
 ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["app"]
