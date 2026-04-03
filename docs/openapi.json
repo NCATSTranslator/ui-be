@@ -84,7 +84,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SessionUpdateRequest"
-                "_GDP": "Check SessionUpdateRequest"
               }
             }
           }
@@ -2516,6 +2515,7 @@
           "timestamp": {
             "type": "string",
             "format": "date-time",
+            "nullable": true,
             "description": "Timestamp of when results were processed"
           }
         },
@@ -2548,26 +2548,29 @@
             "description": "Array of path IDs that support this result"
           },
           "scores": {
-            "type": "object",
-            "properties": {
-              "confidence": {
-                "type": "number",
-                "description": "Confidence score"
-              },
-              "novelty": {
-                "type": "number",
-                "description": "Novelty score"
-              },
-              "clinical_evidence": {
-                "type": "number",
-                "description": "Clinical evidence score"
-              },
-              "normalized_score": {
-                "type": "number",
-                "description": "Normalized overall score"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "confidence": {
+                  "type": "number",
+                  "description": "Confidence score"
+                },
+                "novelty": {
+                  "type": "number",
+                  "description": "Novelty score"
+                },
+                "clinical_evidence": {
+                  "type": "number",
+                  "description": "Clinical evidence score"
+                },
+                "normalized_score": {
+                  "type": "number",
+                  "description": "Normalized overall score"
+                }
               }
             },
-            "description": "Scoring components for result ranking"
+            "description": "Array of scoring components for result ranking, one per ARA analysis"
           },
           "tags": {
             "type": "object",
@@ -2582,6 +2585,15 @@
       "SummaryPath": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this path"
+          },
+          "score": {
+            "type": "number",
+            "description": "Path score used for ordering",
+            "default": 0.0
+          },
           "subgraph": {
             "type": "array",
             "items": {
@@ -2599,12 +2611,12 @@
           "tags": {
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/TagDescription"
+              "$ref": "#/components/schemas/TagObject"
             },
             "description": "Tags associated with this path"
           }
         },
-        "required": ["subgraph", "aras", "tags"]
+        "required": ["id", "score", "subgraph", "aras", "tags"]
       },
       "SummaryNode": {
         "type": "object",
@@ -2615,13 +2627,6 @@
               "type": "string"
             },
             "description": "Array of ARA agent names"
-          },
-          "curies": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Array of CURIE identifiers for this node"
           },
           "descriptions": {
             "type": "array",
@@ -2637,41 +2642,40 @@
             },
             "description": "Array of names for this node"
           },
-          "other_names": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Array of alternative names"
-          },
-          "provenance": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            },
-            "description": "Array of provenance information"
-          },
-          "tags": {
-            "type": "object",
-            "additionalProperties": {
-              "$ref": "#/components/schemas/TagDescription"
-            },
-            "description": "Tags associated with this node"
-          },
           "types": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Array of Biolink types for this node"
+            "description": "Array of Biolink types for this node, sorted by specificity"
           },
-          "species": {
-            "type": "string",
-            "nullable": true,
-            "description": "Species information for this node"
+          "synonyms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of synonym identifiers for this node"
+          },
+          "curies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of CURIE identifiers for this node"
+          },
+          "provenance": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of provenance URLs for this node"
+          },
+          "annotations": {
+            "$ref": "#/components/schemas/Annotation",
+            "description": "Biothings annotations for this node, present only if annotation data is available"
           }
         },
-        "required": ["aras", "curies", "descriptions", "names", "other_names", "provenance", "tags", "types"]
+        "required": ["aras", "descriptions", "names", "types", "synonyms", "curies", "provenance"]
       },
       "SummaryEdge": {
         "type": "object",
@@ -2696,12 +2700,18 @@
           },
           "knowledge_level": {
             "type": "string",
-            "description": "Knowledge level classification"
+            "enum": ["trusted", "inferred", "unknown"],
+            "description": "Knowledge level classification derived from the primary provenance source"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable description of the predicate"
           },
           "type": {
             "type": "string",
             "enum": ["direct", "indirect"],
-            "description": "Edge type - direct or indirect"
+            "description": "Edge type - direct lookup or indirect with supporting evidence"
           },
           "subject": {
             "type": "string",
@@ -2713,11 +2723,11 @@
           },
           "predicate": {
             "type": "string",
-            "description": "Biolink predicate"
+            "description": "Biolink predicate, potentially qualified"
           },
           "predicate_url": {
             "type": "string",
-            "description": "URL for the predicate"
+            "description": "URL for the predicate in the Biolink model"
           },
           "provenance": {
             "type": "array",
@@ -2738,14 +2748,14 @@
                     "description": "Publication ID"
                   },
                   "support": {
-                    "type": "object",
+                    "$ref": "#/components/schemas/SupportingText",
                     "nullable": true,
-                    "description": "Supporting text data"
+                    "description": "Supporting text data extracted from the publication"
                   }
                 }
               }
             },
-            "description": "Publications grouped by knowledge level"
+            "description": "Publications grouped by knowledge level (trusted, inferred, unknown, ml)"
           },
           "trials": {
             "type": "array",
@@ -2757,7 +2767,7 @@
           "tags": {
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/TagDescription"
+              "$ref": "#/components/schemas/TagObject"
             },
             "description": "Tags associated with this edge"
           },
@@ -2767,7 +2777,7 @@
             "description": "Edge metadata containing binding information"
           }
         },
-        "required": ["aras", "support", "is_root", "subject", "object", "predicate", "provenance", "publications", "trials", "tags"]
+        "required": ["aras", "support", "is_root", "knowledge_level", "type", "subject", "object", "predicate", "provenance", "publications", "trials", "tags"]
       },
       "SummaryPublication": {
         "type": "object",
@@ -2781,8 +2791,8 @@
             "description": "URL to the publication"
           },
           "source": {
-            "$ref": "#/components/schemas/Provenance",
-            "description": "Source provenance information for the publication"
+            "type": "string",
+            "description": "URL of the provenance source that provided this publication"
           }
         },
         "required": ["type", "url", "source"]
@@ -2844,12 +2854,65 @@
             "type": "string",
             "description": "User-facing name for the tag"
           },
-          "value": {
+          "description": {
             "type": "string",
             "description": "User-facing description for the tag"
           }
         },
-        "required": ["name", "value"]
+        "required": ["name"],
+        "description": "Tag description used in the top-level tags map"
+      },
+      "TagObject": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Tag identifier (e.g., p/ev/clinical, r/cc/drug)"
+          },
+          "description": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "User-facing name for the tag"
+              },
+              "description": {
+                "type": "string",
+                "description": "User-facing description for the tag"
+              }
+            },
+            "required": ["name"]
+          }
+        },
+        "required": ["id", "description"],
+        "description": "Full tag object used on edges and paths"
+      },
+      "SupportingText": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "nullable": true,
+            "description": "The supporting text excerpt"
+          },
+          "subject": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "nullable": true,
+            "description": "Character range for the subject mention in the text"
+          },
+          "object": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "nullable": true,
+            "description": "Character range for the object mention in the text"
+          }
+        },
+        "description": "Supporting text evidence extracted from a publication"
       },
       "Provenance": {
         "type": "object",
@@ -2952,6 +3015,154 @@
         },
         "required": ["event_type", "pk", "timestamp"],
         "description": "ARS callback payload for query status updates"
+      },
+      "Annotation": {
+        "type": "object",
+        "properties": {
+          "chemical": {
+            "$ref": "#/components/schemas/ChemicalAnnotation"
+          },
+          "disease": {
+            "$ref": "#/components/schemas/DiseaseAnnotation"
+          },
+          "gene": {
+            "$ref": "#/components/schemas/GeneAnnotation"
+          }
+        },
+        "description": "Biothings annotations grouped by node type. Only the relevant type(s) will have non-null values."
+      },
+      "ChemicalAnnotation": {
+        "type": "object",
+        "properties": {
+          "approval": {
+            "type": "integer",
+            "nullable": true,
+            "example": 4
+          },
+          "descriptions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "indications": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "description": "MESH identifier",
+              "example": "MESH:D000077192"
+            }
+          },
+          "other_names": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "commercial": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "generic": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "roles": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "example": "CHEBI:35705"
+                },
+                "name": {
+                  "type": "string",
+                  "example": "immunosuppressive agent"
+                }
+              }
+            }
+          },
+          "otc_status": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "code": {
+                "type": "integer",
+                "example": 1
+              },
+              "label": {
+                "type": "string",
+                "example": "Prescription"
+              }
+            }
+          },
+          "clinical_trials": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "description": "ClinicalTrials.gov identifier",
+              "example": "NCT01197144"
+            }
+          }
+        }
+      },
+      "GeneAnnotation": {
+        "type": "object",
+        "properties": {
+          "descriptions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "example": "AKT serine/threonine kinase 1"
+          },
+          "species": {
+            "type": "string",
+            "nullable": true
+          },
+          "tdl": {
+            "type": "string",
+            "nullable": true,
+            "description": "Target Development Level",
+            "example": "Tchem",
+            "enum": ["Tclin", "Tchem", "Tbio"]
+          }
+        }
+      },
+      "DiseaseAnnotation": {
+        "type": "object",
+        "properties": {
+          "descriptions": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            }
+          },
+          "curies": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "description": "MESH identifier",
+              "example": "MESH:D006223"
+            }
+          }
+        }
       }
     }
   }
