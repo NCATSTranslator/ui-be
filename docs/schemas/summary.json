@@ -1,0 +1,620 @@
+{
+  "QuerySummary": {
+    "type": "object",
+    "properties": {
+      "meta": {
+        "$ref": "./summary.json#/SummaryMetadata",
+        "description": "Metadata about the query and processing agents"
+      },
+      "results": {
+        "type": "array",
+        "items": {
+          "$ref": "./summary.json#/SummaryResult"
+        },
+        "description": "Array of summarized query results"
+      },
+      "paths": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/SummaryPath"
+        },
+        "description": "Map of path IDs to path objects"
+      },
+      "nodes": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/SummaryNode"
+        },
+        "description": "Map of node IDs to node objects from the knowledge graph"
+      },
+      "edges": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/SummaryEdge"
+        },
+        "description": "Map of edge IDs to edge objects from the knowledge graph"
+      },
+      "publications": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/SummaryPublication"
+        },
+        "description": "Map of publication IDs to publication objects"
+      },
+      "trials": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/ClinicalTrial"
+        },
+        "description": "Map of clinical trial IDs to trial objects"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/TagDescription"
+        },
+        "description": "Map of tag labels to tag descriptions for faceting"
+      },
+      "errors": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "description": "Map of agent names to arrays of error messages"
+      }
+    },
+    "required": [
+      "meta",
+      "results",
+      "paths",
+      "nodes",
+      "edges",
+      "publications",
+      "trials",
+      "tags",
+      "errors"
+    ],
+    "description": "Comprehensive summary of query results with all supporting data"
+  },
+  "SummaryMetadata": {
+    "type": "object",
+    "properties": {
+      "qid": {
+        "type": "string",
+        "description": "Query ID"
+      },
+      "aras": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of ARA agent names that processed this query"
+      },
+      "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "Timestamp of when results were processed"
+      }
+    },
+    "required": [
+      "qid",
+      "aras"
+    ]
+  },
+  "SummaryResult": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Unique identifier for this result"
+      },
+      "subject": {
+        "type": "string",
+        "description": "Subject node ID"
+      },
+      "object": {
+        "type": "string",
+        "description": "Object node ID"
+      },
+      "drug_name": {
+        "type": "string",
+        "description": "Human-readable name for the result"
+      },
+      "paths": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of path IDs that support this result"
+      },
+      "scores": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "confidence": {
+              "type": "number",
+              "description": "Confidence score"
+            },
+            "novelty": {
+              "type": "number",
+              "description": "Novelty score"
+            },
+            "clinical_evidence": {
+              "type": "number",
+              "description": "Clinical evidence score"
+            },
+            "normalized_score": {
+              "type": "number",
+              "description": "Normalized overall score"
+            }
+          }
+        },
+        "description": "Array of scoring components for result ranking, one per ARA analysis"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        },
+        "description": "Map of tag labels to null (tags are defined in the main tags object)"
+      }
+    },
+    "required": [
+      "id",
+      "subject",
+      "object",
+      "drug_name",
+      "paths"
+    ]
+  },
+  "SummaryPath": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Unique identifier for this path"
+      },
+      "score": {
+        "type": "number",
+        "description": "Path score used for ordering",
+        "default": 0.0
+      },
+      "subgraph": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array alternating between node IDs and edge IDs representing the path"
+      },
+      "aras": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of ARA agent names that contributed to this path"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/TagObject"
+        },
+        "description": "Tags associated with this path"
+      }
+    },
+    "required": [
+      "id",
+      "score",
+      "subgraph",
+      "aras",
+      "tags"
+    ]
+  },
+  "SummaryNode": {
+    "type": "object",
+    "properties": {
+      "aras": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of ARA agent names"
+      },
+      "descriptions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of descriptions for this node"
+      },
+      "names": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of names for this node"
+      },
+      "types": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of Biolink types for this node, sorted by specificity"
+      },
+      "synonyms": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of synonym identifiers for this node"
+      },
+      "curies": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of CURIE identifiers for this node"
+      },
+      "provenance": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of provenance URLs for this node"
+      },
+      "annotations": {
+        "$ref": "./annotation.json#/Annotation",
+        "description": "Biothings annotations for this node, present only if annotation data is available"
+      }
+    },
+    "required": [
+      "aras",
+      "descriptions",
+      "names",
+      "types",
+      "synonyms",
+      "curies",
+      "provenance"
+    ]
+  },
+  "SummaryEdge": {
+    "type": "object",
+    "properties": {
+      "aras": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of ARA agent names"
+      },
+      "support": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of supporting path IDs"
+      },
+      "is_root": {
+        "type": "boolean",
+        "description": "Whether this is a root path edge"
+      },
+      "knowledge_level": {
+        "type": "string",
+        "enum": [
+          "trusted",
+          "inferred",
+          "unknown"
+        ],
+        "description": "Knowledge level classification derived from the primary provenance source"
+      },
+      "description": {
+        "type": "string",
+        "nullable": true,
+        "description": "Human-readable description of the predicate"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "direct",
+          "indirect"
+        ],
+        "description": "Edge type - direct lookup or indirect with supporting evidence"
+      },
+      "subject": {
+        "type": "string",
+        "description": "Subject node ID"
+      },
+      "object": {
+        "type": "string",
+        "description": "Object node ID"
+      },
+      "predicate": {
+        "type": "string",
+        "description": "Biolink predicate, potentially qualified"
+      },
+      "predicate_url": {
+        "type": "string",
+        "description": "URL for the predicate in the Biolink model"
+      },
+      "provenance": {
+        "type": "array",
+        "items": {
+          "$ref": "./summary.json#/Provenance"
+        },
+        "description": "Array of provenance information"
+      },
+      "publications": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Publication ID"
+              },
+              "support": {
+                "$ref": "./summary.json#/SupportingText",
+                "nullable": true,
+                "description": "Supporting text data extracted from the publication"
+              }
+            }
+          }
+        },
+        "description": "Publications grouped by knowledge level (trusted, inferred, unknown, ml)"
+      },
+      "trials": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of clinical trial IDs"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/TagObject"
+        },
+        "description": "Tags associated with this edge"
+      },
+      "metadata": {
+        "$ref": "./summary.json#/EdgeMetadata",
+        "nullable": true,
+        "description": "Edge metadata containing binding information"
+      }
+    },
+    "required": [
+      "aras",
+      "support",
+      "is_root",
+      "knowledge_level",
+      "type",
+      "subject",
+      "object",
+      "predicate",
+      "provenance",
+      "publications",
+      "trials",
+      "tags"
+    ]
+  },
+  "SummaryPublication": {
+    "type": "object",
+    "properties": {
+      "type": {
+        "type": "string",
+        "description": "Publication type (e.g., PMID, PMC)"
+      },
+      "url": {
+        "type": "string",
+        "description": "URL to the publication"
+      },
+      "source": {
+        "type": "string",
+        "description": "URL of the provenance source that provided this publication"
+      }
+    },
+    "required": [
+      "type",
+      "url",
+      "source"
+    ]
+  },
+  "ClinicalTrial": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Clinical trial ID"
+      },
+      "url": {
+        "type": "string",
+        "description": "URL to the clinical trial"
+      },
+      "phase": {
+        "type": "string",
+        "description": "Clinical trial phase",
+        "nullable": true
+      },
+      "status": {
+        "type": "string",
+        "description": "Clinical trial status",
+        "nullable": true
+      },
+      "child": {
+        "type": "string",
+        "description": "Child trial information",
+        "nullable": true
+      },
+      "start_date": {
+        "type": "string",
+        "description": "Trial start date",
+        "nullable": true
+      },
+      "size": {
+        "type": "integer",
+        "description": "Study size",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "enrolled",
+          "anticipated"
+        ],
+        "description": "Enrollment type",
+        "nullable": true
+      },
+      "title": {
+        "type": "string",
+        "description": "Brief title of the trial",
+        "nullable": true
+      }
+    },
+    "required": [
+      "id",
+      "url"
+    ]
+  },
+  "TagDescription": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "User-facing name for the tag"
+      },
+      "description": {
+        "type": "string",
+        "description": "User-facing description for the tag"
+      }
+    },
+    "required": [
+      "name"
+    ],
+    "description": "Tag description used in the top-level tags map"
+  },
+  "TagObject": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Tag identifier (e.g., p/ev/clinical, r/cc/drug)"
+      },
+      "description": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "User-facing name for the tag"
+          },
+          "description": {
+            "type": "string",
+            "description": "User-facing description for the tag"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      }
+    },
+    "required": [
+      "id",
+      "description"
+    ],
+    "description": "Full tag object used on edges and paths"
+  },
+  "SupportingText": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string",
+        "nullable": true,
+        "description": "The supporting text excerpt"
+      },
+      "subject": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "nullable": true,
+        "description": "Character range for the subject mention in the text"
+      },
+      "object": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "nullable": true,
+        "description": "Character range for the object mention in the text"
+      }
+    },
+    "description": "Supporting text evidence extracted from a publication"
+  },
+  "Provenance": {
+    "type": "object",
+    "properties": {
+      "infores": {
+        "type": "string",
+        "description": "Information resource identifier (e.g., infores:drugbank, infores:chembl)"
+      },
+      "name": {
+        "type": "string",
+        "description": "Human-readable name of the information resource"
+      },
+      "wiki": {
+        "type": "string",
+        "nullable": true,
+        "description": "Wiki URL for the information resource"
+      },
+      "knowledge_level": {
+        "type": "string",
+        "enum": [
+          "trusted",
+          "inferred",
+          "unknown"
+        ],
+        "description": "Knowledge level classification of the information resource"
+      },
+      "url": {
+        "type": "string",
+        "nullable": true,
+        "description": "Main URL for the information resource"
+      }
+    },
+    "required": [
+      "infores",
+      "name",
+      "knowledge_level"
+    ]
+  },
+  "EdgeMetadata": {
+    "type": "object",
+    "properties": {
+      "edge_bindings": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Array of edge binding IDs from the TRAPI result"
+      },
+      "inverted_id": {
+        "type": "string",
+        "nullable": true,
+        "description": "Edge ID for the inverted version of this edge (if applicable)"
+      },
+      "is_root": {
+        "type": "boolean",
+        "description": "Whether this is a root path edge"
+      }
+    },
+    "required": [
+      "edge_bindings",
+      "is_root"
+    ]
+  }
+}

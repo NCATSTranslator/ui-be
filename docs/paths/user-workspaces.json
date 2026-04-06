@@ -1,0 +1,249 @@
+{
+  "/api/v1/users/me/workspaces": {
+    "get": {
+      "summary": "Get user workspaces",
+      "description": "Get all workspaces for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_data",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include workspace data"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted workspaces"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User workspaces",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/user-data.json#/UserWorkspace"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "404": {
+          "description": "No workspaces found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create user workspace",
+      "description": "Create a new workspace for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/CreateWorkspaceRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Workspace created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserWorkspace"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/workspaces/{ws_id}": {
+    "get": {
+      "summary": "Get user workspace by ID",
+      "description": "Get a specific user workspace",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "ws_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Workspace ID"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted workspaces"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User workspace",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserWorkspace"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "403": {
+          "description": "Permission denied"
+        },
+        "404": {
+          "description": "Workspace not found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update user workspace by ID",
+      "description": "Update a specific user workspace",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "ws_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Workspace ID"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted workspaces"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/UserWorkspace"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Workspace updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserWorkspace"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "403": {
+          "description": "Permission denied"
+        },
+        "404": {
+          "description": "Workspace not found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete user workspace by ID",
+      "description": "Delete a specific user workspace",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "ws_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Workspace ID"
+        }
+      ],
+      "responses": {
+        "204": {
+          "description": "Workspace deleted"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "403": {
+          "description": "Permission denied"
+        },
+        "404": {
+          "description": "Workspace not found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+}

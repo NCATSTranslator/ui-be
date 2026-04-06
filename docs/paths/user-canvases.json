@@ -1,0 +1,280 @@
+{
+  "/api/v1/users/me/canvases": {
+    "get": {
+      "summary": "Get all canvases for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Controls if the response should include canvases that are soft deleted"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "All the canvases associated with the current user",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/canvas.json#/UserCanvas"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas": {
+    "post": {
+      "summary": "Create a canvas for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/CreateCanvasRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Canvas successfully created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/UserCanvas"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update a canvas for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/UserCanvas"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Canvas successfully updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/UserCanvas"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The Canvas does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas/trash": {
+    "put": {
+      "summary": "Trash a list of Canvas Save IDs for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Canvases trashed successfully"
+        },
+        "400": {
+          "description": "At least one of the canvases does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas/restore": {
+    "put": {
+      "summary": "Restore a list of Canvas Save IDs for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Canvases restored successfully"
+        },
+        "400": {
+          "description": "At least one of the Canvases does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas/{save_id}/graph": {
+    "get": {
+      "summary": "Get all Display Nodes, Edges, and Annotations for a Canvas",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Graph data retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasGraph"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The Canvas does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Submit a graph to merge into a Canvas",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/Graph"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Graph successfully merged"
+        },
+        "400": {
+          "description": "The Canvas does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  }
+}

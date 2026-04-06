@@ -1,0 +1,67 @@
+{
+  "User": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "User ID"
+      },
+      "name": {
+        "type": "string",
+        "description": "User name"
+      },
+      "email": {
+        "type": "string",
+        "description": "User email"
+      }
+    }
+  },
+  "UserPreferences": {
+    "type": "object",
+    "properties": {
+      "user_id": {
+        "type": "integer",
+        "description": "User ID"
+      },
+      "preferences": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./user.json#/UserPreferenceValue"
+        },
+        "description": "Map of preference names to preference value objects"
+      }
+    },
+    "required": [
+      "user_id",
+      "preferences"
+    ],
+    "description": "User preferences response object"
+  },
+  "UserPreferenceValue": {
+    "type": "object",
+    "properties": {
+      "pref_value": {
+        "description": "The preference value (can be any type based on pref_data_type)"
+      },
+      "pref_data_type": {
+        "type": "string",
+        "nullable": true,
+        "description": "Data type of the preference value"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "When the preference was created"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "When the preference was last updated"
+      }
+    },
+    "required": [
+      "pref_value"
+    ],
+    "description": "Individual preference value with metadata"
+  }
+}

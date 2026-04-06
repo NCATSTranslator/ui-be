@@ -1,0 +1,265 @@
+{
+  "CanvasLayout": {
+    "type": "string",
+    "enum": ["vertical", "horizontal", "concentric", "custom"],
+    "description": "The layout for a User Canvas"
+  },
+  "UserCanvas": {
+    "type": "object",
+    "allOf": [
+      {
+        "$ref": "./user-data.json#/UserSavedData"
+      }
+    ],
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "$ref": "./canvas.json#/CanvasLayout"
+          }
+        },
+        "required": ["layout"]
+      }
+    },
+    "required": ["data"]
+  },
+  "CreateCanvasRequest": {
+    "type": "object",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "The label for the created Canvas"
+      },
+      "layout": {
+        "allOf": [
+          {
+            "$ref": "./canvas.json#/CanvasLayout"
+          }
+        ],
+        "default": "horizontal"
+      },
+      "graph": {
+        "$ref": "./canvas.json#/Graph"
+      }
+    },
+    "required": ["label"]
+  },
+  "CanvasGraph": {
+    "type": "object",
+    "properties": {
+      "nodes": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasNode"
+        }
+      },
+      "edges": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasEdge"
+        }
+      },
+      "annotations": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasAnnotation"
+        }
+      },
+      "tag_descriptions": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/TagObject"
+        }
+      }
+    }
+  },
+  "CanvasNode": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this Canvas Node"
+      },
+      "canvas_id": {
+        "type": "integer",
+        "description": "The ID of the Canvas that contains this Canvas Node"
+      },
+      "data_id": {
+        "type": "integer",
+        "description": "The Data Node ID associated with this Canvas Node"
+      },
+      "label": {
+        "type": "string",
+        "description": "The user friendly label for this Canvas Node"
+      },
+      "type": {
+        "type": "string",
+        "description": "The Biolink Type for this Canvas Node"
+      },
+      "x": {
+        "type": "number",
+        "format": "double",
+        "description": "The x-coordinate on the Canvas that contains this Canvas Node"
+      },
+      "y": {
+        "type": "number",
+        "format": "double",
+        "description": "The y-coordinate on the Canvas that contains this Canvas Node"
+      },
+      "hidden": {
+        "type": "boolean",
+        "description": "A flag for if this Canvas Node is hidden"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        },
+        "description": "Map of tag labels to null (tags are defined in the Canvas tags property)"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this Canvas Node was created"
+      },
+      "time_edited": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this Canvas Node was edited"
+      },
+      "deleted": {
+        "type": "boolean",
+        "description": "A flag for if this Canvas Node has been soft deleted"
+      }
+    }
+  },
+  "CanvasEdge": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this Canvas Edge"
+      },
+      "canvas_id": {
+        "type": "integer",
+        "description": "The ID of the Canvas that contains this Canvas Edge"
+      },
+      "data_id": {
+        "type": "integer",
+        "description": "The Data Edge ID associated with this Canvas Edge"
+      },
+      "subject_id": {
+        "type": "integer",
+        "description": "The Canvas Node ID for the subject of this Canvas Edge"
+      },
+      "object_id": {
+        "type": "integer",
+        "description": "The Canvas Node ID for the object of this Canvas Edge"
+      },
+      "label": {
+        "type": "string",
+        "description": "The user friendly label for this Canvas Edge"
+      },
+      "hidden": {
+        "type": "boolean",
+        "description": "A flag for if this Canvas Edge is hidden"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        },
+        "description": "Map of tag labels to null (tags are defined in the Canvas tags property)"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this Canvas Edge was created"
+      },
+      "time_edited": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this Canvas Edge was edited"
+      },
+      "deleted": {
+        "type": "boolean",
+        "description": "A flag for if this Canvas Edge has been soft deleted"
+      }
+    }
+  },
+  "CanvasAnnotation": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this Canvas Annotation"
+      },
+      "canvas_id": {
+        "type": "integer",
+        "description": "The ID of the Canvas that contains this Canvas Annotation"
+      },
+      "text": {
+        "type": "string",
+        "description": "The text contained in this Canvas Annotation"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        },
+        "description": "Map of tag labels to null (tags are defined in the Canvas tags property)"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this Canvas Annotation was created"
+      },
+      "time_edited": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this Canvas Annotation was edited"
+      },
+      "deleted": {
+        "type": "boolean",
+        "description": "A flag for if this Canvas Annotation has been soft deleted"
+      }
+    }
+  },
+  "Graph": {
+    "type": "object",
+    "properties": {
+      "nodes": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/SummaryNode"
+        }
+      },
+      "edges": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/SummaryEdge"
+        }
+      },
+      "tag_descriptions": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/TagObject"
+        }
+      },
+      "source": {
+        "type": "object",
+        "properties": {
+          "query_ref": {
+            "type": "string"
+          },
+          "result_ref": {
+            "type": "string"
+          }
+        },
+        "required": ["query_ref", "result_ref"]
+      }
+    },
+    "required": ["nodes", "edges", "source"]
+  }
+}

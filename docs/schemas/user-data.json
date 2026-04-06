@@ -1,0 +1,310 @@
+{
+  "UserQuery": {
+    "type": "object",
+    "properties": {
+      "sid": {
+        "type": "string",
+        "description": "Save ID"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "running",
+          "complete",
+          "error"
+        ],
+        "description": "Query status"
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "qid": {
+            "type": "string",
+            "description": "Query primary key"
+          },
+          "aras": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of ARA agent names"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Query title"
+          },
+          "query": {
+            "type": "object",
+            "description": "Original query object/description"
+          },
+          "bookmark_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Associated bookmark IDs"
+          },
+          "note_count": {
+            "type": "integer",
+            "description": "Number of notes associated with this query"
+          },
+          "time_created": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the query was created"
+          },
+          "time_updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the query was last updated"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Whether the query is deleted"
+          }
+        },
+        "required": [
+          "qid",
+          "aras",
+          "bookmark_ids",
+          "note_count",
+          "time_created",
+          "time_updated",
+          "deleted"
+        ]
+      }
+    },
+    "required": [
+      "sid",
+      "status",
+      "data"
+    ],
+    "description": "User query object with status and metadata"
+  },
+  "UserProject": {
+    "type": "object",
+    "allOf": [
+      {
+        "$ref": "./user-data.json#/UserSavedData"
+      }
+    ],
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Project title"
+          },
+          "pks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Query PKs associated with the project"
+          }
+        },
+        "required": [
+          "title",
+          "pks"
+        ]
+      }
+    }
+  },
+  "CreateProjectRequest": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "Project title"
+      },
+      "pks": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Query PKs to associate with the project"
+      }
+    },
+    "required": [
+      "title",
+      "pks"
+    ]
+  },
+  "ProjectUpdateRequest": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "Project ID"
+      },
+      "title": {
+        "type": "string",
+        "description": "Project title"
+      },
+      "pks": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Query PKs to associate with the project"
+      }
+    },
+    "required": [
+      "id"
+    ]
+  },
+  "UserSavedData": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "Save ID",
+        "nullable": true
+      },
+      "user_id": {
+        "type": "integer",
+        "description": "User ID"
+      },
+      "save_type": {
+        "type": "string",
+        "enum": [
+          "project",
+          "query",
+          "bookmark",
+          "tag"
+        ],
+        "description": "Type of saved data"
+      },
+      "label": {
+        "type": "string",
+        "description": "Label for the saved data",
+        "nullable": true
+      },
+      "notes": {
+        "type": "string",
+        "description": "Notes for the saved data",
+        "nullable": true
+      },
+      "ars_pkey": {
+        "type": "string",
+        "description": "ARS primary key",
+        "nullable": true
+      },
+      "object_ref": {
+        "type": "string",
+        "description": "Object reference",
+        "nullable": true
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Creation timestamp"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Last update timestamp"
+      },
+      "data": {
+        "type": "object",
+        "description": "Saved data content",
+        "nullable": true
+      },
+      "deleted": {
+        "type": "boolean",
+        "description": "Whether the save is deleted",
+        "default": false
+      }
+    },
+    "required": [
+      "user_id"
+    ]
+  },
+  "UserWorkspace": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "Workspace UUID"
+      },
+      "name": {
+        "type": "string",
+        "description": "Workspace name"
+      },
+      "description": {
+        "type": "string",
+        "description": "Workspace description",
+        "nullable": true
+      },
+      "label": {
+        "type": "string",
+        "description": "Workspace label"
+      },
+      "user_id": {
+        "type": "integer",
+        "description": "Owner user ID"
+      },
+      "deleted": {
+        "type": "boolean",
+        "description": "Whether the workspace is deleted",
+        "default": false
+      },
+      "is_public": {
+        "type": "boolean",
+        "description": "Whether the workspace is public",
+        "default": false
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Creation timestamp"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Last update timestamp"
+      },
+      "data": {
+        "type": "object",
+        "description": "Workspace data",
+        "nullable": true
+      }
+    },
+    "required": [
+      "name",
+      "user_id"
+    ]
+  },
+  "CreateWorkspaceRequest": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Workspace name"
+      },
+      "description": {
+        "type": "string",
+        "description": "Workspace description"
+      },
+      "user_id": {
+        "type": "integer",
+        "description": "Owner user ID"
+      },
+      "is_public": {
+        "type": "boolean",
+        "description": "Whether the workspace is public",
+        "default": false
+      },
+      "data": {
+        "type": "object",
+        "description": "Workspace data"
+      }
+    },
+    "required": [
+      "name",
+      "user_id"
+    ]
+  }
+}

@@ -1,0 +1,248 @@
+{
+  "/api/v1/users/me/saves": {
+    "get": {
+      "summary": "Get user saves",
+      "description": "Get all saved data for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted saves"
+        },
+        {
+          "name": "type",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "enum": [
+              "project",
+              "query",
+              "bookmark",
+              "tag"
+            ]
+          },
+          "description": "Filter by save type"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User saves",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/user-data.json#/UserSavedData"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Update user saves",
+      "description": "Create or update user saved data",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/UserSavedData"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Save updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserSavedData"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/saves/{save_id}": {
+    "get": {
+      "summary": "Get user save by ID",
+      "description": "Get a specific user saved data item",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Save ID"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted saves"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User save",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserSavedData"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "404": {
+          "description": "Save not found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update user save by ID",
+      "description": "Update a specific user saved data item",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Save ID"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted saves"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/UserSavedData"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Save updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserSavedData"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "404": {
+          "description": "Save not found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete user save by ID",
+      "description": "Delete a specific user saved data item",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Save ID"
+        }
+      ],
+      "responses": {
+        "204": {
+          "description": "Save deleted"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "404": {
+          "description": "Save not found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+}

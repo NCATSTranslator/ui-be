@@ -452,6 +452,179 @@ app.get('/api/v1/users/me/workspaces/:ws_id', (req, res) => {
   }
 });
 
+// User canvases
+app.get('/api/v1/users/me/canvases', (req, res) => {
+  const { include_deleted } = req.query;
+  let data = loadMockData('api/v1/users/me/canvases.json');
+
+  if (data && cmn.is_array(data)) {
+    if (include_deleted !== 'true') {
+      data = data.filter(canvas => !canvas.deleted);
+    }
+    res.status(200).json(data);
+  } else {
+    res.status(500).json({ error: 'Mock data not available' });
+  }
+});
+
+// Create user canvas
+app.post('/api/v1/users/me/canvas', (req, res) => {
+  const { label, layout, graph } = req.body;
+  console.log('POST /api/v1/users/me/canvas - Received data:', JSON.stringify(req.body, null, 2));
+
+  if (!label) {
+    return res.status(400).json({ error: 'label is required' });
+  }
+
+  let data = loadMockData('api/v1/users/me/canvases.json') || [];
+  const maxId = data.reduce((max, c) => Math.max(max, c.id), 0);
+  const now = new Date().toISOString();
+
+  const newCanvas = {
+    id: maxId + 1,
+    user_id: 1,
+    save_type: 'canvas',
+    label,
+    notes: null,
+    ars_pkey: null,
+    object_ref: null,
+    time_created: now,
+    time_updated: now,
+    data: {
+      layout: layout || 'horizontal'
+    },
+    deleted: false
+  };
+
+  data.push(newCanvas);
+  writeMockData('api/v1/users/me/canvases.json', data);
+
+  // Initialize empty graph for the new canvas
+  writeMockData(`api/v1/users/me/canvas/${newCanvas.id}/graph.json`, {
+    nodes: [],
+    edges: [],
+    annotations: [],
+    tag_descriptions: {}
+  });
+
+  res.status(201).json(newCanvas);
+});
+
+// Update user canvas
+app.put('/api/v1/users/me/canvas', (req, res) => {
+  const canvas = req.body;
+  console.log('PUT /api/v1/users/me/canvas - Received data:', JSON.stringify(canvas, null, 2));
+
+  let data = loadMockData('api/v1/users/me/canvases.json');
+  if (data && cmn.is_array(data)) {
+    const index = data.findIndex(c => c.id === canvas.id);
+    if (index === -1) {
+      return res.status(400).json({ error: 'The Canvas does not exist' });
+    }
+
+    data[index] = { ...data[index], ...canvas, time_updated: new Date().toISOString() };
+    writeMockData('api/v1/users/me/canvases.json', data);
+    res.status(200).json(data[index]);
+  } else {
+    res.status(500).json({ error: 'Mock data not available' });
+  }
+});
+
+// Trash user canvases
+app.put('/api/v1/users/me/canvas/trash', (req, res) => {
+  const sids = req.body.map(parseInt);
+  console.log('PUT /api/v1/users/me/canvas/trash - Received data:', JSON.stringify(sids, null, 2));
+
+  if (!cmn.is_array(sids)) {
+    return res.status(400).json({ error: 'data must be an array' });
+  }
+
+  let data = loadMockData('api/v1/users/me/canvases.json');
+  if (data && cmn.is_array(data)) {
+    let allExist = sids.every(sid => data.some(c => c.id === sid));
+    if (!allExist) {
+      return res.status(400).json({ error: 'At least one of the canvases does not exist' });
+    }
+
+    data.forEach(canvas => {
+      if (sids.includes(canvas.id)) {
+        canvas.deleted = true;
+        canvas.time_updated = new Date().toISOString();
+      }
+    });
+
+    writeMockData('api/v1/users/me/canvases.json', data);
+  }
+
+  res.status(200).send();
+});
+
+// Restore user canvases
+app.put('/api/v1/users/me/canvas/restore', (req, res) => {
+  const sids = req.body.map(parseInt);
+  console.log('PUT /api/v1/users/me/canvas/restore - Received data:', JSON.stringify(sids, null, 2));
+
+  if (!cmn.is_array(sids)) {
+    return res.status(400).json({ error: 'data must be an array' });
+  }
+
+  let data = loadMockData('api/v1/users/me/canvases.json');
+  if (data && cmn.is_array(data)) {
+    let allExist = sids.every(sid => data.some(c => c.id === sid));
+    if (!allExist) {
+      return res.status(400).json({ error: 'At least one of the Canvases does not exist' });
+    }
+
+    data.forEach(canvas => {
+      if (sids.includes(canvas.id)) {
+        canvas.deleted = false;
+        canvas.time_updated = new Date().toISOString();
+      }
+    });
+
+    writeMockData('api/v1/users/me/canvases.json', data);
+  }
+
+  res.status(200).send();
+});
+
+// Get canvas graph
+app.get('/api/v1/users/me/canvas/:save_id/graph', (req, res) => {
+  const { save_id } = req.params;
+
+  let canvases = loadMockData('api/v1/users/me/canvases.json');
+  if (canvases && cmn.is_array(canvases)) {
+    const canvas = canvases.find(c => c.id == save_id);
+    if (!canvas) {
+      return res.status(400).json({ error: 'The Canvas does not exist' });
+    }
+  }
+
+  const data = loadMockData(`api/v1/users/me/canvas/${save_id}/graph.json`);
+  if (data) {
+    res.status(200).json(data);
+  } else {
+    res.status(200).json({ nodes: [], edges: [], annotations: [], tag_descriptions: {} });
+  }
+});
+
+// Merge graph into canvas
+app.post('/api/v1/users/me/canvas/:save_id/graph', (req, res) => {
+  const { save_id } = req.params;
+  console.log(`POST /api/v1/users/me/canvas/${save_id}/graph - Received data:`, JSON.stringify(req.body, null, 2));
+
+  let canvases = loadMockData('api/v1/users/me/canvases.json');
+  if (canvases && cmn.is_array(canvases)) {
+    const canvas = canvases.find(c => c.id == save_id);
+    if (!canvas) {
+      return res.status(400).json({ error: 'The Canvas does not exist' });
+    }
+  }
+
+  // In a real server this would merge; mock just acknowledges
+  res.status(200).send();
+});
+
 // Catch-all handler for SPA routing - serve index.html for non-API routes
 app.get('*', (req, res) => {
   // If it's an API route that doesn't exist, return 404 JSON
@@ -488,4 +661,11 @@ app.listen(PORT, () => {
   console.log('  GET /api/v1/users/me/saves/:save_id');
   console.log('  GET /api/v1/users/me/workspaces');
   console.log('  GET /api/v1/users/me/workspaces/:ws_id');
+  console.log('  GET /api/v1/users/me/canvases');
+  console.log('  POST /api/v1/users/me/canvas');
+  console.log('  PUT /api/v1/users/me/canvas');
+  console.log('  PUT /api/v1/users/me/canvas/trash');
+  console.log('  PUT /api/v1/users/me/canvas/restore');
+  console.log('  GET /api/v1/users/me/canvas/:save_id/graph');
+  console.log('  POST /api/v1/users/me/canvas/:save_id/graph');
 });

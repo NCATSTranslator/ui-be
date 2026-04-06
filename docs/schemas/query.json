@@ -1,0 +1,255 @@
+{
+  "QueryRequest": {
+    "oneOf": [
+      {
+        "$ref": "./query.json#/SmartQuery"
+      },
+      {
+        "$ref": "./query.json#/PathfinderQuery"
+      }
+    ],
+    "description": "Query submission request - can be either a smart query or pathfinder query"
+  },
+  "SmartQuery": {
+    "type": "object",
+    "properties": {
+      "pid": {
+        "type": "integer",
+        "description": "Project ID to associate with the query",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "drug",
+          "gene",
+          "chemical"
+        ],
+        "description": "Query type - determines what to find for the given entity"
+      },
+      "curie": {
+        "type": "string",
+        "description": "CURIE identifier for the entity (e.g., MONDO:0007254 for drug queries, NCBIGene:55768 for gene queries, PUBCHEM.COMPOUND:5486971 for chemical queries)"
+      },
+      "direction": {
+        "type": "string",
+        "enum": [
+          "increased",
+          "decreased"
+        ],
+        "description": "Direction of effect - required for gene and chemical queries, not applicable for drug queries",
+        "nullable": true
+      }
+    },
+    "required": [
+      "type",
+      "curie"
+    ],
+    "description": "Smart query for finding drugs, genes affected by chemicals, or chemicals affecting genes"
+  },
+  "PathfinderQuery": {
+    "type": "object",
+    "properties": {
+      "pid": {
+        "type": "integer",
+        "description": "Project ID to associate with the query",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "pathfinder"
+        ],
+        "description": "Query type for pathfinder queries"
+      },
+      "subject": {
+        "$ref": "./query.json#/PathfinderEntity",
+        "description": "Subject entity for pathfinder queries"
+      },
+      "object": {
+        "$ref": "./query.json#/PathfinderEntity",
+        "description": "Object entity for pathfinder queries"
+      },
+      "constraint": {
+        "type": "string",
+        "description": "Constraint category for pathfinding (optional intermediate category)",
+        "nullable": true
+      }
+    },
+    "required": [
+      "type",
+      "subject",
+      "object"
+    ],
+    "description": "Pathfinder query for finding paths between two entities"
+  },
+  "PathfinderEntity": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "CURIE identifier for the entity"
+      },
+      "category": {
+        "type": "string",
+        "description": "Biolink category for the entity"
+      }
+    },
+    "required": [
+      "id",
+      "category"
+    ]
+  },
+  "QuerySubmitResponse": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "running",
+          "complete",
+          "error"
+        ],
+        "description": "Query status - typically 'complete' for successful submissions"
+      },
+      "data": {
+        "type": "string",
+        "description": "Query primary key (PK) - unique identifier for the submitted query"
+      }
+    },
+    "required": [
+      "status",
+      "data"
+    ],
+    "description": "Response from query submission containing status and query PK"
+  },
+  "QueryStatus": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "running",
+          "complete",
+          "error"
+        ],
+        "description": "Query status"
+      },
+      "data": {
+        "type": "object",
+        "properties": {
+          "qid": {
+            "type": "string",
+            "description": "Query primary key (PK)"
+          },
+          "aras": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of ARA (Autonomous Relay Agent) names that have completed processing"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": [
+          "qid",
+          "aras",
+          "timestamp"
+        ],
+        "description": "Query status data"
+      }
+    },
+    "required": [
+      "status",
+      "data"
+    ],
+    "description": "Query status response with processing information"
+  },
+  "QueryResults": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "running",
+          "complete",
+          "error"
+        ],
+        "description": "Query status"
+      },
+      "data": {
+        "$ref": "./summary.json#/QuerySummary"
+      }
+    },
+    "required": [
+      "status",
+      "data"
+    ],
+    "description": "Query results response containing summarized data"
+  },
+  "QueryUpdateRequest": {
+    "type": "object",
+    "properties": {
+      "event_type": {
+        "type": "string",
+        "enum": [
+          "merged_version_available",
+          "merged_version_begun",
+          "ara_response_complete",
+          "admin",
+          "ars_error"
+        ],
+        "description": "Type of ARS callback event"
+      },
+      "pk": {
+        "type": "string",
+        "description": "Query primary key identifier"
+      },
+      "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "description": "Timestamp of the event"
+      },
+      "complete": {
+        "type": "boolean",
+        "description": "Whether the query processing is complete (for merged_version_available events)",
+        "nullable": true
+      },
+      "merged_versions_list": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "items": [
+            {
+              "type": "string",
+              "description": "Version identifier"
+            },
+            {
+              "type": "string",
+              "description": "ARA name"
+            }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "description": "List of [id, ara_name] pairs for merged versions (for merged_version_available events)",
+        "nullable": true
+      },
+      "message": {
+        "type": "string",
+        "description": "Error message (for ars_error events)",
+        "nullable": true
+      }
+    },
+    "required": [
+      "event_type",
+      "pk",
+      "timestamp"
+    ],
+    "description": "ARS callback payload for query status updates"
+  }
+}

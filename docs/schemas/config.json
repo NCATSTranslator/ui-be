@@ -1,0 +1,86 @@
+{
+  "Config": {
+    "type": "object",
+    "properties": {
+      "gaID": {
+        "type": "string",
+        "description": "Google Analytics ID"
+      },
+      "cached_queries": {
+        "type": "array",
+        "items": {
+          "$ref": "./config.json#/CachedQuery"
+        },
+        "description": "Cached queries available to frontend"
+      },
+      "name_resolver": {
+        "type": "string",
+        "description": "Name resolver endpoint"
+      },
+      "social_providers": {
+        "type": "object",
+        "description": "Social authentication providers configuration"
+      },
+      "include_pathfinder": {
+        "type": "boolean",
+        "description": "Whether to include pathfinder functionality"
+      },
+      "include_summarization": {
+        "type": "boolean",
+        "description": "Whether to include summarization functionality"
+      }
+    }
+  },
+  "CachedQuery": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Human-readable name of the query"
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "drug",
+          "chemical",
+          "gene"
+        ],
+        "description": "Type of query (what to find for the given entity)"
+      },
+      "allow_inbound": {
+        "type": "boolean",
+        "description": "Whether this query can be accessed via inbound demo routes"
+      },
+      "allow_outbound": {
+        "type": "boolean",
+        "description": "Whether this query is available in the frontend query list"
+      },
+      "direction": {
+        "type": "string",
+        "enum": [
+          "increased",
+          "decreased"
+        ],
+        "nullable": true,
+        "description": "Direction of effect for gene/chemical queries"
+      },
+      "uuid": {
+        "type": "string",
+        "format": "uuid",
+        "description": "Unique identifier for the cached query"
+      },
+      "id": {
+        "type": "string",
+        "description": "CURIE identifier for the entity (e.g., MONDO:0007254, NCBIGene:55768, PUBCHEM.COMPOUND:5486971)"
+      }
+    },
+    "required": [
+      "name",
+      "type",
+      "allow_inbound",
+      "allow_outbound",
+      "uuid",
+      "id"
+    ]
+  }
+}
