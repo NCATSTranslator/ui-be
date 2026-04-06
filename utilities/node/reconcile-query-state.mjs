@@ -14,7 +14,7 @@ async function main(translator_service, query_service) {
     map_pk_queries.set(query.pk, query);
   }
   const stale_pks = [...map_pk_queries.keys()];
-  if (cmn.isArrayEmpty(stale_pks)) {
+  if (cmn.is_array_empty(stale_pks)) {
     return;
   }
   const [_, notifications] = await translator_service.get_notification_statuses(stale_pks);
@@ -42,7 +42,7 @@ async function main(translator_service, query_service) {
     }
   }
   let update_count = 0;
-  if (!cmn.isArrayEmpty(updates)) {
+  if (!cmn.is_array_empty(updates)) {
     update_count = await query_service.UNSAFE_batch_update(updates);
   }
   return update_count;
