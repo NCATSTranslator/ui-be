@@ -197,7 +197,7 @@ function _testDeep(ac, ex, permissive=false) {
       if (Symbol.iterator in aco) {
         aco = Object.fromEntries(aco);
       }
-      testObject(aco, ex);
+      _testObject(aco, ex);
     } else {
       if (typeof(ex) === 'string' && ex.startsWith('*')) return true;
       ast.strictEqual(ac, ex);
@@ -210,7 +210,7 @@ function _testDeep(ac, ex, permissive=false) {
   }
 }
 
-function testObject(ac, ex) {
+function _testObject(ac, ex) {
   const acks = Object.keys(ac);
   const exks = Object.keys(ex);
   ast.strictEqual(acks.length, exks.length);
@@ -247,7 +247,7 @@ function testObject(ac, ex) {
     }
   }
 
-  if (acksLeft.length > 0) {
+  if (acksLeft.size > 0) {
     ast.fail(); // There was an unmatched wildcard
   }
 }
