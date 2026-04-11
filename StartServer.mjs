@@ -22,6 +22,11 @@ import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.
 import { UserWorkspaceStorePostgres } from './stores/UserWorkspaceStorePostgres.mjs';
 import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
 
+// Initialize OpenTelemetry if enabled via env var
+if (process.env.ENABLE_OTEL === 'true') {
+  const { initTracing } = await import('./lib/tracing.mjs');
+  initTracing();
+}
 
 // Load the config asap as basically everything depends on it
 const SERVER_CONFIG = await (async function() {

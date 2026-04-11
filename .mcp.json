@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "slack-reader": {
+      "command": "python3",
+      "args": ["/Users/nishad/src/np/mcp-server-factory/slack/server.py"],
+      "env": {
+        "SLACK_TOKEN": "${SLACK_TOKEN}"
+      }
+    }
+  }
+}
