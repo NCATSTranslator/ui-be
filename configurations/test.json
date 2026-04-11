@@ -76,5 +76,10 @@
   "_load_secrets": "configurations/secrets/secrets.json",
   "mainsite_path": "/main",
   "demosite_path": "/demo",
+  "otel": {
+    "enabled": true,
+    "endpoint": "http://jaeger-otel-collector:4318",
+    "service_name": "translator-ui"
+  },
   "pg_host": "transltr-test-rds-ui-postgresql.ceyknq0yekb3.us-east-1.rds.amazonaws.com"
 }

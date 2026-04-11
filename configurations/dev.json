@@ -71,5 +71,10 @@
   "_load_sessions": "configurations/sessions.json",
   "_load_storage": "configurations/storage.json",
   "_load_secrets": "configurations/secrets/secrets.json",
+  "otel": {
+k    "enabled": false,
+    "endpoint": "http://jaeger-otel-collector:4318",
+    "service_name": "translator-ui"
+  },
   "pg_host": "pgdb"
 }
