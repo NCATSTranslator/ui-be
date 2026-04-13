@@ -1,6 +1,5 @@
 export { suite }
 
-import * as cmn from "#lib/common.mjs";
 import * as test from "#test/lib/common.mjs";
 import * as taglib from "#lib/taglib.mjs";
 
@@ -471,14 +470,14 @@ function _test_make_rule_collect_clinical_trial_metadata() {
       "args": [],
       "expected": {
         "supporting_trials": {
-          "NCT03279861": {
-            "phase": 4,
-            "status": "WITHDRAWN",
-            "child": false,
-            "start_date": "2017-11",
-            "size": 0,
+          "NCT02040909": {
+            "phase": 1,
+            "status": "TERMINATED",
+            "child": true,
+            "start_date": "2014-07",
+            "size": 91,
             "type": "enrolled",
-            "title": "Sacubitril-valsartan Versus Usual Anti-hypertensives in LVAD"
+            "title": "Optimizing Propofol Dosing for (Preterm) Newborn Infants That Need Endotracheal Intubation"
           }
         }
       },
@@ -486,73 +485,29 @@ function _test_make_rule_collect_clinical_trial_metadata() {
         "source": {
           "attributes": [
             {
-              "attribute_type_id": "biolink:supporting_study",
-              "attributes": [
-                {
-                  "attribute_type_id": "clinical_trial_phase",
-                  "value": 4,
-                  "value_type_id": "biolink:ResearchPhaseEnum"
-                },
-                {
-                  "attribute_type_id": "tested",
-                  "value": "unsure"
-                },
-                {
-                  "attribute_type_id": "primary_purpose",
-                  "value": "TREATMENT"
-                },
-                {
-                  "attribute_type_id": "intervention_model",
-                  "value": "CROSSOVER"
-                },
-                {
-                  "attribute_type_id": "time_perspective",
-                  "value": "nan"
-                },
-                {
-                  "attribute_type_id": "clinical_trial_status",
-                  "value": "WITHDRAWN"
-                },
-                {
-                  "attribute_type_id": "start_date",
-                  "value": "2017-11"
-                },
-                {
-                  "attribute_type_id": "study_size",
-                  "value": 0,
-                  "value_type_id": "metatype:Integer"
-                },
-                {
-                  "attribute_type_id": "enrollment_type",
-                  "value": "ACTUAL"
-                },
-                {
-                  "attribute_type_id": "age_range",
-                  "value": "18 years to 80 years"
-                },
-                {
-                  "attribute_type_id": "child",
-                  "value": false,
-                  "value_type_id": "metatype:Boolean"
-                },
-                {
-                  "attribute_type_id": "adult",
-                  "value": true,
-                  "value_type_id": "metatype:Boolean"},
-                {
-                  "attribute_type_id": "older_adult",
-                  "value": true,
-                  "value_type_id": "metatype:Boolean"
-                },
-                {
-                  "attribute_type_id": "brief_title",
-                  "value": "Sacubitril-valsartan Versus Usual Anti-hypertensives in LVAD",
-                  "value_type_id": "metatype:String"
+              "attribute_type_id": "biolink:has_supporting_studies",
+              "value": {
+                "CLINICALTRIALS:NCT02040909": {
+                  "id": "CLINICALTRIALS:NCT02040909",
+                  "category": [
+                    "biolink:ClinicalTrial"
+                  ],
+                  "name": "Optimizing Propofol Dosing for (Preterm) Newborn Infants That Need Endotracheal Intubation",
+                  "clinical_trial_phase": "clinical_trial_phase_1",
+                  "clinical_trial_primary_purpose": "TREATMENT",
+                  "clinical_trial_intervention_model": "SINGLE_GROUP",
+                  "clinical_trial_overall_status": "TERMINATED",
+                  "clinical_trial_enrollment_type": "ACTUAL",
+                  "clinical_trial_start_date": "2014-07",
+                  "clinical_trial_enrollment": 91,
+                  "clinical_trial_age_stage": [
+                    "child"
+                  ],
+                  "clinical_trial_age_range": "up to 28 days",
+                  "clinical_trial_tested_intervention": "yes"
                 }
-              ],
-              "value": "NCT03279861",
-              "value_url": "https://clinicaltrials.gov/study/NCT03279861?tab=table"
-            }
+              }
+            },
           ]
         },
         "target": {}
