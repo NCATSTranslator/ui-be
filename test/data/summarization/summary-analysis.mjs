@@ -8,6 +8,7 @@ import {
   gen_analysis_paths
 } from "#lib/summarization/summary-analysis.mjs";
 import { SummaryEdge } from "#lib/summarization/SummaryEdge.mjs";
+import { SummaryPath } from "#lib/summarization/SummaryPath.mjs";
 import * as id from "#lib/summarization/identifiers.mjs";
 
 const DIRECT = TRAPI_CONSTANTS.GRAPH.EDGE.TYPE.DIRECT;
@@ -36,6 +37,8 @@ function _test_analysis_to_summary_analysis() {
         {}
       ],
       "expected": {
+        "type": "edge",
+        "score": 0,
         "root": {
           "id": "root",
           "_edge_ids": ["eb1"]
@@ -76,6 +79,8 @@ function _test_analysis_to_summary_analysis() {
         }
       ],
       "expected": {
+        "type": "edge",
+        "score": 0,
         "root": {
           "id": "root",
           "_edge_ids": ["eb1"]
@@ -148,6 +153,8 @@ function _test_analysis_to_summary_analysis() {
         }
       ],
       "expected": {
+        "type": "edge",
+        "score": 0,
         "root": {
           "id": "root",
           "_edge_ids": ["eb1", "eb2"]
@@ -289,11 +296,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
       ],
       expected: [
         [
-          [
-            "nb1",
-            _eid_1,
-            "nb2"
-          ]
+          new SummaryPath(["nb1", _eid_1, "nb2"])
         ],
         {
           [_eid_1]: _make_summary_edge("eb1", [], true, DIRECT)
@@ -306,7 +309,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
     const _eid_1 = id.gen_eid("eb1", _with_support_kgraph(), false, true);
     const _eid_2 = id.gen_eid("eb2", _with_support_kgraph(), false, false);
     const _eid_3 = id.gen_eid("eb3", _with_support_kgraph(), false, false);
-    const _support_path_1 = ["nb1", _eid_2, "nb2.1", _eid_3, "nb2"];
+    const _support_path_1 = new SummaryPath(["nb1", _eid_2, "nb2.1", _eid_3, "nb2"]);
     return {
       args: [
         _with_support_summary_analysis(),
@@ -315,15 +318,11 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
       ],
       expected: [
         [
-          [
-            "nb1",
-            _eid_1,
-            "nb2"
-          ],
+          new SummaryPath(["nb1", _eid_1, "nb2"]),
           _support_path_1
         ],
         {
-          [_eid_1]: _make_summary_edge("eb1", [id.gen_pid(_support_path_1)], true, INDIRECT),
+          [_eid_1]: _make_summary_edge("eb1", [_support_path_1.id], true, INDIRECT),
           [_eid_2]: _make_summary_edge("eb2", [], false, DIRECT),
           [_eid_3]: _make_summary_edge("eb3", [], false, DIRECT)
         }
@@ -358,11 +357,11 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
       id.gen_eid("ax4-eb2", _with_nested_support_kgraph(), true, false)
     ];
     const _support_path = [
-      ["target", _inverted_eid[3], "nb1", _inverted_eid[2], "answer-1"],
-      ["target", _inverted_eid[4], "nb1", _inverted_eid[2], "answer-1"],
-      ["target", _inverted_eid[7], "nb3", _inverted_eid[6], "nb2", _inverted_eid[5], "answer-2"]
+      new SummaryPath(["target", _inverted_eid[3], "nb1", _inverted_eid[2], "answer-1"]),
+      new SummaryPath(["target", _inverted_eid[4], "nb1", _inverted_eid[2], "answer-1"]),
+      new SummaryPath(["target", _inverted_eid[7], "nb3", _inverted_eid[6], "nb2", _inverted_eid[5], "answer-2"])
     ];
-    const _nested_support = ["nb3", _inverted_eid[9], "nb2.1", _inverted_eid[8], "nb2"];
+    const _nested_support = new SummaryPath(["nb3", _inverted_eid[9], "nb2.1", _inverted_eid[8], "nb2"]);
     return {
       config_loader: () => bl.loadBiolink(_test_biolink_config()),
       args: [
@@ -372,8 +371,8 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
       ],
       expected: [
         [
-          ["target", _inverted_eid[0], "answer-1"],
-          ["target", _inverted_eid[1], "answer-2"],
+          new SummaryPath(["target", _inverted_eid[0], "answer-1"]),
+          new SummaryPath(["target", _inverted_eid[1], "answer-2"]),
           _support_path[0],
           _support_path[1],
           _support_path[2],
@@ -382,16 +381,16 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
         {
           [_inverted_eid[0]]: _make_summary_edge(
             "eb1",
-            [id.gen_pid(_support_path[0]), id.gen_pid(_support_path[1])],
+            [_support_path[0].id, _support_path[1].id],
             true,
             INDIRECT,
             _eid[0]),
-          [_inverted_eid[1]]: _make_summary_edge("eb2", [id.gen_pid(_support_path[2])], true, INDIRECT, _eid[1]),
+          [_inverted_eid[1]]: _make_summary_edge("eb2", [_support_path[2].id], true, INDIRECT, _eid[1]),
           [_inverted_eid[2]]: _make_summary_edge("ax1-eb1", [], false, DIRECT, _eid[2]),
           [_inverted_eid[3]]: _make_summary_edge("ax1-eb2", [], false, DIRECT, _eid[3]),
           [_inverted_eid[4]]: _make_summary_edge("ax2-eb1", [], false, DIRECT, _eid[4]),
           [_inverted_eid[5]]: _make_summary_edge("ax3-eb1", [], false, DIRECT, _eid[5]),
-          [_inverted_eid[6]]: _make_summary_edge("ax3-eb2", [id.gen_pid(_nested_support)], false, INDIRECT, _eid[6]),
+          [_inverted_eid[6]]: _make_summary_edge("ax3-eb2", [_nested_support.id], false, INDIRECT, _eid[6]),
           [_inverted_eid[7]]: _make_summary_edge("ax3-eb3", [], false, DIRECT, _eid[7]),
           [_inverted_eid[8]]: _make_summary_edge("ax4-eb1", [], false, DIRECT, _eid[8]),
           [_inverted_eid[9]]: _make_summary_edge("ax4-eb2", [], false, DIRECT, _eid[9])
