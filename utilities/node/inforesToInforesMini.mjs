@@ -1,5 +1,4 @@
 'use strict'
-
 import * as cmn from '../../lib/common.mjs';
 
 const filePath = process.argv[2];
@@ -9,9 +8,22 @@ const inforesEntries = inforesCatalog.information_resources;
 const inforesMini = {};
 inforesEntries.forEach((inforesEntry) => {
   if (inforesEntry.id) {
+    let xref = inforesEntry.xref ?? null;
+    let wiki = null;
+    let url = null;
+    if (xref && xref.length > 0) {
+      xref = xref[0];
+      if (xref.startsWith("https://github.com")) {
+        wiki = xref;
+      } else {
+        url = xref;
+      }
+    }
+
     inforesMini[inforesEntry.id] = {
       name: inforesEntry.name || inforesEntry.id,
-      wiki: (inforesEntry.xref && inforesEntry.xref.length > 0) ? inforesEntry.xref[0] : null,
+      wiki: wiki,
+      url: url,
       knowledge_level: _cleanupKnowledgeLevel(inforesEntry['knowledge_level'])
     };
   }
