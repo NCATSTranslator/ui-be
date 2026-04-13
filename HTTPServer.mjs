@@ -162,6 +162,11 @@ export function startServer(config, services) {
   app.get(`${API_PATH_V1}/users/me/saves/:save_id`, userAPIController.getUserSaveById.bind(userAPIController));
   app.put(`${API_PATH_V1}/users/me/saves/:save_id`, userAPIController.updateUserSaveById.bind(userAPIController));
   app.delete(`${API_PATH_V1}/users/me/saves/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
+
+  // User canvas
+  app.get(`${API_PATH_V1}/users/me/canvases`, userAPIController.getUserCanvases.bind(userAPIController));
+  app.post(`${API_PATH_V1}/users/me/canvas`, userAPIController.createUserCanvases.bind(userAPIController));
+
   // workspaces
   app.get(`${API_PATH_V1}/users/me/workspaces`, userAPIController.getUserWorkspaces.bind(userAPIController));
   app.get(`${API_PATH_V1}/users/me/workspaces/:ws_id`, userAPIController.getUserWorkspaceById.bind(userAPIController));

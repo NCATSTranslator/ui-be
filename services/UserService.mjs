@@ -5,11 +5,17 @@ import { UserWorkspace } from '../models/UserWorkspace.mjs';
 import { UserSavedData, UserQueryData, UserTagData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 
 class UserService {
-  constructor(userStore, userPreferenceStore, userSavedDataStore, userWorkspaceStore) {
+  constructor(
+      userStore,
+      userPreferenceStore,
+      userSavedDataStore,
+      userWorkspaceStore,
+      canvasStore) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
     this.savedDataStore = userSavedDataStore;
     this.userWorkspaceStore = userWorkspaceStore;
+    this.canvasStore = canvasStore;
   }
 
   async getUserById(uid) {
@@ -77,6 +83,21 @@ class UserService {
 
   async restoreUserSaveBatch(uid, sids) {
     return this.savedDataStore.restoreUserSavedDataBatch(uid, sids);
+  }
+
+  async getUserCanvases(user_id, include_deleted=false) {
+    const canvases = this.canvasStore.getCanvasesByUser(user_id, include_deleted);
+    // TODO: [canvas] convert from raw canvas represention to user canvas
+    return canvases;
+  }
+
+  async createUserCanvas(user_id, init_graph) {
+    const create_success = this.canvasStore.createUserCanvas(user_id, init_graph);
+    if (!create_success) {
+      // TODO: [canvas] should throw because it would mean this user does not exist
+      return false;
+    }
+    return true;
   }
 
   // Workspaces

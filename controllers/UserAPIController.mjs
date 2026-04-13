@@ -385,6 +385,30 @@ class UserAPIController {
     }
   }
 
+  async getUserCanvases(req, res) {
+    const user_id = req.sessionData.user.id;
+    if (cmn.is_missing(user_id)) {
+      wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
+      return;
+    }
+    const include_deleted = req.query.include_deleted ?? false;
+    try {
+      const user_canvases = await this.userService.getUserCanvases(user_id, include_deleted);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(user_canvases);
+    } catch (err) {
+      wutil.logInternalServerError(req, err);
+      return wutil.sendInternalServerError(res);
+    }
+  }
+
+  async createUserCanvas(req, res) {
+    const user_id = req.sessionData.user.id;
+    if (cmn.is_missing(user_id)) {
+      wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
+      return;
+    }
+  }
+
   async _get_user_saves_data(user_id, include_deleted, save_type) {
     try {
       const result = await this.userService.getUserSavesByUid(user_id, include_deleted, save_type);

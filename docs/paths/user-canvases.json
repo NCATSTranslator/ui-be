@@ -32,6 +32,16 @@
             }
           }
         },
+        "400": {
+          "description": "Bad Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "401": {
           "description": "Authentication Required"
         },
@@ -65,10 +75,13 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "../schemas/canvas.json#/UserCanvas"
+                "type": "string"
               }
             }
           }
+        },
+        "400": {
+          "description": "Initial canvas graph is malformed"
         },
         "401": {
           "description": "Authentication Required"
