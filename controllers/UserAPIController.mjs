@@ -1,9 +1,15 @@
 'use strict';
 export { UserAPIController };
+
 import * as wutil from '../lib/webutils.mjs';
 import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 import { UserWorkspace } from '../models/UserWorkspace.mjs';
 import * as cmn from '../lib/common.mjs';
+import {
+  Canvas,
+  CanvasCreationError,
+  CanvasRequestError
+} from "../models/Canvas.mjs";
 
 class UserAPIController {
   constructor(config, userService, translatorService) {
@@ -405,6 +411,19 @@ class UserAPIController {
     const user_id = req.sessionData.user.id;
     if (cmn.is_missing(user_id)) {
       wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
+      return;
+    }
+    try {
+      const canvas = new Canvas(req.body);
+      const user_canvas = this.userService.createUserCanvas(user_id, canvas);
+    } catch (err) {
+      if (err instanceof CanvasCreationError) {
+        wutil.sendError(res, cmn.HTTP_CODE.INTERNAL_ERROR, err.message);
+      } else if (err instanceof CanvasRequestError) {
+        wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      } else {
+        wutil.sendInternalServerError(res);
+      }
       return;
     }
   }

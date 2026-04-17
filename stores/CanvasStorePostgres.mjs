@@ -1,6 +1,6 @@
-export { CanvasStorePostgres }
+export { canvasStorePostgres }
 
-class CanvasStorePostgres {
+class canvasStorePostgres {
   constructor(db_pool) {
     this._db_pool = db_pool;
   }
@@ -14,4 +14,5 @@ class CanvasStorePostgres {
     // TODO: [canvas] implement
     return true;
   }
+
 }

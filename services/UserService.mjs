@@ -91,11 +91,10 @@ class UserService {
     return canvases;
   }
 
-  async createUserCanvas(user_id, init_graph) {
-    const create_success = this.canvasStore.createUserCanvas(user_id, init_graph);
-    if (!create_success) {
-      // TODO: [canvas] should throw because it would mean this user does not exist
-      return false;
+  async createUserCanvas(user_id, canvas) {
+    const canvas_id = this.canvasStore.createCanvas(user_id, canvas_request);
+    if (cmn.is_missing(canvas_id)) {
+      throw CanvasCreationError("User does not exist");
     }
     return true;
   }
