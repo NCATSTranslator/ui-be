@@ -10,8 +10,6 @@ export {
   CanvasRequestError
 }
 
-import * as cmn from "#lib/common.mjs";
-
 class Canvas {
   constructor({
     id = null,
@@ -35,13 +33,13 @@ class Canvas {
 class CanvasNode {
   constructor({
     id = null,
-    canvas_id,
-    data_id,
+    canvas_id = null,
+    data_id = null,
     ref,
     label,
     type,
-    x,
-    y,
+    x = null,
+    y = null,
     hidden = false,
     tags = {},
     time_created = new Date(),
@@ -71,24 +69,21 @@ class CanvasNodeData {
     time_created = new Date(),
     time_updated = new Date()
   } = {}) {
-    if (cmn.is_any_missing(ref, data)) {
-    }
     this.id = id;
     this.ref = ref;
     this.data = data;
     this.time_created = time_created;
     this.time_updated = time_updated;
-    t
   }
 }
 
 class CanvasEdge {
   constructor({
     id = null,
-    canvas_id,
-    data_id,
-    subject_id,
-    object_id,
+    canvas_id = null,
+    data_id = null,
+    subject_id = null,
+    object_id = null,
     ref,
     label,
     hidden = false,
@@ -106,9 +101,9 @@ class CanvasEdge {
     this.label = label;
     this.hidden = hidden;
     this.tags = tags;
-    this.time_created = time_created,
-    this.time_updated = time_updated,
-    this.time_deleted = time_deleted
+    this.time_created = time_created;
+    this.time_updated = time_updated;
+    this.time_deleted = time_deleted;
   }
 }
 
