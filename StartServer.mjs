@@ -65,7 +65,8 @@ const AUTH_SERVICE = (function (config) {
   return new AuthService({
     tokenTTLSec: config.sessions.token_ttl_sec,
     sessionAbsoluteTTLSec: config.sessions.session_absolute_ttl_sec,
-    sessionMaxIdleTimeSec: config.sessions.session_max_idle_time_sec
+    sessionMaxIdleTimeSec: config.sessions.session_max_idle_time_sec,
+    loginRequestTTLSec: config.sessions.login_request_ttl_sec
   },
   new SessionStorePostgres(dbPool),
   new UserStorePostgres(dbPool));
