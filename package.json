@@ -16,6 +16,7 @@
   "license": "ISC",
   "imports": {
     "#lib/*": "./lib/*",
+    "#model/*": "./models/*",
     "#test/*": "./test/*"
   },
   "dependencies": {
