@@ -1,6 +1,5 @@
 export { suite }
 
-import * as cmn from "#lib/common.mjs";
 import * as test from "#test/lib/common.mjs";
 import { load_trapi, CONSTANTS } from "#lib/trapi/core.mjs";
 
