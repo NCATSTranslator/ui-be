@@ -26,20 +26,20 @@ function _test_SummaryEdge() {
     trials: []
   };
   return test.make_class_test({
-    default_constructor: {
-      constructor: {
+    default_class_constructor: {
+      class_constructor: {
         args: [],
         expected: default_state
       }
     },
     null_args_default_to_empty: {
-      constructor: {
+      class_constructor: {
         args: [null, null, null],
         expected: default_state
       }
     },
     with_agents: {
-      constructor: {
+      class_constructor: {
         args: [["ara1", "ara2"]],
         expected: {
           ...default_state,
@@ -48,7 +48,7 @@ function _test_SummaryEdge() {
       }
     },
     with_support_and_is_root: {
-      constructor: {
+      class_constructor: {
         args: [[], ["edge_id_1", "edge_id_2"], true],
         expected: {
           ...default_state,
@@ -58,19 +58,19 @@ function _test_SummaryEdge() {
       }
     },
     has_support_empty_is_false: {
-      constructor: { args: [] },
+      class_constructor: { args: [] },
       steps: [
         { method: "has_support", args: [], expected: false }
       ]
     },
     has_support_with_support_is_true: {
-      constructor: { args: [[], ["edge_id_1"]] },
+      class_constructor: { args: [[], ["edge_id_1"]] },
       steps: [
         { method: "has_support", args: [], expected: true }
       ]
     },
     is_inverted_null_metadata_is_false: {
-      constructor: { args: [] },
+      class_constructor: { args: [] },
       steps: [
         { method: "is_inverted", args: [], expected: false }
       ]

@@ -100,30 +100,29 @@ async function _class_test({test_class, test_cases}) {
   const class_name = test_class.name;
   console.log(`Running tests for ${class_name}`);
   for (let case_name of Object.keys(test_cases)) {
-    console.log(`--- Running test case ${case_name}`);
     const tc = test_cases[case_name];
     if (tc.config) {
       await tc.config_loader();
     }
-    if (!cmn.is_missing(tc.constructor) && !cmn.is_missing(tc.injected)) {
+    if (!cmn.is_missing(tc.class_constructor) && !cmn.is_missing(tc.injected)) {
       throw new cmn.DeveloperError('test/lib/common.mjs', '_class_test',
-        `Test case may define either 'constructor' or 'injected', but not both.\n  Test case: ${case_name}`);
+        `Test case may define either 'class_constructor' or 'injected', but not both.\n  Test case: ${case_name}`);
     }
     let obj = test_class;
-    if (!cmn.is_missing(tc.constructor)) {
+    if (!cmn.is_missing(tc.class_constructor)) {
       try {
-        obj = new test_class(...await _delazy(cmn.deepCopy(tc.constructor.args)));
-        if (!cmn.is_missing(tc.constructor.expected)) {
-          _test_deep(obj, tc.constructor.expected);
+        obj = new test_class(...await _delazy(cmn.deepCopy(tc.class_constructor.args)));
+        if (!cmn.is_missing(tc.class_constructor.expected)) {
+          _test_deep(obj, tc.class_constructor.expected);
         }
       } catch (err) {
-        const err_object = tc.constructor.expected;
+        const err_object = tc.class_constructor.expected;
         if (!cmn.is_missing(err_object)
             && (!cmn.is_function(err_object) || !(err instanceof err_object))) {
           throw err;
         }
       }
-      console.log(`------ constructor passed`);
+      console.log(`------ class_constructor passed`);
     } else if (!cmn.is_missing(tc.injected)) {
       obj = new test_class();
       for (const key of Object.keys(tc.injected)) {
