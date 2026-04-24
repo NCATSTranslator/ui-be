@@ -89,7 +89,7 @@ async function apply_rule({actual, case_context}) {
 async function _delazy(args) {
   return await Promise.all(args.map(async (arg) => {
     arg = await arg;
-    if (arg.__lazy__ === _CONSTANTS.LAZY_ID) {
+    if (!cmn.is_missing(arg) && arg.__lazy__ === _CONSTANTS.LAZY_ID) {
       return await arg();
     }
     return arg;
@@ -104,6 +104,10 @@ async function _class_test({test_class, test_cases}) {
     const tc = test_cases[case_name];
     if (tc.config) {
       await tc.config_loader();
+    }
+    if (!cmn.is_missing(tc.constructor) && !cmn.is_missing(tc.injected)) {
+      throw new cmn.DeveloperError('test/lib/common.mjs', '_class_test',
+        `Test case may define either 'constructor' or 'injected', but not both.\n  Test case: ${case_name}`);
     }
     let obj = test_class;
     if (!cmn.is_missing(tc.constructor)) {
@@ -120,21 +124,50 @@ async function _class_test({test_class, test_cases}) {
         }
       }
       console.log(`------ constructor passed`);
+    } else if (!cmn.is_missing(tc.injected)) {
+      obj = new test_class();
+      for (const key of Object.keys(tc.injected)) {
+        if (!Object.hasOwn(obj, key)) {
+          throw new cmn.DeveloperError('test/lib/common.mjs', '_class_test',
+            `Injector property '${key}' does not exist on class ${class_name}.\n  Test case: ${case_name}`);
+        }
+        obj[key] = cmn.deepCopy(tc.injected[key]);
+      }
     }
     if (cmn.is_missing(tc.steps)) {
       tc.steps = [];
     }
     for (let step of tc.steps) {
+      const action_count = Number(!cmn.is_missing(step.method))
+        + Number(!cmn.is_missing(step.get))
+        + Number(!cmn.is_missing(step.set));
+      if (action_count !== 1) {
+        throw new cmn.DeveloperError('test/lib/common.mjs', '_class_test',
+          `Step must define exactly one of 'method', 'get', or 'set'.\n  Test case: ${case_name}`);
+      }
+      let step_label;
       try {
-        const actual = obj[step.method](...await _delazy(cmn.deepCopy(step.args)));
-        _test_deep(actual, step.expected);
+        if (!cmn.is_missing(step.method)) {
+          step_label = step.method;
+          const actual = obj[step.method](...await _delazy(cmn.deepCopy(step.args)));
+          _test_deep(actual, step.expected);
+        } else if (!cmn.is_missing(step.get)) {
+          step_label = `get ${step.get}`;
+          _test_deep(obj[step.get], step.expected);
+        } else {
+          step_label = `set ${step.set}`;
+          obj[step.set] = cmn.deepCopy(step.value);
+          if (!cmn.is_missing(step.expected)) {
+            _test_deep(obj[step.set], step.expected);
+          }
+        }
       } catch (err) {
         const err_object = step.expected;
         if (!cmn.is_function(err_object) || !(err instanceof err_object)) {
           throw err;
         }
       }
-      console.log(`------ ${step.method} passed`);
+      console.log(`------ ${step_label} passed`);
     }
     console.log(`--- ${case_name} passed`);
   }

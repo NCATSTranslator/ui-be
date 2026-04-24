@@ -62,26 +62,59 @@ test_cases = {
     <test_name>: {
         [config_loader]: <function>,
         [constructor]: {
-            args: <list>
+            args: <list>,
+            [expected]: <any>
+        },
+        [injected]: {
+            <property_name>: <any>,
+            ...
         },
         [steps]: <list>
     }
 }
 ```
 `config_loader` is a function that is run before executing the test. This can be useful if there is global state that must be setup for the module to behave correctly.
-`constructor` is an object with a single field `args` that initializes an instance of the class
+`constructor` is an object that initializes an instance of the class by calling `new test_class(...args)`.
+  - `args` is a list of arguments passed to the constructor.
+  - `expected` is optional. When provided, it is deeply compared against the constructed instance to verify the initial state produced by the constructor. If `expected` is an error class, the test passes only if the constructor throws an instance of that error.
+`injected` is an alternative to `constructor` for cases where you want to test methods against a known instance state without exercising the constructor. The test harness creates an instance via `new test_class()` (no arguments) and then assigns each entry in `injected` onto the instance. Each key in `injected` must already exist as an own property on the default-constructed instance; otherwise the test will fail with a developer error. A test case may define either `constructor` or `injected`, but not both.
 `steps` is a list of `class_step` which is defined below:
 
+A `class_step` describes a single interaction with the class instance. Each step must define exactly one of `method`, `get`, or `set`; steps that define zero or more than one of these will throw a developer error.
+
+### Method step
 ```
 class_step = {
     method: <string>,
-    args: <list>
+    args: <list>,
     expected: <any>
 }
 ```
-`method` is the method to call on this instance of the class
-`args` is a list of arguments to `method`
-`expected` is the expected return value of called `method` with `args`
+`method` is the method to call on this instance of the class.
+`args` is a list of arguments to `method`.
+`expected` is the expected return value of calling `method` with `args`. If `expected` is an error class, the test passes only if the method throws an instance of that error.
+
+### Get step
+```
+class_step = {
+    get: <string>,
+    expected: <any>
+}
+```
+`get` is the name of the property to read from the instance.
+`expected` is the expected value of that property. If `expected` is an error class, the test passes only if reading the property throws an instance of that error.
+
+### Set step
+```
+class_step = {
+    set: <string>,
+    value: <any>,
+    [expected]: <any>
+}
+```
+`set` is the name of the property to assign on the instance.
+`value` is the value to assign to the property.
+`expected` is optional. When omitted, the step only performs the assignment. When provided as a value, the property is read after the assignment and deep-compared against `expected`. When provided as an error class, the test passes only if the assignment throws an instance of that error.
 
 The steps occur in order for this test cases's instance of the class and can produce different internal class state if the steps are run in a different order.
 ## Other exposed functions
