@@ -53,7 +53,7 @@ export function startServer(config, services) {
   app.use(pinoHttp({logger: logger}));
   app.use(express.json({
     limit: config.json_payload_limit,
-    verify: (req, res, buf, encoding) => {req.rawBody = buf;}
+    verify: (req, _res, buf, _encoding) => {req.rawBody = buf;}
   }));
   app.use(cookieParser());
 
@@ -66,9 +66,7 @@ export function startServer(config, services) {
     },
   }));
 
-  app.get('/health', (req, res, next) => {
-    res.send('OK');
-  });
+  app.get('/health', (_req, res) => {res.send('OK');});
 
   /* On all routes below, check the session status. If a valid session exists for a submitted token,
    * refresh the token if necessary, update the session time, and attach the user to req.
@@ -124,7 +122,6 @@ export function startServer(config, services) {
   app.post(`${API_PATH_V1}/query/update`, queryAPIController.updateQuery.bind(queryAPIController));
 
   // User routes: privileged
-  //app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
   app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
   app.get(`${API_PATH_V1}/users/me`, userAPIController.getUser.bind(userAPIController));
   app.get(`${API_PATH_V1}/users/me/preferences`, userAPIController.getUserPrefs.bind(userAPIController));
@@ -166,13 +163,6 @@ export function startServer(config, services) {
   // User canvas
   app.get(`${API_PATH_V1}/users/me/canvases`, userAPIController.getUserCanvases.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/canvas`, userAPIController.createUserCanvases.bind(userAPIController));
-
-  // workspaces
-  app.get(`${API_PATH_V1}/users/me/workspaces`, userAPIController.getUserWorkspaces.bind(userAPIController));
-  app.get(`${API_PATH_V1}/users/me/workspaces/:ws_id`, userAPIController.getUserWorkspaceById.bind(userAPIController));
-  app.post(`${API_PATH_V1}/users/me/workspaces`, userAPIController.createUserWorkspace.bind(userAPIController));
-  app.put(`${API_PATH_V1}/users/me/workspaces/:ws_id`, userAPIController.updateUserWorkspace.bind(userAPIController));
-  app.delete(`${API_PATH_V1}/users/me/workspaces/:ws_id`, userAPIController.deleteUserWorkspace.bind(userAPIController));
 
   app.all(['/api', '/api/*'], (req, res) => {
     return res.status(403).send('API action Forbidden');

@@ -666,8 +666,8 @@ function _with_nested_support_analysis_paths() {
 
 function _make_summary_edge(id, edge_binding, support, is_root, type, inverted_id = null) {
   const summary_edge = new SummaryEdge(id);
-  summary_edge.isRootPath = is_root;
-  summary_edge.supPaths = support;
+  summary_edge.is_root = is_root;
+  summary_edge.support = support;
   summary_edge.metadata = {
     edge_bindings: [edge_binding],
     inverted_id: inverted_id,
