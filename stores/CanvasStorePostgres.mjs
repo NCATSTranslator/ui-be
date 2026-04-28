@@ -1,6 +1,6 @@
 export { CanvasStorePostgres }
 
-import { pgExec } from "#lib/postgres_preamble.mjs";
+import { pgExec, pgExecTrans } from "#lib/postgres_preamble.mjs";
 
 class CanvasStorePostgres {
   constructor(db_pool) {
@@ -20,28 +20,20 @@ class CanvasStorePostgres {
   }
 
   async create_user_canvas(user_canvas) {
-    const client = await this._db_pool.connect();
-    try {
-      await client.query("BEGIN");
-      const canvas_id = await this._create_canvas(client, user_canvas);
-      await this._create_user_to_canvas(client, user_canvas.user_id, canvas_id);
-      await client.query("COMMIT");
-      return canvas_id;
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
-    }
+    return await pgExecTrans(this._db_pool, async (client) => {
+      const canvas = await this._create_canvas(client, user_canvas);
+      await this._create_user_to_canvas(client, user_canvas.user_id, canvas.id);
+      return canvas;
+    });
   }
 
   async _create_canvas(client, user_canvas) {
     const res = await client.query(`
       INSERT INTO canvas(label, layout, data)
       VALUES($1, $2, $3)
-      RETURNING id`,
+      RETURNING *`,
       [user_canvas.label, user_canvas.layout, user_canvas.data]);
-    return res.rows[0].id;
+    return res.rows[0];
   }
 
   async _create_user_to_canvas(client, user_id, canvas_id) {

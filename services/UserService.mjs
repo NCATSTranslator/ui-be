@@ -96,8 +96,8 @@ class UserService {
       ...canvas_data,
       user_id: user_id
     });
-    const canvas_id = await this.canvasStore.create_user_canvas(user_canvas);
-    user_canvas.id = canvas_id;
+    const canvas = await this.canvasStore.create_user_canvas(user_canvas);
+    user_canvas.populate_from_raw(canvas);
     return user_canvas;
   }
 

@@ -47,6 +47,16 @@ class UserCanvas {
     this.time_updated = time_updated;
     this.time_deleted = time_deleted;
   }
+
+  populate_from_raw(canvas) {
+    this.id = canvas.id;
+    this.label = canvas.label;
+    this.layout = canvas.layout;
+    this.data = canvas.data;
+    this.time_created = canvas.time_created;
+    this.time_updated = canvas.time_updated;
+    this.time_deleted = canvas.time_deleted;
+  }
 }
 
 class CanvasNode {
