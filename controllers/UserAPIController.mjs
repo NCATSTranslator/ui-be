@@ -406,12 +406,11 @@ class UserAPIController {
   async create_user_canvas(req, res) {
     const user_id = req.sessionData.user.id;
     if (cmn.is_missing(user_id)) {
-      wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-      return;
+      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
     }
     try {
-      const canvas = req.body;
-      const user_canvas = await this.userService.create_user_canvas(user_id, canvas);
+      const canvas_req = req.body;
+      const user_canvas = await this.userService.create_user_canvas(user_id, canvas_req);
       return res.status(cmn.HTTP_CODE.SUCCESS).json(user_canvas);
     } catch (err) {
       if (err instanceof CanvasRequestError) {

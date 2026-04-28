@@ -2,7 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserCanvas, make_user_canvas } from "#model/Canvas.mjs";
+import { UserCanvas, make_user_canvas_from_req } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
@@ -91,11 +91,8 @@ class UserService {
     return canvases;
   }
 
-  async create_user_canvas(user_id, canvas_data) {
-    const user_canvas = make_user_canvas({
-      ...canvas_data,
-      user_id: user_id
-    });
+  async create_user_canvas(user_id, canvas_req) {
+    const user_canvas = make_user_canvas_from_req(user_id, canvas_req);
     const canvas = await this.canvasStore.create_user_canvas(user_canvas);
     user_canvas.populate_from_raw(canvas);
     return user_canvas;

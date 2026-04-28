@@ -1,5 +1,5 @@
 export {
-  make_user_canvas,
+  make_user_canvas_from_req,
   UserCanvas,
   CanvasNode,
   CanvasNodeData,
@@ -10,20 +10,15 @@ export {
   CanvasRequestError
 }
 
-import { validate as _is_valid_user_id } from "uuid";
 import * as cmn from "#lib/common.mjs";
 
-function make_user_canvas(canvas_data) {
-  if (!_is_valid_canvas_data(canvas_data)) throw new CanvasRequestError(`Canvas data is malformed: ${canvas_data}`);
+function make_user_canvas_from_req(user_id, canvas_req) {
+  if (!_is_valid_canvas_req(canvas_req)) throw new CanvasRequestError(`Canvas data is malformed: ${canvas_req}`);
   return new UserCanvas({
-    id: canvas_data.id,
-    user_id: canvas_data.user_id,
-    label: canvas_data.label,
-    layout: canvas_data.layout,
-    data: canvas_data.data,
-    time_created: canvas_data.time_created,
-    time_updated: canvas_data.time_updated,
-    time_deleted: canvas_data.time_deleted
+    user_id: user_id,
+    label: canvas_req.label,
+    layout: canvas_req.layout,
+    data: canvas_req.data
   });
 }
 
@@ -173,11 +168,10 @@ class CanvasRequestError extends Error {
   }
 }
 
-function _is_valid_canvas_data(canvas_data) {
-  return !cmn.is_missing(canvas_data)
-         && _is_valid_user_id(canvas_data.user_id)
-         && _is_valid_label(canvas_data.label)
-         && _is_valid_layout(canvas_data.layout);
+function _is_valid_canvas_req(canvas_req) {
+  return !cmn.is_missing(canvas_req)
+         && _is_valid_label(canvas_req.label)
+         && _is_valid_layout(canvas_req.layout);
 
   function _is_valid_label(label) {
     return "string" === typeof label;
