@@ -1,8 +1,8 @@
 'use strict';
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
-import { UserWorkspace } from '../models/UserWorkspace.mjs';
-import { UserSavedData, UserQueryData, UserTagData, SAVE_TYPE } from '../models/UserSavedData.mjs';
+import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
+import { UserCanvas, make_user_canvas } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
@@ -85,18 +85,20 @@ class UserService {
     return this.savedDataStore.restoreUserSavedDataBatch(uid, sids);
   }
 
-  async getUserCanvases(user_id, include_deleted=false) {
-    const canvases = this.canvasStore.getCanvasesByUser(user_id, include_deleted);
-    // TODO: [canvas] convert from raw canvas represention to user canvas
+  async get_user_canvases(user_id, include_deleted=false) {
+    const rows = await this.canvasStore.get_canvases_by_user(user_id, include_deleted);
+    const canvases = rows.map(row => new UserCanvas(row));
     return canvases;
   }
 
-  async createUserCanvas(user_id, canvas) {
-    const canvas_id = this.canvasStore.createCanvas(user_id, canvas_request);
-    if (cmn.is_missing(canvas_id)) {
-      throw CanvasCreationError("User does not exist");
-    }
-    return true;
+  async create_user_canvas(user_id, canvas_data) {
+    const user_canvas = make_user_canvas({
+      ...canvas_data,
+      user_id: user_id
+    });
+    const canvas_id = await this.canvasStore.create_user_canvas(user_canvas);
+    user_canvas.id = canvas_id;
+    return user_canvas;
   }
 
   // Workspaces

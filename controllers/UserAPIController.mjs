@@ -5,11 +5,7 @@ import * as wutil from '../lib/webutils.mjs';
 import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 import { UserWorkspace } from '../models/UserWorkspace.mjs';
 import * as cmn from '../lib/common.mjs';
-import {
-  Canvas,
-  CanvasCreationError,
-  CanvasRequestError
-} from "../models/Canvas.mjs";
+import { CanvasRequestError } from "../models/Canvas.mjs";
 
 class UserAPIController {
   constructor(config, userService, translatorService) {
@@ -391,15 +387,15 @@ class UserAPIController {
     }
   }
 
-  async getUserCanvases(req, res) {
+  async get_user_canvases(req, res) {
     const user_id = req.sessionData.user.id;
     if (cmn.is_missing(user_id)) {
       wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
       return;
     }
-    const include_deleted = req.query.include_deleted ?? false;
+    const include_deleted = req.query.include_deleted === "true";
     try {
-      const user_canvases = await this.userService.getUserCanvases(user_id, include_deleted);
+      const user_canvases = await this.userService.get_user_canvases(user_id, include_deleted);
       return res.status(cmn.HTTP_CODE.SUCCESS).json(user_canvases);
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -407,24 +403,22 @@ class UserAPIController {
     }
   }
 
-  async createUserCanvas(req, res) {
+  async create_user_canvas(req, res) {
     const user_id = req.sessionData.user.id;
     if (cmn.is_missing(user_id)) {
       wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
       return;
     }
     try {
-      const canvas = new Canvas(req.body);
-      const user_canvas = this.userService.createUserCanvas(user_id, canvas);
+      const canvas = req.body;
+      const user_canvas = await this.userService.create_user_canvas(user_id, canvas);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(user_canvas);
     } catch (err) {
-      if (err instanceof CanvasCreationError) {
-        wutil.sendError(res, cmn.HTTP_CODE.INTERNAL_ERROR, err.message);
-      } else if (err instanceof CanvasRequestError) {
+      if (err instanceof CanvasRequestError) {
         wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
       } else {
         wutil.sendInternalServerError(res);
       }
-      return;
     }
   }
 
