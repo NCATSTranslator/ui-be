@@ -1,6 +1,7 @@
 export { CanvasStorePostgres }
 
 import { pgExec, pgExecTrans } from "#lib/postgres_preamble.mjs";
+import { SQL_TYPES, models_to_params_and_args } from "#model/common.mjs";
 
 class CanvasStorePostgres {
   constructor(db_pool) {
@@ -25,6 +26,26 @@ class CanvasStorePostgres {
       await this._create_user_to_canvas(client, user_canvas.user_id, canvas.id);
       return canvas;
     });
+  }
+
+  async batch_create_node(nodes) {
+    return this._batch_create_entity("node", nodes);
+  }
+
+  async batch_create_edge(edges) {
+    return this._batch_create_entity("edge", edges);
+  }
+
+  async _batch_create_entity(type, entities) {
+    const [params, args] = models_to_params_and_args(
+      entities,
+      ["ref", "data"],
+      [SQL_TYPES.TEXT, SQL_TYPES.JSONB]);
+    const res = await pgExec(this._db_pool, `
+      INSERT INTO ${type} (ref, data)
+      VALUES ${params}
+      RETURNING id`, args);
+    return res.rows;
   }
 
   async _create_canvas(client, user_canvas) {
