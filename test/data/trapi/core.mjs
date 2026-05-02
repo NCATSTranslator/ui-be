@@ -1,6 +1,5 @@
 export { suite }
 
-import * as cmn from "#lib/common.mjs";
 import * as test from "#test/lib/common.mjs";
 import { load_trapi, CONSTANTS } from "#lib/trapi/core.mjs";
 
@@ -2777,8 +2776,8 @@ function _test_is_valid_query() {
 
 function _test_AttributeIterator() {
   return test.make_class_test({
-    "empty_constructor": {
-      "constructor": {
+    "empty_class_constructor": {
+      "class_constructor": {
         "args": []
       },
       "steps": [
@@ -2809,7 +2808,7 @@ function _test_AttributeIterator() {
       ]
     },
     "no_attributes": {
-      "constructor": {
+      "class_constructor": {
         "args": [[]]
       },
       "steps": [
@@ -2840,7 +2839,7 @@ function _test_AttributeIterator() {
       ]
     },
     "finding_single_attributes": {
-      "constructor": {
+      "class_constructor": {
         "args": [
           {
             "attributes": [
@@ -2945,7 +2944,7 @@ function _test_AttributeIterator() {
       ]
     },
     "finding_all_attributes": {
-      "constructor": {
+      "class_constructor": {
         "args": [
           {
             "attributes": [
