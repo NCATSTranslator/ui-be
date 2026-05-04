@@ -299,7 +299,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
           new SummaryPath(["nb1", _eid_1, "nb2"])
         ],
         {
-          [_eid_1]: _make_summary_edge("eb1", [], true, DIRECT)
+          [_eid_1]: _make_summary_edge(_eid_1, "eb1", [], true, DIRECT)
         }
       ]
     }
@@ -322,9 +322,9 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
           _support_path_1
         ],
         {
-          [_eid_1]: _make_summary_edge("eb1", [_support_path_1.id], true, INDIRECT),
-          [_eid_2]: _make_summary_edge("eb2", [], false, DIRECT),
-          [_eid_3]: _make_summary_edge("eb3", [], false, DIRECT)
+          [_eid_1]: _make_summary_edge(_eid_1, "eb1", [_support_path_1.id], true, INDIRECT),
+          [_eid_2]: _make_summary_edge(_eid_2, "eb2", [], false, DIRECT),
+          [_eid_3]: _make_summary_edge(_eid_3, "eb3", [], false, DIRECT)
         }
       ]
     }
@@ -380,20 +380,21 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
         ],
         {
           [_inverted_eid[0]]: _make_summary_edge(
+            _inverted_eid[0],
             "eb1",
             [_support_path[0].id, _support_path[1].id],
             true,
             INDIRECT,
             _eid[0]),
-          [_inverted_eid[1]]: _make_summary_edge("eb2", [_support_path[2].id], true, INDIRECT, _eid[1]),
-          [_inverted_eid[2]]: _make_summary_edge("ax1-eb1", [], false, DIRECT, _eid[2]),
-          [_inverted_eid[3]]: _make_summary_edge("ax1-eb2", [], false, DIRECT, _eid[3]),
-          [_inverted_eid[4]]: _make_summary_edge("ax2-eb1", [], false, DIRECT, _eid[4]),
-          [_inverted_eid[5]]: _make_summary_edge("ax3-eb1", [], false, DIRECT, _eid[5]),
-          [_inverted_eid[6]]: _make_summary_edge("ax3-eb2", [_nested_support.id], false, INDIRECT, _eid[6]),
-          [_inverted_eid[7]]: _make_summary_edge("ax3-eb3", [], false, DIRECT, _eid[7]),
-          [_inverted_eid[8]]: _make_summary_edge("ax4-eb1", [], false, DIRECT, _eid[8]),
-          [_inverted_eid[9]]: _make_summary_edge("ax4-eb2", [], false, DIRECT, _eid[9])
+          [_inverted_eid[1]]: _make_summary_edge(_inverted_eid[1], "eb2", [_support_path[2].id], true, INDIRECT, _eid[1]),
+          [_inverted_eid[2]]: _make_summary_edge(_inverted_eid[2], "ax1-eb1", [], false, DIRECT, _eid[2]),
+          [_inverted_eid[3]]: _make_summary_edge(_inverted_eid[3], "ax1-eb2", [], false, DIRECT, _eid[3]),
+          [_inverted_eid[4]]: _make_summary_edge(_inverted_eid[4], "ax2-eb1", [], false, DIRECT, _eid[4]),
+          [_inverted_eid[5]]: _make_summary_edge(_inverted_eid[5], "ax3-eb1", [], false, DIRECT, _eid[5]),
+          [_inverted_eid[6]]: _make_summary_edge(_inverted_eid[6], "ax3-eb2", [_nested_support.id], false, INDIRECT, _eid[6]),
+          [_inverted_eid[7]]: _make_summary_edge(_inverted_eid[7], "ax3-eb3", [], false, DIRECT, _eid[7]),
+          [_inverted_eid[8]]: _make_summary_edge(_inverted_eid[8], "ax4-eb1", [], false, DIRECT, _eid[8]),
+          [_inverted_eid[9]]: _make_summary_edge(_inverted_eid[9], "ax4-eb2", [], false, DIRECT, _eid[9])
         }
       ]
     }
@@ -669,8 +670,8 @@ function _with_nested_support_analysis_paths() {
   });
 }
 
-function _make_summary_edge(edge_binding, support, is_root, type, inverted_id = null) {
-  const summary_edge = new SummaryEdge();
+function _make_summary_edge(eid, edge_binding, support, is_root, type, inverted_id = null) {
+  const summary_edge = new SummaryEdge(eid);
   summary_edge.is_root = is_root;
   summary_edge.support = support;
   summary_edge.metadata = {
