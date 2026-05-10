@@ -98,6 +98,10 @@ const QUERY_SERVICE = (function (config) {
 })(SERVER_CONFIG);
 logger.info(SERVER_CONFIG, "Server configuration");
 
+['SIGINT', 'SIGTERM'].forEach(sig =>
+  process.once(sig, () => process.exit(0))
+);
+
 httpserver.startServer(SERVER_CONFIG, {
   translatorService: TRANSLATOR_SERVICE,
   authService: AUTH_SERVICE,
