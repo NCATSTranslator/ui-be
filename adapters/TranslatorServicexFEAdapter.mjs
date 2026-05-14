@@ -36,7 +36,7 @@ class TranslatorServicexFEAdapter {
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
     const data = msg.completed.filter(e => {
-      return !!e.data;
+      return e.data && !(Array.isArray(e.data) && e.data.length === 0);
     }).map(e => {
       return {
         agent: e.agent,

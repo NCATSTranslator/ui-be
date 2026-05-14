@@ -379,7 +379,13 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
           _nested_support
         ],
         {
-          [_inverted_eid[0]]: _make_summary_edge(_inverted_eid[0], "eb1", [_support_path[0].id, _support_path[1].id], true, INDIRECT, _eid[0]),
+          [_inverted_eid[0]]: _make_summary_edge(
+            _inverted_eid[0],
+            "eb1",
+            [_support_path[0].id, _support_path[1].id],
+            true,
+            INDIRECT,
+            _eid[0]),
           [_inverted_eid[1]]: _make_summary_edge(_inverted_eid[1], "eb2", [_support_path[2].id], true, INDIRECT, _eid[1]),
           [_inverted_eid[2]]: _make_summary_edge(_inverted_eid[2], "ax1-eb1", [], false, DIRECT, _eid[2]),
           [_inverted_eid[3]]: _make_summary_edge(_inverted_eid[3], "ax1-eb2", [], false, DIRECT, _eid[3]),
@@ -664,8 +670,8 @@ function _with_nested_support_analysis_paths() {
   });
 }
 
-function _make_summary_edge(id, edge_binding, support, is_root, type, inverted_id = null) {
-  const summary_edge = new SummaryEdge(id);
+function _make_summary_edge(eid, edge_binding, support, is_root, type, inverted_id = null) {
+  const summary_edge = new SummaryEdge(eid);
   summary_edge.is_root = is_root;
   summary_edge.support = support;
   summary_edge.metadata = {

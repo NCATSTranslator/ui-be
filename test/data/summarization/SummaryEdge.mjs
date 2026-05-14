@@ -9,8 +9,9 @@ const suite = {
 };
 
 function _test_SummaryEdge() {
+  const EDGE_ID = "edge_test";
   const default_state = {
-    id: "A",
+    id: EDGE_ID,
     aras: [],
     support: [],
     is_root: false,
@@ -27,7 +28,7 @@ function _test_SummaryEdge() {
     trials: []
   };
   const default_other = {
-    id: "A",
+    id: EDGE_ID,
     metadata: null,
     aras: [],
     support: [],
@@ -46,22 +47,19 @@ function _test_SummaryEdge() {
   return test.make_class_test({
     default_class_constructor: {
       class_constructor: {
-        args: ["A"],
+        args: [EDGE_ID],
         expected: default_state
       }
     },
     null_args_default_to_empty: {
       class_constructor: {
-        args: [null, null, null, null],
-        expected: {
-          ...default_state,
-          id: null
-        }
+        args: [EDGE_ID, null, null, null],
+        expected: default_state
       }
     },
     with_agents: {
       class_constructor: {
-        args: ["A", ["ara1", "ara2"]],
+        args: [EDGE_ID, ["ara1", "ara2"]],
         expected: {
           ...default_state,
           aras: ["ara1", "ara2"]
@@ -70,7 +68,7 @@ function _test_SummaryEdge() {
     },
     with_support_and_is_root: {
       class_constructor: {
-        args: ["A", [], ["edge_id_1", "edge_id_2"], true],
+        args: [EDGE_ID, [], ["edge_id_1", "edge_id_2"], true],
         expected: {
           ...default_state,
           support: ["edge_id_1", "edge_id_2"],
@@ -79,25 +77,26 @@ function _test_SummaryEdge() {
       }
     },
     has_support_empty_is_false: {
-      class_constructor: { args: [] },
+      class_constructor: { args: [EDGE_ID] },
       steps: [
         { method: "has_support", args: [], expected: false }
       ]
     },
     has_support_with_support_is_true: {
-      class_constructor: { args: ["A", [], ["edge_id_1"]] },
+      class_constructor: { args: [EDGE_ID, [], ["edge_id_1"]] },
       steps: [
         { method: "has_support", args: [], expected: true }
       ]
     },
     is_inverted_null_metadata_is_false: {
-      class_constructor: { args: [] },
+      class_constructor: { args: [EDGE_ID] },
       steps: [
         { method: "is_inverted", args: [], expected: false }
       ]
     },
     is_inverted_with_inverted_id_is_true: {
       injected: {
+        id: EDGE_ID,
         metadata: { inverted_id: "EDGE_INV_1", edge_bindings: [] }
       },
       steps: [
@@ -106,6 +105,7 @@ function _test_SummaryEdge() {
     },
     is_inverted_with_null_inverted_id_is_false: {
       injected: {
+        id: EDGE_ID,
         metadata: { inverted_id: null, edge_bindings: [] }
       },
       steps: [
@@ -114,7 +114,7 @@ function _test_SummaryEdge() {
     },
     merge_accumulates_aras_support_and_is_root: {
       class_constructor: {
-        args: ["A", ["ara1"], ["edge1"], true]
+        args: [EDGE_ID, ["ara1"], ["edge1"], true]
       },
       steps: [
         {
@@ -136,7 +136,7 @@ function _test_SummaryEdge() {
     },
     merge_preserves_existing_scalar_fields: {
       injected: {
-        id: "A",
+        id: EDGE_ID,
         description: "existing description",
         knowledge_level: "primary",
         type: "direct",
@@ -172,7 +172,7 @@ function _test_SummaryEdge() {
       ]
     },
     merge_fills_missing_scalar_fields_from_other: {
-      class_constructor: { args: ["A"] },
+      class_constructor: { args: [EDGE_ID] },
       steps: [
         {
           method: "merge",
@@ -201,7 +201,7 @@ function _test_SummaryEdge() {
     },
     merge_indirect_type_overrides_direct: {
       injected: {
-        id: "A",
+        id: EDGE_ID,
         type: "direct"
       },
       steps: [
@@ -220,7 +220,7 @@ function _test_SummaryEdge() {
     },
     merge_appends_edge_bindings_when_both_have_metadata: {
       injected: {
-        id: "A",
+        id: EDGE_ID,
         metadata: { inverted_id: "EDGE_INV_1", edge_bindings: ["eb1"] }
       },
       steps: [
@@ -239,7 +239,7 @@ function _test_SummaryEdge() {
     },
     merge_combines_publications_by_knowledge_level: {
       injected: {
-        id: "A",
+        id: EDGE_ID,
         publications: { primary: ["pub1"] }
       },
       steps: [
@@ -258,7 +258,7 @@ function _test_SummaryEdge() {
     },
     merge_concatenates_provenance_and_trials: {
       injected: {
-        id: "A",
+        id: EDGE_ID,
         provenance: ["prov1"],
         trials: ["trial1"]
       },

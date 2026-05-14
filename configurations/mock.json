@@ -31,7 +31,7 @@
   "biolink": {
     "version": "4.2.1",
     "support_deprecated_predicates": false,
-    "infores_catalog": "infores-catalog-v1.1.4.json",
+    "infores_catalog": "infores-catalog-v1.1.7.json",
     "prefix_catalog": {
       "path": "prefix-catalog.json",
       "exclude": [
@@ -52,8 +52,10 @@
     }
   },
   "feature_config": {
+    
     "pull_source_records": true,
-    "max_hops": 4
+    "max_hops": 4,
+    "replace_indirect_edges": true
   },
   "google_analytics_id": "G-7EBCDRY7DX",
   "google_tag_manager_id": "GTM-5SGQTGPF",

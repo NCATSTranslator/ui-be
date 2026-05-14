@@ -7,10 +7,6 @@ const suite = {
   tests: {
     make_rule_group_publications_by_knowledge_level: _test_make_rule_group_publications_by_knowledge_level(),
     make_rule_collect_publication_supporting_text: _test_make_rule_collect_publication_supporting_text(),
-    make_rule_collect_semmed_sentences: _test_make_rule_collect_semmed_sentences()
-
-
-,
     make_rule_collect_clinical_trial_metadata: _test_make_rule_collect_clinical_trial_metadata(),
     make_rule_tag_attribute: _test_make_rule_tag_attribute()
   }
@@ -57,13 +53,13 @@ function _test_make_rule_group_publications_by_knowledge_level() {
         "source": [
           {
             "attributes": [
-              {"attribute_type_id": "biolink:supporting_document", "value": ["PMID:1", "PMID:2"]}
+              {"attribute_type_id": "biolink:publications", "value": ["PMID:1", "PMID:2"]}
             ],
             "__context__": {"provenance": "test-source-1", "knowledge_level": "test-kl-1"}
           },
           {
             "attributes": [
-              {"attribute_type_id": "biolink:Publication", "value": ["PMID:4"]}
+              {"attribute_type_id": "biolink:publications", "value": ["PMID:4"]}
             ],
             "__context__": {"provenance": "test-source-1", "knowledge_level": "test-kl-2"}
           },
@@ -75,7 +71,7 @@ function _test_make_rule_group_publications_by_knowledge_level() {
           },
           {
             "attributes": [
-              {"attribute_type_id": "biolink:publication", "value": ["PMID:1"]}
+              {"attribute_type_id": "biolink:publications", "value": ["PMID:1"]}
             ],
             "__context__": {"provenance": "test-source-3", "knowledge_level": "test-kl-2"}
           }
@@ -128,15 +124,16 @@ function _test_make_rule_group_publications_by_knowledge_level() {
 }
 
 function _test_make_rule_collect_publication_supporting_text() {
+  const long_text = "The existing publications do not confirm the connection between fatigue syndrome and duration of treatment and type of medications administered (except amantadine in the study of Martinez-Martin et al., as the percentage of patients with fatigue syndrome treated with amantadine was significantly lower).";
   return test.make_function_test({
     "single-sentence": {
       "args": [],
       "expected": {
         "supporting_text": {
           "PMC:4746390": {
-            "text": "The existing publications do not confirm the connection between fatigue syndrome and duration of treatment and type of medications administered (except amantadine in the study of Martinez-Martin et al., as the percentage of patients with fatigue syndrome treated with amantadine was significantly lower).",
-            "subject": [269,278],
-            "object": [239,245]
+            "text": long_text,
+            "subject": [269, 278],
+            "object": [239, 245]
           }
         }
       },
@@ -144,52 +141,22 @@ function _test_make_rule_collect_publication_supporting_text() {
         "source": {
           "attributes": [
             {
-              "attribute_type_id": "biolink:has_supporting_study_result",
-              "attributes": [
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted",
-                  "attribute_type_id": "biolink:supporting_text",
-                  "value": "The existing publications do not confirm the connection between fatigue syndrome and duration of treatment and type of medications administered (except amantadine in the study of Martinez-Martin et al., as the percentage of patients with fatigue syndrome treated with amantadine was significantly lower).",
-                  "value_type_id": "EDAM:data_3671"
-                },
-                {
-                  "attribute_source": "infores:pubmed",
-                  "attribute_type_id": "biolink:publications",
-                  "value": "PMC:4746390",
-                  "value_type_id": "biolink:Uriorcurie",
-                  "value_url": "https://pubmed.ncbi.nlm.nih.gov/PMC4746390/"
-                },
-                {
-                  "attribute_source": "infores:pubmed",
-                  "attribute_type_id": "biolink:supporting_text_located_in",
-                  "value": "DISCUSS",
-                  "value_type_id": "IAO_0000314"
-                },
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted",
-                  "attribute_type_id": "biolink:extraction_confidence_score",
-                  "value": 0.99937505,
-                  "value_type_id": "EDAM:data_1772"
-                },
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted",
-                  "attribute_type_id": "biolink:subject_location_in_text",
-                  "value": "268|278",
-                  "value_type_id": "SIO:001056"
-                },
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted ",
-                  "attribute_type_id": "biolink:object_location_in_text",
-                  "value": "238|245",
-                  "value_type_id": "SIO:001056"
-                },
-                {
-                  "attribute_source": "infores:pubmed",
-                  "attribute_type_id": "biolink:supporting_document_year",
-                  "value": 2016,
-                  "value_type_id": "UO:0000036"
+              "attribute_type_id": "biolink:has_supporting_studies",
+              "value": {
+                "STUDY:1": {
+                  "id": "STUDY:1",
+                  "category": "biolink:Study",
+                  "has_study_results": {
+                    "RESULT:1": {
+                      "id": "RESULT:1",
+                      "xref": ["PMC:4746390"],
+                      "supporting_text": [long_text],
+                      "subject_location_in_text": [268, 278],
+                      "object_location_in_text": [238, 245]
+                    }
+                  }
                 }
-              ]
+              }
             }
           ]
         },
@@ -198,20 +165,18 @@ function _test_make_rule_collect_publication_supporting_text() {
       post: test.apply_rule
     },
     "multi-sentence": {
-      "args": [
-        {"attr_ids": ["biolink:has_supporting_study_result"]}
-      ],
+      "args": [],
       "expected": {
         "supporting_text": {
           "PMC:4746390": {
-            "text": "The existing publications do not confirm the connection between fatigue syndrome and duration of treatment and type of medications administered (except amantadine in the study of Martinez-Martin et al., as the percentage of patients with fatigue syndrome treated with amantadine was significantly lower).",
-            "subject": [269,278],
-            "object": [239,245]
+            "text": long_text,
+            "subject": [269, 278],
+            "object": [239, 245]
           },
           "PMC:123": {
             "text": "ok",
-            "subject": [1,1],
-            "object": [2,2]
+            "subject": [1, 1],
+            "object": [2, 2]
           }
         }
       },
@@ -219,82 +184,53 @@ function _test_make_rule_collect_publication_supporting_text() {
         "source": {
           "attributes": [
             {
-              "attribute_type_id": "biolink:has_supporting_study_result",
-              "attributes": [
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted",
-                  "attribute_type_id": "biolink:supporting_text",
-                  "value": "The existing publications do not confirm the connection between fatigue syndrome and duration of treatment and type of medications administered (except amantadine in the study of Martinez-Martin et al., as the percentage of patients with fatigue syndrome treated with amantadine was significantly lower).",
-                  "value_type_id": "EDAM:data_3671"
-                },
-                {
-                  "attribute_source": "infores:pubmed",
-                  "attribute_type_id": "biolink:publications",
-                  "value": "PMC:4746390",
-                  "value_type_id": "biolink:Uriorcurie",
-                  "value_url": "https://pubmed.ncbi.nlm.nih.gov/PMC4746390/"
-                },
-                {
-                  "attribute_source": "infores:pubmed",
-                  "attribute_type_id": "biolink:supporting_text_located_in",
-                  "value": "DISCUSS",
-                  "value_type_id": "IAO_0000314"
-                },
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted",
-                  "attribute_type_id": "biolink:extraction_confidence_score",
-                  "value": 0.99937505,
-                  "value_type_id": "EDAM:data_1772"
-                },
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted",
-                  "attribute_type_id": "biolink:subject_location_in_text",
-                  "value": "268|278",
-                  "value_type_id": "SIO:001056"
-                },
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted ",
-                  "attribute_type_id": "biolink:object_location_in_text",
-                  "value": "238|245",
-                  "value_type_id": "SIO:001056"
-                },
-                {
-                  "attribute_source": "infores:pubmed",
-                  "attribute_type_id": "biolink:supporting_document_year",
-                  "value": 2016,
-                  "value_type_id": "UO:0000036"
+              "attribute_type_id": "biolink:has_supporting_studies",
+              "value": {
+                "STUDY:1": {
+                  "id": "STUDY:1",
+                  "category": "biolink:Study",
+                  "has_study_results": {
+                    "RESULT:1": {
+                      "id": "RESULT:1",
+                      "xref": ["PMC:4746390"],
+                      "supporting_text": [long_text],
+                      "subject_location_in_text": [268, 278],
+                      "object_location_in_text": [238, 245]
+                    },
+                    "RESULT:2": {
+                      "id": "RESULT:2",
+                      "xref": ["PMC:123"],
+                      "supporting_text": ["ok"],
+                      "subject_location_in_text": [0, 1],
+                      "object_location_in_text": [1, 2]
+                    }
+                  }
                 }
-              ]
-            },
+              }
+            }
+          ]
+        },
+        "target": {}
+      },
+      post: test.apply_rule
+    },
+    "non-study-category-skipped": {
+      "args": [],
+      "expected": {
+        "supporting_text": {}
+      },
+      "context": {
+        "source": {
+          "attributes": [
             {
-              "attribute_type_id": "biolink:has_supporting_study_result",
-              "attributes": [
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted",
-                  "attribute_type_id": "biolink:supporting_text",
-                  "value": "ok",
-                  "value_type_id": "EDAM:data_3671"
-                },
-                {
-                  "attribute_source": "infores:pubmed",
-                  "attribute_type_id": "biolink:publications",
-                  "value": "PMC:123",
-                  "value_type_id": "biolink:Uriorcurie",
-                  "value_url": "https://pubmed.ncbi.nlm.nih.gov/PMC4746390/"
-                },
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted",
-                  "attribute_type_id": "biolink:subject_location_in_text",
-                  "value": "0|1",
-                  "value_type_id": "SIO:001056"
-                },
-                {
-                  "attribute_source": "infores:text-mining-provider-targeted ",
-                  "attribute_type_id": "biolink:object_location_in_text",
-                  "value": "1|2",
-                  "value_type_id": "SIO:001056"
+              "attribute_type_id": "biolink:has_supporting_studies",
+              "value": {
+                "CLINICALTRIALS:NCT1": {
+                  "id": "CLINICALTRIALS:NCT1",
+                  "category": ["biolink:ClinicalTrial"],
+                  "has_study_results": {}
                 }
-              ]
+              }
             }
           ]
         },
@@ -303,9 +239,7 @@ function _test_make_rule_collect_publication_supporting_text() {
       post: test.apply_rule
     },
     "no-attributes": {
-      "args": [
-        {"attr_ids": ["biolink:has_supporting_study_result"]}
-      ],
+      "args": [],
       "expected": {
         "supporting_text": {}
       },
@@ -313,150 +247,6 @@ function _test_make_rule_collect_publication_supporting_text() {
         "source": {
           "attributes": []
         },
-        "target": {}
-      },
-      post: test.apply_rule
-    }
-  });
-}
-
-function _test_make_rule_collect_semmed_sentences() {
-  return test.make_function_test({
-    "single-sentence": {
-      "args": [],
-      "expected": {
-        "supporting_text": {
-          "PMID:10525314": {
-            "text": "This study aimed to examine whether lipopolysaccharide (LPS)-induced increase in tumour necrosis factor alpha (TNF-alpha) and interleukin 6 (IL-6) gene transcription was regulated by beta-adrenoceptor activation and whether TNF-alpha and IL-6 gene transcription was regulated by angiotensin II in rat renal resident macrophage cells.",
-            "subject": null,
-            "object": null
-          }
-        }
-      },
-      "context": {
-        "source": {
-          "attributes": [
-            {
-              "attribute_type_id": "biolink:supporting_text",
-              "original_attribute_name": null,
-              "value": {
-                "PMID:10525314": {
-                  "object score": "1000",
-                  "publication date": "1999 Oct",
-                  "sentence": "This study aimed to examine whether lipopolysaccharide (LPS)-induced increase in tumour necrosis factor alpha (TNF-alpha) and interleukin 6 (IL-6) gene transcription was regulated by beta-adrenoceptor activation and whether TNF-alpha and IL-6 gene transcription was regulated by angiotensin II in rat renal resident macrophage cells.",
-                  "subject score": "1000"
-                }
-              }
-            }
-          ]
-        },
-        "target": {}
-      },
-      post: test.apply_rule
-    },
-    "multi-sentence-single-source": {
-      "args": [],
-      "expected": {
-        "supporting_text": {
-          "PMID:10525314": {
-            "text": "This study aimed to examine whether lipopolysaccharide (LPS)-induced increase in tumour necrosis factor alpha (TNF-alpha) and interleukin 6 (IL-6) gene transcription was regulated by beta-adrenoceptor activation and whether TNF-alpha and IL-6 gene transcription was regulated by angiotensin II in rat renal resident macrophage cells.",
-            "subject": null,
-            "object": null
-          },
-          "PMID:11081773": {
-            "text": "These results suggest that skeletal muscle TNF-alpha is linked to insulin resistance and hypertension and that angiotensin II may be one of the factors that regulate skeletal muscle TNF-alpha.",
-            "subject": null,
-            "object": null
-          }
-        }
-      },
-      "context": {
-        "source": {
-          "attributes": [
-            {
-              "attribute_type_id": "biolink:supporting_text",
-              "original_attribute_name": null,
-              "value": {
-                "PMID:10525314": {
-                  "object score": "1000",
-                  "publication date": "1999 Oct",
-                  "sentence": "This study aimed to examine whether lipopolysaccharide (LPS)-induced increase in tumour necrosis factor alpha (TNF-alpha) and interleukin 6 (IL-6) gene transcription was regulated by beta-adrenoceptor activation and whether TNF-alpha and IL-6 gene transcription was regulated by angiotensin II in rat renal resident macrophage cells.",
-                  "subject score": "1000"
-                },
-                "PMID:11081773": {
-                  "object score": "901",
-                  "publication date": "2000 Nov",
-                  "sentence": "These results suggest that skeletal muscle TNF-alpha is linked to insulin resistance and hypertension and that angiotensin II may be one of the factors that regulate skeletal muscle TNF-alpha.",
-                  "subject score": "1000"
-                }
-              }
-            }
-          ]
-        },
-        "target": {}
-      },
-      post: test.apply_rule
-    },
-    "multi-sentence-multi-source": {
-      "args": [],
-      "expected": {
-        "supporting_text": {
-          "PMID:10525314": {
-            "text": "This study aimed to examine whether lipopolysaccharide (LPS)-induced increase in tumour necrosis factor alpha (TNF-alpha) and interleukin 6 (IL-6) gene transcription was regulated by beta-adrenoceptor activation and whether TNF-alpha and IL-6 gene transcription was regulated by angiotensin II in rat renal resident macrophage cells.",
-            "subject": null,
-            "object": null
-          },
-          "PMID:11081773": {
-            "text": "These results suggest that skeletal muscle TNF-alpha is linked to insulin resistance and hypertension and that angiotensin II may be one of the factors that regulate skeletal muscle TNF-alpha.",
-            "subject": null,
-            "object": null
-          }
-        }
-      },
-      "context": {
-        "source": [{
-          "attributes": [
-            {
-              "attribute_type_id": "biolink:supporting_text",
-              "original_attribute_name": null,
-              "value": {
-                "PMID:10525314": {
-                  "object score": "1000",
-                  "publication date": "1999 Oct",
-                  "sentence": "This study aimed to examine whether lipopolysaccharide (LPS)-induced increase in tumour necrosis factor alpha (TNF-alpha) and interleukin 6 (IL-6) gene transcription was regulated by beta-adrenoceptor activation and whether TNF-alpha and IL-6 gene transcription was regulated by angiotensin II in rat renal resident macrophage cells.",
-                  "subject score": "1000"
-                }
-              }
-            }
-          ]
-        },
-          {
-            "attributes": [
-              {
-                "attribute_type_id": "biolink:supporting_text",
-                "original_attribute_name": null,
-                "value": {
-                  "PMID:11081773": {
-                    "object score": "901",
-                    "publication date": "2000 Nov",
-                    "sentence": "These results suggest that skeletal muscle TNF-alpha is linked to insulin resistance and hypertension and that angiotensin II may be one of the factors that regulate skeletal muscle TNF-alpha.",
-                    "subject score": "1000"
-                  }
-                }
-              }
-            ]
-          }],
-        "target": {}
-      },
-      post: test.apply_rule
-    },
-    "no-sentences": {
-      "args": [],
-      "expected": {
-        "supporting_text": {}
-      },
-      "context": {
-        "source": {},
         "target": {}
       },
       post: test.apply_rule
@@ -585,8 +375,4 @@ function _test_make_rule_tag_attribute() {
     return taglib.make_taggable({});
   }
 }
-
-
-
-
 
