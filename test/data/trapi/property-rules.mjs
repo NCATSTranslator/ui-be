@@ -19,7 +19,7 @@ function _test_make_rule_transform_property() {
     get: {
       args: [{
         source_key: "test-prop",
-        transform: cmn.jsonGet
+        transform: cmn.json_get
       }],
       expected: {
         "test-prop": "ok"
@@ -35,7 +35,7 @@ function _test_make_rule_transform_property() {
     get_double: {
       args: [{
         source_key: "test-prop",
-        transform: (source, key) => 2 * cmn.jsonGet(source, key)
+        transform: (source, key) => 2 * cmn.json_get(source, key)
       }],
       expected: {
         "test-prop": 4
@@ -51,7 +51,7 @@ function _test_make_rule_transform_property() {
     no_rewrite: {
       args: [{
         source_key: "test-prop",
-        transform: cmn.jsonGet
+        transform: cmn.json_get
       }],
       expected: {
         "test-prop": "ok"
@@ -69,7 +69,7 @@ function _test_make_rule_transform_property() {
     property_missing_empty_target: {
       args: [{
         source_key: "test-prop",
-        transform: cmn.jsonGet
+        transform: cmn.json_get
       }],
       expected: {
         "test-prop": null
@@ -146,7 +146,7 @@ function _test_make_rule_transform_and_aggregate_property() {
       args: [{
         source_key: "test-prop",
         target_key: "test-prop",
-        transform: cmn.jsonGet
+        transform: cmn.json_get
       }],
       expected: {
         "test-prop": ["ok-1", "ok-2", "ok-3"]
@@ -165,7 +165,7 @@ function _test_make_rule_transform_and_aggregate_property() {
       args: [{
         source_key: "test-prop",
         target_key: "doubled-prop",
-        transform: (source, key) => 2 * cmn.jsonGet(source, key)
+        transform: (source, key) => 2 * cmn.json_get(source, key)
       }],
       expected: {
         "doubled-prop": [2, 4, 6],
@@ -185,7 +185,7 @@ function _test_make_rule_transform_and_aggregate_property() {
       args: [{
         source_key: "test-prop",
         target_key: "doubled-prop",
-        transform: (source, key) => 2 * cmn.jsonGet(source, key)
+        transform: (source, key) => 2 * cmn.json_get(source, key)
       }],
       expected: {
         "doubled-prop": [],
@@ -205,7 +205,7 @@ function _test_make_rule_transform_and_aggregate_property() {
       args: [{
         source_key: "test-prop",
         target_key: "doubled-prop",
-        transform: (source, key) => 2 * cmn.jsonGet(source, key)
+        transform: (source, key) => 2 * cmn.json_get(source, key)
       }],
       expected: {
         "doubled-prop": [2,4,6,8]

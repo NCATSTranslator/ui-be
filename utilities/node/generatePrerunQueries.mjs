@@ -97,7 +97,7 @@ async function main() {
   const configRoot = '../../configurations';
   const preRunQueries = {};
   for (const env of envs) {
-    const config = await cmn.readJson(`${configRoot}/${env}.json`);
+    const config = await cmn.read_json(`${configRoot}/${env}.json`);
     const client = new ARSClient(
       config.ars_endpoint.client_id,
       '',

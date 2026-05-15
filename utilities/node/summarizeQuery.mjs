@@ -9,7 +9,7 @@ import * as cfg from '../../lib/config.mjs'
 import { loadBiolink } from '../../lib/biolink-model.mjs';
 import { loadChebi } from '../../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../../adapters/TranslatorServicexFEAdapter.mjs'
-import { readJson } from '../../lib/common.mjs';
+import { read_json } from '../../lib/common.mjs';
 import { load_trapi } from '../../lib/trapi/core.mjs';
 
 // TODO: config shit
@@ -17,7 +17,7 @@ const configPath = process.argv[2];
 const dataPath = process.argv[3];
 const maxHops = 3;
 const translatorAdapter = new TranslatorServicexFEAdapter();
-readJson(dataPath).then(async (data) => {
+read_json(dataPath).then(async (data) => {
   const config = await cfg.bootstrapConfig(configPath);
   await loadBiolink(config.biolink);
   await loadChebi();

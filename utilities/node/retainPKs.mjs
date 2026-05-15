@@ -5,9 +5,9 @@ import { ARSClient } from '../../lib/ARSClient.mjs';
 const configRoot = '../../configurations';
 const env = process.argv[2];
 const filePath = `${configRoot}/frontend/${env}.json`;
-const frontendConfig = await cmn.readJson(filePath);
+const frontendConfig = await cmn.read_json(filePath);
 const pks = frontendConfig.cached_queries.map(q => q.uuid);
-const config = await cmn.readJson(`${configRoot}/${env}.json`)
+const config = await cmn.read_json(`${configRoot}/${env}.json`)
 const client = new ARSClient(`${config.ars_endpoint.protocol}://${config.ars_endpoint.host}`,
     '', '', config.ars_endpoint.retain_uri);
 

@@ -1,6 +1,6 @@
 'use strict';
 import { v4 as uuidv4 } from 'uuid';
-import { generateRandomAlphaNumString } from '../lib/common.mjs';
+import { generate_random_alpha_num_string } from '../lib/common.mjs';
 export { UserWorkspace };
 
 class UserWorkspace {
@@ -8,7 +8,7 @@ class UserWorkspace {
     id = uuidv4(),
     name,
     description = null,
-    label = generateRandomAlphaNumString(3,4),
+    label = generate_random_alpha_num_string(3,4),
     user_id,
     deleted = false,
     is_public = false,

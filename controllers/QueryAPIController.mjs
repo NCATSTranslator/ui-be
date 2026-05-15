@@ -56,7 +56,7 @@ class QueryAPIController {
     try {
       const update = req.body;
       const queryServiceMsg = await this.queryService.processQueryUpdate(update);
-      res.set(_CUSTOM_HEADERS.X_EVENT_SIG, cmn.generateHMACSignature(JSON.stringify(res.body), this.apiKey));
+      res.set(_CUSTOM_HEADERS.X_EVENT_SIG, cmn.generate_hmac_signature(JSON.stringify(res.body), this.apiKey));
       return res.status(this._queryServiceMsgToHTTPCode(queryServiceMsg)).send();
     } catch (err) {
       // TODO: Send errors at more granular level
@@ -316,7 +316,7 @@ class QueryAPIController {
       reqVerification.valid = false;
       reqVerification.errorCode = cmn.HTTP_CODE.BAD_REQUEST;
       reqVerification.errorMsg = 'Signature not provided';
-    } else if (!cmn.verifyHMACSignature(signature, req.rawBody, this.apiKey)) {
+    } else if (!cmn.verify_hmac_signature(signature, req.rawBody, this.apiKey)) {
       reqVerification.valid = false;
       reqVerification.errorCode = cmn.HTTP_CODE.UNAUTHORIZED;
       reqVerification.errorMsg = 'Invalid signature provided';

@@ -11,7 +11,7 @@ async function loadAll(fileNames)
   let messages = [];
   for (const f of fileNames)
   {
-    let yy = await cmn.readJson('/Users/nishadprakash/translator/nnn/gus-stuff/actual-data/' + f);
+    let yy = await cmn.read_json('/Users/nishadprakash/translator/nnn/gus-stuff/actual-data/' + f);
     messages.push(yy);
   }
   return messages;

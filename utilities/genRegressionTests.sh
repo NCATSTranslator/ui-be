@@ -32,8 +32,8 @@ async function loadConfig() {
 
 async function regressionTest(testFile) {
   await loadConfig();
-  const input = cmn.readJson("'`test/data/regression/in/${testFile}`'");
-  const expected = cmn.readJson("'`test/data/regression/out/${testFile}`'");
+  const input = cmn.read_json("'`test/data/regression/in/${testFile}`'");
+  const expected = cmn.read_json("'`test/data/regression/out/${testFile}`'");
   const maxHops = 3;
   const translatorAdapter = new TranslatorServicexFEAdapter();
   const actual = await translatorAdapter.queryResultsToFE(await input, maxHops);

@@ -68,7 +68,7 @@ function make_class_test(test_cases) {
 }
 
 async function make_lazy({call, args}) {
-  const lazy = async () => await call(...await _delazy(cmn.deepCopy(args)));
+  const lazy = async () => await call(...await _delazy(cmn.deep_copy(args)));
   lazy.__lazy__ = _CONSTANTS.LAZY_ID;
   return lazy;
 }
@@ -111,7 +111,7 @@ async function _class_test({test_class, test_cases}) {
     let obj = test_class;
     if (!cmn.is_missing(tc.class_constructor)) {
       try {
-        obj = new test_class(...await _delazy(cmn.deepCopy(tc.class_constructor.args)));
+        obj = new test_class(...await _delazy(cmn.deep_copy(tc.class_constructor.args)));
         if (!cmn.is_missing(tc.class_constructor.expected)) {
           _test_deep(obj, tc.class_constructor.expected);
         }
@@ -130,7 +130,7 @@ async function _class_test({test_class, test_cases}) {
           throw new cmn.DeveloperError('test/lib/common.mjs', '_class_test',
             `Injector property '${key}' does not exist on class ${class_name}.\n  Test case: ${case_name}`);
         }
-        obj[key] = cmn.deepCopy(tc.injected[key]);
+        obj[key] = cmn.deep_copy(tc.injected[key]);
       }
     }
     if (cmn.is_missing(tc.steps)) {
@@ -148,14 +148,14 @@ async function _class_test({test_class, test_cases}) {
       try {
         if (!cmn.is_missing(step.method)) {
           step_label = step.method;
-          const actual = obj[step.method](...await _delazy(cmn.deepCopy(step.args)));
+          const actual = obj[step.method](...await _delazy(cmn.deep_copy(step.args)));
           _test_deep(actual, step.expected);
         } else if (!cmn.is_missing(step.get)) {
           step_label = `get ${step.get}`;
           _test_deep(obj[step.get], step.expected);
         } else {
           step_label = `set ${step.set}`;
-          obj[step.set] = cmn.deepCopy(step.value);
+          obj[step.set] = cmn.deep_copy(step.value);
           if (!cmn.is_missing(step.expected)) {
             _test_deep(obj[step.set], step.expected);
           }
@@ -207,7 +207,7 @@ async function _run_case({test_func, test_case, case_name}) {
   if (test_case.config_loader) {
     await test_case.config_loader();
   }
-  return await test_func(...await _delazy(cmn.deepCopy(test_case.args)));
+  return await test_func(...await _delazy(cmn.deep_copy(test_case.args)));
 }
 
 function _test_deep(ac, ex) {

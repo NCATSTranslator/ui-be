@@ -66,8 +66,8 @@ class ARSClient {
 
   async _fetchMessage(uuid, doTrace=false, compress=false) {
     const meta = {
-      fetchMs: 0,
-      parseMs: 0,
+      fetch_ms: 0,
+      parse_ms: 0,
       status: "done",
       headers: ""
     };

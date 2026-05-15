@@ -2,7 +2,7 @@
 
 import * as wutil from '../lib/webutils.mjs';
 import * as AuthService from '../services/AuthService.mjs';
-import { generatePKCECodeChallenge, generatePKCECodeVerifier } from '../lib/common.mjs';
+import { generate_pkce_code_challenge, generate_pkce_code_verifier } from '../lib/common.mjs';
 
 export { LoginController };
 
@@ -21,8 +21,8 @@ class LoginController {
       // If the user has a valid login session, bypass the login flow
       return res.redirect(302, redirPath);
     }
-    const codeVerifier = generatePKCECodeVerifier(64);
-    const codeChallenge = generatePKCECodeChallenge(codeVerifier);
+    const codeVerifier = generate_pkce_code_verifier(64);
+    const codeChallenge = generate_pkce_code_challenge(codeVerifier);
 
     let stateData = await this.authService.createLoginStateSession({
       type: 'login',
