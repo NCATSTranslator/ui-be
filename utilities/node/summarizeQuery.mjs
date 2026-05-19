@@ -6,7 +6,7 @@
  */
 
 import * as cfg from '../../lib/config.mjs'
-import { loadBiolink } from '../../lib/biolink-model.mjs';
+import { load_biolink } from '../../lib/biolink-model.mjs';
 import { loadChebi } from '../../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../../adapters/TranslatorServicexFEAdapter.mjs'
 import { read_json } from '../../lib/common.mjs';
@@ -19,7 +19,7 @@ const maxHops = 3;
 const translatorAdapter = new TranslatorServicexFEAdapter();
 read_json(dataPath).then(async (data) => {
   const config = await cfg.bootstrapConfig(configPath);
-  await loadBiolink(config.biolink);
+  await load_biolink(config.biolink);
   await loadChebi();
   load_trapi(config.trapi);
   const summaryMsg = await translatorAdapter.queryResultsToFE(data, maxHops);

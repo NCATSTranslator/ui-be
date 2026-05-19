@@ -4,7 +4,7 @@ import * as cmn from '../../../lib/common.mjs';
 import { validate as isUuid } from 'uuid';
 import * as trapi from '../../../lib/trapi/core.mjs';
 import { loadConfigFromFile, postProcessConfig }  from '../../../lib/config.mjs';
-import { loadBiolink } from '../../../lib/biolink-model.mjs';
+import { load_biolink } from '../../../lib/biolink-model.mjs';
 
 
 
@@ -59,7 +59,7 @@ const prefix = process.argv[4];
 
 const SERVER_CONFIG = await loadConfigFromFile(process.argv[2]);
 
-await loadBiolink(SERVER_CONFIG.biolink.version,
+await load_biolink(SERVER_CONFIG.biolink.version,
   SERVER_CONFIG.biolink.support_deprecated_predicates,
   SERVER_CONFIG.biolink.infores_catalog,
   SERVER_CONFIG.biolink.prefix_catalog);
