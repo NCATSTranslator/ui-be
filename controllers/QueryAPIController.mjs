@@ -7,39 +7,39 @@ import * as trapi from '../lib/trapi/core.mjs';
 import { logger } from "../lib/logger.mjs";
 
 class QueryAPIController {
-  constructor(config, translatorService, translatorServicexFEAdapter,
-      queryService, queryServicexFEAdapter, userService, filters) {
+  constructor(config, translator_service, translator_service_fe_adapter,
+      query_service, query_service_fe_adapter, user_service, filters) {
     this.config = config;
-    this.apiKey = config.secrets.hmac.key;
-    this.translatorService = translatorService;
-    this.translatorServicexFEAdapter = translatorServicexFEAdapter;
-    this.queryService = queryService;
-    this.queryServicexFEAdapter = queryServicexFEAdapter;
-    this.userService = userService;
+    this.api_key = config.secrets.hmac.key;
+    this.translator_service = translator_service;
+    this.translator_service_fe_adapter = translator_service_fe_adapter;
+    this.query_service = query_service;
+    this.query_service_fe_adapter = query_service_fe_adapter;
+    this.user_service = user_service;
     this.filters = filters;
     this.using_pubsub = this.config.ars_endpoint.use_pubsub;
     if (this.using_pubsub) {
-      this.submitQuery = this._submitQueryViaPubSub;
-      this.getQueryStatus = this._getQueryStatusViaPubSub;
-      this.getUserQueries = this._getUserQueriesViaPubSub;
+      this.submit_query = this._submit_query_via_pubsub;
+      this.get_query_status = this._get_query_status_via_pubsub;
+      this.get_user_queries = this._get_user_queries_via_pubsub;
     } else {
-      this.submitQuery = this._submitQueryViaPolling;
-      this.getQueryStatus = this._getQueryStatusViaPolling;
-      this.getUserQueries = this._getUserQueriesViaPolling;
+      this.submit_query = this._submit_query_via_polling;
+      this.get_query_status = this._get_query_status_via_polling;
+      this.get_user_queries = this._get_user_queries_via_polling;
     }
-    this.submitQuery.bind(this);
-    this.getQueryStatus.bind(this);
-    this.getUserQueries.bind(this);
+    this.submit_query.bind(this);
+    this.get_query_status.bind(this);
+    this.get_user_queries.bind(this);
   }
 
-  async getQueryResult(req, res, next) {
-    if (!this._isValidQueryResultRequest(req)) {
+  async get_query_result(req, res, next) {
+    if (!this._is_valid_query_result_request(req)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed Request');
     }
     try {
       const uuid = req.params.qid;
-      let results = await this.translatorService.getResults(uuid, this.filters);
-      results = await this.translatorServicexFEAdapter.queryResultsToFE(
+      let results = await this.translator_service.getResults(uuid, this.filters);
+      results = await this.translator_service_fe_adapter.queryResultsToFE(
           results, this.config.max_hops, this.config.ara_to_infores_map);
       return res.status(cmn.HTTP_CODE.SUCCESS).json(results);
     } catch (err) {
@@ -48,16 +48,16 @@ class QueryAPIController {
     }
   }
 
-  async updateQuery(req, res, next) {
-    const reqVerification = this._isValidQueryUpdateRequest(req);
-    if (!reqVerification.valid) {
-      return wutil.sendError(res, reqVerification.errorCode, reqVerification.errorMsg);
+  async update_query(req, res, next) {
+    const req_verification = this._is_valid_query_update_request(req);
+    if (!req_verification.valid) {
+      return wutil.sendError(res, req_verification.error_code, req_verification.error_msg);
     }
     try {
       const update = req.body;
-      const queryServiceMsg = await this.queryService.processQueryUpdate(update);
-      res.set(_CUSTOM_HEADERS.X_EVENT_SIG, cmn.generateHMACSignature(JSON.stringify(res.body), this.apiKey));
-      return res.status(this._queryServiceMsgToHTTPCode(queryServiceMsg)).send();
+      const query_service_msg = await this.query_service.processQueryUpdate(update);
+      res.set(_CUSTOM_HEADERS.X_EVENT_SIG, cmn.generate_hmac_signature(JSON.stringify(res.body), this.api_key));
+      return res.status(this._query_service_msg_to_http_code(query_service_msg)).send();
     } catch (err) {
       // TODO: Send errors at more granular level
       wutil.logInternalServerError(req, err);
@@ -110,14 +110,14 @@ class QueryAPIController {
     }
   }
 
-  async deleteUserQueries(req, res, next) {
+  async delete_user_queries(req, res, next) {
     const query_ids = await req.body;
     if (!cmn.is_array(query_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const uid = req.sessionData.user.id;
     try {
-      const _ = await this.userService.deleteUserSaveBatch(uid, query_ids);
+      const _ = await this.user_service.deleteUserSaveBatch(uid, query_ids);
       return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
@@ -125,7 +125,7 @@ class QueryAPIController {
     }
   }
 
-  async restoreUserQueries(req, res, next) {
+  async restore_user_queries(req, res, next) {
     const query_ids = await req.body;
     if (!cmn.is_array(query_ids)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
@@ -133,7 +133,7 @@ class QueryAPIController {
     const uid = req.sessionData.user.id;
     let queries = null;
     try {
-      const _ = await this.userService.restoreUserSaveBatch(uid, query_ids);
+      const _ = await this.user_service.restoreUserSaveBatch(uid, query_ids);
       return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
       wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
@@ -141,65 +141,65 @@ class QueryAPIController {
     }
   }
 
-  async _submitQueryViaPubSub(req, res, next) {
-    this._logQuerySubmissionRequest(req);
-    if (!this._isValidQuerySubmissionRequest(req)) {
+  async _submit_query_via_pubsub(req, res, next) {
+    this._log_query_submission_request(req);
+    if (!this._is_valid_query_submission_request(req)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
     }
     try {
-      const queryRequest = req.body;
-      const pid = queryRequest.pid;
+      const query_request = req.body;
+      const pid = query_request.pid;
       let project = null;
       const uid = req.sessionData.user.id;
       if (pid) {
-        const projects = await this.userService.getUserSavesBy(uid, {id: pid});
+        const projects = await this.user_service.getUserSavesBy(uid, {id: pid});
         if (!projects || cmn.is_array_empty(projects)) {
           throw new Error(`Submitted query includes unknown PID: ${pid}`);
         }
         project = projects[0];
         req.log.info({project: project});
       }
-      const trapiQuery = this.translatorService.inputToQuery(queryRequest);
-      req.log.info({query: trapiQuery});
-      const submitResp = await this.translatorService.submitQuery(trapiQuery);
-      req.log.info({arsqueryresp: submitResp});
-      const pk = trapi.get_pk(submitResp);
-      if (!pk) throw new Error(`ARS query submission response has no PK: ${submitResp}`);
-      const queryModel = await this.queryService.createQuery(pk, req.body);
-      if (!queryModel) throw new Error(`Failed to create query with PK: ${pk}`);
+      const trapi_query = this.translator_service.inputToQuery(query_request);
+      req.log.info({query: trapi_query});
+      const submit_resp = await this.translator_service.submitQuery(trapi_query);
+      req.log.info({arsqueryresp: submit_resp});
+      const pk = trapi.get_pk(submit_resp);
+      if (!pk) throw new Error(`ARS query submission response has no PK: ${submit_resp}`);
+      const query_model = await this.query_service.createQuery(pk, req.body);
+      if (!query_model) throw new Error(`Failed to create query with PK: ${pk}`);
       //TODO: verify subscribe response
-      const subscribeResp = await this.translatorService.subscribeQuery(pk);
-      const userQueryModel = await this.userService.createUserQuery(uid, pk, queryModel.metadata.query);
-      if (!userQueryModel) throw new Error(`User service failed to create entry for query ${queryModel.id} and user ${uid}`);
-      const isUserAssignedQuery = this.queryService.addQueryUserRelationship(queryModel, userQueryModel);
-      if (!isUserAssignedQuery) throw new Error(`Query service failed to associate query ${queryModel.id} with user save ${userQueryModel.id}`);
+      const subscribe_resp = await this.translator_service.subscribeQuery(pk);
+      const user_query_model = await this.user_service.createUserQuery(uid, pk, query_model.metadata.query);
+      if (!user_query_model) throw new Error(`User service failed to create entry for query ${query_model.id} and user ${uid}`);
+      const is_user_assigned_query = this.query_service.addQueryUserRelationship(query_model, user_query_model);
+      if (!is_user_assigned_query) throw new Error(`Query service failed to associate query ${query_model.id} with user save ${user_query_model.id}`);
       if (pid) {
         project.data.pks.push(pk);
-        const updatedProject = await this.userService.updateUserSave(project);
-        if (!updatedProject) {
+        const updated_project = await this.user_service.updateUserSave(project);
+        if (!updated_project) {
           throw new Error(`Error updating project: ${pid} with PK: ${pk}`);
         }
       }
-      return res.status(200).json(this.queryServicexFEAdapter.querySubmitToFE(queryModel));
+      return res.status(200).json(this.query_service_fe_adapter.querySubmitToFE(query_model));
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
     }
   }
 
-  async _getQueryStatusViaPubSub(req, res, next) {
-    if (!this._isValidQueryResultRequest(req)) {
+  async _get_query_status_via_pubsub(req, res, next) {
+    if (!this._is_valid_query_result_request(req)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed Request');
     }
     try {
       const uuid = req.params.qid;
-      const queryModel = await this.queryService.getQueryByPk(uuid);
+      const query_model = await this.query_service.getQueryByPk(uuid);
       let status = null;
-      if (queryModel) {
-        status = this.queryServicexFEAdapter.queryStatusToFE(queryModel);
+      if (query_model) {
+        status = this.query_service_fe_adapter.queryStatusToFE(query_model);
       } else {
-        const statusResp = await this.translatorService.getQueryStatus(uuid, this.filters);
-        status = this.translatorServicexFEAdapter.queryStatusToFE(statusResp);
+        const status_resp = await this.translator_service.getQueryStatus(uuid, this.filters);
+        status = this.translator_service_fe_adapter.queryStatusToFE(status_resp);
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(status);
     } catch (err) {
@@ -208,11 +208,11 @@ class QueryAPIController {
     }
   }
 
-  async _getUserQueriesViaPubSub(req, res, next) {
+  async _get_user_queries_via_pubsub(req, res, next) {
     const uid = req.sessionData.user.id;
     const include_deleted = req.query.include_deleted === 'true';
     try {
-      const user_queries = await this.userService.get_user_queries_map(uid, include_deleted, this.using_pubsub);
+      const user_queries = await this.user_service.get_user_queries_map(uid, include_deleted, this.using_pubsub);
       return res.status(cmn.HTTP_CODE.SUCCESS).json([...user_queries.values()]);
     } catch (err) {
       wutil.logInternalServerError(req, err);
@@ -221,53 +221,53 @@ class QueryAPIController {
     }
   }
 
-  async _submitQueryViaPolling(req, res, next) {
-    this._logQuerySubmissionRequest(req);
-    if (!this._isValidQuerySubmissionRequest(req)) {
+  async _submit_query_via_polling(req, res, next) {
+    this._log_query_submission_request(req);
+    if (!this._is_valid_query_submission_request(req)) {
       return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
     }
     try {
-      const queryRequest = req.body;
-      const pid = parseInt(queryRequest.pid, 10);
+      const query_request = req.body;
+      const pid = parseInt(query_request.pid, 10);
       const uid = req.sessionData.user.id;
       let project = null;
       if (pid) {
-        const projects = await this.userService.getUserSavesBy(uid, {id: pid});
+        const projects = await this.user_service.getUserSavesBy(uid, {id: pid});
         if (!projects) {
           throw new Error(`Submitted query includes unknown PID: ${pid}`);
         }
         req.log.info({projects: projects});
         project = projects[0];
       }
-      const trapiQuery = this.translatorService.inputToQuery(req.body);
-      const submitResp = await this.translatorService.submitQuery(trapiQuery);
-      req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submitResp}, 'Query submission and response');
-      const pk = trapi.get_pk(submitResp);
-      const userQueryModel = this.userService.createUserQuery(uid, pk, req.body);
-      if (!userQueryModel) throw new Error(`User service failed to create entry for query ${pk} and user ${uid}`);
+      const trapi_query = this.translator_service.inputToQuery(req.body);
+      const submit_resp = await this.translator_service.submitQuery(trapi_query);
+      req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submit_resp}, 'Query submission and response');
+      const pk = trapi.get_pk(submit_resp);
+      const user_query_model = this.user_service.createUserQuery(uid, pk, req.body);
+      if (!user_query_model) throw new Error(`User service failed to create entry for query ${pk} and user ${uid}`);
       if (pid) {
         project.data.pks.push(pk);
-        const updatedProject = await this.userService.updateUserSave(project);
-        if (!updatedProject) {
+        const updated_project = await this.user_service.updateUserSave(project);
+        if (!updated_project) {
           throw new Error(`Error updating project: ${pid} with PK: ${pk}`);
         }
       }
-      return res.status(200).json(this.translatorServicexFEAdapter.querySubmitToFE(submitResp));
+      return res.status(200).json(this.translator_service_fe_adapter.querySubmitToFE(submit_resp));
     } catch (err) {
       wutil.logInternalServerError(req, err);
       return wutil.sendInternalServerError(res, err);
     }
   }
 
-  async _getQueryStatusViaPolling(req, res, next) {
-    if (!this._isValidQueryResultRequest(req)) {
+  async _get_query_status_via_polling(req, res, next) {
+    if (!this._is_valid_query_result_request(req)) {
       return wutil.sendError(res, 400, 'Malformed Request');
     }
     try {
       let uuid = req.params.qid;
-      let statusResp = await this.translatorService.getQueryStatus(uuid, this.filters);
-      logger.debug({ltype: 'query-status from service', statusResp: statusResp});
-      let retval = this.translatorServicexFEAdapter.queryStatusToFE(statusResp);
+      let status_resp = await this.translator_service.getQueryStatus(uuid, this.filters);
+      logger.debug({ltype: 'query-status from service', statusResp: status_resp});
+      let retval = this.translator_service_fe_adapter.queryStatusToFE(status_resp);
       logger.debug({ltype: 'query-status after adapter', value: retval});
       return res.status(200).json(retval);
     } catch (err) {
@@ -276,15 +276,15 @@ class QueryAPIController {
     }
   }
 
-  async _getUserQueriesViaPolling(req, res, next) {
+  async _get_user_queries_via_polling(req, res, next) {
     const uid = req.sessionData.user.id;
     const include_deleted = req.query.include_deleted === 'true';
     try {
-      const user_queries = await this.userService.get_user_queries_map(uid, include_deleted, this.using_pubsub);
+      const user_queries = await this.user_service.get_user_queries_map(uid, include_deleted, this.using_pubsub);
       const pks = [...user_queries.keys()];
-      const resps = await Promise.all(pks.map(pk => this.translatorService.getQueryStatus(pk, this.filters)));
+      const resps = await Promise.all(pks.map(pk => this.translator_service.getQueryStatus(pk, this.filters)));
       for (const resp of resps) {
-        const status_model = this.translatorServicexFEAdapter.queryStatusToFE(resp);
+        const status_model = this.translator_service_fe_adapter.queryStatusToFE(resp);
         const user_query = user_queries.get(status_model.data.qid);
         user_query.status = status_model.status;
         user_query.data.aras = status_model.data.aras;
@@ -297,48 +297,48 @@ class QueryAPIController {
     }
   }
 
-  _isValidQuerySubmissionRequest(req) {
+  _is_valid_query_submission_request(req) {
     return cmn.is_object(req.body) && req.sessionData.user.id;
   }
 
-  _isValidQueryResultRequest(req) {
+  _is_valid_query_result_request(req) {
     return req.params.hasOwnProperty('qid') && req.params.qid;
   }
 
-  _isValidQueryUpdateRequest(req) {
-    const reqVerification = {
+  _is_valid_query_update_request(req) {
+    const req_verification = {
       valid: true,
-      errorCode: null,
-      errorMsg: ''
+      error_code: null,
+      error_msg: ''
     };
     const signature = req.headers[_CUSTOM_HEADERS.X_EVENT_SIG];
     if (!signature) {
-      reqVerification.valid = false;
-      reqVerification.errorCode = cmn.HTTP_CODE.BAD_REQUEST;
-      reqVerification.errorMsg = 'Signature not provided';
-    } else if (!cmn.verifyHMACSignature(signature, req.rawBody, this.apiKey)) {
-      reqVerification.valid = false;
-      reqVerification.errorCode = cmn.HTTP_CODE.UNAUTHORIZED;
-      reqVerification.errorMsg = 'Invalid signature provided';
+      req_verification.valid = false;
+      req_verification.error_code = cmn.HTTP_CODE.BAD_REQUEST;
+      req_verification.error_msg = 'Signature not provided';
+    } else if (!cmn.verify_hmac_signature(signature, req.rawBody, this.api_key)) {
+      req_verification.valid = false;
+      req_verification.error_code = cmn.HTTP_CODE.UNAUTHORIZED;
+      req_verification.error_msg = 'Invalid signature provided';
     }
-    return reqVerification;
+    return req_verification;
   }
 
   async _update_user_query(uid, sid, is_deleted, update) {
-    let user_saved_data = await this.userService.getUserSavesBy(uid, {id: sid}, is_deleted);
+    let user_saved_data = await this.user_service.getUserSavesBy(uid, {id: sid}, is_deleted);
     if (!user_saved_data) return null;
     user_saved_data = user_saved_data[0];
     update(user_saved_data);
-    user_saved_data = await this.userService.updateUserSave(user_saved_data, is_deleted);
+    user_saved_data = await this.user_service.updateUserSave(user_saved_data, is_deleted);
     if (!user_saved_data) throw Error('PANIC: Database failed to update user query but did not throw');
     return user_saved_data;
   }
 
-  _logQuerySubmissionRequest(req) {
+  _log_query_submission_request(req) {
     req.log.info({reqBody: req.body});
   }
 
-  _queryServiceMsgToHTTPCode(msg) {
+  _query_service_msg_to_http_code(msg) {
     switch (msg) {
       case QUERY_SERVICE_MSG.UPDATE_IGNORED:
       case QUERY_SERVICE_MSG.UPDATE_SUCCESS:  return cmn.HTTP_CODE.SUCCESS;

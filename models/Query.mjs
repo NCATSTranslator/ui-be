@@ -77,6 +77,7 @@ class UserQuery {
       statistics,
       time_created,
       time_updated,
+      time_viewed,
       deleted
     } = kwargs;
     const is_invalid = !sid
@@ -97,6 +98,7 @@ class UserQuery {
       note_count: 0,
       time_created: time_created,
       time_updated: time_updated,
+      time_viewed: time_viewed,
       deleted: deleted
     }
   }
@@ -110,28 +112,29 @@ class UserQuery {
   }
 }
 
-function gen_user_query(data) {
+function gen_user_query(uq_data) {
   let status = null;
   let aras = null;
-  if (data.status && data.metadata.aras ) {
-    status = data.status;
-    aras = data.metadata.aras;
-  } else if (data.status === undefined) {
+  if (uq_data.status && uq_data.metadata.aras ) {
+    status = uq_data.status;
+    aras = uq_data.metadata.aras;
+  } else if (uq_data.status === undefined) {
     status = cmn.QUERY_STATUS.RUNNING;
     aras = [];
   } else {
-    throw new Error(`Could not generate UserQuery from given data: ${data}`);
+    throw new Error(`Could not generate UserQuery from given data: ${JSON.stringify(uq_data)}`);
   }
   return new UserQuery({
-    sid: data.sid,
+    sid: uq_data.sid,
     status: status,
-    pk: data.pk,
+    pk: uq_data.pk,
     aras: aras,
-    query: data.data.description,
-    title: data.data.title ?? null,
-    statistics: data.metadata.statistics ?? new QueryStatistics(),
-    time_created: data.time_created,
-    time_updated: data.time_updated,
-    deleted: data.deleted
+    query: uq_data.data.description,
+    title: uq_data.data.title ?? null,
+    statistics: uq_data.metadata.statistics ?? new QueryStatistics(),
+    time_viewed: uq_data.data.last_seen ?? null,
+    time_created: uq_data.time_created,
+    time_updated: uq_data.time_updated,
+    deleted: uq_data.deleted
   });
 }

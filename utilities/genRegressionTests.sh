@@ -17,7 +17,7 @@ import * as assert from 'assert';
 import * as cfg from '../lib/config.mjs';
 import * as cmn from '../lib/common.mjs';
 import * as tsmy from './lib/core.mjs';
-import { loadBiolink } from '../lib/biolink-model.mjs';
+import { load_biolink } from '../lib/biolink-model.mjs';
 import { loadChebi } from '../lib/chebi.mjs';
 import { TranslatorServicexFEAdapter } from '../adapters/TranslatorServicexFEAdapter.mjs';
 import { load_trapi } from '../lib/trapi/core.mjs';
@@ -25,15 +25,15 @@ import { load_trapi } from '../lib/trapi/core.mjs';
 // We have to do this because the 'before' hook does not seem to work
 async function loadConfig() {
   const config = await cfg.bootstrapConfig('./configurations/production.json')
-  await loadBiolink(config.biolink);
+  await load_biolink(config.biolink);
   await loadChebi();
   load_trapi(config.trapi);
 }
 
 async function regressionTest(testFile) {
   await loadConfig();
-  const input = cmn.readJson("'`test/data/regression/in/${testFile}`'");
-  const expected = cmn.readJson("'`test/data/regression/out/${testFile}`'");
+  const input = cmn.read_json("'`test/data/regression/in/${testFile}`'");
+  const expected = cmn.read_json("'`test/data/regression/out/${testFile}`'");
   const maxHops = 3;
   const translatorAdapter = new TranslatorServicexFEAdapter();
   const actual = await translatorAdapter.queryResultsToFE(await input, maxHops);

@@ -57,7 +57,7 @@ function _test_analysis_to_summary_analysis() {
           }
         }
       },
-      "config_loader": () => bl.loadBiolink(_test_biolink_config()),
+      "config_loader": () => bl.load_biolink(_test_biolink_config()),
     },
     "with-support": {
       "args": [
@@ -111,7 +111,7 @@ function _test_analysis_to_summary_analysis() {
           }
         }
       },
-      "config_loader": () => bl.loadBiolink(_test_biolink_config()),
+      "config_loader": () => bl.load_biolink(_test_biolink_config()),
     },
     "with-nested-support": {
       "args": [
@@ -225,7 +225,7 @@ function _test_analysis_to_summary_analysis() {
           }
         }
       },
-      "config_loader": () => bl.loadBiolink(_test_biolink_config()),
+      "config_loader": () => bl.load_biolink(_test_biolink_config()),
     }
   });
 }
@@ -331,7 +331,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
   }
 
   async function __with_nested_support_test_case() {
-    await bl.loadBiolink(_test_biolink_config());
+    await bl.load_biolink(_test_biolink_config());
     const _eid = [
       id.gen_eid("eb1", _with_nested_support_kgraph(), false, true),
       id.gen_eid("eb2", _with_nested_support_kgraph(), false, true),
@@ -363,7 +363,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
     ];
     const _nested_support = new SummaryPath(["nb3", _inverted_eid[9], "nb2.1", _inverted_eid[8], "nb2"]);
     return {
-      config_loader: () => bl.loadBiolink(_test_biolink_config()),
+      config_loader: () => bl.load_biolink(_test_biolink_config()),
       args: [
         _with_nested_support_summary_analysis(),
         _with_nested_support_analysis_paths(),
