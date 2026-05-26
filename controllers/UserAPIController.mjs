@@ -12,7 +12,7 @@ class UserAPIController {
     this.translatorService = translatorService;
   }
 
-  getUser(req, res, next) {
+  getUser(req, res, _next) {
     let sessionData = req.sessionData;
     if (sessionData && sessionData.user) {
       return res.status(cmn.HTTP_CODE.SUCCESS).json(sessionData.user);
@@ -22,8 +22,8 @@ class UserAPIController {
   }
 
   // Preferences
-  async getUserPrefs(req, res, next) {
-    let user_id = req.sessionData.user.id;
+  async getUserPrefs(req, res, _next) {
+    let user_id = wutil.request_to_user_id(req);
     try {
       let result = await this.userService.getUserPreferences(user_id);
       if (!result) {
@@ -37,8 +37,8 @@ class UserAPIController {
     }
   }
 
-  async updateUserPrefs(req, res, next) {
-    let user_id = req.sessionData.user.id;
+  async updateUserPrefs(req, res, _next) {
+    let user_id = wutil.request_to_user_id(req);
     let preferences = req.body;
     try {
       let result = await this.userService.updateUserPreferences(user_id, preferences);
@@ -68,8 +68,8 @@ class UserAPIController {
   }
 
   // Projects
-  async getUserProjects(req, res, next) {
-    const user_id = req.sessionData.user.id;
+  async getUserProjects(req, res, _next) {
+    const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === 'true';
     const [projects, err] = await this._get_user_saves_data(user_id, include_deleted, SAVE_TYPE.PROJECT);
     if (err !== null) {
@@ -78,6 +78,7 @@ class UserAPIController {
     }
     return res.status(cmn.HTTP_CODE.SUCCESS).json(projects);
   }
+
   async createUserProject(req, res, next) {
     const project = await req.body;
     if (project.title === undefined) return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing "title" field');
@@ -89,7 +90,8 @@ class UserAPIController {
     req.body = user_save;
     return this.updateUserSaves(req, res, next);
   }
-  async updateUserProjects(req, res, next) {
+
+  async updateUserProjects(req, res, _next) {
     const project_updates = await req.body;
     if (!cmn.is_array(project_updates)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_updates)}`);
@@ -99,7 +101,7 @@ class UserAPIController {
         return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'All project updates require an ID');
       }
     }
-    const user_id = req.sessionData.user.id;
+    const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === 'true';
     const [projects, err] = await this._get_user_saves_data(user_id, include_deleted, SAVE_TYPE.PROJECT);
     if (err !== null) {
@@ -127,12 +129,12 @@ class UserAPIController {
       return wutil.send_internal_server_error(res, `Error commiting projects updates to database. Got: ${err}`);
     }
   }
-  async deleteUserProjects(req, res, next) {
+  async deleteUserProjects(req, res, _next) {
     const project_ids = await req.body;
     if (!cmn.is_array(project_ids)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
-    const user_id = req.sessionData.user.id;
+    const user_id = wutil.request_to_user_id(req);
     try {
       const _ = await this.userService.deleteUserSaveBatch(user_id, project_ids);
       return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
@@ -141,12 +143,12 @@ class UserAPIController {
       return wutil.send_internal_server_error(res, 'Failed to update projects from the database');
     }
   }
-  async restoreUserProjects(req, res, next) {
+  async restoreUserProjects(req, res, _next) {
     const project_ids = await req.body;
     if (!cmn.is_array(project_ids)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
-    const user_id = req.sessionData.user.id;
+    const user_id = wutil.request_to_user_id(req);
     try {
       const _ = await this.userService.restoreUserSaveBatch(user_id, project_ids);
       return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
@@ -175,8 +177,8 @@ class UserAPIController {
   }
 
   // Saves
-  async getUserSaves(req, res, next) {
-    let user_id = req.sessionData.user.id;
+  async getUserSaves(req, res, _next) {
+    let user_id = wutil.request_to_user_id(req);
     let includeDeleted = req.query.include_deleted === 'true';
     let saveType = req.query.type ? req.query.type : null;
     try {
@@ -192,7 +194,7 @@ class UserAPIController {
     }
   }
 
-  async updateUserSaves(req, res, next) {
+  async updateUserSaves(req, res, _next) {
     try {
       let data = {...req.body};
       // TODO: generalize saving object behavior when we start saving more types
@@ -208,7 +210,7 @@ class UserAPIController {
         }
       }
 
-      data.user_id = req.sessionData.user.id;
+      data.user_id = wutil.request_to_user_id(req);
       let saveData = new UserSavedData(data);
       let result = await this.userService.saveUserData(saveData);
       if (!result) {
@@ -222,9 +224,9 @@ class UserAPIController {
     }
   }
 
-  async getUserSaveById(req, res, next) {
+  async getUserSaveById(req, res, _next) {
     let save_id = parseInt(req.params.save_id, 10);
-    let user_id = req.sessionData.user.id;
+    let user_id = wutil.request_to_user_id(req);
     let includeDeleted = req.query.include_deleted === 'true';
     try {
       let result = await this.userService.getUserSavesBy(user_id, {id: save_id}, includeDeleted);
@@ -242,9 +244,9 @@ class UserAPIController {
   /* Slight violation of REST in that PUT is supposed to take as input the entire object,
    * and we out here accepting partial fields. What. evah.
    */
-  async updateUserSaveById(req, res, next) {
+  async updateUserSaveById(req, res, _next) {
     let save_id = parseInt(req.params.save_id, 10);
-    let user_id = req.sessionData.user.id;
+    let user_id = wutil.request_to_user_id(req);
     let includeDeleted = req.query.include_deleted === 'true';
     try {
       let exists = await this.userService.getUserSavesBy(user_id, {id: save_id}, includeDeleted);
@@ -264,9 +266,9 @@ class UserAPIController {
     }
   }
 
-  async deleteUserSaveById(req, res, next) {
+  async deleteUserSaveById(req, res, _next) {
     let save_id = parseInt(req.params.save_id, 10);
-    let user_id = req.sessionData.user.id;
+    let user_id = wutil.request_to_user_id(req);
     try {
       let exists = await this.userService.getUserSavesBy(user_id, {id: save_id});
       if (!exists) {
@@ -285,8 +287,8 @@ class UserAPIController {
     }
   }
 
-  async getUserWorkspaces(req, res, next) {
-    let user_id = req.sessionData.user.id;
+  async getUserWorkspaces(req, res, _next) {
+    let user_id = wutil.request_to_user_id(req);
     let includeData = req.query.include_data === 'true';
     let includeDeleted = req.query.include_deleted === 'true';
     try {
@@ -302,8 +304,8 @@ class UserAPIController {
     }
   }
 
-  async getUserWorkspaceById(req, res, next) {
-    let user_id = req.sessionData.user.id;
+  async getUserWorkspaceById(req, res, _next) {
+    let user_id = wutil.request_to_user_id(req);
     let ws_id = req.params.ws_id;
     let includeDeleted = req.query.include_deleted === 'true';
     try {
@@ -322,7 +324,7 @@ class UserAPIController {
     }
   }
 
-  async createUserWorkspace(req, res, next) {
+  async createUserWorkspace(req, res, _next) {
     try {
       let workspace = await this.userService.createUserWorkspace(new UserWorkspace(req.body));
       if (!workspace) {
@@ -337,8 +339,8 @@ class UserAPIController {
   }
 
   // As with save data updates, we will accept a partial object
-  async updateUserWorkspace(req, res, next) {
-    let user_id = req.sessionData.user.id;
+  async updateUserWorkspace(req, res, _next) {
+    let user_id = wutil.request_to_user_id(req);
     let ws_id = req.params.ws_id;
     let includeDeleted = req.query.include_deleted === 'true';
     try {
@@ -362,8 +364,8 @@ class UserAPIController {
     }
   }
 
-  async deleteUserWorkspace(req, res, next) {
-    let user_id = req.sessionData.user.id;
+  async deleteUserWorkspace(req, res, _next) {
+    let user_id = wutil.request_to_user_id(req);
     let ws_id = req.params.ws_id;
     try {
       let workspace = await this.userService.getUserWorkspaceById(ws_id, true);
