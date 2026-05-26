@@ -34,7 +34,7 @@ class QueryAPIController {
 
   async get_query_result(req, res, next) {
     if (!this._is_valid_query_result_request(req)) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed Request');
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed Request');
     }
     try {
       const uuid = req.params.qid;
@@ -43,15 +43,15 @@ class QueryAPIController {
           results, this.config.max_hops, this.config.ara_to_infores_map);
       return res.status(cmn.HTTP_CODE.SUCCESS).json(results);
     } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, err);
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, err);
     }
   }
 
   async update_query(req, res, next) {
     const req_verification = this._is_valid_query_update_request(req);
     if (!req_verification.valid) {
-      return wutil.sendError(res, req_verification.error_code, req_verification.error_msg);
+      return wutil.send_error(res, req_verification.error_code, req_verification.error_msg);
     }
     try {
       const update = req.body;
@@ -60,15 +60,15 @@ class QueryAPIController {
       return res.status(this._query_service_msg_to_http_code(query_service_msg)).send();
     } catch (err) {
       // TODO: Send errors at more granular level
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, err);
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, err);
     }
   }
 
   async update_user_query(req, res, next) {
     const user_query = req.body;
     if (!user_query) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to contain user query. Got: ${JSON.stringify(user_query)}`);
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to contain user query. Got: ${JSON.stringify(user_query)}`);
     }
     const uid = req.sessionData.user.id;
     const sid = parseInt(user_query.sid, 10);
@@ -79,14 +79,14 @@ class QueryAPIController {
         store_user_query.data.title = user_query.data.title;
       });
       if (user_saved_data === null) {
-        return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Failed to update user query. Does not exist');
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Failed to update user query. Does not exist');
       }
       user_query.data.time_updated = user_saved_data.time_updated;
       return res.status(cmn.HTTP_CODE.SUCCESS).json(user_query);
     }
     catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, `Database failed to update given user query: ${JSON.stringify(user_query)}`);
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, `Database failed to update given user query: ${JSON.stringify(user_query)}`);
     }
   }
 
@@ -105,30 +105,30 @@ class QueryAPIController {
       };
       return res.status(cmn.HTTP_CODE.SUCCESS).json(update);
     } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, `Database failed to update given sid: ${sid}`);
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, `Database failed to update given sid: ${sid}`);
     }
   }
 
   async delete_user_queries(req, res, next) {
     const query_ids = await req.body;
     if (!cmn.is_array(query_ids)) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const uid = req.sessionData.user.id;
     try {
       const _ = await this.user_service.deleteUserSaveBatch(uid, query_ids);
       return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
-      wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
-      return wutil.sendInternalServerError(res, 'Failed to update queries from the database');
+      wutil.log_internal_server_error(req, `Failed to update queries from the database. Got error: ${err}`);
+      return wutil.send_internal_server_error(res, 'Failed to update queries from the database');
     }
   }
 
   async restore_user_queries(req, res, next) {
     const query_ids = await req.body;
     if (!cmn.is_array(query_ids)) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Expected body to be JSON array. Got: ${JSON.stringify(project_ids)}`);
     }
     const uid = req.sessionData.user.id;
     let queries = null;
@@ -136,15 +136,15 @@ class QueryAPIController {
       const _ = await this.user_service.restoreUserSaveBatch(uid, query_ids);
       return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
     } catch (err) {
-      wutil.logInternalServerError(req, `Failed to update queries from the database. Got error: ${err}`);
-      return wutil.sendInternalServerError(res, 'Failed to update queries from the database');
+      wutil.log_internal_server_error(req, `Failed to update queries from the database. Got error: ${err}`);
+      return wutil.send_internal_server_error(res, 'Failed to update queries from the database');
     }
   }
 
   async _submit_query_via_pubsub(req, res, next) {
     this._log_query_submission_request(req);
     if (!this._is_valid_query_submission_request(req)) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
     }
     try {
       const query_request = req.body;
@@ -182,14 +182,14 @@ class QueryAPIController {
       }
       return res.status(200).json(this.query_service_fe_adapter.querySubmitToFE(query_model));
     } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, err);
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, err);
     }
   }
 
   async _get_query_status_via_pubsub(req, res, next) {
     if (!this._is_valid_query_result_request(req)) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed Request');
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed Request');
     }
     try {
       const uuid = req.params.qid;
@@ -203,8 +203,8 @@ class QueryAPIController {
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(status);
     } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, err);
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, err);
     }
   }
 
@@ -215,16 +215,16 @@ class QueryAPIController {
       const user_queries = await this.user_service.get_user_queries_map(uid, include_deleted, this.using_pubsub);
       return res.status(cmn.HTTP_CODE.SUCCESS).json([...user_queries.values()]);
     } catch (err) {
-      wutil.logInternalServerError(req, err);
-      wutil.logInternalServerError(req, `Failed to get queries status for the current user: ${uid}`);
-      return wutil.sendInternalServerError(res, 'Failed to get queries status for the current user');
+      wutil.log_internal_server_error(req, err);
+      wutil.log_internal_server_error(req, `Failed to get queries status for the current user: ${uid}`);
+      return wutil.send_internal_server_error(res, 'Failed to get queries status for the current user');
     }
   }
 
   async _submit_query_via_polling(req, res, next) {
     this._log_query_submission_request(req);
     if (!this._is_valid_query_submission_request(req)) {
-      return wutil.sendError(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
     }
     try {
       const query_request = req.body;
@@ -254,14 +254,14 @@ class QueryAPIController {
       }
       return res.status(200).json(this.translator_service_fe_adapter.querySubmitToFE(submit_resp));
     } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, err);
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, err);
     }
   }
 
   async _get_query_status_via_polling(req, res, next) {
     if (!this._is_valid_query_result_request(req)) {
-      return wutil.sendError(res, 400, 'Malformed Request');
+      return wutil.send_error(res, 400, 'Malformed Request');
     }
     try {
       let uuid = req.params.qid;
@@ -271,8 +271,8 @@ class QueryAPIController {
       logger.debug({ltype: 'query-status after adapter', value: retval});
       return res.status(200).json(retval);
     } catch (err) {
-      wutil.logInternalServerError(req, err);
-      return wutil.sendInternalServerError(res, err);
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, err);
     }
   }
 
@@ -291,9 +291,9 @@ class QueryAPIController {
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json([...user_queries.values()]);
     } catch (err) {
-      wutil.logInternalServerError(req, err);
-      wutil.logInternalServerError(req, `Failed to get queries status for the current user: ${uid}`);
-      return wutil.sendInternalServerError(res, 'Failed to get queries status for the current user');
+      wutil.log_internal_server_error(req, err);
+      wutil.log_internal_server_error(req, `Failed to get queries status for the current user: ${uid}`);
+      return wutil.send_internal_server_error(res, 'Failed to get queries status for the current user');
     }
   }
 
