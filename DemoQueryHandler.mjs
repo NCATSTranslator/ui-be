@@ -14,7 +14,7 @@ function validateDemoQueryRequest(allowList, validationKey, reqToCurie) {
     const curie = reqToCurie(req);
     const query = findAllowed(curie, allowList, validationKey);
     if (!query) {
-      return wutil.sendError(res, 403, `Request for ${curie} is not supported`);
+      return wutil.send_error(res, 403, `Request for ${curie} is not supported`);
     } else {
       req.demoQuery = query;
       next();

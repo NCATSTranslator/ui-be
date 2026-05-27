@@ -11,7 +11,7 @@ class BiolinkAPIController {
     const bytes = req.headers[HEADERS.CONTENT_LENGTH];
     const max_bytes = 1028;
     if (bytes > max_bytes) {
-      return wutil.sendError(res, HTTP_CODE.BAD_REQUEST, "Size of request is too large");
+      return wutil.send_error(res, HTTP_CODE.BAD_REQUEST, "Size of request is too large");
     }
     const node_types = req.body;
     const mapping = {};
