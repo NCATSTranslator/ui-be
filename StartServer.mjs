@@ -3,7 +3,7 @@ import { logger } from './lib/logger.mjs';
 
 import { bootstrapConfig } from './lib/config.mjs';
 
-import { loadBiolink } from './lib/biolink-model.mjs';
+import { load_biolink } from './lib/biolink-model.mjs';
 import { loadChebi } from './lib/chebi.mjs';
 import { load_trapi } from './lib/trapi/core.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
@@ -38,7 +38,7 @@ const SERVER_CONFIG = await (async function() {
   return bootstrapConfig(basefile, overrides);
 })();
 
-await loadBiolink(SERVER_CONFIG.biolink);
+await load_biolink(SERVER_CONFIG.biolink);
 await load_trapi(SERVER_CONFIG.trapi);
 await loadChebi();
 

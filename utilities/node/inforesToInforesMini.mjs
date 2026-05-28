@@ -3,7 +3,7 @@ import * as cmn from '../../lib/common.mjs';
 
 const filePath = process.argv[2];
 const patchPath = process.argv[3];
-const inforesCatalog = await cmn.readJson(filePath);
+const inforesCatalog = await cmn.read_json(filePath);
 const inforesEntries = inforesCatalog.information_resources;
 const inforesMini = {};
 inforesEntries.forEach((inforesEntry) => {
@@ -30,7 +30,7 @@ inforesEntries.forEach((inforesEntry) => {
 });
 
 if (patchPath) {
-  const patchFile = await cmn.readJson(patchPath);
+  const patchFile = await cmn.read_json(patchPath);
   for (const entryPatch of patchFile) {
     const entry = inforesMini[entryPatch.id];
     if (entry) {

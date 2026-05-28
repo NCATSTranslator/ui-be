@@ -2,7 +2,7 @@
 
 import * as wutil from '../lib/webutils.mjs';
 import * as AuthService from '../services/AuthService.mjs';
-import { generatePKCECodeChallenge, generatePKCECodeVerifier } from '../lib/common.mjs';
+import { generate_pkce_code_challenge, generate_pkce_code_verifier } from '../lib/common.mjs';
 
 export { LoginController };
 
@@ -21,8 +21,8 @@ class LoginController {
       // If the user has a valid login session, bypass the login flow
       return res.redirect(302, redirPath);
     }
-    const codeVerifier = generatePKCECodeVerifier(64);
-    const codeChallenge = generatePKCECodeChallenge(codeVerifier);
+    const codeVerifier = generate_pkce_code_verifier(64);
+    const codeChallenge = generate_pkce_code_challenge(codeVerifier);
 
     let stateData = await this.authService.createLoginStateSession({
       type: 'login',
@@ -30,7 +30,7 @@ class LoginController {
       codeVerifier: codeVerifier
     });
     if (!stateData) {
-      return wutil.sendInternalServerError(res, `Error creating login state session`);
+      return wutil.send_internal_server_error(res, `Error creating login state session`);
     }
     const unaConfig = this.config.auth.social_providers.una;
     const redirUrl = `${unaConfig.auth_uri}?`
@@ -65,7 +65,7 @@ class LoginController {
       case AuthService.LOGIN_STATE_VALID:
         break; // Good: continue with the login flow.
       default:
-        return wutil.sendInternalServerError(res, `Unexpected login state status: `)
+        return wutil.send_internal_server_error(res, `Unexpected login state status: `)
     }
 
     let newSession = await this.authService.handleSSORedirect(provider, authcode, this.config, loginData.loginRequestSession);
@@ -75,7 +75,7 @@ class LoginController {
       //let cookiePath = this.config.mainsite_path;
       let cookiePath = this.config.session_cookie.path; // *=*
       let cookieMaxAge = this.authService.sessionAbsoluteTTLSec;
-      wutil.setSessionCookie(res, this.config.session_cookie, newSession.token, cookiePath, cookieMaxAge);
+      wutil.set_session_cookie(res, this.config.session_cookie, newSession.token, cookiePath, cookieMaxAge);
       // %%SV2: update this to be first '/', then the path in the state param once ready
       return res.redirect(302, decodeURIComponent(loginData.loginRequestSession.data.urlPath));  // *=*
     }
@@ -89,7 +89,7 @@ class LoginController {
     let cookieToken = req.cookies[this.config.session_cookie.name];
 
     // first, expire the cookie
-    wutil.setSessionCookie(res, this.config.session_cookie, '', cookiePath, 0);
+    wutil.set_session_cookie(res, this.config.session_cookie, '', cookiePath, 0);
     // Second, kill the session internally
     let session = await this.authService.retrieveSessionByToken(cookieToken);
     if (!session) {

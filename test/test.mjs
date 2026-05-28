@@ -6,6 +6,8 @@ import {test_summary_analysis} from "#test/summarization/summary-analysis.mjs";
 import {test_summarization_property_rules} from "#test/summarization/property-rules.mjs";
 import {test_summary_node} from "#test/summarization/SummaryNode.mjs";
 import {test_summary_edge} from "#test/summarization/SummaryEdge.mjs";
+import {test_biolink_model} from "#test/biolink-model.mjs";
+import {test_biothings_annotation} from "#test/biothings-annotation.mjs";
 
 logger.level = "silent";
 await test_trapi_core();
@@ -15,3 +17,5 @@ await test_trapi_property_rules();
 await test_summarization_property_rules();
 await test_summary_node();
 await test_summary_edge();
+await test_biolink_model();
+await test_biothings_annotation();

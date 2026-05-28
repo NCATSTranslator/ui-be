@@ -92,7 +92,7 @@ class SessionController {
       /* This age should more correctly be maxagesec - <time already elapsed since start of session>,
        * but it doesn't really matter as we always check the session length in the BE. */
       let cookieMaxAgeSec = this.authService.sessionAbsoluteTTLSec;
-      wutil.setSessionCookie(res, this.config.session_cookie, newSession.session.token,
+      wutil.set_session_cookie(res, this.config.session_cookie, newSession.session.token,
         cookiePath, cookieMaxAgeSec);
     }
     // Finally, attach the new sessionData to req
@@ -158,7 +158,7 @@ class SessionController {
       case 'update':
         if (curSession.status === AuthService.SESSION_TOKEN_EXPIRED) {
           newSession = await this.authService.refreshSessionToken(curSession.session);
-          wutil.setSessionCookie(res, this.config.session_cookie, newSession.token,
+          wutil.set_session_cookie(res, this.config.session_cookie, newSession.token,
             cookiePath, cookieMaxAgeSec);
         } else if (curSession.status === AuthService.SESSION_VALID) {
           newSession = await this.authService.updateSessionTime(curSession.session);

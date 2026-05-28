@@ -4,10 +4,10 @@ import * as cmn from '../lib/common.mjs';
 
 class ARSCallbackxQueryServiceAdapter {
   processQueryUpdate(queryUpdate) {
-    const eventType = cmn.jsonGet(queryUpdate, 'event_type');
+    const eventType = cmn.json_get(queryUpdate, 'event_type');
     const update = {
-      pk: cmn.jsonGet(queryUpdate, 'pk'),
-      timestamp: cmn.jsonGet(queryUpdate, 'timestamp'),
+      pk: cmn.json_get(queryUpdate, 'pk'),
+      timestamp: cmn.json_get(queryUpdate, 'timestamp'),
       status: null,
       stats: null,
       aras: []
@@ -15,10 +15,10 @@ class ARSCallbackxQueryServiceAdapter {
     switch (eventType) {
       case _UPDATE_EVENT.MV_AVAILABLE:
       case _UPDATE_EVENT.ARS_COMPLETE:
-        update.aras = cmn.jsonGet(queryUpdate, 'merged_versions_list').map(idAraPair => idAraPair[1]);
+        update.aras = cmn.json_get(queryUpdate, 'merged_versions_list').map(idAraPair => idAraPair[1]);
         update.aras.reverse();
-        update.stats = cmn.jsonGet(queryUpdate, 'stats', null);
-        if (cmn.jsonGet(queryUpdate, 'complete')) {
+        update.stats = cmn.json_get(queryUpdate, 'stats', null);
+        if (cmn.json_get(queryUpdate, 'complete')) {
           update.status = cmn.QUERY_STATUS.COMPLETE;
         } else {
           update.status = cmn.QUERY_STATUS.RUNNING;

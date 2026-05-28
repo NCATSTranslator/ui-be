@@ -110,16 +110,16 @@ export function startServer(config, services) {
   // Submit query route: privileged session
   app.post(`${API_PATH_V1}/query`,
     sessionController.authenticatePrivilegedRequest.bind(sessionController),
-    queryAPIController.submitQuery.bind(queryAPIController));
+    queryAPIController.submit_query.bind(queryAPIController));
   // Query request routes: unprivileged session
   app.get(`${API_PATH_V1}/query/:qid/status`,
     sessionController.authenticateUnprivilegedRequest.bind(sessionController),
-    queryAPIController.getQueryStatus.bind(queryAPIController));
+    queryAPIController.get_query_status.bind(queryAPIController));
   app.get(`${API_PATH_V1}/query/:qid/result`,
     sessionController.authenticateUnprivilegedRequest.bind(sessionController),
-    queryAPIController.getQueryResult.bind(queryAPIController));
+    queryAPIController.get_query_result.bind(queryAPIController));
   // Query callback route: behind hmac
-  app.post(`${API_PATH_V1}/query/update`, queryAPIController.updateQuery.bind(queryAPIController));
+  app.post(`${API_PATH_V1}/query/update`, queryAPIController.update_query.bind(queryAPIController));
 
   // User routes: privileged
   app.use(`${API_PATH_V1}/users`, sessionController.authenticatePrivilegedRequest.bind(sessionController));
@@ -129,11 +129,11 @@ export function startServer(config, services) {
 
   // User queries
   // Creation of user queries is done on submission. See the /query endpoint
-  app.get(`${API_PATH_V1}/users/me/queries`, queryAPIController.getUserQueries.bind(queryAPIController));
+  app.get(`${API_PATH_V1}/users/me/queries`, queryAPIController.get_user_queries.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries`, queryAPIController.update_user_query.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/touch`, queryAPIController.touch_user_query.bind(queryAPIController));
-  app.put(`${API_PATH_V1}/users/me/queries/trash`, queryAPIController.deleteUserQueries.bind(queryAPIController));
-  app.put(`${API_PATH_V1}/users/me/queries/restore`, queryAPIController.restoreUserQueries.bind(queryAPIController));
+  app.put(`${API_PATH_V1}/users/me/queries/trash`, queryAPIController.delete_user_queries.bind(queryAPIController));
+  app.put(`${API_PATH_V1}/users/me/queries/restore`, queryAPIController.restore_user_queries.bind(queryAPIController));
 
   // User projects
   app.get(`${API_PATH_V1}/users/me/projects`, userAPIController.getUserProjects.bind(userAPIController));
