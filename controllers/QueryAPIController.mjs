@@ -1,5 +1,7 @@
 'use strict';
 export { QueryAPIController };
+
+import { validate as isUuid } from "uuid";
 import { QUERY_SERVICE_MSG } from '../services/QueryService.mjs';
 import * as cmn from '../lib/common.mjs';
 import * as wutil from '../lib/webutils.mjs';
@@ -110,6 +112,27 @@ class QueryAPIController {
     }
   }
 
+  async copy_user_query(req, res, _next) {
+    // user_id is valid because of session authentication middleware
+    const user_id = wutil.request_to_user_id(req);
+    const pk = req.body.pk;
+    if (!isUuid(pk)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `PK is not a UUID: ${pk}`);
+    }
+    try {
+      const query = await this.query_service.getQueryByPk(pk);
+      // TODO:[error] revisit what to do if a query is missing
+      if (cmn.is_missing(query)) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Unknown PK: ${pk}`);
+      }
+      const _user_query = await this._create_user_query(user_id, query);
+      return res.status(cmn.HTTP_CODE.SUCCESS).send("OK");
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, `Query creation failed for PK: ${pk}`);
+    }
+  }
+
   async delete_user_queries(req, res, _next) {
     const query_ids = await req.body;
     if (!cmn.is_array(query_ids)) {
@@ -165,14 +188,11 @@ class QueryAPIController {
       req.log.info({arsqueryresp: submit_resp});
       const pk = trapi.get_pk(submit_resp);
       if (!pk) throw new Error(`ARS query submission response has no PK: ${submit_resp}`);
-      const query_model = await this.query_service.createQuery(pk, req.body);
-      if (!query_model) throw new Error(`Failed to create query with PK: ${pk}`);
+      const query = await this.query_service.createQuery(pk, req.body);
+      if (!query) throw new Error(`Failed to create query with PK: ${pk}`);
       //TODO: verify subscribe response
-      const subscribe_resp = await this.translator_service.subscribeQuery(pk);
-      const user_query_model = await this.user_service.createUserQuery(user_id, pk, query_model.metadata.query);
-      if (!user_query_model) throw new Error(`User service failed to create entry for query ${query_model.id} and user ${user_id}`);
-      const is_user_assigned_query = this.query_service.addQueryUserRelationship(query_model, user_query_model);
-      if (!is_user_assigned_query) throw new Error(`Query service failed to associate query ${query_model.id} with user save ${user_query_model.id}`);
+      const _subscribe_resp = await this.translator_service.subscribeQuery(pk);
+      const _user_query = await this._create_user_query(user_id, query);
       if (pid) {
         project.data.pks.push(pk);
         const updated_project = await this.user_service.updateUserSave(project);
@@ -180,7 +200,7 @@ class QueryAPIController {
           throw new Error(`Error updating project: ${pid} with PK: ${pk}`);
         }
       }
-      return res.status(200).json(this.query_service_fe_adapter.querySubmitToFE(query_model));
+      return res.status(200).json(this.query_service_fe_adapter.querySubmitToFE(query));
     } catch (err) {
       wutil.log_internal_server_error(req, err);
       return wutil.send_internal_server_error(res, err);
@@ -332,6 +352,19 @@ class QueryAPIController {
     user_saved_data = await this.user_service.updateUserSave(user_saved_data, is_deleted);
     if (!user_saved_data) throw Error('PANIC: Database failed to update user query but did not throw');
     return user_saved_data;
+  }
+
+  async _create_user_query(user_id, query) {
+    const query_request = query.metadata.query;
+    const user_query = await this.user_service.createUserQuery(user_id, query.pk, query_request);
+    if (cmn.is_missing(user_query)) {
+      throw new Error(`User service failed to create entry for query ${query.id} and user ${user_id}`);
+    }
+    const is_user_assigned_query = await this.query_service.addQueryUserRelationship(query, user_query);
+    if (!is_user_assigned_query) {
+      throw new Error(`Query service failed to associate query ${query.id} with user save ${user_query.id}`);
+    }
+    return user_query;
   }
 
   _log_query_submission_request(req) {
