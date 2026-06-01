@@ -638,6 +638,57 @@
         }
       }
     },
+    "/api/v1/users/me/queries/copy": {
+      "post": {
+        "summary": "Copy user query",
+        "description": "Create a new user query referencing an existing query PK",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "pk": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "PK (UUID) of the query to copy"
+                  }
+                },
+                "required": ["pk"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query copied successfully",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "OK"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (e.g. PK is not a UUID or unknown PK)"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/api/v1/users/me/queries/touch": {
       "put": {
         "summary": "Touch user query",
