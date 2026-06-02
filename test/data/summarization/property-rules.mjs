@@ -19,7 +19,7 @@ function _test_make_rule_group_publications_by_knowledge_level() {
       "expected": {
         "publications": {
           "test-kl": [
-            {"id": "PMID:123", "src": "test-source"}
+            {"id": "PMID:123", "infores": "test-source"}
           ]
         }
       },
@@ -28,7 +28,7 @@ function _test_make_rule_group_publications_by_knowledge_level() {
           "attributes": [
             {"attribute_type_id": "biolink:publications", "value": ["PMID:123"]}
           ],
-          "__context__": {"provenance": "test-source", "knowledge_level": "test-kl"}
+          "__context__": {"infores":"test-source", "knowledge_level": "test-kl"}
         },
         "target": {}
       },
@@ -39,13 +39,13 @@ function _test_make_rule_group_publications_by_knowledge_level() {
       "expected": {
         "publications": {
           "test-kl-1": [
-            {"id": "PMID:1", "src": "test-source-1"},
-            {"id": "PMID:2", "src": "test-source-1"},
-            {"id": "PMID:3", "src": "test-source-2"}
+            {"id": "PMID:1", "infores": "test-source-1"},
+            {"id": "PMID:2", "infores": "test-source-1"},
+            {"id": "PMID:3", "infores": "test-source-2"}
           ],
           "test-kl-2": [
-            {"id": "PMID:4", "src": "test-source-1"},
-            {"id": "PMID:1", "src": "test-source-3"}
+            {"id": "PMID:4", "infores": "test-source-1"},
+            {"id": "PMID:1", "infores": "test-source-3"}
           ]
         }
       },
@@ -55,25 +55,25 @@ function _test_make_rule_group_publications_by_knowledge_level() {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:1", "PMID:2"]}
             ],
-            "__context__": {"provenance": "test-source-1", "knowledge_level": "test-kl-1"}
+            "__context__": {"infores":"test-source-1", "knowledge_level": "test-kl-1"}
           },
           {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:4"]}
             ],
-            "__context__": {"provenance": "test-source-1", "knowledge_level": "test-kl-2"}
+            "__context__": {"infores":"test-source-1", "knowledge_level": "test-kl-2"}
           },
           {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:3"]}
             ],
-            "__context__": {"provenance": "test-source-2", "knowledge_level": "test-kl-1"}
+            "__context__": {"infores":"test-source-2", "knowledge_level": "test-kl-1"}
           },
           {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:1"]}
             ],
-            "__context__": {"provenance": "test-source-3", "knowledge_level": "test-kl-2"}
+            "__context__": {"infores":"test-source-3", "knowledge_level": "test-kl-2"}
           }
         ],
         "target": {}
@@ -85,8 +85,8 @@ function _test_make_rule_group_publications_by_knowledge_level() {
       "expected": {
         "publications": {
           "test-kl": [
-            {"id": "PMID:1", "src": "test-source"},
-            {"id": "PMID:1", "src": "test-source"}
+            {"id": "PMID:1", "infores": "test-source"},
+            {"id": "PMID:1", "infores": "test-source"}
           ]
         }
       },
@@ -96,13 +96,13 @@ function _test_make_rule_group_publications_by_knowledge_level() {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:1"]}
             ],
-            "__context__": {"provenance": "test-source", "knowledge_level": "test-kl"}
+            "__context__": {"infores":"test-source", "knowledge_level": "test-kl"}
           },
           {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:1"]}
             ],
-            "__context__": {"provenance": "test-source", "knowledge_level": "test-kl"}
+            "__context__": {"infores":"test-source", "knowledge_level": "test-kl"}
           }
         ],
         "target": {}

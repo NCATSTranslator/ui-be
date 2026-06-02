@@ -21,7 +21,7 @@ const suite = {
     curie_to_url: _test_curie_to_url(),
     curie_to_normalized_url: _test_curie_to_normalized_url(),
     infores_to_provenance: _test_infores_to_provenance(),
-    source_to_provenance: _test_source_to_provenance(),
+    is_valid_infores: _test_is_valid_infores(),
     biolink_class_cmp_fn: _test_biolink_class_cmp_fn(),
     MissingInforesError: _test_MissingInforesError()
   },
@@ -364,41 +364,16 @@ function _test_infores_to_provenance() {
   });
 }
 
-function _test_source_to_provenance() {
+function _test_is_valid_infores() {
   return test.make_function_test({
-    "known_source_with_records": {
+    "known_infores_is_valid": {
       config_loader: () => load_biolink(_test_biolink_config()),
-      "args": [{
-        "id": "infores:rnacentral",
-        "records": ["http://example.com/record/1"]
-      }],
-      "expected": {
-        "name": "RNAcentral",
-        "wiki": "https://rnacentral.org",
-        "knowledge_level": "trusted",
-        "infores": "infores:rnacentral",
-        "url": "http://example.com/record/1"
-      }
+      "args": ["infores:rnacentral"],
+      "expected": true
     },
-    "known_source_without_records": {
+    "unknown_infores_is_invalid": {
       config_loader: () => load_biolink(_test_biolink_config()),
-      "args": [{
-        "id": "infores:rnacentral",
-        "records": []
-      }],
-      "expected": {
-        "name": "RNAcentral",
-        "wiki": "https://rnacentral.org",
-        "knowledge_level": "trusted",
-        "infores": "infores:rnacentral"
-      }
-    },
-    "unknown_source_returns_false": {
-      config_loader: () => load_biolink(_test_biolink_config()),
-      "args": [{
-        "id": "infores:not-a-real-infores",
-        "records": []
-      }],
+      "args": ["infores:not-a-real-infores"],
       "expected": false
     }
   });
