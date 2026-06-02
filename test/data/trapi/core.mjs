@@ -1325,7 +1325,7 @@ function _test_get_primary_source() {
         }
       ],
       "expected": {
-        "id": "infores:gtopdb",
+        "infores": "infores:gtopdb",
         "records": []
       }
     },
@@ -1426,7 +1426,7 @@ function _test_get_primary_source() {
         }
       ],
       "expected": {
-        "id": "infores:gtopdb",
+        "infores": "infores:gtopdb",
         "records": []
       }
     }
