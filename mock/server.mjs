@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import { validate as isUuid } from 'uuid';
 import * as cmn from '../lib/common.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -191,6 +192,45 @@ app.put('/api/v1/users/me/queries/restore', (req, res) => {
   }
 
   res.status(200).send();
+});
+
+// Copy user query
+app.post('/api/v1/users/me/queries/copy', (req, res) => {
+  const pk = req.body.pk;
+  console.log('POST /api/v1/users/me/queries/copy - Received data:', JSON.stringify(req.body, null, 2));
+
+  if (!isUuid(pk)) {
+    return res.status(400).json({ error: `PK is not a UUID: ${pk}` });
+  }
+
+  let data = loadMockData('api/v1/users/me/queries.json');
+  if (data && cmn.is_array(data)) {
+    const source = data.find(query => query.data.qid === pk);
+    if (!source) {
+      return res.status(400).json({ error: `Unknown PK: ${pk}` });
+    }
+
+    const next_sid = data.reduce((max, q) => Math.max(max, q.sid), 0) + 1;
+    const now = new Date().toISOString();
+    const copy = {
+      ...source,
+      sid: next_sid,
+      data: {
+        ...source.data,
+        bookmark_ids: [],
+        note_count: 0,
+        time_created: now,
+        time_updated: now,
+        deleted: false
+      },
+      time_updated: now
+    };
+    data.push(copy);
+    writeMockData('api/v1/users/me/queries.json', data);
+    return res.status(200).send('OK');
+  }
+
+  res.status(500).json({ error: 'Mock data not available' });
 });
 
 // Permanently delete user queries
@@ -651,6 +691,7 @@ app.listen(PORT, () => {
   console.log('  DELETE /api/v1/users/me/queries');
   console.log('  PUT /api/v1/users/me/queries/trash');
   console.log('  PUT /api/v1/users/me/queries/restore');
+  console.log('  POST /api/v1/users/me/queries/copy');
   console.log('  GET /api/v1/users/me/projects');
   console.log('  PUT /api/v1/users/me/projects');
   console.log('  DELETE /api/v1/users/me/projects');

@@ -132,6 +132,7 @@ export function startServer(config, services) {
   app.get(`${API_PATH_V1}/users/me/queries`, queryAPIController.get_user_queries.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries`, queryAPIController.update_user_query.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/touch`, queryAPIController.touch_user_query.bind(queryAPIController));
+  app.post(`${API_PATH_V1}/users/me/queries/copy`, queryAPIController.copy_user_query.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/trash`, queryAPIController.delete_user_queries.bind(queryAPIController));
   app.put(`${API_PATH_V1}/users/me/queries/restore`, queryAPIController.restore_user_queries.bind(queryAPIController));
 
