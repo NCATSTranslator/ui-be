@@ -13,12 +13,16 @@ export {
 import * as cmn from "#lib/common.mjs";
 
 function make_user_canvas_from_req(user_id, canvas_req) {
-  if (!_is_valid_canvas_req(canvas_req)) throw new CanvasRequestError(`Canvas data is malformed: ${canvas_req}`);
+  if (!_is_valid_canvas_req(canvas_req)) throw new CanvasRequestError(`Canvas data is malformed: ${JSON.stringify(canvas_req)}`);
   return new UserCanvas({
     user_id: user_id,
     label: canvas_req.label,
     layout: canvas_req.layout,
-    data: canvas_req.data
+    data: {
+      tags: canvas_req.graph?.tags ?? null,
+      query_ref: canvas_req.graph?.query_ref ?? null,
+      result_ref: canvas_req.graph?.result_ref ?? null
+    }
   });
 }
 
@@ -28,7 +32,7 @@ class UserCanvas {
     user_id,
     label,
     layout,
-    data = {},
+    data,
     time_created = new Date(),
     time_updated = new Date(),
     time_deleted = null

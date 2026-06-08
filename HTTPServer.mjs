@@ -162,7 +162,7 @@ export function startServer(config, services) {
   app.delete(`${API_PATH_V1}/users/me/saves/:save_id`, userAPIController.deleteUserSaveById.bind(userAPIController));
 
   // User canvas
-  app.get(`${API_PATH_V1}/users/me/canvases`, userAPIController.get_user_canvases.bind(userAPIController));
+  app.get(`${API_PATH_V1}/users/me/canvas`, userAPIController.get_user_canvases.bind(userAPIController));
   app.post(`${API_PATH_V1}/users/me/canvas`, userAPIController.create_user_canvas.bind(userAPIController));
 
   app.all(['/api', '/api/*'], (req, res) => {

@@ -73,6 +73,22 @@ const AUTH_SERVICE = (function (config) {
   new UserStorePostgres(dbPool));
 })(SERVER_CONFIG);
 
+/* Session auth checking is controlled from here so the HTTP layer and SessionController stay
+ * untouched. Setting "auth_check": false enables a bypass that ensures a fixed test user exists in
+ * the DB and makes every request resolve to it; any other value (or its absence) leaves normal auth
+ * in place. As a safety rail, disabling auth is only permitted under the mock configuration
+ * (ars_endpoint.host === "mock"): anywhere else we refuse to start so a real deployment can never
+ * accidentally run with session auth turned off. */
+const IS_MOCK_CONFIG = SERVER_CONFIG.ars_endpoint.host === 'mock';
+if (SERVER_CONFIG.auth_check === false) {
+  if (!IS_MOCK_CONFIG) {
+    throw new Error('Refusing to start: "auth_check" is false but this is not the mock '
+      + 'configuration (ars_endpoint.host !== "mock"). Session auth may only be disabled under mock.');
+  }
+  const { bypassSessionAuth } = await import('./mock/auth.mjs');
+  await bypassSessionAuth(AUTH_SERVICE);
+}
+
 // Bootstrap the user service
 const USER_SERVICE = (function (config) {
   const dbPool = new pg.Pool({

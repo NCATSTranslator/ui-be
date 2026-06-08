@@ -91,6 +91,7 @@ class UserService {
     return canvases;
   }
 
+  // TODO:[canvas] only creates a blank canvas. Should also work if client supplies a graph
   async create_user_canvas(user_id, canvas_req) {
     const user_canvas = make_user_canvas_from_req(user_id, canvas_req);
     const canvas = await this.canvasStore.create_user_canvas(user_canvas);
