@@ -8,7 +8,7 @@ import { loadChebi } from './lib/chebi.mjs';
 import { load_trapi } from './lib/trapi/core.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
-import * as httpserver from './HTTPServer.mjs';
+import * as httpserver from './http_server.mjs';
 import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
 import { QueryService } from './services/QueryService.mjs';
@@ -116,7 +116,7 @@ const QUERY_SERVICE = (function (config) {
 })(SERVER_CONFIG);
 logger.info(SERVER_CONFIG, "Server configuration");
 
-httpserver.startServer(SERVER_CONFIG, {
+httpserver.start_server(SERVER_CONFIG, {
   translatorService: TRANSLATOR_SERVICE,
   authService: AUTH_SERVICE,
   userService: USER_SERVICE,
