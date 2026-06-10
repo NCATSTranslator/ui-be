@@ -19,7 +19,6 @@ import { UserStorePostgres } from './stores/UserStorePostgres.mjs';
 import { pg } from './lib/postgres_preamble.mjs';
 import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgres.mjs';
 import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
-import { UserWorkspaceStorePostgres } from './stores/UserWorkspaceStorePostgres.mjs';
 import { CanvasStorePostgres } from './stores/CanvasStorePostgres.mjs';
 import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
 
@@ -100,7 +99,6 @@ const USER_SERVICE = (function (config) {
     new UserStorePostgres(dbPool),
     new UserPreferenceStorePostgres(dbPool),
     new UserSavedDataStorePostgres(dbPool),
-    new UserWorkspaceStorePostgres(dbPool),
     new CanvasStorePostgres(dbPool)
   );
 })(SERVER_CONFIG);

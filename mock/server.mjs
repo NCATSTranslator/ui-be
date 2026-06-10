@@ -448,50 +448,6 @@ app.get('/api/v1/users/me/saves/:save_id', (req, res) => {
   }
 });
 
-// User workspaces
-app.get('/api/v1/users/me/workspaces', (req, res) => {
-  const { include_data, include_deleted } = req.query;
-  let data = loadMockData('api/v1/users/me/workspaces.json');
-
-  if (data && cmn.is_array(data)) {
-    // Filter based on include_deleted parameter
-    if (include_deleted !== 'true') {
-      data = data.filter(workspace => !workspace.deleted);
-    }
-
-    // Remove data field if include_data is false
-    if (include_data !== 'true') {
-      data = data.map(workspace => {
-        const { data: workspaceData, ...rest } = workspace;
-        return rest;
-      });
-    }
-
-    res.status(200).json(data);
-  } else {
-    res.status(500).json({ error: 'Mock data not available' });
-  }
-});
-
-// User workspace by ID
-app.get('/api/v1/users/me/workspaces/:ws_id', (req, res) => {
-  const { ws_id } = req.params;
-  const { include_deleted } = req.query;
-  let data = loadMockData('api/v1/users/me/workspaces.json');
-
-  if (data && cmn.is_array(data)) {
-    let workspace = data.find(w => w.id === ws_id);
-
-    if (workspace && (include_deleted === 'true' || !workspace.deleted)) {
-      res.status(200).json(workspace);
-    } else {
-      res.status(404).json({ error: 'Workspace not found' });
-    }
-  } else {
-    res.status(500).json({ error: 'Mock data not available' });
-  }
-});
-
 // User canvases
 app.get('/api/v1/users/me/canvases', (req, res) => {
   const { include_deleted } = req.query;
@@ -700,8 +656,6 @@ app.listen(PORT, () => {
   console.log('  GET /api/v1/users/me/bookmarks');
   console.log('  GET /api/v1/users/me/saves');
   console.log('  GET /api/v1/users/me/saves/:save_id');
-  console.log('  GET /api/v1/users/me/workspaces');
-  console.log('  GET /api/v1/users/me/workspaces/:ws_id');
   console.log('  GET /api/v1/users/me/canvases');
   console.log('  POST /api/v1/users/me/canvas');
   console.log('  PUT /api/v1/users/me/canvas');

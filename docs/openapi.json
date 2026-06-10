@@ -138,12 +138,6 @@
     "/api/v1/users/me/saves/{save_id}": {
       "$ref": "paths/user-saves.json#/~1api~1v1~1users~1me~1saves~1{save_id}"
     },
-    "/api/v1/users/me/workspaces": {
-      "$ref": "paths/user-workspaces.json#/~1api~1v1~1users~1me~1workspaces"
-    },
-    "/api/v1/users/me/workspaces/{ws_id}": {
-      "$ref": "paths/user-workspaces.json#/~1api~1v1~1users~1me~1workspaces~1{ws_id}"
-    },
     "/api/v1/users/me/canvases": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvases"
     },
@@ -237,12 +231,6 @@
       },
       "UserSavedData": {
         "$ref": "schemas/user-data.json#/UserSavedData"
-      },
-      "UserWorkspace": {
-        "$ref": "schemas/user-data.json#/UserWorkspace"
-      },
-      "CreateWorkspaceRequest": {
-        "$ref": "schemas/user-data.json#/CreateWorkspaceRequest"
       },
       "QuerySummary": {
         "$ref": "schemas/summary.json#/QuerySummary"

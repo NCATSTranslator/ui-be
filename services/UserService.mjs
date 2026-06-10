@@ -9,12 +9,10 @@ class UserService {
       userStore,
       userPreferenceStore,
       userSavedDataStore,
-      userWorkspaceStore,
       canvasStore) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
     this.savedDataStore = userSavedDataStore;
-    this.userWorkspaceStore = userWorkspaceStore;
     this.canvasStore = canvasStore;
   }
 
@@ -99,34 +97,6 @@ class UserService {
     return user_canvas;
   }
 
-  // Workspaces
-  async getUserWorkspaces(uid, includeData=false, includeDeleted=false) {
-    return this.userWorkspaceStore.retrieveWorkspacesByUserId(uid, includeData, includeDeleted);
-  }
-
-  async getUserWorkspaceById(ws_id, includeDeleted=false) {
-    return this.userWorkspaceStore.retrieveWorkspaceById(ws_id, includeDeleted);
-  }
-
-  async createUserWorkspace(workspace) {
-    return this.userWorkspaceStore.createUserWorkspace(workspace);
-  }
-
-  async updateUserWorkspace(workspace) {
-    return this.userWorkspaceStore.updateUserWorkspace(workspace);
-  }
-
-  async deleteUserWorkspace(ws_id) {
-    return this.userWorkspaceStore.deleteUserWorkspace(ws_id);
-  }
-
-  async updateUserWorkspaceVisibility(ws_id, is_public) {
-    return this.userWorkspaceStore.updateUserWorkspaceVisibility(ws_id, is_public);
-  }
-
-  async updateUserWorkspaceLastUpdated(ws_id, last_updated=new Date()) {
-    return this.userWorkspaceStore.updateUserWorkspaceLastUpdated(ws_id, last_updated);
-  }
   // Utils
   preferenceArrayToObject(arr)  {
     var retval = {

@@ -3,7 +3,6 @@ export { UserAPIController };
 
 import * as wutil from '../lib/webutils.mjs';
 import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserWorkspace } from '../models/UserWorkspace.mjs';
 import * as cmn from '../lib/common.mjs';
 import { CanvasRequestError } from "../models/Canvas.mjs";
 
@@ -282,106 +281,6 @@ class UserAPIController {
         } else {
           return res.status(cmn.HTTP_CODE.NO_CONTENT).end();
         }
-      }
-    } catch (err) {
-      wutil.log_internal_server_error(req, err);
-      return wutil.send_internal_server_error(res);
-    }
-  }
-
-  async get_user_workspaces(req, res, _next) {
-    let user_id = wutil.request_to_user_id(req);
-    let include_data = req.query.include_data === 'true';
-    let include_deleted = req.query.include_deleted === 'true';
-    try {
-      let workspaces = await this.user_service.getUserWorkspaces(user_id, include_data, include_deleted);
-      if (!workspaces) {
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No workspace data found for user id ${user_id}`);
-      } else {
-        return res.status(cmn.HTTP_CODE.SUCCESS).json(workspaces);
-      }
-    } catch (err) {
-      wutil.log_internal_server_error(req, err);
-      return wutil.send_internal_server_error(res);
-    }
-  }
-
-  async get_user_workspace_by_id(req, res, _next) {
-    let user_id = wutil.request_to_user_id(req);
-    let ws_id = req.params.ws_id;
-    let include_deleted = req.query.include_deleted === 'true';
-    try {
-      let workspace = await this.user_service.getUserWorkspaceById(ws_id, include_deleted);
-      if (!workspace) {
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No workspace data found for user id ${user_id}`);
-      } else if (user_id !== workspace.user_id) {
-        // TODO: logic around is_public
-        return wutil.send_error(res, cmn.HTTP_CODE.FORBIDDEN, `User ${user_id} does not have permission to access this workspace`);
-      } else {
-        return res.status(cmn.HTTP_CODE.SUCCESS).json(workspace);
-      }
-    } catch (err) {
-      wutil.log_internal_server_error(req, err);
-      return wutil.send_internal_server_error(res);
-    }
-  }
-
-  async create_user_workspace(req, res, _next) {
-    try {
-      let workspace = await this.user_service.createUserWorkspace(new UserWorkspace(req.body));
-      if (!workspace) {
-        return wutil.send_error(res, cmn.HTTP_CODE.INTERNAL_ERROR, `Server error creating workspace`);
-      } else {
-        return res.status(cmn.HTTP_CODE.SUCCESS).json(workspace);
-      }
-    } catch (err) {
-      wutil.log_internal_server_error(req, err);
-      return wutil.send_internal_server_error(res);
-    }
-  }
-
-  // As with save data updates, we will accept a partial object
-  async update_user_workspace(req, res, _next) {
-    let user_id = wutil.request_to_user_id(req);
-    let ws_id = req.params.ws_id;
-    let include_deleted = req.query.include_deleted === 'true';
-    try {
-      let workspace = await this.user_service.getUserWorkspaceById(ws_id, include_deleted);
-      if (!workspace) {
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `Could not find workspace id ${ws_id}`);
-      }
-      if (user_id !== workspace.user_id) {
-        return wutil.send_error(res, cmn.HTTP_CODE.FORBIDDEN, `User ${user_id} does not have permission to update this workspace`);
-      }
-      workspace = new UserWorkspace({...workspace, ...req.body});
-      workspace = await this.user_service.updateUserWorkspace(workspace);
-      if (!workspace) {
-        return wutil.send_error(res, cmn.HTTP_CODE.INTERNAL_ERROR, `Server error updating workspace`);
-      } else {
-        return res.status(cmn.HTTP_CODE.SUCCESS).json(workspace);
-      }
-    } catch (err) {
-      wutil.log_internal_server_error(req, err);
-      return wutil.send_internal_server_error(res);
-    }
-  }
-
-  async delete_user_workspace(req, res, _next) {
-    let user_id = wutil.request_to_user_id(req);
-    let ws_id = req.params.ws_id;
-    try {
-      let workspace = await this.user_service.getUserWorkspaceById(ws_id, true);
-      if (!workspace) {
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `Could not find workspace id ${ws_id}`);
-      }
-      if (user_id !== workspace.user_id) {
-        return wutil.send_error(res, cmn.HTTP_CODE.FORBIDDEN, `User ${user_id} does not have permission to delete this workspace`);
-      }
-      let success = await this.user_service.deleteUserWorkspace(ws_id);
-      if (!success) {
-        return wutil.send_error(res, cmn.HTTP_CODE.INTERNAL_ERROR, `Server error deleting workspace`);
-      } else {
-        return res.status(cmn.HTTP_CODE.NO_CONTENT).end();
       }
     } catch (err) {
       wutil.log_internal_server_error(req, err);
