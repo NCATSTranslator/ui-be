@@ -37,7 +37,8 @@ class ARSClient {
   }
 
   async retainQuery(pkey) {
-    throw new Error("Not implemented");
+    logger.info(`[mock ARS] retainQuery ${pkey}`);
+    return { pk: pkey, status: "retained" };
   }
 
   async getQueryStatus(pkey, filters) {
