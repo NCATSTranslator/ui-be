@@ -226,13 +226,44 @@
       }
     }
   },
+  "GraphNode": {
+    "type": "object",
+    "description": "A node submitted as part of a canvas Graph",
+    "allOf": [
+      {
+        "$ref": "./summary.json#/SummaryNode"
+      }
+    ],
+    "properties": {
+      "x": {
+        "type": "number",
+        "format": "double",
+        "description": "The x-coordinate for this node on the canvas"
+      },
+      "y": {
+        "type": "number",
+        "format": "double",
+        "description": "The y-coordinate for this node on the canvas"
+      },
+      "hidden": {
+        "type": "boolean",
+        "default": false,
+        "description": "Whether this node is hidden on the canvas"
+      },
+      "label": {
+        "type": "string",
+        "description": "Optional display label override"
+      }
+    },
+    "required": ["x", "y"]
+  },
   "Graph": {
     "type": "object",
     "properties": {
       "nodes": {
         "type": "object",
         "additionalProperties": {
-          "$ref": "./summary.json#/SummaryNode"
+          "$ref": "./canvas.json#/GraphNode"
         }
       },
       "edges": {

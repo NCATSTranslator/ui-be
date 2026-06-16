@@ -99,7 +99,8 @@ const USER_SERVICE = (function (config) {
     new UserStorePostgres(dbPool),
     new UserPreferenceStorePostgres(dbPool),
     new UserSavedDataStorePostgres(dbPool),
-    new CanvasStorePostgres(dbPool)
+    new CanvasStorePostgres(dbPool),
+    config.secrets.hmac.key
   );
 })(SERVER_CONFIG);
 

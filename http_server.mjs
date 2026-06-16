@@ -32,7 +32,8 @@ export function start_server(config, services) {
   const translator_service = services.translatorService;
   const query_service = services.queryService;
   const demo_queries = config.frontend.cached_queries.filter(e => e.allow_inbound);
-  const translator_servicex_fe_adapter = new TranslatorServicexFEAdapter(config.feature_config);
+  const translator_servicex_fe_adapter = new TranslatorServicexFEAdapter(
+    config.feature_config, config.secrets.hmac.key);
   const query_servicex_fe_adapter = new QueryServicexFEAdapter();
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
   const app = express();

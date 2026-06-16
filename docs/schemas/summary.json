@@ -217,6 +217,10 @@
   "SummaryNode": {
     "type": "object",
     "properties": {
+      "id": {
+        "type": "string",
+        "description": "Canonical identifier (CURIE) for this node"
+      },
       "aras": {
         "type": "array",
         "items": {
@@ -269,16 +273,30 @@
       "annotations": {
         "$ref": "./annotation.json#/Annotation",
         "description": "Biothings annotations for this node, present only if annotation data is available"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/TagObject"
+        },
+        "description": "Map of tag id to tag object for this node"
+      },
+      "signature": {
+        "type": "string",
+        "description": "Server-minted HMAC over this node's data to ensure authenticity"
       }
     },
     "required": [
+      "id",
       "aras",
       "descriptions",
       "names",
       "types",
       "synonyms",
       "curies",
-      "provenance"
+      "provenance",
+      "tags",
+      "signature"
     ]
   },
   "SummaryEdge": {

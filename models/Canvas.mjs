@@ -1,6 +1,8 @@
 export {
   make_user_canvas_from_req,
+  make_graph_nodes_from_req,
   UserCanvas,
+  GraphNode,
   CanvasNode,
   CanvasNodeData,
   CanvasEdge,
@@ -11,6 +13,7 @@ export {
 }
 
 import * as cmn from "#lib/common.mjs";
+import { SummaryNode } from "#lib/summarization/SummaryNode.mjs";
 
 function make_user_canvas_from_req(user_id, canvas_req) {
   if (!_is_valid_canvas_req(canvas_req)) throw new CanvasRequestError(`Canvas data is malformed: ${JSON.stringify(canvas_req)}`);
@@ -19,10 +22,24 @@ function make_user_canvas_from_req(user_id, canvas_req) {
     label: canvas_req.label,
     layout: canvas_req.layout,
     data: {
-      tags: canvas_req.graph?.tags ?? null,
-      query_ref: canvas_req.graph?.query_ref ?? null,
-      result_ref: canvas_req.graph?.result_ref ?? null
+      tags: canvas_req.graph?.tag_descriptions ?? null,
+      query_ref: canvas_req.graph?.source?.query_ref ?? null,
+      result_ref: canvas_req.graph?.source?.result_ref ?? null
     }
+  });
+}
+
+function make_graph_nodes_from_req(canvas_req, secret) {
+  const raw_nodes = canvas_req.graph?.nodes;
+  if (cmn.is_missing(raw_nodes)) return [];
+  if (typeof raw_nodes !== "object" || Array.isArray(raw_nodes)) {
+    throw new CanvasRequestError(`Graph nodes must be a map of node id to node: ${JSON.stringify(raw_nodes)}`);
+  }
+  return Object.entries(raw_nodes).map(([id, raw]) => {
+    if (cmn.is_missing(raw) || typeof raw !== "object") {
+      throw new CanvasRequestError(`Graph node ${id} is malformed`);
+    }
+    return GraphNode.from_object({ ...raw, id: id }, secret);
   });
 }
 
@@ -148,6 +165,71 @@ class CanvasEdgeData {
     this.data = data;
     this.time_created = time_created;
     this.time_updated = time_updated;
+  }
+}
+
+class GraphNode {
+  constructor({
+    data,
+    x,
+    y,
+    hidden = false,
+    label = null
+  } = {}) {
+    this.data = data;
+    this.x = x;
+    this.y = y;
+    this.hidden = hidden;
+    this.label = label;
+  }
+
+  static from_object(raw, secret) {
+    if (cmn.is_missing(raw) || typeof raw !== "object") {
+      throw new CanvasRequestError(`Graph node is malformed: ${JSON.stringify(raw)}`);
+    }
+    if (!Number.isFinite(raw.x) || !Number.isFinite(raw.y)) {
+      throw new CanvasRequestError(`Graph node requires numeric x and y coordinates: ${JSON.stringify(raw)}`);
+    }
+    let data;
+    try {
+      data = SummaryNode.from_object(raw);
+    } catch (err) {
+      throw new CanvasRequestError(`Graph node is not a valid node: ${err.message}`);
+    }
+    if (!cmn.verify_entity_data(data.to_raw_obj(), raw.signature, secret)) {
+      throw new CanvasRequestError(`Graph node ${data.id} has an invalid or missing signature`);
+    }
+    return new GraphNode({
+      data: data,
+      x: raw.x,
+      y: raw.y,
+      hidden: raw.hidden ?? false,
+      label: raw.label ?? null
+    });
+  }
+
+  get ref() {
+    return this.data.id;
+  }
+
+  to_canvas_node_data() {
+    return new CanvasNodeData({
+      ref: this.ref,
+      data: this.data.to_raw_obj()
+    });
+  }
+
+  to_canvas_node(canvas_id, data_id) {
+    return new CanvasNode({
+      canvas_id: canvas_id,
+      data_id: data_id,
+      ref: this.ref,
+      label: this.label ?? this.data.name(),
+      type: this.data.get_specific_type(),
+      x: this.x,
+      y: this.y,
+      hidden: this.hidden
+    });
   }
 }
 

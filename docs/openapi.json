@@ -292,6 +292,9 @@
       "CanvasAnnotation": {
         "$ref": "schemas/canvas.json#/CanvasAnnotation"
       },
+      "GraphNode": {
+        "$ref": "schemas/canvas.json#/GraphNode"
+      },
       "Graph": {
         "$ref": "schemas/canvas.json#/Graph"
       },

@@ -20,31 +20,80 @@ class CanvasStorePostgres {
     return res.rows;
   }
 
-  async create_user_canvas(user_canvas) {
+  async create_user_canvas(user_canvas, graph_nodes = []) {
     return await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._create_canvas(client, user_canvas);
+      // TODO:[canvas] Test doing DB calls in parallel
       await this._create_user_to_canvas(client, user_canvas.user_id, canvas.id);
+      if (graph_nodes.length > 0) {
+        await this._create_canvas_nodes(client, canvas.id, graph_nodes);
+      }
       return canvas;
     });
   }
 
-  async batch_create_node(nodes) {
-    return this._batch_create_entity("node", nodes);
+  async _create_canvas_nodes(client, canvas_id, graph_nodes) {
+    const node_data = graph_nodes.map((gn) => gn.to_canvas_node_data());
+    const upserted = await this.batch_create_node(node_data, client);
+    const data_id_by_ref = new Map(upserted.map((row) => [row.ref, row.id]));
+    const canvas_nodes = graph_nodes.map((gn) =>
+      gn.to_canvas_node(canvas_id, data_id_by_ref.get(gn.ref)));
+    return this.batch_create_canvas_node(canvas_nodes, client);
   }
 
-  async batch_create_edge(edges) {
-    return this._batch_create_entity("edge", edges);
+  async batch_create_node(nodes, client = null) {
+    return this._batch_create_entity("node", nodes, client);
   }
 
-  async _batch_create_entity(type, entities) {
+  async batch_create_edge(edges, client = null) {
+    return this._batch_create_entity("edge", edges, client);
+  }
+
+  async _batch_create_entity(type, entities, client = null) {
+    if (entities.length === 0) return [];
     const [params, args] = models_to_params_and_args(
       entities,
       ["ref", "data"],
       [SQL_TYPES.TEXT, SQL_TYPES.JSONB]);
-    const res = await pgExec(this._db_pool, `
-      INSERT INTO ${type} (ref, data)
+    // TODO:[performance] Characterize when saving on writes is more performant
+    // Ensure we do not write if we do not need to
+    const sql = `
+      WITH input(ref, data) AS (
+        VALUES ${params}
+      ),
+      upserted AS (
+        INSERT INTO ${type} (ref, data)
+        SELECT ref, data FROM input
+        ON CONFLICT (ref) DO UPDATE
+          SET data = EXCLUDED.data, time_updated = CURRENT_TIMESTAMP
+          WHERE ${type}.data IS DISTINCT FROM EXCLUDED.data
+        RETURNING id, ref
+      )
+      SELECT id, ref FROM upserted
+      UNION
+      SELECT t.id, t.ref FROM ${type} t
+        WHERE t.ref IN (SELECT ref FROM input)
+          AND NOT EXISTS (SELECT 1 FROM upserted u WHERE u.ref = t.ref)`;
+    const res = client
+      ? await client.query(sql, args)
+      : await pgExec(this._db_pool, sql, args);
+    return res.rows;
+  }
+
+  async batch_create_canvas_node(canvas_nodes, client = null) {
+    if (canvas_nodes.length === 0) return [];
+    const [params, args] = models_to_params_and_args(
+      canvas_nodes,
+      ["canvas_id", "data_id", "ref", "label", "type", "x", "y", "hidden", "tags"],
+      [SQL_TYPES.BIGINT, SQL_TYPES.BIGINT, SQL_TYPES.TEXT, SQL_TYPES.TEXT, SQL_TYPES.TEXT,
+       SQL_TYPES.DOUBLE, SQL_TYPES.DOUBLE, SQL_TYPES.BOOL, SQL_TYPES.JSONB]);
+    const sql = `
+      INSERT INTO canvas_node (canvas_id, data_id, ref, label, type, x, y, hidden, tags)
       VALUES ${params}
-      RETURNING id`, args);
+      RETURNING *`;
+    const res = client
+      ? await client.query(sql, args)
+      : await pgExec(this._db_pool, sql, args);
     return res.rows;
   }
 

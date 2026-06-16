@@ -2,18 +2,20 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserCanvas, make_user_canvas_from_req } from "#model/Canvas.mjs";
+import { UserCanvas, make_user_canvas_from_req, make_graph_nodes_from_req } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
       userStore,
       userPreferenceStore,
       userSavedDataStore,
-      canvasStore) {
+      canvasStore,
+      nodeSigningSecret = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
     this.savedDataStore = userSavedDataStore;
     this.canvasStore = canvasStore;
+    this.nodeSigningSecret = nodeSigningSecret;
   }
 
   async getUserById(uid) {
@@ -89,10 +91,11 @@ class UserService {
     return canvases;
   }
 
-  // TODO:[canvas] only creates a blank canvas. Should also work if client supplies a graph
+  // TODO:[canvas] Add edge processing
   async create_user_canvas(user_id, canvas_req) {
     const user_canvas = make_user_canvas_from_req(user_id, canvas_req);
-    const canvas = await this.canvasStore.create_user_canvas(user_canvas);
+    const graph_nodes = make_graph_nodes_from_req(canvas_req, this.nodeSigningSecret);
+    const canvas = await this.canvasStore.create_user_canvas(user_canvas, graph_nodes);
     user_canvas.populate_from_raw(canvas);
     return user_canvas;
   }
