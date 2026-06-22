@@ -2,6 +2,7 @@ export { CanvasStorePostgres }
 
 import { pgExec, pgExecTrans } from "#lib/postgres_preamble.mjs";
 import { SQL_TYPES, models_to_params_and_args } from "#model/common.mjs";
+import { Graph } from "#model/Canvas.mjs";
 
 class CanvasStorePostgres {
   constructor(db_pool) {
@@ -20,16 +21,26 @@ class CanvasStorePostgres {
     return res.rows;
   }
 
-  async create_user_canvas(user_canvas, graph_nodes = []) {
+  async create_user_canvas(user_canvas, graph = new Graph()) {
     return await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._create_canvas(client, user_canvas);
       // TODO:[canvas] Test doing DB calls in parallel
       await this._create_user_to_canvas(client, user_canvas.user_id, canvas.id);
-      if (graph_nodes.length > 0) {
-        await this._create_canvas_nodes(client, canvas.id, graph_nodes);
-      }
+      await this._create_canvas_graph(client, canvas.id, graph);
       return canvas;
     });
+  }
+
+  async _create_canvas_graph(client, canvas_id, graph) {
+    const graph_nodes = graph.nodes();
+    const graph_edges = graph.edges();
+    let node_data_id_by_ref = new Map();
+    if (graph_nodes.length > 0) {
+      node_data_id_by_ref = await this._create_canvas_nodes(client, canvas_id, graph_nodes);
+    }
+    if (graph_edges.length > 0) {
+      await this._create_canvas_edges(client, canvas_id, graph_edges, node_data_id_by_ref);
+    }
   }
 
   async _create_canvas_nodes(client, canvas_id, graph_nodes) {
@@ -37,8 +48,22 @@ class CanvasStorePostgres {
     const upserted = await this.batch_create_node(node_data, client);
     const data_id_by_ref = new Map(upserted.map((row) => [row.ref, row.id]));
     const canvas_nodes = graph_nodes.map((gn) =>
-      gn.to_canvas_node(canvas_id, data_id_by_ref.get(gn.ref)));
-    return this.batch_create_canvas_node(canvas_nodes, client);
+      gn.to_canvas_node(canvas_id, data_id_by_ref.get(gn.ref())));
+    await this.batch_create_canvas_node(canvas_nodes, client);
+    return data_id_by_ref;
+  }
+
+  async _create_canvas_edges(client, canvas_id, graph_edges, node_data_id_by_ref) {
+    const edge_data = graph_edges.map((ge) => ge.to_canvas_edge_data());
+    const upserted = await this.batch_create_edge(edge_data, client);
+    const data_id_by_ref = new Map(upserted.map((row) => [row.ref, row.id]));
+    const canvas_edges = graph_edges.map((ge) =>
+      ge.to_canvas_edge(
+        canvas_id,
+        data_id_by_ref.get(ge.ref()),
+        node_data_id_by_ref.get(ge.subject_ref()),
+        node_data_id_by_ref.get(ge.object_ref())));
+    return this.batch_create_canvas_edge(canvas_edges, client);
   }
 
   async batch_create_node(nodes, client = null) {
@@ -89,6 +114,23 @@ class CanvasStorePostgres {
        SQL_TYPES.DOUBLE, SQL_TYPES.DOUBLE, SQL_TYPES.BOOL, SQL_TYPES.JSONB]);
     const sql = `
       INSERT INTO canvas_node (canvas_id, data_id, ref, label, type, x, y, hidden, tags)
+      VALUES ${params}
+      RETURNING *`;
+    const res = client
+      ? await client.query(sql, args)
+      : await pgExec(this._db_pool, sql, args);
+    return res.rows;
+  }
+
+  async batch_create_canvas_edge(canvas_edges, client = null) {
+    if (canvas_edges.length === 0) return [];
+    const [params, args] = models_to_params_and_args(
+      canvas_edges,
+      ["canvas_id", "data_id", "subject_id", "object_id", "ref", "label", "hidden", "tags"],
+      [SQL_TYPES.BIGINT, SQL_TYPES.BIGINT, SQL_TYPES.BIGINT, SQL_TYPES.BIGINT, SQL_TYPES.TEXT,
+       SQL_TYPES.TEXT, SQL_TYPES.BOOL, SQL_TYPES.JSONB]);
+    const sql = `
+      INSERT INTO canvas_edge (canvas_id, data_id, subject_id, object_id, ref, label, hidden, tags)
       VALUES ${params}
       RETURNING *`;
     const res = client

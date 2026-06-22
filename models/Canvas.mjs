@@ -1,8 +1,9 @@
 export {
   make_user_canvas_from_req,
-  make_graph_nodes_from_req,
+  Graph,
   UserCanvas,
   GraphNode,
+  GraphEdge,
   CanvasNode,
   CanvasNodeData,
   CanvasEdge,
@@ -14,6 +15,7 @@ export {
 
 import * as cmn from "#lib/common.mjs";
 import { SummaryNode } from "#lib/summarization/SummaryNode.mjs";
+import { SummaryEdge } from "#lib/summarization/SummaryEdge.mjs";
 
 function make_user_canvas_from_req(user_id, canvas_req) {
   if (!_is_valid_canvas_req(canvas_req)) throw new CanvasRequestError(`Canvas data is malformed: ${JSON.stringify(canvas_req)}`);
@@ -29,17 +31,38 @@ function make_user_canvas_from_req(user_id, canvas_req) {
   });
 }
 
-function make_graph_nodes_from_req(canvas_req, secret) {
+function _make_graph_nodes(canvas_req, secret) {
   const raw_nodes = canvas_req.graph?.nodes;
   if (cmn.is_missing(raw_nodes)) return [];
-  if (typeof raw_nodes !== "object" || Array.isArray(raw_nodes)) {
+  if (!cmn.is_object(raw_nodes)) {
     throw new CanvasRequestError(`Graph nodes must be a map of node id to node: ${JSON.stringify(raw_nodes)}`);
   }
   return Object.entries(raw_nodes).map(([id, raw]) => {
-    if (cmn.is_missing(raw) || typeof raw !== "object") {
+    if (!cmn.is_object(raw)) {
       throw new CanvasRequestError(`Graph node ${id} is malformed`);
     }
     return GraphNode.from_object({ ...raw, id: id }, secret);
+  });
+}
+
+function _make_graph_edges(canvas_req, secret, nodes) {
+  const raw_edges = canvas_req.graph?.edges;
+  if (cmn.is_missing(raw_edges)) return [];
+  if (!cmn.is_object(raw_edges)) {
+    throw new CanvasRequestError(`Graph edges must be a map of edge id to edge: ${JSON.stringify(raw_edges)}`);
+  }
+  const node_refs = new Set(nodes.map((node) => node.ref()));
+  return Object.entries(raw_edges).map(([id, raw]) => {
+    if (!cmn.is_object(raw)) {
+      throw new CanvasRequestError(`Graph edge ${id} is malformed`);
+    }
+    const edge = GraphEdge.from_object({ ...raw, id: id }, secret);
+    if (!node_refs.has(edge.subject_ref()) || !node_refs.has(edge.object_ref())) {
+      throw new CanvasRequestError(
+        `Graph edge ${id} references a node not present in the graph `
+        + `(subject=${edge.subject_ref()}, object=${edge.object_ref()})`);
+    }
+    return edge;
   });
 }
 
@@ -184,7 +207,7 @@ class GraphNode {
   }
 
   static from_object(raw, secret) {
-    if (cmn.is_missing(raw) || typeof raw !== "object") {
+    if (!cmn.is_object(raw)) {
       throw new CanvasRequestError(`Graph node is malformed: ${JSON.stringify(raw)}`);
     }
     if (!Number.isFinite(raw.x) || !Number.isFinite(raw.y)) {
@@ -208,13 +231,13 @@ class GraphNode {
     });
   }
 
-  get ref() {
+  ref() {
     return this.data.id;
   }
 
   to_canvas_node_data() {
     return new CanvasNodeData({
-      ref: this.ref,
+      ref: this.ref(),
       data: this.data.to_raw_obj()
     });
   }
@@ -223,13 +246,97 @@ class GraphNode {
     return new CanvasNode({
       canvas_id: canvas_id,
       data_id: data_id,
-      ref: this.ref,
+      ref: this.ref(),
       label: this.label ?? this.data.name(),
       type: this.data.get_specific_type(),
       x: this.x,
       y: this.y,
       hidden: this.hidden
     });
+  }
+}
+
+class GraphEdge {
+  constructor({
+    data,
+    hidden = false,
+    label = null
+  } = {}) {
+    this.data = data;
+    this.hidden = hidden;
+    this.label = label;
+  }
+
+  static from_object(raw, secret) {
+    if (!cmn.is_object(raw)) {
+      throw new CanvasRequestError(`Graph edge is malformed: ${JSON.stringify(raw)}`);
+    }
+    let data;
+    try {
+      data = SummaryEdge.from_object(raw);
+    } catch (err) {
+      throw new CanvasRequestError(`Graph edge is not a valid edge: ${err.message}`);
+    }
+    if (!cmn.verify_entity_data(data.to_raw_obj(), raw.signature, secret)) {
+      throw new CanvasRequestError(`Graph edge ${data.id} has an invalid or missing signature`);
+    }
+    return new GraphEdge({
+      data: data,
+      hidden: raw.hidden ?? false,
+      label: raw.label ?? null
+    });
+  }
+
+  ref() {
+    return this.data.id;
+  }
+
+  subject_ref() {
+    return this.data.subject;
+  }
+
+  object_ref() {
+    return this.data.object;
+  }
+
+  to_canvas_edge_data() {
+    return new CanvasEdgeData({
+      ref: this.ref(),
+      data: this.data.to_raw_obj()
+    });
+  }
+
+  to_canvas_edge(canvas_id, data_id, subject_id, object_id) {
+    return new CanvasEdge({
+      canvas_id: canvas_id,
+      data_id: data_id,
+      subject_id: subject_id,
+      object_id: object_id,
+      ref: this.ref(),
+      label: this.label ?? this.data.predicate,
+      hidden: this.hidden
+    });
+  }
+}
+
+class Graph {
+  constructor({ nodes = [], edges = [] } = {}) {
+    this._nodes = nodes;
+    this._edges = edges;
+  }
+
+  static from_req(canvas_req, secret) {
+    const nodes = _make_graph_nodes(canvas_req, secret);
+    const edges = _make_graph_edges(canvas_req, secret, nodes);
+    return new Graph({ nodes: nodes, edges: edges });
+  }
+
+  nodes() {
+    return this._nodes;
+  }
+
+  edges() {
+    return this._edges;
   }
 }
 

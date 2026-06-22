@@ -19,6 +19,7 @@
   "imports": {
     "#lib/*": "./lib/*",
     "#model/*": "./models/*",
+    "#store/*": "./stores/*",
     "#test/*": "./test/*"
   },
   "dependencies": {

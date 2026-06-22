@@ -295,6 +295,9 @@
       "GraphNode": {
         "$ref": "schemas/canvas.json#/GraphNode"
       },
+      "GraphEdge": {
+        "$ref": "schemas/canvas.json#/GraphEdge"
+      },
       "Graph": {
         "$ref": "schemas/canvas.json#/Graph"
       },

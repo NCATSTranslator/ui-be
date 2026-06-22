@@ -2,7 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserCanvas, make_user_canvas_from_req, make_graph_nodes_from_req } from "#model/Canvas.mjs";
+import { UserCanvas, make_user_canvas_from_req, Graph } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
@@ -10,12 +10,12 @@ class UserService {
       userPreferenceStore,
       userSavedDataStore,
       canvasStore,
-      nodeSigningSecret = null) {
+      entitySigningSecret = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
     this.savedDataStore = userSavedDataStore;
     this.canvasStore = canvasStore;
-    this.nodeSigningSecret = nodeSigningSecret;
+    this.entitySigningSecret = entitySigningSecret;
   }
 
   async getUserById(uid) {
@@ -91,11 +91,10 @@ class UserService {
     return canvases;
   }
 
-  // TODO:[canvas] Add edge processing
   async create_user_canvas(user_id, canvas_req) {
     const user_canvas = make_user_canvas_from_req(user_id, canvas_req);
-    const graph_nodes = make_graph_nodes_from_req(canvas_req, this.nodeSigningSecret);
-    const canvas = await this.canvasStore.create_user_canvas(user_canvas, graph_nodes);
+    const graph = Graph.from_req(canvas_req, this.entitySigningSecret);
+    const canvas = await this.canvasStore.create_user_canvas(user_canvas, graph);
     user_canvas.populate_from_raw(canvas);
     return user_canvas;
   }

@@ -257,6 +257,26 @@
     },
     "required": ["x", "y"]
   },
+  "GraphEdge": {
+    "type": "object",
+    "description": "An edge submitted as part of a canvas Graph",
+    "allOf": [
+      {
+        "$ref": "./summary.json#/SummaryEdge"
+      }
+    ],
+    "properties": {
+      "hidden": {
+        "type": "boolean",
+        "default": false,
+        "description": "Whether this edge is hidden on the canvas"
+      },
+      "label": {
+        "type": "string",
+        "description": "Optional display label override"
+      }
+    }
+  },
   "Graph": {
     "type": "object",
     "properties": {
@@ -269,7 +289,7 @@
       "edges": {
         "type": "object",
         "additionalProperties": {
-          "$ref": "./summary.json#/SummaryEdge"
+          "$ref": "./canvas.json#/GraphEdge"
         }
       },
       "tag_descriptions": {

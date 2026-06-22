@@ -10,9 +10,9 @@ export { TranslatorServicexFEAdapter };
 // msg: ARS client message with trace=y
 
 class TranslatorServicexFEAdapter {
-  constructor(feature_config, node_signing_secret = null) {
+  constructor(feature_config, entity_signing_secret = null) {
     this.feature_config = feature_config;
-    this.node_signing_secret = node_signing_secret;
+    this.entity_signing_secret = entity_signing_secret;
   }
 
   querySubmitToFE(msg) {
@@ -50,7 +50,8 @@ class TranslatorServicexFEAdapter {
       data,
       this.feature_config);
     summary.set_timestamp(msg.meta.timestamp);
-    this._sign_nodes(summary);
+    this._sign_entities(summary.nodes);
+    this._sign_entities(summary.edges);
 
     return {
       status: _determine_status(msg),
@@ -58,10 +59,10 @@ class TranslatorServicexFEAdapter {
     };
   }
 
-  _sign_nodes(summary) {
-    if (!this.node_signing_secret) return;
-    for (const node of Object.values(summary.nodes)) {
-      node.signature = cmn.sign_entity_data(node.to_raw_obj(), this.node_signing_secret);
+  _sign_entities(entities) {
+    if (!this.entity_signing_secret) return;
+    for (const entity of Object.values(entities)) {
+      entity.signature = cmn.sign_entity_data(entity.to_raw_obj(), this.entity_signing_secret);
     }
   }
 }

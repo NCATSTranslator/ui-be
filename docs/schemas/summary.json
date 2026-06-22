@@ -302,6 +302,10 @@
   "SummaryEdge": {
     "type": "object",
     "properties": {
+      "id": {
+        "type": "string",
+        "description": "Canonical identifier for this edge"
+      },
       "aras": {
         "type": "array",
         "items": {
@@ -404,9 +408,14 @@
         "$ref": "./summary.json#/EdgeMetadata",
         "nullable": true,
         "description": "Edge metadata containing binding information"
+      },
+      "signature": {
+        "type": "string",
+        "description": "Server-minted HMAC over this edge's data to ensure authenticity"
       }
     },
     "required": [
+      "id",
       "aras",
       "support",
       "is_root",
@@ -418,7 +427,8 @@
       "provenance",
       "publications",
       "trials",
-      "tags"
+      "tags",
+      "signature"
     ]
   },
   "SummaryPublication": {
