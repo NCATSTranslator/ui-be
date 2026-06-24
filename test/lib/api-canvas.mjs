@@ -26,6 +26,18 @@ export const SOURCE_TIME = '2026-06-23T12:00:00.000Z';
 export const NEWER_SOURCE_TIME = '2026-06-24T12:00:00.000Z';
 export const STALE_SOURCE_TIME = '2026-06-01T12:00:00.000Z';
 
+// Tag ids carried by the fixture entities. The full tag objects live in the entity data (and are
+// signed); the server denormalizes the ids onto canvas_node/canvas_edge.tags and the descriptions
+// onto canvas.data.tags via the graph's tag_descriptions.
+export const NODE_TAG_DRUG = 'r/cc/drug';
+export const NODE_TAG_FDA = 'r/fda/approved';
+export const EDGE_TAG_CLINICAL = 'p/ev/clinical';
+
+// A TagObject as the summary schema defines it: an id plus a user-facing description.
+export function tagObject(id, name, description = '') {
+  return { id, description: { name, description } };
+}
+
 export async function postCanvas(body) {
   return postJson(CANVAS_PATH, body);
 }
@@ -95,9 +107,17 @@ export function graphWithNodesAndEdges(variant = '', sourceTime = SOURCE_TIME) {
   const suffix = variant ? ` ${variant}` : '';
   return {
     nodes: {
-      // node 1 carries annotations to exercise lossless round-trip + signing of annotation data
+      // node 1 carries annotations to exercise lossless round-trip + signing of annotation data, and
+      // tags to exercise denormalizing the entity's tag ids onto canvas_node.tags
       [NODE_REF_1]: signNode(NODE_REF_1, testNode(NODE_REF_1, `API Test Node One${suffix}`, 'biolink:Disease', 10, 20,
-        { annotations: { disease: { mondo: ['MONDO:0005148'] } }, source_time: sourceTime })),
+        {
+          annotations: { disease: { mondo: ['MONDO:0005148'] } },
+          tags: {
+            [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug'),
+            [NODE_TAG_FDA]: tagObject(NODE_TAG_FDA, 'FDA Approved'),
+          },
+          source_time: sourceTime,
+        })),
       [NODE_REF_2]: signNode(NODE_REF_2, testNode(NODE_REF_2, `API Test Node Two${suffix}`, 'biolink:ChemicalEntity', 30, 40,
         { hidden: true, source_time: sourceTime })),
     },
@@ -105,9 +125,17 @@ export function graphWithNodesAndEdges(variant = '', sourceTime = SOURCE_TIME) {
       // edge 1 connects node 1 -> node 2; its endpoints resolve to the canvas node data ids. The
       // description varies with the variant so the update branch sees data IS DISTINCT FROM stored.
       [EDGE_REF_1]: signEdge(EDGE_REF_1, testEdge(NODE_REF_1, NODE_REF_2, 'biolink:treats',
-        { description: `API test edge${suffix}`, source_time: sourceTime })),
+        {
+          description: `API test edge${suffix}`,
+          tags: { [EDGE_TAG_CLINICAL]: tagObject(EDGE_TAG_CLINICAL, 'Clinical Evidence') },
+          source_time: sourceTime,
+        })),
     },
-    tag_descriptions: {},
+    tag_descriptions: {
+      [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug'),
+      [NODE_TAG_FDA]: tagObject(NODE_TAG_FDA, 'FDA Approved'),
+      [EDGE_TAG_CLINICAL]: tagObject(EDGE_TAG_CLINICAL, 'Clinical Evidence'),
+    },
     source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   };
 }

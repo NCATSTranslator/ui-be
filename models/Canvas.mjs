@@ -14,6 +14,7 @@ export {
 }
 
 import * as cmn from "#lib/common.mjs";
+import * as taglib from "#lib/taglib.mjs";
 import { SummaryNode } from "#lib/summarization/SummaryNode.mjs";
 import { SummaryEdge } from "#lib/summarization/SummaryEdge.mjs";
 
@@ -29,6 +30,14 @@ function make_user_canvas_from_req(user_id, canvas_req) {
       result_ref: canvas_req.graph?.source?.result_ref ?? null
     }
   });
+}
+
+function _entity_data_to_canvas_tags(entity_data) {
+  const tags = {};
+  for (const tag of taglib.get_tags(entity_data)) {
+    tags[tag.id] = null;
+  }
+  return tags;
 }
 
 function _make_graph_nodes(canvas_req, secret) {
@@ -251,7 +260,8 @@ class GraphNode {
       type: this.data.get_specific_type(),
       x: this.x,
       y: this.y,
-      hidden: this.hidden
+      hidden: this.hidden,
+      tags: _entity_data_to_canvas_tags(this.data)
     });
   }
 }
@@ -314,7 +324,8 @@ class GraphEdge {
       object_id: object_id,
       ref: this.ref(),
       label: this.label ?? this.data.predicate,
-      hidden: this.hidden
+      hidden: this.hidden,
+      tags: _entity_data_to_canvas_tags(this.data)
     });
   }
 }
