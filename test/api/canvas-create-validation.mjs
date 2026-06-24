@@ -1,7 +1,8 @@
 /* Standalone API test: POST /api/v1/users/me/canvas (validation)
  *
- * Confirms malformed canvas requests are rejected with 400. A canvas request requires a string
- * `label` and a `layout` of one of: horizontal, vertical, concentric, custom (see models/Canvas.mjs).
+ * Confirms malformed canvas requests are rejected with 400, and that every valid layout is accepted.
+ * A canvas request requires a string `label` and a `layout` of one of: horizontal, vertical,
+ * concentric, custom (see models/Canvas.mjs).
  *
  * Assumes the server is running with "auth_check": false (see mock/auth.mjs): the request is
  * authorized as the fixed test user and therefore reaches the canvas request validator.
@@ -51,6 +52,11 @@ try {
   ok((await postStatus({ label: 'no layout' })) === 400, 'missing layout -> 400');
   ok((await postStatus({ label: 'bad layout', layout: 'diagonal' })) === 400, 'invalid layout -> 400');
   ok((await postStatus({})) === 400, 'empty body -> 400');
+
+  // Every valid layout is accepted (guards against a regression that drops one from _VALID_LAYOUTS).
+  for (const layout of ['horizontal', 'vertical', 'concentric', 'custom']) {
+    ok((await postStatus({ label: `valid ${layout}`, layout })) === 200, `valid layout "${layout}" -> 200`);
+  }
 } catch (err) {
   failures += 1;
   console.error(`  ✗ request failed: ${err.message} -- is the server running with auth_check=false?`);
