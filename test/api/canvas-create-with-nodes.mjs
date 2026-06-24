@@ -45,6 +45,9 @@ const SIGNING_SECRET = JSON.parse(
 const NODE_REF_1 = 'API_TEST:node-1';
 const NODE_REF_2 = 'API_TEST:node-2';
 const EDGE_REF_1 = 'API_TEST:edge-1';
+const SOURCE_TIME = '2026-06-23T12:00:00.000Z';
+const NEWER_SOURCE_TIME = '2026-06-24T12:00:00.000Z';
+const STALE_SOURCE_TIME = '2026-06-01T12:00:00.000Z';
 
 let failures = 0;
 function ok(cond, msg) {
@@ -74,6 +77,7 @@ function testNode(ref, name, type, x, y, extra = {}) {
     curies: [ref],
     provenance: [],
     tags: {},
+    source_time: SOURCE_TIME,
     x: x,
     y: y,
     ...extra,
@@ -106,6 +110,7 @@ function testEdge(subject, object, predicate, extra = {}) {
     metadata: null,
     trials: [],
     tags: {},
+    source_time: SOURCE_TIME,
     ...extra,
   };
 }
@@ -117,23 +122,25 @@ function signEdge(ref, edge) {
   return { ...edge, signature: cmn.sign_entity_data(raw, SIGNING_SECRET) };
 }
 
-// variant alters the SummaryNode/SummaryEdge data for the same refs, so re-submitting it exercises
-// the upsert's update branch (data IS DISTINCT FROM the stored data). Note node x/y live on the
-// canvas_node placement, not node.data, so changing them alone would NOT count as a data change.
-function graphWithNodesAndEdges(variant = '') {
+// variant alters the SummaryNode/SummaryEdge data for the same refs; combined with a strictly newer
+// sourceTime, re-submitting it exercises the upsert's update branch (data IS DISTINCT FROM the stored
+// data AND the incoming source_time is newer). Note node x/y live on the canvas_node placement, not
+// node.data, so changing them alone would NOT count as a data change.
+function graphWithNodesAndEdges(variant = '', sourceTime = SOURCE_TIME) {
   const suffix = variant ? ` ${variant}` : '';
   return {
     nodes: {
       // node 1 carries annotations to exercise lossless round-trip + signing of annotation data
       [NODE_REF_1]: signNode(NODE_REF_1, testNode(NODE_REF_1, `API Test Node One${suffix}`, 'biolink:Disease', 10, 20,
-        { annotations: { disease: { mondo: ['MONDO:0005148'] } } })),
-      [NODE_REF_2]: signNode(NODE_REF_2, testNode(NODE_REF_2, `API Test Node Two${suffix}`, 'biolink:ChemicalEntity', 30, 40, { hidden: true })),
+        { annotations: { disease: { mondo: ['MONDO:0005148'] } }, source_time: sourceTime })),
+      [NODE_REF_2]: signNode(NODE_REF_2, testNode(NODE_REF_2, `API Test Node Two${suffix}`, 'biolink:ChemicalEntity', 30, 40,
+        { hidden: true, source_time: sourceTime })),
     },
     edges: {
       // edge 1 connects node 1 -> node 2; its endpoints resolve to the canvas node data ids. The
       // description varies with the variant so the update branch sees data IS DISTINCT FROM stored.
       [EDGE_REF_1]: signEdge(EDGE_REF_1, testEdge(NODE_REF_1, NODE_REF_2, 'biolink:treats',
-        { description: `API test edge${suffix}` })),
+        { description: `API test edge${suffix}`, source_time: sourceTime })),
     },
     tag_descriptions: {},
     source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
@@ -186,14 +193,32 @@ try {
   ok(create2.json && create2.json.id !== undefined && create2.json.id !== (canvas && canvas.id),
     'second canvas is a distinct canvas sharing the same node and edge data');
 
-  // Update: reuse the SAME refs but with CHANGED data, exercising the upsert's update branch
-  // (data IS DISTINCT FROM the stored data -> the shared node/edge rows are updated, not skipped).
-  // Verifying the data actually changed needs the (not-yet-built) GET-graph endpoint; for now we
-  // assert the path succeeds.
-  const createUpdated = await postCanvas({ label: `${label} (updated data)`, layout, graph: graphWithNodesAndEdges('UPDATED') });
+  // Update: reuse the SAME refs but with CHANGED data and a strictly newer source_time, exercising
+  // the upsert's update branch (data IS DISTINCT FROM the stored data AND the incoming source_time is
+  // newer -> the shared node/edge rows are updated, not skipped). Verifying the data actually changed
+  // needs the (not-yet-built) GET-graph endpoint; for now we assert the path succeeds.
+  const createUpdated = await postCanvas({ label: `${label} (updated data)`, layout, graph: graphWithNodesAndEdges('UPDATED', NEWER_SOURCE_TIME) });
   ok(createUpdated.res.status === 200, `canvas with updated node/edge data responds 200 (got ${createUpdated.res.status})`);
   ok(createUpdated.json && createUpdated.json.id !== undefined && createUpdated.json.id !== null,
     'canvas with updated node/edge data has an id');
+
+  const stale = {
+    nodes: {
+      [NODE_REF_1]: signNode(NODE_REF_1, testNode(NODE_REF_1, 'API Test Node One STALE', 'biolink:Disease', 10, 20,
+        { annotations: { disease: { mondo: ['MONDO:0005148'] } }, source_time: STALE_SOURCE_TIME })),
+      [NODE_REF_2]: signNode(NODE_REF_2, testNode(NODE_REF_2, 'API Test Node Two STALE', 'biolink:ChemicalEntity', 30, 40,
+        { hidden: true, source_time: STALE_SOURCE_TIME })),
+    },
+    edges: {
+      [EDGE_REF_1]: signEdge(EDGE_REF_1, testEdge(NODE_REF_1, NODE_REF_2, 'biolink:treats',
+        { description: 'API test edge STALE', source_time: STALE_SOURCE_TIME })),
+    },
+    tag_descriptions: {},
+    source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
+  };
+  const createStale = await postCanvas({ label: `${label} (stale data)`, layout, graph: stale });
+  ok(createStale.res.status === 200,
+    `canvas with an older source_time still creates successfully (the skip-not-overwrite behavior itself is unverifiable until the GET-graph endpoint exists) (got ${createStale.res.status})`);
 
   // Security: a node whose data was altered after signing must be rejected. Sign a node, then mutate
   // a signed field (names) -- the server re-derives a different hash than the stale signature.

@@ -25,7 +25,8 @@ function _test_SummaryEdge() {
     provenance: [],
     publications: {},
     metadata: null,
-    trials: []
+    trials: [],
+    source_time: null
   };
   const default_other = {
     id: EDGE_ID,

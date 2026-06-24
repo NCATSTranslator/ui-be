@@ -21,7 +21,8 @@ function _test_SummaryNode() {
           types: [],
           synonyms: [],
           curies: [],
-          provenance: []
+          provenance: [],
+          source_time: null
         }
       }
     },
@@ -36,7 +37,8 @@ function _test_SummaryNode() {
           types: [],
           synonyms: [],
           curies: [],
-          provenance: []
+          provenance: [],
+          source_time: null
         }
       }
     },
@@ -51,7 +53,8 @@ function _test_SummaryNode() {
           types: [],
           synonyms: [],
           curies: [],
-          provenance: []
+          provenance: [],
+          source_time: null
         }
       }
     },

@@ -91,7 +91,9 @@ class CanvasStorePostgres {
         SELECT ref, data FROM input
         ON CONFLICT (ref) DO UPDATE
           SET data = EXCLUDED.data, time_updated = CURRENT_TIMESTAMP
-          WHERE ${type}.data IS DISTINCT FROM EXCLUDED.data
+          WHERE (${type}.data - 'source_time') IS DISTINCT FROM (EXCLUDED.data - 'source_time')
+            AND (EXCLUDED.data ->> 'source_time')::timestamptz
+                > (${type}.data ->> 'source_time')::timestamptz
         RETURNING id, ref
       )
       SELECT id, ref FROM upserted

@@ -34,6 +34,12 @@ class TranslatorServicexFEAdapter {
   }
 
   async queryResultsToFE(msg, maxHops) {
+    if (cmn.is_missing(this.entity_signing_secret)) {
+      throw new Error('Cannot summarize results for canvas: entity signing secret is not configured');
+    }
+    if (cmn.is_missing(msg.meta.timestamp)) {
+      throw new Error('Cannot summarize results for canvas: message timestamp (source_time) is missing');
+    }
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
     const data = msg.completed.filter(e => {
@@ -60,7 +66,6 @@ class TranslatorServicexFEAdapter {
   }
 
   _sign_entities(entities) {
-    if (!this.entity_signing_secret) return;
     for (const entity of Object.values(entities)) {
       entity.signature = cmn.sign_entity_data(entity.to_raw_obj(), this.entity_signing_secret);
     }

@@ -281,6 +281,12 @@
         },
         "description": "Map of tag id to tag object for this node"
       },
+      "source_time": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "Timestamp of the query/answer-set this node was summarized from; signed and used to reject stale overwrites of shared node data"
+      },
       "signature": {
         "type": "string",
         "description": "Server-minted HMAC over this node's data to ensure authenticity"
@@ -408,6 +414,12 @@
         "$ref": "./summary.json#/EdgeMetadata",
         "nullable": true,
         "description": "Edge metadata containing binding information"
+      },
+      "source_time": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "Timestamp of the query/answer-set this edge was summarized from; signed and used to reject stale overwrites of shared edge data"
       },
       "signature": {
         "type": "string",
