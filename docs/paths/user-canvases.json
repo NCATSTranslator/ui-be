@@ -1,5 +1,5 @@
 {
-  "/api/v1/users/me/canvases": {
+  "/api/v1/users/me/canvas": {
     "get": {
       "summary": "Get all canvases for the current user",
       "security": [
@@ -49,9 +49,7 @@
           "description": "Internal Server Error"
         }
       }
-    }
-  },
-  "/api/v1/users/me/canvas": {
+    },
     "post": {
       "summary": "Create a canvas for the current user",
       "security": [
@@ -70,12 +68,12 @@
         }
       },
       "responses": {
-        "201": {
+        "200": {
           "description": "Canvas successfully created",
           "content": {
             "application/json": {
               "schema": {
-                "type": "string"
+                "$ref": "../schemas/canvas.json#/UserCanvas"
               }
             }
           }

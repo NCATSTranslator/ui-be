@@ -319,6 +319,7 @@ class UserAPIController {
       if (err instanceof CanvasRequestError) {
         wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
       } else {
+        wutil.log_internal_server_error(req, err);
         wutil.send_internal_server_error(res);
       }
     }

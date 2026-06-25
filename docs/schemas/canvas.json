@@ -32,18 +32,13 @@
         "description": "The label for the created Canvas"
       },
       "layout": {
-        "allOf": [
-          {
-            "$ref": "./canvas.json#/CanvasLayout"
-          }
-        ],
-        "default": "horizontal"
+        "$ref": "./canvas.json#/CanvasLayout"
       },
       "graph": {
         "$ref": "./canvas.json#/Graph"
       }
     },
-    "required": ["label"]
+    "required": ["label", "layout"]
   },
   "CanvasGraph": {
     "type": "object",
