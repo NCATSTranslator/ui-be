@@ -347,5 +347,56 @@
         }
       }
     }
+  },
+  "/api/v1/users/me/canvas/{save_id}/edge/{data_id}": {
+    "get": {
+      "summary": "Get the underlying data entity for a Canvas Edge",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        },
+        {
+          "name": "data_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Data Edge ID (the data_id of the Canvas Edge)"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The underlying data entity for the edge",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/summary.json#/SummaryEdge"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "No edge with the given data_id exists"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
   }
 }

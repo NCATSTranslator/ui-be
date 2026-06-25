@@ -347,6 +347,25 @@ class UserAPIController {
     }
   }
 
+  async get_user_canvas_edge_data(req, res) {
+    const data_id = parseInt(req.params.data_id, 10);
+    if (!Number.isInteger(data_id)) {
+      req.log.warn(`Invalid edge ID requested: ${req.params.data_id}`);
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid edge ID: ${req.params.data_id}`);
+    }
+    try {
+      const data = await this.user_service.get_edge_data(data_id);
+      if (data === null) {
+        req.log.warn(`No edge found for id ${data_id}`);
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No edge found for id ${data_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(data);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async create_user_canvas(req, res) {
     const user_id = req.sessionData.user.id;
     if (cmn.is_missing(user_id)) {

@@ -101,6 +101,10 @@ class UserService {
     return this.canvasStore.get_node_data(data_id);
   }
 
+  async get_edge_data(data_id) {
+    return this.canvasStore.get_edge_data(data_id);
+  }
+
   async create_user_canvas(user_id, canvas_req) {
     const user_canvas = make_user_canvas_from_req(user_id, canvas_req);
     const graph = Graph.from_req(canvas_req, this.entitySigningSecret);
