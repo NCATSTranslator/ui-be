@@ -208,7 +208,7 @@
           "description": "Canvases restored successfully"
         },
         "400": {
-          "description": "At least one of the Canvases does not exist"
+          "description": "The request body is not a valid array of canvas IDs"
         },
         "401": {
           "description": "Authentication Required"

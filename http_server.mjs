@@ -166,6 +166,7 @@ export function start_server(config, services) {
   app.get(`${API_PATH_V1}/users/me/canvas`, user_api_controller.get_user_canvases.bind(user_api_controller));
   app.post(`${API_PATH_V1}/users/me/canvas`, user_api_controller.create_user_canvas.bind(user_api_controller));
   app.put(`${API_PATH_V1}/users/me/canvas/trash`, user_api_controller.trash_user_canvases.bind(user_api_controller));
+  app.put(`${API_PATH_V1}/users/me/canvas/restore`, user_api_controller.restore_user_canvases.bind(user_api_controller));
   app.put(`${API_PATH_V1}/users/me/canvas/:save_id`, user_api_controller.update_user_canvas.bind(user_api_controller));
   app.get(`${API_PATH_V1}/users/me/canvas/:save_id/graph`, user_api_controller.get_user_canvas_graph.bind(user_api_controller));
   app.get(`${API_PATH_V1}/users/me/canvas/:save_id/node/:data_id`, user_api_controller.get_user_canvas_node_data.bind(user_api_controller));

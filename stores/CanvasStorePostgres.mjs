@@ -106,6 +106,21 @@ class CanvasStorePostgres {
     return res.rows.map((row) => row.id);
   }
 
+  async restore_canvases_by_user(user_id, canvas_ids) {
+    if (canvas_ids.length === 0) return [];
+    const res = await pgExec(this._db_pool, `
+      UPDATE canvas
+      SET time_deleted = NULL
+      WHERE canvas.id = ANY($1::bigint[])
+        AND canvas.time_deleted IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM user_to_canvas
+          WHERE user_to_canvas.canvas_id = canvas.id
+            AND user_to_canvas.user_id = $2)
+      RETURNING id`, [canvas_ids, user_id]);
+    return res.rows.map((row) => row.id);
+  }
+
   async create_user_canvas(user_canvas, graph = new Graph()) {
     return await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._create_canvas(client, user_canvas);

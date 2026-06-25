@@ -372,6 +372,26 @@ class UserAPIController {
     }
   }
 
+  async restore_user_canvases(req, res) {
+    const user_id = req.sessionData.user.id;
+    if (cmn.is_missing(user_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
+    }
+    const canvas_ids = req.body;
+    if (!cmn.is_array(canvas_ids) || !canvas_ids.every((id) => Number.isInteger(id))) {
+      req.log.warn(`Malformed canvas restore request: ${JSON.stringify(canvas_ids)}`);
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST,
+        `Expected body to be a JSON array of canvas IDs. Got: ${JSON.stringify(canvas_ids)}`);
+    }
+    try {
+      await this.user_service.restore_canvases(user_id, canvas_ids);
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async get_user_canvas_node_data(req, res) {
     const data_id = parseInt(req.params.data_id, 10);
     if (!Number.isInteger(data_id)) {
