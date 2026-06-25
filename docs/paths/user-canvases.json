@@ -296,5 +296,56 @@
         }
       }
     }
+  },
+  "/api/v1/users/me/canvas/{save_id}/node/{data_id}": {
+    "get": {
+      "summary": "Get the underlying data entity for a Canvas Node",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        },
+        {
+          "name": "data_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Data Node ID (the data_id of the Canvas Node)"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The underlying data entity for the node",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/summary.json#/SummaryNode"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "No node with the given data_id exists"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
   }
 }

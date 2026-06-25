@@ -49,6 +49,13 @@ class CanvasStorePostgres {
     };
   }
 
+  async get_node_data(data_id) {
+    const res = await pgExec(this._db_pool,
+      `SELECT data FROM node WHERE id = $1`, [data_id]);
+    if (res.rows.length === 0) return null;
+    return res.rows[0].data;
+  }
+
   async create_user_canvas(user_canvas, graph = new Graph()) {
     return await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._create_canvas(client, user_canvas);
