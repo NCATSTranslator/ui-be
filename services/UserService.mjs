@@ -2,7 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserCanvas, make_user_canvas_from_req, Graph } from "#model/Canvas.mjs";
+import { UserCanvas, CanvasGraph, make_user_canvas_from_req, Graph } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
@@ -89,6 +89,12 @@ class UserService {
     const rows = await this.canvasStore.get_canvases_by_user(user_id, include_deleted);
     const canvases = rows.map(row => new UserCanvas(row));
     return canvases;
+  }
+
+  async get_canvas_graph(user_id, canvas_id, include_deleted=false) {
+    const graph = await this.canvasStore.get_canvas_graph_by_user(user_id, canvas_id, include_deleted);
+    if (graph === null) return null;
+    return new CanvasGraph(graph);
   }
 
   async create_user_canvas(user_id, canvas_req) {

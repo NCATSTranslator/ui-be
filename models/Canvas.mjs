@@ -8,6 +8,7 @@ export {
   CanvasNodeData,
   CanvasEdge,
   CanvasEdgeData,
+  CanvasGraph,
   CanvasNodeCreationError,
   CanvasEdgeCreationError,
   CanvasRequestError
@@ -348,6 +349,14 @@ class Graph {
 
   edges() {
     return this._edges;
+  }
+}
+
+class CanvasGraph {
+  constructor({ nodes = [], edges = [], tags = null } = {}) {
+    this.nodes = nodes;
+    this.edges = edges;
+    this.tags = tags;
   }
 }
 

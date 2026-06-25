@@ -306,6 +306,28 @@ class UserAPIController {
     }
   }
 
+  async get_user_canvas_graph(req, res) {
+    const user_id = req.sessionData.user.id;
+    if (cmn.is_missing(user_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
+    }
+    const canvas_id = parseInt(req.params.save_id, 10);
+    if (!Number.isInteger(canvas_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
+    }
+    const include_deleted = req.query.include_deleted === "true";
+    try {
+      const graph = await this.user_service.get_canvas_graph(user_id, canvas_id, include_deleted);
+      if (graph === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No canvas found for id ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(graph);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async create_user_canvas(req, res) {
     const user_id = req.sessionData.user.id;
     if (cmn.is_missing(user_id)) {

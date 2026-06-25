@@ -205,7 +205,7 @@
   },
   "/api/v1/users/me/canvas/{save_id}/graph": {
     "get": {
-      "summary": "Get all Display Nodes, Edges, and Annotations for a Canvas",
+      "summary": "Get the Nodes, Edges, and Tags for a Canvas",
       "security": [
         {
           "cookieAuth": []
@@ -220,6 +220,15 @@
             "type": "integer"
           },
           "description": "The Canvas Save ID"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Controls if the response should include soft deleted nodes, edges, and canvases"
         }
       ],
       "responses": {
@@ -233,7 +242,7 @@
             }
           }
         },
-        "400": {
+        "404": {
           "description": "The Canvas does not exist"
         },
         "401": {

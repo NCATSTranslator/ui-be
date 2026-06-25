@@ -61,21 +61,20 @@
           "$ref": "./canvas.json#/CanvasAnnotation"
         }
       },
-      "tag_descriptions": {
+      "tags": {
         "type": "object",
+        "nullable": true,
         "additionalProperties": {
           "$ref": "./summary.json#/TagObject"
-        }
+        },
+        "description": "Map of tag id to its full description for every tag referenced by the Canvas nodes and edges"
       }
-    }
+    },
+    "required": ["nodes", "edges", "tags"]
   },
   "CanvasNode": {
     "type": "object",
     "properties": {
-      "id": {
-        "type": "integer",
-        "description": "The ID of this Canvas Node"
-      },
       "canvas_id": {
         "type": "integer",
         "description": "The ID of the Canvas that contains this Canvas Node"
@@ -83,6 +82,10 @@
       "data_id": {
         "type": "integer",
         "description": "The Data Node ID associated with this Canvas Node"
+      },
+      "ref": {
+        "type": "string",
+        "description": "The id of the underlying data entity (e.g. the node CURIE)"
       },
       "label": {
         "type": "string",
@@ -118,24 +121,22 @@
         "format": "date-time",
         "description": "The time this Canvas Node was created"
       },
-      "time_edited": {
+      "time_updated": {
         "type": "string",
         "format": "date-time",
         "description": "The last time this Canvas Node was edited"
       },
-      "deleted": {
-        "type": "boolean",
-        "description": "A flag for if this Canvas Node has been soft deleted"
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this Canvas Node was soft deleted, or null if active"
       }
     }
   },
   "CanvasEdge": {
     "type": "object",
     "properties": {
-      "id": {
-        "type": "integer",
-        "description": "The ID of this Canvas Edge"
-      },
       "canvas_id": {
         "type": "integer",
         "description": "The ID of the Canvas that contains this Canvas Edge"
@@ -151,6 +152,10 @@
       "object_id": {
         "type": "integer",
         "description": "The Canvas Node ID for the object of this Canvas Edge"
+      },
+      "ref": {
+        "type": "string",
+        "description": "The id of the underlying data entity (e.g. the edge id)"
       },
       "label": {
         "type": "string",
@@ -172,14 +177,16 @@
         "format": "date-time",
         "description": "The time this Canvas Edge was created"
       },
-      "time_edited": {
+      "time_updated": {
         "type": "string",
         "format": "date-time",
         "description": "The last time this Canvas Edge was edited"
       },
-      "deleted": {
-        "type": "boolean",
-        "description": "A flag for if this Canvas Edge has been soft deleted"
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this Canvas Edge was soft deleted, or null if active"
       }
     }
   },

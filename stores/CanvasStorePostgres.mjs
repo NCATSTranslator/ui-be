@@ -21,6 +21,34 @@ class CanvasStorePostgres {
     return res.rows;
   }
 
+  async get_canvas_graph_by_user(user_id, canvas_id, include_deleted) {
+    const sql_canvas_deleted = include_deleted ? "" : " AND canvas.time_deleted IS NULL";
+    const canvas_res = await pgExec(this._db_pool, `
+      SELECT canvas.id, canvas.data
+      FROM user_to_canvas
+      JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+      WHERE user_to_canvas.user_id = $1 AND canvas.id = $2${sql_canvas_deleted}`,
+      [user_id, canvas_id]);
+    if (canvas_res.rows.length === 0) return null;
+    const canvas = canvas_res.rows[0];
+    const sql_entity_deleted = include_deleted ? "" : " AND time_deleted IS NULL";
+    const node_res = await pgExec(this._db_pool, `
+      SELECT canvas_id, data_id, ref, label, type, x, y, hidden, tags,
+             time_created, time_updated, time_deleted
+      FROM canvas_node
+      WHERE canvas_id = $1${sql_entity_deleted}`, [canvas_id]);
+    const edge_res = await pgExec(this._db_pool, `
+      SELECT canvas_id, data_id, subject_id, object_id, ref, label, hidden, tags,
+             time_created, time_updated, time_deleted
+      FROM canvas_edge
+      WHERE canvas_id = $1${sql_entity_deleted}`, [canvas_id]);
+    return {
+      nodes: node_res.rows,
+      edges: edge_res.rows,
+      tags: canvas.data?.tags ?? null
+    };
+  }
+
   async create_user_canvas(user_canvas, graph = new Graph()) {
     return await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._create_canvas(client, user_canvas);
