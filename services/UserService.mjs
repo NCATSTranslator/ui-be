@@ -114,6 +114,10 @@ class UserService {
     return canvas;
   }
 
+  async trash_canvases(user_id, canvas_ids) {
+    return this.canvasStore.trash_canvases_by_user(user_id, canvas_ids);
+  }
+
   async create_user_canvas(user_id, canvas_req) {
     const user_canvas = make_user_canvas_from_req(user_id, canvas_req);
     const graph = Graph.from_req(canvas_req, this.entitySigningSecret);

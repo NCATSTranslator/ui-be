@@ -171,7 +171,7 @@
           "description": "Canvases trashed successfully"
         },
         "400": {
-          "description": "At least one of the canvases does not exist"
+          "description": "The request body is not a valid array of canvas IDs"
         },
         "401": {
           "description": "Authentication Required"
