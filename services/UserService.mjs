@@ -2,7 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserCanvas, CanvasGraph, make_user_canvas_from_req, Graph } from "#model/Canvas.mjs";
+import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, Graph } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
@@ -103,6 +103,15 @@ class UserService {
 
   async get_edge_data(data_id) {
     return this.canvasStore.get_edge_data(data_id);
+  }
+
+  async update_canvas(user_id, canvas_id, canvas_req) {
+    const fields = make_canvas_update_from_req(canvas_req);
+    const row = await this.canvasStore.update_canvas_by_user(user_id, canvas_id, fields);
+    if (row === null) return null;
+    const canvas = new UserCanvas({ user_id: user_id });
+    canvas.populate_from_raw(row);
+    return canvas;
   }
 
   async create_user_canvas(user_id, canvas_req) {

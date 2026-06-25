@@ -40,6 +40,20 @@
     },
     "required": ["label", "layout"]
   },
+  "UpdateCanvasRequest": {
+    "type": "object",
+    "description": "A partial update of a Canvas's properties; only the fields present are changed",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "A new label for the Canvas"
+      },
+      "layout": {
+        "$ref": "./canvas.json#/CanvasLayout"
+      }
+    },
+    "minProperties": 1
+  },
   "CanvasGraph": {
     "type": "object",
     "properties": {

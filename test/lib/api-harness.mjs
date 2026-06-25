@@ -57,6 +57,19 @@ export async function postJson(path, body) {
   return { res, json, raw };
 }
 
+export async function putJson(path, body) {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const raw = await res.text();
+  showResponse('PUT', path, res, raw);
+  let json = null;
+  if (raw) { try { json = JSON.parse(raw); } catch { /* non-JSON */ } }
+  return { res, json, raw };
+}
+
 export async function getJson(path) {
   const res = await fetch(`${BASE_URL}${path}`);
   const raw = await res.text();

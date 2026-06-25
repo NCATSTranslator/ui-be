@@ -1,5 +1,6 @@
 export {
   make_user_canvas_from_req,
+  make_canvas_update_from_req,
   Graph,
   UserCanvas,
   GraphNode,
@@ -31,6 +32,29 @@ function make_user_canvas_from_req(user_id, canvas_req) {
       result_ref: canvas_req.graph?.source?.result_ref ?? null
     }
   });
+}
+
+function make_canvas_update_from_req(canvas_req) {
+  if (cmn.is_missing(canvas_req) || !cmn.is_object(canvas_req)) {
+    throw new CanvasRequestError(`Canvas update is malformed: ${JSON.stringify(canvas_req)}`);
+  }
+  const update = {};
+  if (canvas_req.label !== undefined) {
+    if ("string" !== typeof canvas_req.label) {
+      throw new CanvasRequestError(`Canvas label must be a string: ${JSON.stringify(canvas_req.label)}`);
+    }
+    update.label = canvas_req.label;
+  }
+  if (canvas_req.layout !== undefined) {
+    if (!_VALID_LAYOUTS.includes(canvas_req.layout)) {
+      throw new CanvasRequestError(`Canvas layout is invalid: ${JSON.stringify(canvas_req.layout)}`);
+    }
+    update.layout = canvas_req.layout;
+  }
+  if (Object.keys(update).length === 0) {
+    throw new CanvasRequestError("Canvas update must include at least one of: label, layout");
+  }
+  return update;
 }
 
 function _entity_data_to_canvas_tags(entity_data) {

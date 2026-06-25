@@ -328,6 +328,30 @@ class UserAPIController {
     }
   }
 
+  async update_user_canvas(req, res) {
+    const user_id = req.sessionData.user.id;
+    if (cmn.is_missing(user_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
+    }
+    const canvas_id = parseInt(req.params.save_id, 10);
+    if (!Number.isInteger(canvas_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
+    }
+    try {
+      const canvas = await this.user_service.update_canvas(user_id, canvas_id, req.body);
+      if (canvas === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No canvas found for id ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(canvas);
+    } catch (err) {
+      if (err instanceof CanvasRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async get_user_canvas_node_data(req, res) {
     const data_id = parseInt(req.params.data_id, 10);
     if (!Number.isInteger(data_id)) {

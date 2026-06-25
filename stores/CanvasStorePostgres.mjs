@@ -63,6 +63,34 @@ class CanvasStorePostgres {
     return res.rows[0].data;
   }
 
+  async update_canvas_by_user(user_id, canvas_id, fields) {
+    const set_clauses = [];
+    const values = [];
+    let i = 1;
+    for (const col of Object.keys(fields)) {
+      set_clauses.push(`${col} = $${i}`);
+      values.push(fields[col]);
+      i += 1;
+    }
+    set_clauses.push("time_updated = CURRENT_TIMESTAMP");
+    const canvas_id_param = i;
+    values.push(canvas_id);
+    i += 1;
+    const user_id_param = i;
+    values.push(user_id);
+    const res = await pgExec(this._db_pool, `
+      UPDATE canvas
+      SET ${set_clauses.join(", ")}
+      WHERE canvas.id = $${canvas_id_param}
+        AND canvas.time_deleted IS NULL
+        AND EXISTS (
+          SELECT 1 FROM user_to_canvas
+          WHERE user_to_canvas.canvas_id = canvas.id
+            AND user_to_canvas.user_id = $${user_id_param})
+      RETURNING *`, values);
+    return res.rows.length > 0 ? res.rows[0] : null;
+  }
+
   async create_user_canvas(user_canvas, graph = new Graph()) {
     return await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._create_canvas(client, user_canvas);
