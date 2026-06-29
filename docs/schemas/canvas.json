@@ -328,5 +328,25 @@
       }
     },
     "required": ["nodes", "edges", "source"]
+  },
+  "GraphSelection": {
+    "type": "object",
+    "description": "A selection of Canvas Node and Edge data ids to soft delete or restore. At least one node or edge id is required. Soft deleting a node also soft deletes every edge attached to it; restoring an edge requires both of its endpoint nodes to be active.",
+    "properties": {
+      "nodes": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "description": "The data ids of the Canvas Nodes to soft delete or restore"
+      },
+      "edges": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "description": "The data ids of the Canvas Edges to soft delete or restore"
+      }
+    }
   }
 }

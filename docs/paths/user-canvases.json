@@ -323,6 +323,118 @@
       }
     }
   },
+  "/api/v1/users/me/canvas/{save_id}/graph/trash": {
+    "put": {
+      "summary": "Soft delete Nodes and Edges from a Canvas",
+      "description": "Soft deletes the listed Canvas Nodes and Edges. Soft deleting a node also soft deletes every edge attached to it. Returns the resulting Canvas graph.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/GraphSelection"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The resulting Canvas graph after the soft delete",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasGraph"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The request body is not a valid selection of node and edge ids"
+        },
+        "404": {
+          "description": "The Canvas does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas/{save_id}/graph/restore": {
+    "put": {
+      "summary": "Restore soft deleted Nodes and Edges in a Canvas",
+      "description": "Restores the listed Canvas Nodes and Edges. An edge is only restored if both of its endpoint nodes are active. Returns the resulting Canvas graph.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/GraphSelection"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The resulting Canvas graph after the restore",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasGraph"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The request body is not a valid selection of node and edge ids"
+        },
+        "404": {
+          "description": "The Canvas does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
   "/api/v1/users/me/canvas/{save_id}/node/{data_id}": {
     "get": {
       "summary": "Get the underlying data entity for a Canvas Node",

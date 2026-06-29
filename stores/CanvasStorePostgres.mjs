@@ -145,6 +145,71 @@ class CanvasStorePostgres {
     return this.get_canvas_graph_by_user(user_id, canvas_id, false);
   }
 
+  async trash_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids) {
+    const trashed = await pgExecTrans(this._db_pool, async (client) => {
+      const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
+      if (canvas === null) return false;
+      await this._trash_canvas_edges(client, canvas_id, node_ids, edge_ids);
+      await this._trash_canvas_nodes(client, canvas_id, node_ids);
+      return true;
+    });
+    if (!trashed) return null;
+    return this.get_canvas_graph_by_user(user_id, canvas_id, false);
+  }
+
+  async restore_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids) {
+    const restored = await pgExecTrans(this._db_pool, async (client) => {
+      const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
+      if (canvas === null) return false;
+      await this._restore_canvas_nodes(client, canvas_id, node_ids);
+      await this._restore_canvas_edges(client, canvas_id, edge_ids);
+      return true;
+    });
+    if (!restored) return null;
+    return this.get_canvas_graph_by_user(user_id, canvas_id, false);
+  }
+
+  async _trash_canvas_edges(client, canvas_id, node_ids, edge_ids) {
+    await client.query(`
+      UPDATE canvas_edge
+      SET time_deleted = CURRENT_TIMESTAMP, time_updated = CURRENT_TIMESTAMP
+      WHERE canvas_id = $1 AND time_deleted IS NULL
+        AND (data_id = ANY($2::bigint[])
+             OR subject_id = ANY($3::bigint[])
+             OR object_id = ANY($3::bigint[]))`,
+      [canvas_id, edge_ids, node_ids]);
+  }
+
+  async _trash_canvas_nodes(client, canvas_id, node_ids) {
+    await client.query(`
+      UPDATE canvas_node
+      SET time_deleted = CURRENT_TIMESTAMP, time_updated = CURRENT_TIMESTAMP
+      WHERE canvas_id = $1 AND time_deleted IS NULL AND data_id = ANY($2::bigint[])`,
+      [canvas_id, node_ids]);
+  }
+
+  async _restore_canvas_nodes(client, canvas_id, node_ids) {
+    await client.query(`
+      UPDATE canvas_node
+      SET time_deleted = NULL, time_updated = CURRENT_TIMESTAMP
+      WHERE canvas_id = $1 AND time_deleted IS NOT NULL AND data_id = ANY($2::bigint[])`,
+      [canvas_id, node_ids]);
+  }
+
+  async _restore_canvas_edges(client, canvas_id, edge_ids) {
+    await client.query(`
+      UPDATE canvas_edge ce
+      SET time_deleted = NULL, time_updated = CURRENT_TIMESTAMP
+      WHERE ce.canvas_id = $1 AND ce.time_deleted IS NOT NULL AND ce.data_id = ANY($2::bigint[])
+        AND EXISTS (SELECT 1 FROM canvas_node sn
+                    WHERE sn.canvas_id = ce.canvas_id AND sn.data_id = ce.subject_id
+                      AND sn.time_deleted IS NULL)
+        AND EXISTS (SELECT 1 FROM canvas_node obn
+                    WHERE obn.canvas_id = ce.canvas_id AND obn.data_id = ce.object_id
+                      AND obn.time_deleted IS NULL)`,
+      [canvas_id, edge_ids]);
+  }
+
   async _lock_active_canvas_for_user(client, user_id, canvas_id) {
     const res = await client.query(`
       SELECT canvas.id, canvas.data

@@ -2,7 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, make_graph_merge_from_req, Graph } from "#model/Canvas.mjs";
+import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, make_graph_merge_from_req, make_graph_selection_from_req, Graph } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
@@ -102,6 +102,20 @@ class UserService {
     const merged = await this.canvasStore.merge_canvas_graph(user_id, canvas_id, graph, tag_descriptions);
     if (merged === null) return null;
     return new CanvasGraph(merged);
+  }
+
+  async trash_canvas_graph(user_id, canvas_id, graph_req) {
+    const { node_ids, edge_ids } = make_graph_selection_from_req(graph_req);
+    const graph = await this.canvasStore.trash_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids);
+    if (graph === null) return null;
+    return new CanvasGraph(graph);
+  }
+
+  async restore_canvas_graph(user_id, canvas_id, graph_req) {
+    const { node_ids, edge_ids } = make_graph_selection_from_req(graph_req);
+    const graph = await this.canvasStore.restore_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids);
+    if (graph === null) return null;
+    return new CanvasGraph(graph);
   }
 
   async get_node_data(data_id) {

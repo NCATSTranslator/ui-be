@@ -2,6 +2,7 @@ export {
   make_user_canvas_from_req,
   make_canvas_update_from_req,
   make_graph_merge_from_req,
+  make_graph_selection_from_req,
   Graph,
   UserCanvas,
   GraphNode,
@@ -65,6 +66,26 @@ function make_graph_merge_from_req(graph_req, secret) {
   const graph = Graph.from_req({ graph: graph_req }, secret);
   const tag_descriptions = graph_req.tag_descriptions ?? null;
   return { graph: graph, tag_descriptions: tag_descriptions };
+}
+
+function make_graph_selection_from_req(graph_req) {
+  if (cmn.is_missing(graph_req) || !cmn.is_object(graph_req)) {
+    throw new CanvasRequestError(`Graph selection is malformed: ${JSON.stringify(graph_req)}`);
+  }
+  const node_ids = _validate_graph_id_array(graph_req.nodes, "nodes");
+  const edge_ids = _validate_graph_id_array(graph_req.edges, "edges");
+  if (node_ids.length === 0 && edge_ids.length === 0) {
+    throw new CanvasRequestError("Graph selection must include at least one node or edge id");
+  }
+  return { node_ids: node_ids, edge_ids: edge_ids };
+}
+
+function _validate_graph_id_array(ids, field) {
+  if (cmn.is_missing(ids)) return [];
+  if (!cmn.is_array(ids) || !ids.every((id) => Number.isInteger(id))) {
+    throw new CanvasRequestError(`Graph ${field} must be an array of integer ids: ${JSON.stringify(ids)}`);
+  }
+  return ids;
 }
 
 function _entity_data_to_canvas_tags(entity_data) {
