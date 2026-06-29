@@ -289,13 +289,7 @@ class UserAPIController {
   }
 
   async get_user_canvases(req, res) {
-    const user_id = req.sessionData.user.id;
-    // TODO: Remove this check. user_id MUST be valid because of session management
-    if (cmn.is_missing(user_id)) {
-      wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-      return;
-    }
-    // TODO: Make an abstraction for this check.
+    const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === "true";
     try {
       const user_canvases = await this.user_service.get_user_canvases(user_id, include_deleted);
@@ -307,10 +301,7 @@ class UserAPIController {
   }
 
   async get_user_canvas_graph(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     const canvas_id = parseInt(req.params.save_id, 10);
     if (!Number.isInteger(canvas_id)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
@@ -329,10 +320,7 @@ class UserAPIController {
   }
 
   async update_user_canvas(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     const canvas_id = parseInt(req.params.save_id, 10);
     if (!Number.isInteger(canvas_id)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
@@ -353,10 +341,7 @@ class UserAPIController {
   }
 
   async trash_user_canvases(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     const canvas_ids = req.body;
     if (!cmn.is_array(canvas_ids) || !canvas_ids.every((id) => Number.isInteger(id))) {
       req.log.warn(`Malformed canvas trash request: ${JSON.stringify(canvas_ids)}`);
@@ -373,10 +358,7 @@ class UserAPIController {
   }
 
   async restore_user_canvases(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     const canvas_ids = req.body;
     if (!cmn.is_array(canvas_ids) || !canvas_ids.every((id) => Number.isInteger(id))) {
       req.log.warn(`Malformed canvas restore request: ${JSON.stringify(canvas_ids)}`);
@@ -393,10 +375,7 @@ class UserAPIController {
   }
 
   async merge_user_canvas_graph(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     const canvas_id = parseInt(req.params.save_id, 10);
     if (!Number.isInteger(canvas_id)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
@@ -417,10 +396,7 @@ class UserAPIController {
   }
 
   async update_user_canvas_node(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     const canvas_id = parseInt(req.params.save_id, 10);
     if (!Number.isInteger(canvas_id)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
@@ -445,10 +421,7 @@ class UserAPIController {
   }
 
   async update_user_canvas_edge(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     const canvas_id = parseInt(req.params.save_id, 10);
     if (!Number.isInteger(canvas_id)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
@@ -473,10 +446,7 @@ class UserAPIController {
   }
 
   async trash_user_canvas_graph(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     const canvas_id = parseInt(req.params.save_id, 10);
     if (!Number.isInteger(canvas_id)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
@@ -497,10 +467,7 @@ class UserAPIController {
   }
 
   async restore_user_canvas_graph(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     const canvas_id = parseInt(req.params.save_id, 10);
     if (!Number.isInteger(canvas_id)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
@@ -559,10 +526,7 @@ class UserAPIController {
   }
 
   async create_user_canvas(req, res) {
-    const user_id = req.sessionData.user.id;
-    if (cmn.is_missing(user_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
-    }
+    const user_id = wutil.request_to_user_id(req);
     try {
       const canvas_req = req.body;
       const user_canvas = await this.user_service.create_user_canvas(user_id, canvas_req);
