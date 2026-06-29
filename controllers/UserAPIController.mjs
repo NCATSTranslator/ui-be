@@ -288,6 +288,24 @@ class UserAPIController {
     }
   }
 
+  parse_canvas_id(req, res, next, value) {
+    const canvas_id = parseInt(value, 10);
+    if (!Number.isInteger(canvas_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${value}`);
+    }
+    req.canvas_id = canvas_id;
+    return next();
+  }
+
+  parse_canvas_data_id(req, res, next, value) {
+    const data_id = parseInt(value, 10);
+    if (!Number.isInteger(data_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid data ID: ${value}`);
+    }
+    req.data_id = data_id;
+    return next();
+  }
+
   async get_user_canvases(req, res) {
     const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === "true";
@@ -302,10 +320,7 @@ class UserAPIController {
 
   async get_user_canvas_graph(req, res) {
     const user_id = wutil.request_to_user_id(req);
-    const canvas_id = parseInt(req.params.save_id, 10);
-    if (!Number.isInteger(canvas_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
-    }
+    const canvas_id = req.canvas_id;
     const include_deleted = req.query.include_deleted === "true";
     try {
       const graph = await this.user_service.get_canvas_graph(user_id, canvas_id, include_deleted);
@@ -321,10 +336,7 @@ class UserAPIController {
 
   async update_user_canvas(req, res) {
     const user_id = wutil.request_to_user_id(req);
-    const canvas_id = parseInt(req.params.save_id, 10);
-    if (!Number.isInteger(canvas_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
-    }
+    const canvas_id = req.canvas_id;
     try {
       const canvas = await this.user_service.update_canvas(user_id, canvas_id, req.body);
       if (canvas === null) {
@@ -376,10 +388,7 @@ class UserAPIController {
 
   async merge_user_canvas_graph(req, res) {
     const user_id = wutil.request_to_user_id(req);
-    const canvas_id = parseInt(req.params.save_id, 10);
-    if (!Number.isInteger(canvas_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
-    }
+    const canvas_id = req.canvas_id;
     try {
       const graph = await this.user_service.merge_canvas_graph(user_id, canvas_id, req.body);
       if (graph === null) {
@@ -397,14 +406,8 @@ class UserAPIController {
 
   async update_user_canvas_node(req, res) {
     const user_id = wutil.request_to_user_id(req);
-    const canvas_id = parseInt(req.params.save_id, 10);
-    if (!Number.isInteger(canvas_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
-    }
-    const data_id = parseInt(req.params.data_id, 10);
-    if (!Number.isInteger(data_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid node ID: ${req.params.data_id}`);
-    }
+    const canvas_id = req.canvas_id;
+    const data_id = req.data_id;
     try {
       const node = await this.user_service.update_canvas_node(user_id, canvas_id, data_id, req.body);
       if (node === null) {
@@ -422,14 +425,8 @@ class UserAPIController {
 
   async update_user_canvas_edge(req, res) {
     const user_id = wutil.request_to_user_id(req);
-    const canvas_id = parseInt(req.params.save_id, 10);
-    if (!Number.isInteger(canvas_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
-    }
-    const data_id = parseInt(req.params.data_id, 10);
-    if (!Number.isInteger(data_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid edge ID: ${req.params.data_id}`);
-    }
+    const canvas_id = req.canvas_id;
+    const data_id = req.data_id;
     try {
       const edge = await this.user_service.update_canvas_edge(user_id, canvas_id, data_id, req.body);
       if (edge === null) {
@@ -447,10 +444,7 @@ class UserAPIController {
 
   async trash_user_canvas_graph(req, res) {
     const user_id = wutil.request_to_user_id(req);
-    const canvas_id = parseInt(req.params.save_id, 10);
-    if (!Number.isInteger(canvas_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
-    }
+    const canvas_id = req.canvas_id;
     try {
       const graph = await this.user_service.trash_canvas_graph(user_id, canvas_id, req.body);
       if (graph === null) {
@@ -468,10 +462,7 @@ class UserAPIController {
 
   async restore_user_canvas_graph(req, res) {
     const user_id = wutil.request_to_user_id(req);
-    const canvas_id = parseInt(req.params.save_id, 10);
-    if (!Number.isInteger(canvas_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
-    }
+    const canvas_id = req.canvas_id;
     try {
       const graph = await this.user_service.restore_canvas_graph(user_id, canvas_id, req.body);
       if (graph === null) {
@@ -488,11 +479,7 @@ class UserAPIController {
   }
 
   async get_user_canvas_node_data(req, res) {
-    const data_id = parseInt(req.params.data_id, 10);
-    if (!Number.isInteger(data_id)) {
-      req.log.warn(`Invalid node ID requested: ${req.params.data_id}`);
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid node ID: ${req.params.data_id}`);
-    }
+    const data_id = req.data_id;
     try {
       const data = await this.user_service.get_node_data(data_id);
       if (data === null) {
@@ -507,11 +494,7 @@ class UserAPIController {
   }
 
   async get_user_canvas_edge_data(req, res) {
-    const data_id = parseInt(req.params.data_id, 10);
-    if (!Number.isInteger(data_id)) {
-      req.log.warn(`Invalid edge ID requested: ${req.params.data_id}`);
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid edge ID: ${req.params.data_id}`);
-    }
+    const data_id = req.data_id;
     try {
       const data = await this.user_service.get_edge_data(data_id);
       if (data === null) {
