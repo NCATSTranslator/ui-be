@@ -329,6 +329,21 @@
     },
     "required": ["nodes", "edges", "source"]
   },
+  "UpdateCanvasElementRequest": {
+    "type": "object",
+    "description": "A partial update of a Canvas Node or Edge's display properties; only the fields present are changed. Node position is updated through the dedicated move endpoint, not here.",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "A new display label for the Canvas Node or Edge"
+      },
+      "hidden": {
+        "type": "boolean",
+        "description": "Whether the Canvas Node or Edge is hidden on the canvas"
+      }
+    },
+    "minProperties": 1
+  },
   "GraphSelection": {
     "type": "object",
     "description": "A selection of Canvas Node and Edge data ids to soft delete or restore. At least one node or edge id is required. Soft deleting a node also soft deletes every edge attached to it; restoring an edge requires both of its endpoint nodes to be active.",

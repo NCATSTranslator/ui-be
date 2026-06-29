@@ -416,6 +416,62 @@ class UserAPIController {
     }
   }
 
+  async update_user_canvas_node(req, res) {
+    const user_id = req.sessionData.user.id;
+    if (cmn.is_missing(user_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
+    }
+    const canvas_id = parseInt(req.params.save_id, 10);
+    if (!Number.isInteger(canvas_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
+    }
+    const data_id = parseInt(req.params.data_id, 10);
+    if (!Number.isInteger(data_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid node ID: ${req.params.data_id}`);
+    }
+    try {
+      const node = await this.user_service.update_canvas_node(user_id, canvas_id, data_id, req.body);
+      if (node === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No node found for id ${data_id} on canvas ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(node);
+    } catch (err) {
+      if (err instanceof CanvasRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async update_user_canvas_edge(req, res) {
+    const user_id = req.sessionData.user.id;
+    if (cmn.is_missing(user_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, "No user ID");
+    }
+    const canvas_id = parseInt(req.params.save_id, 10);
+    if (!Number.isInteger(canvas_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${req.params.save_id}`);
+    }
+    const data_id = parseInt(req.params.data_id, 10);
+    if (!Number.isInteger(data_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid edge ID: ${req.params.data_id}`);
+    }
+    try {
+      const edge = await this.user_service.update_canvas_edge(user_id, canvas_id, data_id, req.body);
+      if (edge === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No edge found for id ${data_id} on canvas ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(edge);
+    } catch (err) {
+      if (err instanceof CanvasRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async trash_user_canvas_graph(req, res) {
     const user_id = req.sessionData.user.id;
     if (cmn.is_missing(user_id)) {

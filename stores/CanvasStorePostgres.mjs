@@ -91,6 +91,63 @@ class CanvasStorePostgres {
     return res.rows.length > 0 ? res.rows[0] : null;
   }
 
+  async update_canvas_node_by_user(user_id, canvas_id, data_id, fields) {
+    const [set_clause, values] = this._build_element_update(fields, canvas_id, data_id, user_id);
+    const res = await pgExec(this._db_pool, `
+      UPDATE canvas_node
+      SET ${set_clause}
+      WHERE canvas_node.canvas_id = $${values.canvas_id_param}
+        AND canvas_node.data_id = $${values.data_id_param}
+        AND canvas_node.time_deleted IS NULL
+        AND EXISTS (
+          SELECT 1 FROM user_to_canvas
+          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+          WHERE user_to_canvas.canvas_id = canvas_node.canvas_id
+            AND user_to_canvas.user_id = $${values.user_id_param}
+            AND canvas.time_deleted IS NULL)
+      RETURNING *`, values.args);
+    return res.rows.length > 0 ? res.rows[0] : null;
+  }
+
+  async update_canvas_edge_by_user(user_id, canvas_id, data_id, fields) {
+    const [set_clause, values] = this._build_element_update(fields, canvas_id, data_id, user_id);
+    const res = await pgExec(this._db_pool, `
+      UPDATE canvas_edge
+      SET ${set_clause}
+      WHERE canvas_edge.canvas_id = $${values.canvas_id_param}
+        AND canvas_edge.data_id = $${values.data_id_param}
+        AND canvas_edge.time_deleted IS NULL
+        AND EXISTS (
+          SELECT 1 FROM user_to_canvas
+          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+          WHERE user_to_canvas.canvas_id = canvas_edge.canvas_id
+            AND user_to_canvas.user_id = $${values.user_id_param}
+            AND canvas.time_deleted IS NULL)
+      RETURNING *`, values.args);
+    return res.rows.length > 0 ? res.rows[0] : null;
+  }
+
+  _build_element_update(fields, canvas_id, data_id, user_id) {
+    const set_clauses = [];
+    const args = [];
+    let i = 1;
+    for (const col of Object.keys(fields)) {
+      set_clauses.push(`${col} = $${i}`);
+      args.push(fields[col]);
+      i += 1;
+    }
+    set_clauses.push("time_updated = CURRENT_TIMESTAMP");
+    const canvas_id_param = i;
+    args.push(canvas_id);
+    i += 1;
+    const data_id_param = i;
+    args.push(data_id);
+    i += 1;
+    const user_id_param = i;
+    args.push(user_id);
+    return [set_clauses.join(", "), { args, canvas_id_param, data_id_param, user_id_param }];
+  }
+
   async trash_canvases_by_user(user_id, canvas_ids) {
     if (canvas_ids.length === 0) return [];
     const res = await pgExec(this._db_pool, `

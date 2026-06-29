@@ -1,6 +1,7 @@
 export {
   make_user_canvas_from_req,
   make_canvas_update_from_req,
+  make_canvas_element_update_from_req,
   make_graph_merge_from_req,
   make_graph_selection_from_req,
   Graph,
@@ -55,6 +56,29 @@ function make_canvas_update_from_req(canvas_req) {
   }
   if (Object.keys(update).length === 0) {
     throw new CanvasRequestError("Canvas update must include at least one of: label, layout");
+  }
+  return update;
+}
+
+function make_canvas_element_update_from_req(element_req) {
+  if (cmn.is_missing(element_req) || !cmn.is_object(element_req)) {
+    throw new CanvasRequestError(`Canvas element update is malformed: ${JSON.stringify(element_req)}`);
+  }
+  const update = {};
+  if (element_req.label !== undefined) {
+    if ("string" !== typeof element_req.label) {
+      throw new CanvasRequestError(`Canvas element label must be a string: ${JSON.stringify(element_req.label)}`);
+    }
+    update.label = element_req.label;
+  }
+  if (element_req.hidden !== undefined) {
+    if ("boolean" !== typeof element_req.hidden) {
+      throw new CanvasRequestError(`Canvas element hidden must be a boolean: ${JSON.stringify(element_req.hidden)}`);
+    }
+    update.hidden = element_req.hidden;
+  }
+  if (Object.keys(update).length === 0) {
+    throw new CanvasRequestError("Canvas element update must include at least one of: label, hidden");
   }
   return update;
 }

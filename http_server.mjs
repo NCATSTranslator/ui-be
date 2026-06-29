@@ -173,7 +173,9 @@ export function start_server(config, services) {
   app.put(`${API_PATH_V1}/users/me/canvas/:save_id/graph/trash`, user_api_controller.trash_user_canvas_graph.bind(user_api_controller));
   app.put(`${API_PATH_V1}/users/me/canvas/:save_id/graph/restore`, user_api_controller.restore_user_canvas_graph.bind(user_api_controller));
   app.get(`${API_PATH_V1}/users/me/canvas/:save_id/node/:data_id`, user_api_controller.get_user_canvas_node_data.bind(user_api_controller));
+  app.put(`${API_PATH_V1}/users/me/canvas/:save_id/node/:data_id`, user_api_controller.update_user_canvas_node.bind(user_api_controller));
   app.get(`${API_PATH_V1}/users/me/canvas/:save_id/edge/:data_id`, user_api_controller.get_user_canvas_edge_data.bind(user_api_controller));
+  app.put(`${API_PATH_V1}/users/me/canvas/:save_id/edge/:data_id`, user_api_controller.update_user_canvas_edge.bind(user_api_controller));
 
   app.all(['/api', '/api/*'], (req, res) => {
     return res.status(403).send('API action Forbidden');

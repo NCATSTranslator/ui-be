@@ -484,6 +484,69 @@
           "description": "Internal Server Error"
         }
       }
+    },
+    "put": {
+      "summary": "Update the display properties of a Canvas Node",
+      "description": "Partially updates a single Canvas Node's display properties (label, hidden). Node position is updated through the dedicated move endpoint, not here. Returns the updated Canvas Node.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        },
+        {
+          "name": "data_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Data Node ID (the data_id of the Canvas Node)"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/UpdateCanvasElementRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The updated Canvas Node",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasNode"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The update request is malformed"
+        },
+        "404": {
+          "description": "No active node with the given data_id exists on the canvas"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
     }
   },
   "/api/v1/users/me/canvas/{save_id}/edge/{data_id}": {
@@ -527,6 +590,69 @@
         },
         "404": {
           "description": "No edge with the given data_id exists"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update the display properties of a Canvas Edge",
+      "description": "Partially updates a single Canvas Edge's display properties (label, hidden). Returns the updated Canvas Edge.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        },
+        {
+          "name": "data_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Data Edge ID (the data_id of the Canvas Edge)"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/UpdateCanvasElementRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The updated Canvas Edge",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasEdge"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The update request is malformed"
+        },
+        "404": {
+          "description": "No active edge with the given data_id exists on the canvas"
         },
         "401": {
           "description": "Authentication Required"
