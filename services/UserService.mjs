@@ -2,7 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, Graph } from "#model/Canvas.mjs";
+import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, make_graph_merge_from_req, Graph } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
@@ -97,6 +97,13 @@ class UserService {
     return new CanvasGraph(graph);
   }
 
+  async merge_canvas_graph(user_id, canvas_id, graph_req) {
+    const { graph, tag_descriptions } = make_graph_merge_from_req(graph_req, this.entitySigningSecret);
+    const merged = await this.canvasStore.merge_canvas_graph(user_id, canvas_id, graph, tag_descriptions);
+    if (merged === null) return null;
+    return new CanvasGraph(merged);
+  }
+
   async get_node_data(data_id) {
     return this.canvasStore.get_node_data(data_id);
   }
@@ -125,6 +132,7 @@ class UserService {
   async create_user_canvas(user_id, canvas_req) {
     const user_canvas = make_user_canvas_from_req(user_id, canvas_req);
     const graph = Graph.from_req(canvas_req, this.entitySigningSecret);
+    graph.assert_edges_reference_nodes();
     const canvas = await this.canvasStore.create_user_canvas(user_canvas, graph);
     user_canvas.populate_from_raw(canvas);
     return user_canvas;

@@ -299,9 +299,19 @@
       },
       "responses": {
         "200": {
-          "description": "Graph successfully merged"
+          "description": "The resulting Canvas graph after the merge",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasGraph"
+              }
+            }
+          }
         },
         "400": {
+          "description": "The submitted graph is malformed"
+        },
+        "404": {
           "description": "The Canvas does not exist"
         },
         "401": {

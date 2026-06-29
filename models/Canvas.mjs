@@ -1,6 +1,7 @@
 export {
   make_user_canvas_from_req,
   make_canvas_update_from_req,
+  make_graph_merge_from_req,
   Graph,
   UserCanvas,
   GraphNode,
@@ -57,6 +58,15 @@ function make_canvas_update_from_req(canvas_req) {
   return update;
 }
 
+function make_graph_merge_from_req(graph_req, secret) {
+  if (cmn.is_missing(graph_req) || !cmn.is_object(graph_req) || cmn.is_object_empty(graph_req)) {
+    throw new CanvasRequestError(`Graph merge request is malformed: ${JSON.stringify(graph_req)}`);
+  }
+  const graph = Graph.from_req({ graph: graph_req }, secret);
+  const tag_descriptions = graph_req.tag_descriptions ?? null;
+  return { graph: graph, tag_descriptions: tag_descriptions };
+}
+
 function _entity_data_to_canvas_tags(entity_data) {
   const tags = {};
   for (const tag of taglib.get_tags(entity_data)) {
@@ -79,24 +89,17 @@ function _make_graph_nodes(canvas_req, secret) {
   });
 }
 
-function _make_graph_edges(canvas_req, secret, nodes) {
+function _make_graph_edges(canvas_req, secret) {
   const raw_edges = canvas_req.graph?.edges;
   if (cmn.is_missing(raw_edges)) return [];
   if (!cmn.is_object(raw_edges)) {
     throw new CanvasRequestError(`Graph edges must be a map of edge id to edge: ${JSON.stringify(raw_edges)}`);
   }
-  const node_refs = new Set(nodes.map((node) => node.ref()));
   return Object.entries(raw_edges).map(([id, raw]) => {
     if (!cmn.is_object(raw)) {
       throw new CanvasRequestError(`Graph edge ${id} is malformed`);
     }
-    const edge = GraphEdge.from_object({ ...raw, id: id }, secret);
-    if (!node_refs.has(edge.subject_ref()) || !node_refs.has(edge.object_ref())) {
-      throw new CanvasRequestError(
-        `Graph edge ${id} references a node not present in the graph `
-        + `(subject=${edge.subject_ref()}, object=${edge.object_ref()})`);
-    }
-    return edge;
+    return GraphEdge.from_object({ ...raw, id: id }, secret);
   });
 }
 
@@ -363,7 +366,7 @@ class Graph {
 
   static from_req(canvas_req, secret) {
     const nodes = _make_graph_nodes(canvas_req, secret);
-    const edges = _make_graph_edges(canvas_req, secret, nodes);
+    const edges = _make_graph_edges(canvas_req, secret);
     return new Graph({ nodes: nodes, edges: edges });
   }
 
@@ -373,6 +376,20 @@ class Graph {
 
   edges() {
     return this._edges;
+  }
+
+  assert_edges_reference_nodes(known_node_refs = []) {
+    const node_refs = new Set(this._nodes.map((node) => node.ref()));
+    for (const ref of known_node_refs) {
+      node_refs.add(ref);
+    }
+    for (const edge of this._edges) {
+      if (!node_refs.has(edge.subject_ref()) || !node_refs.has(edge.object_ref())) {
+        throw new CanvasRequestError(
+          `Graph edge ${edge.ref()} references a node not present in the graph `
+          + `(subject=${edge.subject_ref()}, object=${edge.object_ref()})`);
+      }
+    }
   }
 }
 

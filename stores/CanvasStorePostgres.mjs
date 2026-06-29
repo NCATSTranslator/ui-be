@@ -131,6 +131,46 @@ class CanvasStorePostgres {
     });
   }
 
+  async merge_canvas_graph(user_id, canvas_id, graph, tag_descriptions) {
+    const merged = await pgExecTrans(this._db_pool, async (client) => {
+      const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
+      if (canvas === null) return false;
+      const known_node_refs = await this._get_canvas_node_refs(client, canvas_id);
+      graph.assert_edges_reference_nodes(known_node_refs);
+      await this._create_canvas_graph(client, canvas_id, graph);
+      await this._merge_canvas_tags(client, canvas, tag_descriptions);
+      return true;
+    });
+    if (!merged) return null;
+    return this.get_canvas_graph_by_user(user_id, canvas_id, false);
+  }
+
+  async _lock_active_canvas_for_user(client, user_id, canvas_id) {
+    const res = await client.query(`
+      SELECT canvas.id, canvas.data
+      FROM user_to_canvas
+      JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+      WHERE user_to_canvas.user_id = $1 AND canvas.id = $2 AND canvas.time_deleted IS NULL
+      FOR UPDATE OF canvas`, [user_id, canvas_id]);
+    return res.rows.length > 0 ? res.rows[0] : null;
+  }
+
+  async _get_canvas_node_refs(client, canvas_id) {
+    const res = await client.query(
+      `SELECT ref FROM canvas_node WHERE canvas_id = $1 AND time_deleted IS NULL`, [canvas_id]);
+    return res.rows.map((row) => row.ref);
+  }
+
+  async _merge_canvas_tags(client, canvas, tag_descriptions) {
+    if (tag_descriptions === null || Object.keys(tag_descriptions).length === 0) return;
+    const existing = canvas.data?.tags ?? {};
+    const merged = { ...existing, ...tag_descriptions };
+    const new_data = { ...(canvas.data ?? {}), tags: merged };
+    await client.query(
+      `UPDATE canvas SET data = $1, time_updated = CURRENT_TIMESTAMP WHERE id = $2`,
+      [new_data, canvas.id]);
+  }
+
   async _create_canvas_graph(client, canvas_id, graph) {
     const graph_nodes = graph.nodes();
     const graph_edges = graph.edges();
@@ -157,13 +197,32 @@ class CanvasStorePostgres {
     const edge_data = graph_edges.map((ge) => ge.to_canvas_edge_data());
     const upserted = await this.batch_create_edge(edge_data, client);
     const data_id_by_ref = new Map(upserted.map((row) => [row.ref, row.id]));
+    const endpoint_ids = await this._resolve_edge_endpoint_ids(client, graph_edges, node_data_id_by_ref);
     const canvas_edges = graph_edges.map((ge) =>
       ge.to_canvas_edge(
         canvas_id,
         data_id_by_ref.get(ge.ref()),
-        node_data_id_by_ref.get(ge.subject_ref()),
-        node_data_id_by_ref.get(ge.object_ref())));
+        endpoint_ids.get(ge.subject_ref()),
+        endpoint_ids.get(ge.object_ref())));
     return this.batch_create_canvas_edge(canvas_edges, client);
+  }
+
+  async _resolve_edge_endpoint_ids(client, graph_edges, node_data_id_by_ref) {
+    // NOTE: assert_edges_reference_nodes (run under lock before this) guarantees every endpoint ref
+    // is on the canvas or in this submission, so each resolves to an id here. If that invariant ever
+    // breaks, an unresolved ref yields undefined and surfaces as a NOT NULL violation on insert.
+    const missing = new Set();
+    for (const ge of graph_edges) {
+      for (const ref of [ge.subject_ref(), ge.object_ref()]) {
+        if (!node_data_id_by_ref.has(ref)) missing.add(ref);
+      }
+    }
+    if (missing.size === 0) return node_data_id_by_ref;
+    const res = await client.query(
+      `SELECT id, ref FROM node WHERE ref = ANY($1::text[])`, [[...missing]]);
+    const resolved = new Map(node_data_id_by_ref);
+    for (const row of res.rows) resolved.set(row.ref, row.id);
+    return resolved;
   }
 
   async batch_create_node(nodes, client = null) {
@@ -217,6 +276,16 @@ class CanvasStorePostgres {
     const sql = `
       INSERT INTO canvas_node (canvas_id, data_id, ref, label, type, x, y, hidden, tags)
       VALUES ${params}
+      ON CONFLICT (canvas_id, data_id) DO UPDATE
+        SET time_deleted = NULL,
+            label = EXCLUDED.label,
+            type = EXCLUDED.type,
+            x = EXCLUDED.x,
+            y = EXCLUDED.y,
+            hidden = EXCLUDED.hidden,
+            tags = EXCLUDED.tags,
+            time_updated = CURRENT_TIMESTAMP
+        WHERE canvas_node.time_deleted IS NOT NULL
       RETURNING *`;
     const res = client
       ? await client.query(sql, args)
@@ -234,6 +303,15 @@ class CanvasStorePostgres {
     const sql = `
       INSERT INTO canvas_edge (canvas_id, data_id, subject_id, object_id, ref, label, hidden, tags)
       VALUES ${params}
+      ON CONFLICT (canvas_id, data_id) DO UPDATE
+        SET time_deleted = NULL,
+            subject_id = EXCLUDED.subject_id,
+            object_id = EXCLUDED.object_id,
+            label = EXCLUDED.label,
+            hidden = EXCLUDED.hidden,
+            tags = EXCLUDED.tags,
+            time_updated = CURRENT_TIMESTAMP
+        WHERE canvas_edge.time_deleted IS NOT NULL
       RETURNING *`;
     const res = client
       ? await client.query(sql, args)
