@@ -7,15 +7,7 @@ export {
   make_graph_move_from_req,
   Graph,
   UserCanvas,
-  GraphNode,
-  GraphEdge,
-  CanvasNode,
-  CanvasNodeData,
-  CanvasEdge,
-  CanvasEdgeData,
   CanvasGraph,
-  CanvasNodeCreationError,
-  CanvasEdgeCreationError,
   CanvasRequestError
 }
 
@@ -464,20 +456,6 @@ class CanvasGraph {
     this.nodes = nodes;
     this.edges = edges;
     this.tags = tags;
-  }
-}
-
-class CanvasNodeCreationError extends Error {
-  constructor(msg) {
-    super(msg);
-    this.name = "CanvasNodeCreationError";
-  }
-}
-
-class CanvasEdgeCreationError extends Error {
-  constructor(msg) {
-    super(msg);
-    this.name = "CanvasEdgeCreationError";
   }
 }
 
