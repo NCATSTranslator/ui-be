@@ -435,6 +435,65 @@
       }
     }
   },
+  "/api/v1/users/me/canvas/{save_id}/graph/move": {
+    "put": {
+      "summary": "Move Nodes on a Canvas",
+      "description": "Updates the x/y positions of the listed Canvas Nodes in a single atomic operation. Only active (non-deleted) nodes on the Canvas are moved. Returns the updated Canvas Nodes.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/GraphMove"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The updated Canvas Nodes after the move",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/canvas.json#/CanvasNode"
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The request body is not a valid set of node positions"
+        },
+        "404": {
+          "description": "The Canvas does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
   "/api/v1/users/me/canvas/{save_id}/node/{data_id}": {
     "get": {
       "summary": "Get the underlying data entity for a Canvas Node",

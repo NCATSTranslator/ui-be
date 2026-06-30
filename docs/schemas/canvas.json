@@ -363,5 +363,37 @@
         "description": "The data ids of the Canvas Edges to soft delete or restore"
       }
     }
+  },
+  "GraphMove": {
+    "type": "object",
+    "description": "A set of new positions for Canvas Nodes. Each entry moves the node with the given data id to the given x/y coordinates. Only active nodes on the Canvas are moved.",
+    "properties": {
+      "nodes": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "properties": {
+            "data_id": {
+              "type": "integer",
+              "description": "The data id of the Canvas Node to move"
+            },
+            "x": {
+              "type": "number",
+              "format": "double",
+              "description": "The new x-coordinate for the node on the canvas"
+            },
+            "y": {
+              "type": "number",
+              "format": "double",
+              "description": "The new y-coordinate for the node on the canvas"
+            }
+          },
+          "required": ["data_id", "x", "y"]
+        },
+        "description": "The Canvas Nodes to move with their new positions"
+      }
+    },
+    "required": ["nodes"]
   }
 }

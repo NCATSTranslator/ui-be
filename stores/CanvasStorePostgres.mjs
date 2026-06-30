@@ -202,6 +202,14 @@ class CanvasStorePostgres {
     return this.get_canvas_graph_by_user(user_id, canvas_id, false);
   }
 
+  async move_canvas_nodes_by_user(user_id, canvas_id, moves) {
+    return pgExecTrans(this._db_pool, async (client) => {
+      const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
+      if (canvas === null) return null;
+      return this._move_canvas_nodes(client, canvas_id, moves);
+    });
+  }
+
   async trash_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids) {
     const trashed = await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
@@ -224,6 +232,25 @@ class CanvasStorePostgres {
     });
     if (!restored) return null;
     return this.get_canvas_graph_by_user(user_id, canvas_id, false);
+  }
+
+  async _move_canvas_nodes(client, canvas_id, moves) {
+    const [params, args] = models_to_params_and_args(
+      moves,
+      ["data_id", "x", "y"],
+      [SQL_TYPES.BIGINT, SQL_TYPES.DOUBLE, SQL_TYPES.DOUBLE]);
+    const canvas_id_param = args.length + 1;
+    args.push(canvas_id);
+    const res = await client.query(`
+      UPDATE canvas_node AS cn
+      SET x = v.x, y = v.y, time_updated = CURRENT_TIMESTAMP
+      FROM (VALUES ${params}) AS v(data_id, x, y)
+      WHERE cn.canvas_id = $${canvas_id_param}
+        AND cn.data_id = v.data_id
+        AND cn.time_deleted IS NULL
+      RETURNING cn.canvas_id, cn.data_id, cn.ref, cn.label, cn.type, cn.x, cn.y, cn.hidden,
+                cn.tags, cn.time_created, cn.time_updated, cn.time_deleted`, args);
+    return res.rows;
   }
 
   async _trash_canvas_edges(client, canvas_id, node_ids, edge_ids) {

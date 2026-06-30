@@ -2,7 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, make_canvas_element_update_from_req, make_graph_merge_from_req, make_graph_selection_from_req, Graph } from "#model/Canvas.mjs";
+import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, make_canvas_element_update_from_req, make_graph_merge_from_req, make_graph_selection_from_req, make_graph_move_from_req, Graph } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
@@ -112,6 +112,11 @@ class UserService {
   async update_canvas_edge(user_id, canvas_id, data_id, edge_req) {
     const fields = make_canvas_element_update_from_req(edge_req);
     return this.canvasStore.update_canvas_edge_by_user(user_id, canvas_id, data_id, fields);
+  }
+
+  async move_canvas_nodes(user_id, canvas_id, move_req) {
+    const { moves } = make_graph_move_from_req(move_req);
+    return this.canvasStore.move_canvas_nodes_by_user(user_id, canvas_id, moves);
   }
 
   async trash_canvas_graph(user_id, canvas_id, graph_req) {

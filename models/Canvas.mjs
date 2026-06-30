@@ -4,6 +4,7 @@ export {
   make_canvas_element_update_from_req,
   make_graph_merge_from_req,
   make_graph_selection_from_req,
+  make_graph_move_from_req,
   Graph,
   UserCanvas,
   GraphNode,
@@ -102,6 +103,26 @@ function make_graph_selection_from_req(graph_req) {
     throw new CanvasRequestError("Graph selection must include at least one node or edge id");
   }
   return { node_ids: node_ids, edge_ids: edge_ids };
+}
+
+function make_graph_move_from_req(move_req) {
+  if (cmn.is_missing(move_req) || !cmn.is_object(move_req)) {
+    throw new CanvasRequestError(`Graph move is malformed: ${JSON.stringify(move_req)}`);
+  }
+  const raw_nodes = move_req.nodes;
+  if (!cmn.is_array(raw_nodes) || raw_nodes.length === 0) {
+    throw new CanvasRequestError(`Graph move must include a non-empty array of node positions: ${JSON.stringify(raw_nodes)}`);
+  }
+  const moves = raw_nodes.map((raw) => {
+    if (!cmn.is_object(raw) || !Number.isInteger(raw.data_id)) {
+      throw new CanvasRequestError(`Graph move node requires an integer data_id: ${JSON.stringify(raw)}`);
+    }
+    if (!Number.isFinite(raw.x) || !Number.isFinite(raw.y)) {
+      throw new CanvasRequestError(`Graph move node requires numeric x and y coordinates: ${JSON.stringify(raw)}`);
+    }
+    return { data_id: raw.data_id, x: raw.x, y: raw.y };
+  });
+  return { moves: moves };
 }
 
 function _validate_graph_id_array(ids, field) {

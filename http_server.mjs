@@ -173,6 +173,7 @@ export function start_server(config, services) {
   canvas_router.put('/:save_id', user_api_controller.update_user_canvas.bind(user_api_controller));
   canvas_router.get('/:save_id/graph', user_api_controller.get_user_canvas_graph.bind(user_api_controller));
   canvas_router.post('/:save_id/graph', user_api_controller.merge_user_canvas_graph.bind(user_api_controller));
+  canvas_router.put('/:save_id/graph/move', user_api_controller.move_user_canvas_nodes.bind(user_api_controller));
   canvas_router.put('/:save_id/graph/trash', user_api_controller.trash_user_canvas_graph.bind(user_api_controller));
   canvas_router.put('/:save_id/graph/restore', user_api_controller.restore_user_canvas_graph.bind(user_api_controller));
   canvas_router.get('/:save_id/node/:data_id', user_api_controller.get_user_canvas_node_data.bind(user_api_controller));
