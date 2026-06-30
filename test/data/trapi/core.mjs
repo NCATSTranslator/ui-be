@@ -37,6 +37,7 @@ const suite = {
     is_chemical_disease_query: _test_is_chemical_disease_query(),
     is_gene_chemical_query: _test_is_gene_chemical_query(),
     is_pathfinder_query: _test_is_pathfinder_query(),
+    is_lookup_query: _test_is_lookup_query(),
     is_valid_query: _test_is_valid_query(),
     AttributeIterator: _test_AttributeIterator()
   },
@@ -368,6 +369,119 @@ function _test_client_request_to_trapi_query() {
           }
         }
       }
+    },
+    "lookup--related_to-->chemical": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "type": "lookup",
+          "subject": {
+            "id": "MONDO:123",
+            "category": "Disease"
+          },
+          "object": {
+            "category": "ChemicalEntity"
+          },
+          "node_one_label": "type 2 diabetes mellitus"
+        }
+      ],
+      "expected": {
+        "message": {
+          "query_graph": {
+            "nodes": {
+              "sn": {
+                "ids": ["MONDO:123"],
+                "categories": ["biolink:Disease"]
+              },
+              "on": {
+                "categories": ["biolink:ChemicalEntity"]
+              }
+            },
+            "edges": {
+              "*": {
+                "subject": "sn",
+                "object": "on",
+                "knowledge_type": "lookup",
+                "predicates": ["biolink:related_to"]
+              }
+            }
+          }
+        }
+      }
+    },
+    "lookup_missing_subject": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "type": "lookup",
+          "object": {
+            "category": "ChemicalEntity"
+          },
+          "node_one_label": "type 2 diabetes mellitus"
+        }
+      ],
+      "expected": TypeError
+    },
+    "lookup_missing_subject_id": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "type": "lookup",
+          "subject": {
+            "category": "Disease"
+          },
+          "object": {
+            "category": "ChemicalEntity"
+          },
+          "node_one_label": "type 2 diabetes mellitus"
+        }
+      ],
+      "expected": TypeError
+    },
+    "lookup_missing_subject_category": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "type": "lookup",
+          "subject": {
+            "id": "MONDO:123"
+          },
+          "object": {
+            "category": "ChemicalEntity"
+          },
+          "node_one_label": "type 2 diabetes mellitus"
+        }
+      ],
+      "expected": TypeError
+    },
+    "lookup_missing_object": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "type": "lookup",
+          "subject": {
+            "id": "MONDO:123",
+            "category": "Disease"
+          },
+          "node_one_label": "type 2 diabetes mellitus"
+        }
+      ],
+      "expected": TypeError
+    },
+    "lookup_missing_object_category": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "type": "lookup",
+          "subject": {
+            "id": "MONDO:123",
+            "category": "Disease"
+          },
+          "object": {},
+          "node_one_label": "type 2 diabetes mellitus"
+        }
+      ],
+      "expected": TypeError
     }
   });
 }
@@ -2440,6 +2554,92 @@ function _test_message_to_query_type() {
         }
       ],
       "expected": 3
+    },
+    "lookup_over_creative_category_pair": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": {
+                  "ids": ["MONDO:123"],
+                  "categories": ["biolink:Disease"]
+                },
+                "on": {
+                  "categories": ["biolink:ChemicalEntity"]
+                }
+              },
+              "edges": {
+                "e0": {
+                  "subject": "sn",
+                  "object": "on",
+                  "knowledge_type": "lookup",
+                  "predicates": ["biolink:related_to"]
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expected": 4
+    },
+    "lookup_over_unsupported_category_pair": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": {
+                  "ids": ["MONDO:123"],
+                  "categories": ["biolink:Disease"]
+                },
+                "on": {
+                  "categories": ["biolink:Disease"]
+                }
+              },
+              "edges": {
+                "e0": {
+                  "subject": "sn",
+                  "object": "on",
+                  "knowledge_type": "lookup",
+                  "predicates": ["biolink:related_to"]
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expected": 4
+    },
+    "omitted_knowledge_type_defaults_to_lookup": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": {
+                  "categories": ["biolink:ChemicalEntity"]
+                },
+                "on": {
+                  "ids": ["NCBIGene:6323"],
+                  "categories": ["biolink:Gene"]
+                }
+              },
+              "edges": {
+                "e0": {
+                  "subject": "sn",
+                  "object": "on",
+                  "predicates": ["biolink:affects"]
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expected": 4
     }
   });
 }
@@ -2648,6 +2848,35 @@ function _test_message_to_endpoints() {
         }
       ],
       "expected": ["sn", "on"]
+    },
+    "lookup": {
+      config_loader: () => load_trapi(_test_config),
+      "args": [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": {
+                  "ids": ["MONDO:123"],
+                  "categories": ["biolink:Disease"]
+                },
+                "on": {
+                  "categories": ["biolink:ChemicalEntity"]
+                }
+              },
+              "edges": {
+                "e0": {
+                  "subject": "sn",
+                  "object": "on",
+                  "knowledge_type": "lookup",
+                  "predicates": ["biolink:related_to"]
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expected": ["sn", "on"]
     }
   });
 }
@@ -2739,6 +2968,41 @@ function _test_is_pathfinder_query() {
   });
 }
 
+function _test_is_lookup_query() {
+  return test.make_function_test({
+    "chemical--affects->gene": {
+      "args": [
+        0
+      ],
+      "expected": false
+    },
+    "chemical--treats->disease": {
+      "args": [
+        1
+      ],
+      "expected": false
+    },
+    "gene--affected_by->chemical": {
+      "args": [
+        2
+      ],
+      "expected": false
+    },
+    "pathfinder": {
+      "args": [
+        3
+      ],
+      "expected": false
+    },
+    "lookup": {
+      "args": [
+        4
+      ],
+      "expected": true
+    }
+  });
+}
+
 function _test_is_valid_query() {
   return test.make_function_test({
     "chemical--affects->gene": {
@@ -2765,9 +3029,15 @@ function _test_is_valid_query() {
       ],
       "expected": true
     },
-    "invalid_template": {
+    "lookup": {
       "args": [
         4
+      ],
+      "expected": true
+    },
+    "invalid_template": {
+      "args": [
+        9999
       ],
       "expected": false
     }
