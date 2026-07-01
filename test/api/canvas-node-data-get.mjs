@@ -3,8 +3,9 @@
  * The node-data endpoint returns the underlying data-pool entity (the signed SummaryNode) for a
  * Canvas Node, by its data_id. Unlike the graph endpoint - which returns the canvas_node row with a
  * { tag_id: null } id-set - this returns the full entity: its curies, names, annotations, and the
- * full tag objects. The data pool is shared and deduplicated by ref, so the endpoint reads it
- * directly by id without scoping to the canvas; a missing id is a 404 and a non-numeric id a 400.
+ * full tag objects. The data pool is shared, but the read is scoped to the addressed Canvas: the
+ * node must belong to a Canvas the current user owns (and that is not trashed). A data_id that is
+ * not on this Canvas - or an unknown id - is a 404, and a non-numeric id is a 400.
  *
  * This test mints a unique ref per run so the pool row it reads back is exactly what it submitted -
  * the suite's stable-ref fixtures share pool rows whose newest-source_time version (or a legacy row
@@ -85,6 +86,16 @@ try {
   // A non-numeric node id is a bad request.
   const badId = await getJson(`${CANVAS_PATH}/${canvas.id}/node/not-a-number`);
   ok(badId.res.status === 400, `non-numeric node id -> 400 (got ${badId.res.status})`);
+
+  // Scoping: the same pooled node is NOT readable through a different canvas that does not contain it.
+  const other = await postCanvas({ label: `${label} (other)`, layout });
+  ok(other.res.status === 200 && other.json && other.json.id != null, 'created a second canvas without this node');
+  const crossCanvas = await getJson(`${CANVAS_PATH}/${other.json.id}/node/${canvasNode.data_id}`);
+  ok(crossCanvas.res.status === 404, `a real node addressed through a canvas it is not on -> 404 (got ${crossCanvas.res.status})`);
+
+  // A real data_id under a nonexistent canvas is a 404 - the save_id is enforced, not decorative.
+  const bogusCanvas = await getJson(`${CANVAS_PATH}/999999999/node/${canvasNode.data_id}`);
+  ok(bogusCanvas.res.status === 404, `a real node under a nonexistent canvas -> 404 (got ${bogusCanvas.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
 }

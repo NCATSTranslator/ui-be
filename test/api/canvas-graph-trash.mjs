@@ -125,6 +125,15 @@ try {
   ok(finalRes.res.status === 200, `final graph fetch responds 200 (got ${finalRes.res.status})`);
   ok(finalRes.json.nodes.length === 3 && finalRes.json.edges.length === 2,
     'the canvas ends with all 3 nodes and 2 edges active');
+
+  // A trashed canvas is gone: both graph/trash and graph/restore on it are 404. This canvas exists
+  // but is soft-deleted, so it is distinct from the unknown-canvas 404 above.
+  const trashCanvas = await putJson(`${CANVAS_PATH}/trash`, [id]);
+  ok(trashCanvas.res.status === 200, `trash canvas responds 200 (got ${trashCanvas.res.status})`);
+  const trashOnTrashed = await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { nodes: [nodeDataId.get(refA)] });
+  ok(trashOnTrashed.res.status === 404, `graph/trash on a trashed canvas -> 404 (got ${trashOnTrashed.res.status})`);
+  const restoreOnTrashed = await putJson(`${CANVAS_PATH}/${id}/graph/restore`, { nodes: [nodeDataId.get(refA)] });
+  ok(restoreOnTrashed.res.status === 404, `graph/restore on a trashed canvas -> 404 (got ${restoreOnTrashed.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
 }

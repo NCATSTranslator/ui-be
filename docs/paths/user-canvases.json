@@ -497,6 +497,7 @@
   "/api/v1/users/me/canvas/{save_id}/node/{data_id}": {
     "get": {
       "summary": "Get the underlying data entity for a Canvas Node",
+      "description": "Returns the underlying data-pool entity (the signed SummaryNode) for a Canvas Node. The node must belong to the given Canvas and that Canvas must be owned by the current user and not trashed; otherwise the response is 404.",
       "security": [
         {
           "cookieAuth": []
@@ -534,7 +535,7 @@
           }
         },
         "404": {
-          "description": "No node with the given data_id exists"
+          "description": "No such node on a Canvas the current user owns"
         },
         "401": {
           "description": "Authentication Required"
@@ -611,6 +612,7 @@
   "/api/v1/users/me/canvas/{save_id}/edge/{data_id}": {
     "get": {
       "summary": "Get the underlying data entity for a Canvas Edge",
+      "description": "Returns the underlying data-pool entity (the signed SummaryEdge) for a Canvas Edge. The edge must belong to the given Canvas and that Canvas must be owned by the current user and not trashed; otherwise the response is 404.",
       "security": [
         {
           "cookieAuth": []
@@ -648,7 +650,7 @@
           }
         },
         "404": {
-          "description": "No edge with the given data_id exists"
+          "description": "No such edge on a Canvas the current user owns"
         },
         "401": {
           "description": "Authentication Required"

@@ -114,6 +114,13 @@ try {
   const moveTrashed = await putJson(movePath, { nodes: [{ data_id: nodeAId, x: 7, y: 8 }] });
   ok(moveTrashed.res.status === 200, `moving a soft-deleted node responds 200 (got ${moveTrashed.res.status})`);
   ok(Array.isArray(moveTrashed.json) && moveTrashed.json.length === 0, 'a soft-deleted node is not moved');
+
+  // A trashed canvas is gone: moving nodes on it is a 404 (distinct from the unknown-canvas 404 above,
+  // this canvas exists but is soft-deleted), not the silent no-op an unknown data_id gets.
+  const trashCanvas = await putJson(`${CANVAS_PATH}/trash`, [id]);
+  ok(trashCanvas.res.status === 200, `trash canvas responds 200 (got ${trashCanvas.res.status})`);
+  const moveOnTrashed = await putJson(movePath, { nodes: [{ data_id: nodeBId, x: 1, y: 1 }] });
+  ok(moveOnTrashed.res.status === 404, `moving nodes on a trashed canvas -> 404 (got ${moveOnTrashed.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
 }

@@ -122,6 +122,15 @@ try {
   ok(trash.res.status === 200, `trash edge responds 200 (got ${trash.res.status})`);
   const updateTrashed = await putJson(edgePath, { label: 'should not apply' });
   ok(updateTrashed.res.status === 404, `updating a soft-deleted edge -> 404 (got ${updateTrashed.res.status})`);
+
+  // A trashed canvas takes its elements with it: updating a node (still active in its own right) or
+  // edge on a soft-deleted canvas is a 404.
+  const trashCanvas = await putJson(`${CANVAS_PATH}/trash`, [id]);
+  ok(trashCanvas.res.status === 200, `trash canvas responds 200 (got ${trashCanvas.res.status})`);
+  const nodeAfterCanvasTrash = await putJson(nodePath, { label: 'after canvas trash' });
+  ok(nodeAfterCanvasTrash.res.status === 404, `updating a node on a trashed canvas -> 404 (got ${nodeAfterCanvasTrash.res.status})`);
+  const edgeAfterCanvasTrash = await putJson(edgePath, { label: 'after canvas trash' });
+  ok(edgeAfterCanvasTrash.res.status === 404, `updating an edge on a trashed canvas -> 404 (got ${edgeAfterCanvasTrash.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
 }

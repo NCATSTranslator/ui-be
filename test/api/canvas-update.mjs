@@ -68,6 +68,16 @@ try {
   // A canvas that does not exist (or is not owned) is a 404.
   const missing = await putJson(`${CANVAS_PATH}/999999999`, { label: 'x' });
   ok(missing.res.status === 404, `unknown canvas id -> 404 (got ${missing.res.status})`);
+
+  // A non-string label is a 400 (the update validator rejects it before touching the DB).
+  const badLabel = await putJson(`${CANVAS_PATH}/${canvas.id}`, { label: 42 });
+  ok(badLabel.res.status === 400, `non-string label -> 400 (got ${badLabel.res.status})`);
+
+  // A trashed (soft-deleted) canvas is treated as gone: updating it is a 404, not a silent success.
+  const trash = await putJson(`${CANVAS_PATH}/trash`, [canvas.id]);
+  ok(trash.res.status === 200, `trash canvas responds 200 (got ${trash.res.status})`);
+  const trashedUpdate = await putJson(`${CANVAS_PATH}/${canvas.id}`, { label: 'after trash' });
+  ok(trashedUpdate.res.status === 404, `updating a trashed canvas -> 404 (got ${trashedUpdate.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
 }

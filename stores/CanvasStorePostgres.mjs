@@ -49,16 +49,32 @@ class CanvasStorePostgres {
     };
   }
 
-  async get_node_data(data_id) {
-    const res = await pgExec(this._db_pool,
-      `SELECT data FROM node WHERE id = $1`, [data_id]);
+  async get_node_data(user_id, canvas_id, data_id) {
+    const res = await pgExec(this._db_pool, `
+      SELECT node.data
+      FROM canvas_node
+      JOIN node ON node.id = canvas_node.data_id
+      JOIN user_to_canvas ON user_to_canvas.canvas_id = canvas_node.canvas_id
+      JOIN canvas ON canvas.id = canvas_node.canvas_id
+      WHERE canvas_node.canvas_id = $1
+        AND canvas_node.data_id = $2
+        AND user_to_canvas.user_id = $3
+        AND canvas.time_deleted IS NULL`, [canvas_id, data_id, user_id]);
     if (res.rows.length === 0) return null;
     return res.rows[0].data;
   }
 
-  async get_edge_data(data_id) {
-    const res = await pgExec(this._db_pool,
-      `SELECT data FROM edge WHERE id = $1`, [data_id]);
+  async get_edge_data(user_id, canvas_id, data_id) {
+    const res = await pgExec(this._db_pool, `
+      SELECT edge.data
+      FROM canvas_edge
+      JOIN edge ON edge.id = canvas_edge.data_id
+      JOIN user_to_canvas ON user_to_canvas.canvas_id = canvas_edge.canvas_id
+      JOIN canvas ON canvas.id = canvas_edge.canvas_id
+      WHERE canvas_edge.canvas_id = $1
+        AND canvas_edge.data_id = $2
+        AND user_to_canvas.user_id = $3
+        AND canvas.time_deleted IS NULL`, [canvas_id, data_id, user_id]);
     if (res.rows.length === 0) return null;
     return res.rows[0].data;
   }

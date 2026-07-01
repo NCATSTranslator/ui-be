@@ -133,12 +133,12 @@ class UserService {
     return new CanvasGraph(graph);
   }
 
-  async get_node_data(data_id) {
-    return this.canvasStore.get_node_data(data_id);
+  async get_node_data(user_id, canvas_id, data_id) {
+    return this.canvasStore.get_node_data(user_id, canvas_id, data_id);
   }
 
-  async get_edge_data(data_id) {
-    return this.canvasStore.get_edge_data(data_id);
+  async get_edge_data(user_id, canvas_id, data_id) {
+    return this.canvasStore.get_edge_data(user_id, canvas_id, data_id);
   }
 
   async update_canvas(user_id, canvas_id, canvas_req) {

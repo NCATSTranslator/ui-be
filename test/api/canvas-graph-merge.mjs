@@ -17,7 +17,7 @@
  * Override the target host with API_BASE_URL=... if the server is elsewhere.
  */
 
-import { createHarness, postJson, getJson, BASE_URL, TEST_USER_ID } from '../lib/api-harness.mjs';
+import { createHarness, postJson, putJson, getJson, BASE_URL, TEST_USER_ID } from '../lib/api-harness.mjs';
 import {
   postCanvas, testNode, signNode, testEdge, signEdge, tagObject, CANVAS_PATH,
   NODE_TAG_DRUG, NODE_TAG_FDA,
@@ -223,6 +223,48 @@ try {
   const finalRes = await getJson(`${CANVAS_PATH}/${id}/graph`);
   ok(finalRes.res.status === 200, `final graph fetch responds 200 (got ${finalRes.res.status})`);
   verifyFinalGraph(finalRes.json, expectedGraph);
+
+  // Merging re-adds a soft-deleted node/edge (the canvas_node/canvas_edge ON CONFLICT revival path):
+  // trash a node so its edge cascades, then merge the same node + edge back and confirm both return.
+  const rs = Date.now();
+  const rA = `API_TEST:revive-A-${rs}`;
+  const rB = `API_TEST:revive-B-${rs}`;
+  const rAB = `${rA}->${rB}`;
+  const reviveNodes = { [rA]: signNode(rA, testNode(rA, 'Revive A', 'biolink:Disease', 1, 2)) };
+  const reviveEdge = { [rAB]: signEdge(rAB, testEdge(rA, rB, 'biolink:treats')) };
+  const reviveCreate = await postCanvas({
+    label: `api-test merge revive ${rs}`, layout: 'horizontal',
+    graph: {
+      nodes: { ...reviveNodes, [rB]: signNode(rB, testNode(rB, 'Revive B', 'biolink:ChemicalEntity', 3, 4)) },
+      edges: reviveEdge, tag_descriptions: {}, source,
+    },
+  });
+  ok(reviveCreate.res.status === 200, `revive: create responds 200 (got ${reviveCreate.res.status})`);
+  const reviveId = reviveCreate.json && reviveCreate.json.id;
+  const reviveInitial = await getJson(`${CANVAS_PATH}/${reviveId}/graph`);
+  const rNodeDataId = new Map((reviveInitial.json.nodes || []).map((n) => [n.ref, n.data_id]));
+
+  // Trash node A -> cascades to edge A->B; the default graph now shows only B and no edges.
+  await putJson(`${CANVAS_PATH}/${reviveId}/graph/trash`, { nodes: [rNodeDataId.get(rA)] });
+  const afterTrash = await getJson(`${CANVAS_PATH}/${reviveId}/graph`);
+  ok(afterTrash.json.nodes.length === 1 && afterTrash.json.edges.length === 0,
+    `revive: trashing A cascades its edge (got ${afterTrash.json.nodes.length} nodes, ${afterTrash.json.edges.length} edges)`);
+
+  // Merge the same node A and edge A->B back in: both are un-deleted (time_deleted cleared).
+  const reviveMerge = await postJson(`${CANVAS_PATH}/${reviveId}/graph`,
+    { nodes: reviveNodes, edges: reviveEdge, tag_descriptions: {}, source });
+  ok(reviveMerge.res.status === 200, `revive: merge responds 200 (got ${reviveMerge.res.status})`);
+  ok(byRef(reviveMerge.json.nodes, rA), 'revive: soft-deleted node A is re-added by the merge');
+  ok(byRef(reviveMerge.json.edges, rAB), 'revive: cascaded edge A->B is re-added by the merge');
+  ok(reviveMerge.json.nodes.length === 2 && reviveMerge.json.edges.length === 1,
+    `revive: the canvas is whole again (got ${reviveMerge.json.nodes.length} nodes, ${reviveMerge.json.edges.length} edges)`);
+
+  // Merging into a trashed (soft-deleted, but still existing) canvas is a 404, distinct from the
+  // unknown-canvas 404 above.
+  const trashOriginal = await putJson(`${CANVAS_PATH}/trash`, [id]);
+  ok(trashOriginal.res.status === 200, `trash canvas responds 200 (got ${trashOriginal.res.status})`);
+  const mergeTrashed = await postJson(`${CANVAS_PATH}/${id}/graph`, { nodes: {}, edges: {}, tag_descriptions: {}, source });
+  ok(mergeTrashed.res.status === 404, `merging into a trashed canvas -> 404 (got ${mergeTrashed.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
 }

@@ -497,12 +497,14 @@ class UserAPIController {
   }
 
   async get_user_canvas_node_data(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const canvas_id = req.canvas_id;
     const data_id = req.data_id;
     try {
-      const data = await this.user_service.get_node_data(data_id);
+      const data = await this.user_service.get_node_data(user_id, canvas_id, data_id);
       if (data === null) {
-        req.log.warn(`No node found for id ${data_id}`);
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No node found for id ${data_id}`);
+        req.log.warn(`No node found for id ${data_id} on canvas ${canvas_id}`);
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No node found for id ${data_id} on canvas ${canvas_id}`);
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(data);
     } catch (err) {
@@ -512,12 +514,14 @@ class UserAPIController {
   }
 
   async get_user_canvas_edge_data(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const canvas_id = req.canvas_id;
     const data_id = req.data_id;
     try {
-      const data = await this.user_service.get_edge_data(data_id);
+      const data = await this.user_service.get_edge_data(user_id, canvas_id, data_id);
       if (data === null) {
-        req.log.warn(`No edge found for id ${data_id}`);
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No edge found for id ${data_id}`);
+        req.log.warn(`No edge found for id ${data_id} on canvas ${canvas_id}`);
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No edge found for id ${data_id} on canvas ${canvas_id}`);
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(data);
     } catch (err) {
