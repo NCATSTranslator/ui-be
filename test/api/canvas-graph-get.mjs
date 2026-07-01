@@ -10,6 +10,10 @@
  * Ownership is enforced by the endpoint, so a canvas the user does not own (or that does not exist)
  * reads as 404 and a non-numeric id is rejected as 400.
  *
+ * include_deleted=true widens the read at both levels: it surfaces soft-deleted nodes/edges within a
+ * canvas, and it lets a soft-deleted canvas's graph be read at all (the default read 404s). This test
+ * exercises both by trashing a node (which cascades to its edge) and then the whole canvas.
+ *
  * Assumes the server is running with "auth_check": false (see mock/auth.mjs). This hits a real
  * Postgres, so run it against the mock-ars server (host=mock allows the auth bypass):
  *
@@ -20,7 +24,7 @@
  * Override the target host with API_BASE_URL=... if the server is elsewhere.
  */
 
-import { createHarness, getJson, BASE_URL, TEST_USER_ID } from '../lib/api-harness.mjs';
+import { createHarness, getJson, putJson, BASE_URL, TEST_USER_ID } from '../lib/api-harness.mjs';
 import {
   postCanvas, graphWithNodesAndEdges, CANVAS_PATH,
   NODE_REF_1, NODE_REF_2, EDGE_REF_1,
@@ -93,6 +97,44 @@ try {
   // A non-numeric id is a bad request.
   const badId = await getJson(`${CANVAS_PATH}/not-a-number/graph`);
   ok(badId.res.status === 400, `non-numeric canvas id -> 400 (got ${badId.res.status})`);
+
+  // --- include_deleted ---
+
+  // Soft delete node 1; trashing a node cascades to its incident edge (edge 1 connects node 1 -> 2).
+  const trashNode = await putJson(`${CANVAS_PATH}/${canvas.id}/graph/trash`, { nodes: [node1.data_id] });
+  ok(trashNode.res.status === 200, `soft delete node 1 responds 200 (got ${trashNode.res.status})`);
+
+  // By default the graph hides the soft-deleted node and its cascaded edge.
+  const activeGraph = await getJson(`${CANVAS_PATH}/${canvas.id}/graph`);
+  ok(activeGraph.res.status === 200, `default graph responds 200 (got ${activeGraph.res.status})`);
+  const activeNodes = (activeGraph.json && activeGraph.json.nodes) || [];
+  const activeEdges = (activeGraph.json && activeGraph.json.edges) || [];
+  ok(activeNodes.length === 1 && activeNodes[0].ref === NODE_REF_2,
+    `default graph returns only the surviving node (got ${activeNodes.length})`);
+  ok(activeEdges.length === 0, `default graph drops the cascaded edge (got ${activeEdges.length})`);
+
+  // include_deleted=true surfaces the soft-deleted node and edge, each carrying a time_deleted stamp.
+  const deletedGraph = await getJson(`${CANVAS_PATH}/${canvas.id}/graph?include_deleted=true`);
+  ok(deletedGraph.res.status === 200, `graph?include_deleted=true responds 200 (got ${deletedGraph.res.status})`);
+  const allNodes = (deletedGraph.json && deletedGraph.json.nodes) || [];
+  const allEdges = (deletedGraph.json && deletedGraph.json.edges) || [];
+  ok(allNodes.length === 2, `include_deleted graph returns both nodes (got ${allNodes.length})`);
+  ok(allEdges.length === 1, `include_deleted graph returns the cascaded edge (got ${allEdges.length})`);
+  const deletedNode1 = allNodes.find((n) => n.ref === NODE_REF_1);
+  const deletedEdge1 = allEdges.find((e) => e.ref === EDGE_REF_1);
+  ok(deletedNode1 && deletedNode1.time_deleted, 'soft-deleted node 1 carries a time_deleted timestamp');
+  ok(deletedEdge1 && deletedEdge1.time_deleted, 'cascaded edge carries a time_deleted timestamp');
+
+  // Trash the whole canvas: the default graph read now 404s, but include_deleted=true still returns it.
+  const trashCanvas = await putJson(`${CANVAS_PATH}/trash`, [canvas.id]);
+  ok(trashCanvas.res.status === 200, `trash canvas responds 200 (got ${trashCanvas.res.status})`);
+  const goneGraph = await getJson(`${CANVAS_PATH}/${canvas.id}/graph`);
+  ok(goneGraph.res.status === 404, `graph of a trashed canvas -> 404 by default (got ${goneGraph.res.status})`);
+  const revivedGraph = await getJson(`${CANVAS_PATH}/${canvas.id}/graph?include_deleted=true`);
+  ok(revivedGraph.res.status === 200,
+    `graph of a trashed canvas?include_deleted=true -> 200 (got ${revivedGraph.res.status})`);
+  ok(revivedGraph.json && Array.isArray(revivedGraph.json.nodes) && revivedGraph.json.nodes.length === 2,
+    `include_deleted returns the trashed canvas graph with all nodes (got ${revivedGraph.json && revivedGraph.json.nodes && revivedGraph.json.nodes.length})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
 }
