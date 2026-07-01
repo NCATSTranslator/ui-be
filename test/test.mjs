@@ -9,6 +9,7 @@ import {test_summary_edge} from "#test/summarization/SummaryEdge.mjs";
 import {test_biolink_model} from "#test/biolink-model.mjs";
 import {test_biothings_annotation} from "#test/biothings-annotation.mjs";
 import {test_evidence} from "#test/evidence.mjs";
+import {test_canvas} from "#test/canvas.mjs";
 
 logger.level = "silent";
 await test_trapi_core();
@@ -21,3 +22,4 @@ await test_summary_edge();
 await test_biolink_model();
 await test_biothings_annotation();
 await test_evidence();
+await test_canvas();
