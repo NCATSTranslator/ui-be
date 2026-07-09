@@ -360,5 +360,6 @@
   "include_query_status_polling": true,
   "include_projects": false,
   "include_hashed_parameters": false,
+  "include_lookup": false,
   "show_novelty_boost": true
 }
