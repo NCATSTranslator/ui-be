@@ -138,9 +138,6 @@
     "/api/v1/users/me/saves/{save_id}": {
       "$ref": "paths/user-saves.json#/~1api~1v1~1users~1me~1saves~1{save_id}"
     },
-    "/api/v1/users/me/canvases": {
-      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvases"
-    },
     "/api/v1/users/me/canvas": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas"
     },
@@ -150,8 +147,26 @@
     "/api/v1/users/me/canvas/restore": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1restore"
     },
+    "/api/v1/users/me/canvas/{save_id}": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}"
+    },
     "/api/v1/users/me/canvas/{save_id}/graph": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1graph"
+    },
+    "/api/v1/users/me/canvas/{save_id}/graph/move": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1graph~1move"
+    },
+    "/api/v1/users/me/canvas/{save_id}/graph/trash": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1graph~1trash"
+    },
+    "/api/v1/users/me/canvas/{save_id}/graph/restore": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1graph~1restore"
+    },
+    "/api/v1/users/me/canvas/{save_id}/node/{data_id}": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1node~1{data_id}"
+    },
+    "/api/v1/users/me/canvas/{save_id}/edge/{data_id}": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1edge~1{data_id}"
     },
     "/demo/disease/{disease_id}": {
       "$ref": "paths/demo.json#/~1demo~1disease~1{disease_id}"
