@@ -8,15 +8,19 @@ const inforesEntries = inforesCatalog.information_resources;
 const inforesMini = {};
 inforesEntries.forEach((inforesEntry) => {
   if (inforesEntry.id) {
-    let xref = inforesEntry.xref ?? null;
+    let xrefs = inforesEntry.xref ?? null;
     let wiki = null;
     let url = null;
-    if (xref && xref.length > 0) {
-      xref = xref[0];
-      if (xref.startsWith("https://github.com")) {
-        wiki = xref;
-      } else {
-        url = xref;
+    if (xrefs) {
+      for (let i = 0; i < xrefs.length; i++) {
+        if (wiki !== null && url !== null) break;
+        const xref = xrefs[i];
+        const isWiki = xref.startsWith("https://github.com");
+        if (wiki === null && isWiki) {
+          wiki = xref;
+        } else if (url === null && !isWiki) {
+          url = xref;
+        }
       }
     }
 
