@@ -7,6 +7,7 @@ import {test_summarization_property_rules} from "#test/summarization/property-ru
 import {test_summary_node} from "#test/summarization/SummaryNode.mjs";
 import {test_summary_edge} from "#test/summarization/SummaryEdge.mjs";
 import {test_predicates} from "#test/summarization/predicates.mjs";
+import {test_tags} from "#test/summarization/tags.mjs";
 import {test_biolink_model} from "#test/biolink-model.mjs";
 import {test_biothings_annotation} from "#test/biothings-annotation.mjs";
 import {test_evidence} from "#test/evidence.mjs";
@@ -20,6 +21,7 @@ await test_summarization_property_rules();
 await test_summary_node();
 await test_summary_edge();
 await test_predicates();
+await test_tags();
 await test_biolink_model();
 await test_biothings_annotation();
 await test_evidence();
