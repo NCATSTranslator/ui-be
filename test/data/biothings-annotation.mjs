@@ -165,7 +165,7 @@ function _test_make_rule_collect_gene_annotations() {
             descriptions: ["A gene summary"],
             name: "BRCA1",
             species: "Mouse",
-            tdl: "Tclin"
+            tdl: ["Tclin"]
           }
         }
       },
@@ -188,7 +188,7 @@ function _test_make_rule_collect_gene_annotations() {
             descriptions: null,
             name: "GENE1",
             species: null,
-            tdl: null
+            tdl: []
           }
         }
       },
