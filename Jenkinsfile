@@ -46,7 +46,7 @@ pipeline {
             steps {
                 script {
                     sh '''#!/bin/bash
-                    source build-docker-container.sh -b main -f main 
+                    source build-docker-container.sh -b hotfix/july-2026 -f hotfix/july-2026 
                     aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin  853771734544.dkr.ecr.us-east-1.amazonaws.com
                     docker image tag $image_name:$version_tag $IMAGE_NAME
                     '''
