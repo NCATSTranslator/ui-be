@@ -403,7 +403,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
 
 function _test_biolink_config() {
   return {
-    "version": "4.2.1",
+    "version": "4.4.3",
     "support_deprecated_predicates": false,
     "infores_catalog": "infores-catalog-v1.1.4.json",
     "prefix_catalog": {
