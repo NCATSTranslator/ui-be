@@ -15,6 +15,7 @@ const suite = {
     is_biolink_pred: _test_is_biolink_pred(),
     is_deprecated_pred: _test_is_deprecated_pred(),
     invert_biolink_pred: _test_invert_biolink_pred(),
+    is_canonical_pred: _test_is_canonical_pred(),
     get_predicate_description: _test_get_predicate_description(),
     get_node_type_description: _test_get_node_type_description(),
     is_valid_curie: _test_is_valid_curie(),
@@ -236,6 +237,51 @@ function _test_invert_biolink_pred() {
       config_loader: () => load_biolink(_test_biolink_config()),
       "args": ["biolink:superclass_of", true],
       "expected": "biolink:subclass_of"
+    }
+  });
+}
+
+function _test_is_canonical_pred() {
+  return test.make_function_test({
+    "canonical_predicate": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["affects"],
+      "expected": true
+    },
+    "noncanonical_predicate": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["affected by"],
+      "expected": false
+    },
+    "canonical_predicate_treats": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["treats"],
+      "expected": true
+    },
+    "noncanonical_predicate_treated_by": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["treated by"],
+      "expected": false
+    },
+    "symmetric_predicate_is_canonical": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["related to"],
+      "expected": true
+    },
+    "biolinkified_input_canonical": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["biolink:affects"],
+      "expected": true
+    },
+    "biolinkified_input_noncanonical": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["biolink:affected_by"],
+      "expected": false
+    },
+    "unknown_predicate_throws": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["not a real predicate"],
+      "expected": Error
     }
   });
 }
