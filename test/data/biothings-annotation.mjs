@@ -2,14 +2,30 @@ export { suite }
 
 import * as test from "#test/lib/common.mjs";
 import * as cmn from "#lib/common.mjs";
+import { make_section } from "#lib/biothings-annotation.mjs";
 
 const ANNOTATION_ID = "biothings_annotations";
+
+const SRC = {
+  CHEBI: { name: "Chemical Entity of Biological Interest", url: "https://www.ebi.ac.uk/chebi/" },
+  CHEMBL: { name: "ChEMBL", url: "https://www.ebi.ac.uk/chembl/" },
+  CLINICAL_TRIALS: { name: "ClinicalTrials.gov", url: "https://clinicaltrials.gov/" },
+  DISEASE_ONTOLOGY: { name: "Disease Ontology", url: "https://disease-ontology.org/" },
+  MONDO: { name: "MONDO Disease Ontology", url: "https://obofoundry.org/ontology/mondo.html" },
+  NCBI_GENE: { name: "National Center for Biotechnology Information Gene", url: "https://www.ncbi.nlm.nih.gov/gene/" },
+  NCBI_TAXONOMY: { name: "NCBI Taxonomy", url: "https://www.ncbi.nlm.nih.gov/taxonomy/" },
+  NCIT: { name: "National Cancer Institute Thesaurus", url: "https://ncithesaurus.nci.nih.gov/ncitbrowser/" },
+  NDC: { name: "National Drug Code Directory", url: "https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory" },
+  PHARMGKB: { name: "Pharmacogenomics Knowledgebase", url: "https://www.pharmgkb.org/" },
+  PHAROS: { name: "Pharos", url: "https://pharos.nih.gov/" }
+};
 
 const suite = {
   tests: {
     is_chemical: _test_is_chemical(),
     is_disease: _test_is_disease(),
     is_gene: _test_is_gene(),
+    make_section: _test_make_section(),
     make_rule_collect_chemical_annotations: _test_make_rule_collect_chemical_annotations(),
     make_rule_collect_gene_annotations: _test_make_rule_collect_gene_annotations(),
     make_rule_collect_disease_annotations: _test_make_rule_collect_disease_annotations(),
@@ -20,7 +36,7 @@ const suite = {
 function _test_is_chemical() {
   return test.make_function_test({
     "chemical_with_populated_field_is_chemical": {
-      args: [{ annotations: { chemical: { approval: 3 } } }],
+      args: [{ annotations: { chemical: { approval: make_section(3, []) } } }],
       expected: true
     },
     "chemical_with_all_null_fields_is_not_chemical": {
@@ -32,7 +48,7 @@ function _test_is_chemical() {
       expected: false
     },
     "disease_annotation_is_not_chemical": {
-      args: [{ annotations: { disease: { descriptions: ["d"] } } }],
+      args: [{ annotations: { disease: { descriptions: make_section(["d"], []) } } }],
       expected: false
     }
   });
@@ -41,7 +57,7 @@ function _test_is_chemical() {
 function _test_is_disease() {
   return test.make_function_test({
     "disease_with_populated_field_is_disease": {
-      args: [{ annotations: { disease: { descriptions: ["d"] } } }],
+      args: [{ annotations: { disease: { descriptions: make_section(["d"], []) } } }],
       expected: true
     },
     "disease_with_all_null_fields_is_not_disease": {
@@ -58,7 +74,7 @@ function _test_is_disease() {
 function _test_is_gene() {
   return test.make_function_test({
     "gene_with_populated_field_is_gene": {
-      args: [{ annotations: { gene: { name: "BRCA1" } } }],
+      args: [{ annotations: { gene: { name: make_section("BRCA1", []) } } }],
       expected: true
     },
     "gene_with_all_null_fields_is_not_gene": {
@@ -72,6 +88,19 @@ function _test_is_gene() {
   });
 }
 
+function _test_make_section() {
+  return test.make_function_test({
+    "wraps_value_and_sources_as_metadata": {
+      args: [3, [SRC.CHEMBL]],
+      expected: { value: 3, metadata: { sources: [SRC.CHEMBL] } }
+    },
+    "supports_no_sources": {
+      args: [["a"], []],
+      expected: { value: ["a"], metadata: { sources: [] } }
+    }
+  });
+}
+
 function _test_make_rule_collect_chemical_annotations() {
   return test.make_function_test({
     "full_chemical_annotation": {
@@ -79,13 +108,13 @@ function _test_make_rule_collect_chemical_annotations() {
       expected: {
         annotations: {
           chemical: {
-            approval: 3,
-            descriptions: ["NCIT description"],
-            indications: ["D000001"],
-            other_names: { commercial: ["aspirin"], generic: ["acetylsalicylic acid"] },
+            approval: make_section(3, [SRC.CHEMBL]),
+            descriptions: make_section(["NCIT description"], [SRC.NCIT]),
+            indications: make_section(["D000001"], [SRC.CHEMBL]),
+            other_names: make_section({ commercial: ["aspirin"], generic: ["acetylsalicylic acid"] }, [SRC.PHARMGKB, SRC.NDC]),
             roles: null,
-            otc_status: { code: 2, label: "Over the Counter" },
-            clinical_trials: ["NCT001"]
+            otc_status: make_section({ code: 2, label: "Over the Counter" }, [SRC.CHEMBL]),
+            clinical_trials: make_section(["NCT001"], [SRC.CLINICAL_TRIALS])
           }
         }
       },
@@ -118,7 +147,7 @@ function _test_make_rule_collect_chemical_annotations() {
             indications: null,
             other_names: null,
             roles: null,
-            otc_status: { code: 1, label: "Prescription" },
+            otc_status: make_section({ code: 1, label: "Prescription" }, [SRC.CHEMBL]),
             clinical_trials: null
           }
         }
@@ -162,10 +191,10 @@ function _test_make_rule_collect_gene_annotations() {
       expected: {
         annotations: {
           gene: {
-            descriptions: ["A gene summary"],
-            name: "BRCA1",
-            species: "Mouse",
-            tdl: ["Tclin"]
+            descriptions: make_section(["A gene summary"], [SRC.NCBI_GENE]),
+            name: make_section("BRCA1", [SRC.NCBI_GENE]),
+            species: make_section("Mouse", [SRC.NCBI_TAXONOMY]),
+            tdl: make_section(["Tclin"], [SRC.PHAROS])
           }
         }
       },
@@ -186,9 +215,9 @@ function _test_make_rule_collect_gene_annotations() {
         annotations: {
           gene: {
             descriptions: null,
-            name: "GENE1",
+            name: make_section("GENE1", [SRC.NCBI_GENE]),
             species: null,
-            tdl: []
+            tdl: null
           }
         }
       },
@@ -211,8 +240,8 @@ function _test_make_rule_collect_disease_annotations() {
       expected: {
         annotations: {
           disease: {
-            descriptions: ["Disease text "],
-            curies: ["MESH:D001", "MESH:D002"]
+            descriptions: make_section(["Disease text "], [SRC.DISEASE_ONTOLOGY]),
+            curies: make_section(["MESH:D001", "MESH:D002"], [SRC.MONDO, SRC.DISEASE_ONTOLOGY])
           }
         }
       },
