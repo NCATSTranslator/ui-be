@@ -111,7 +111,11 @@ function _test_make_rule_collect_chemical_annotations() {
           chemical: {
             approval: make_section(3, [SRC.CHEMBL("CHEMBL001")]),
             descriptions: make_section(["NCIT description", "CHEBI definition"], [SRC.NCIT("C001"), SRC.CHEBI("CHEBI:001")]),
-            indications: make_section([{ name: "disease one", ids: ["MONDO:001", "UMLS:001"] }], [SRC.DRUG_APPROVALS]),
+            indications: make_section([{
+              name: "disease one",
+              ids: ["MONDO:001", "UMLS:001"],
+              urls: ["https://kp.example/mondo001a", "https://kp.example/umls001", "https://kp.example/mondo001b"]
+            }], [SRC.DRUG_APPROVALS]),
             other_names: make_section({ commercial: ["aspirin"], generic: ["acetylsalicylic acid"] }, [SRC.PHARMGKB, SRC.NDC]),
             roles: null,
             otc_status: make_section({ code: 2, label: "Over the Counter" }, [SRC.CHEMBL("CHEMBL001")]),
@@ -127,10 +131,10 @@ function _test_make_rule_collect_chemical_annotations() {
             max_phase: 3
           },
           clinical_approval: [
-            { disease: { mondo: "MONDO:001", name: "disease one" }, status: "approved_for_condition" },
-            { disease: { umls: "UMLS:001", name: "disease one" }, status: "approved_for_condition" },
-            { disease: { mondo: "MONDO:001", name: "disease one" }, status: "approved_for_condition" },
-            { disease: { hp: "HP:001", name: "phenotype two" }, status: "not_approved_for_condition" }
+            { disease: { mondo: "MONDO:001", name: "disease one" }, status: "approved_for_condition", source_record_urls: ["https://kp.example/mondo001a"] },
+            { disease: { umls: "UMLS:001", name: "disease one" }, status: "approved_for_condition", source_record_urls: ["https://kp.example/umls001"] },
+            { disease: { mondo: "MONDO:001", name: "disease one" }, status: "approved_for_condition", source_record_urls: ["https://kp.example/mondo001b"] },
+            { disease: { hp: "HP:001", name: "phenotype two" }, status: "not_approved_for_condition", source_record_urls: ["https://kp.example/hp001"] }
           ],
           unii: { ncit: "C001", ncit_description: "NCIT description" },
           chebi: { id: "CHEBI:001", definition: "CHEBI definition" },

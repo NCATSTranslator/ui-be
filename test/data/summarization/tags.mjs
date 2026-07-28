@@ -378,35 +378,35 @@ function _test_decorate_indication_tag() {
   return test.make_function_test({
     indicated_when_path_disease_matches: {
       args: _indication_case(
-        {indications: make_section([{name: 'disease one', ids: ['MONDO:0000001']}], [])},
+        {indications: make_section([{name: 'disease one', ids: ['MONDO:0000001'], urls: []}], [])},
         ['MONDO:0000001']),
       post: _raw_tags,
       expected: {'n/di/ind': _raw('n/di/ind', 'Has Been in Trial')}
     },
     not_indicated_when_no_disease_matches: {
       args: _indication_case(
-        {indications: make_section([{name: 'disease two', ids: ['MONDO:0000002']}], [])},
+        {indications: make_section([{name: 'disease two', ids: ['MONDO:0000002'], urls: []}], [])},
         ['MONDO:0000001']),
       post: _raw_tags,
       expected: {'n/di/not': _raw('n/di/not', 'Has Not Been in Trial')}
     },
     matches_any_end_curie: {
       args: _indication_case(
-        {indications: make_section([{name: 'phenotype one', ids: ['HP:0000001']}], [])},
+        {indications: make_section([{name: 'phenotype one', ids: ['HP:0000001'], urls: []}], [])},
         ['MONDO:0000001', 'HP:0000001']),
       post: _raw_tags,
       expected: {'n/di/ind': _raw('n/di/ind', 'Has Been in Trial')}
     },
     matches_any_merged_id: {
       args: _indication_case(
-        {indications: make_section([{name: 'disease one', ids: ['MONDO:0000001', 'UMLS:0000001']}], [])},
+        {indications: make_section([{name: 'disease one', ids: ['MONDO:0000001', 'UMLS:0000001'], urls: []}], [])},
         ['UMLS:0000001']),
       post: _raw_tags,
       expected: {'n/di/ind': _raw('n/di/ind', 'Has Been in Trial')}
     },
     fda_approval_not_required: {
       args: _indication_case(
-        {indications: make_section([{name: 'disease one', ids: ['MONDO:0000001']}], [])},
+        {indications: make_section([{name: 'disease one', ids: ['MONDO:0000001'], urls: []}], [])},
         ['MONDO:0000001'],
         []),
       post: _raw_tags,
