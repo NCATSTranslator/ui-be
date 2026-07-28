@@ -11,6 +11,7 @@ const SRC = {
   CHEMBL: (id) => ({ name: "ChEMBL", url: `https://www.ebi.ac.uk/chembl/compound_report_card/${id}/` }),
   CLINICAL_TRIALS: { name: "ClinicalTrials.gov", url: "https://clinicaltrials.gov/" },
   DISEASE_ONTOLOGY: (id) => ({ name: "Disease Ontology", url: `https://disease-ontology.org/?id=${id}` }),
+  DRUG_APPROVALS: { name: "Drug Approvals Knowledge Provider", url: "https://github.com/NCATSTranslator/Translator-All/wiki/Multiomics-Drug-Approvals-KP" },
   MONDO: (id) => ({ name: "MONDO Disease Ontology", url: `https://monarchinitiative.org/${id}` }),
   NCBI_GENE: (id) => ({ name: "National Center for Biotechnology Information Gene", url: `https://www.ncbi.nlm.nih.gov/gene/${id}` }),
   NCBI_TAXONOMY: (id) => ({ name: "NCBI Taxonomy", url: `https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=${id}` }),
@@ -110,7 +111,7 @@ function _test_make_rule_collect_chemical_annotations() {
           chemical: {
             approval: make_section(3, [SRC.CHEMBL("CHEMBL001")]),
             descriptions: make_section(["NCIT description", "CHEBI definition"], [SRC.NCIT("C001"), SRC.CHEBI("CHEBI:001")]),
-            indications: make_section(["D000001"], [SRC.CHEMBL("CHEMBL001")]),
+            indications: make_section(["MONDO:001"], [SRC.DRUG_APPROVALS]),
             other_names: make_section({ commercial: ["aspirin"], generic: ["acetylsalicylic acid"] }, [SRC.PHARMGKB, SRC.NDC]),
             roles: null,
             otc_status: make_section({ code: 2, label: "Over the Counter" }, [SRC.CHEMBL("CHEMBL001")]),
@@ -123,12 +124,13 @@ function _test_make_rule_collect_chemical_annotations() {
           chembl: {
             molecule_chembl_id: "CHEMBL001",
             availability_type: 2,
-            max_phase: 3,
-            drug_indications: [
-              { mesh_id: "D000001" },
-              { mesh_id: false }
-            ]
+            max_phase: 3
           },
+          clinical_approval: [
+            { disease: { mondo: "MONDO:001", name: "disease one" }, status: "approved_for_condition" },
+            { disease: { mondo: "MONDO:001", name: "disease one" }, status: "approved_for_condition" },
+            { disease: { hp: "HP:001", name: "phenotype two" }, status: "not_approved_for_condition" }
+          ],
           unii: { ncit: "C001", ncit_description: "NCIT description" },
           chebi: { id: "CHEBI:001", definition: "CHEBI definition" },
           pharmgkb: { trade_names: ["Aspirin"] },
