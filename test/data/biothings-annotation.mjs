@@ -252,7 +252,8 @@ function _test_make_rule_collect_disease_annotations() {
         annotations: {
           disease: {
             descriptions: make_section(["Disease text "], [SRC.DISEASE_ONTOLOGY("DOID:001")]),
-            curies: make_section(["MESH:D001", "MESH:D002"], [SRC.MONDO("MONDO:001"), SRC.DISEASE_ONTOLOGY("DOID:001")])
+            curies: make_section(["MESH:D001", "MESH:D002"], [SRC.MONDO("MONDO:001"), SRC.DISEASE_ONTOLOGY("DOID:001")]),
+            synonyms: null
           }
         }
       },
@@ -278,12 +279,113 @@ function _test_make_rule_collect_disease_annotations() {
         annotations: {
           disease: {
             descriptions: null,
-            curies: null
+            curies: null,
+            synonyms: null
           }
         }
       },
       context: {
         source: _make_attr_source({}),
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    "synonyms_merge_both_sources_and_deduplicate": {
+      args: [],
+      expected: {
+        annotations: {
+          disease: {
+            descriptions: null,
+            curies: null,
+            synonyms: make_section(
+              ["diabetes", "diabetes mellitus", "DM", "sugar diabetes"],
+              [SRC.MONDO("MONDO:001"), SRC.DISEASE_ONTOLOGY("DOID:001")]
+            )
+          }
+        }
+      },
+      context: {
+        source: _make_attr_source({
+          mondo: {
+            mondo: "MONDO:001",
+            synonym: { exact: ["diabetes", "diabetes mellitus"], related: ["DM"] }
+          },
+          disease_ontology: {
+            doid: "DOID:001",
+            name: "diabetes mellitus",
+            synonyms: { exact: ["diabetes", "sugar diabetes"] }
+          }
+        }),
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    "synonyms_deduplicate_case_insensitively_keeping_first_casing": {
+      args: [],
+      expected: {
+        annotations: {
+          disease: {
+            descriptions: null,
+            curies: null,
+            synonyms: make_section(["DM", "Sugar Diabetes"], [SRC.MONDO("MONDO:001")])
+          }
+        }
+      },
+      context: {
+        source: _make_attr_source({
+          mondo: {
+            mondo: "MONDO:001",
+            synonym: { exact: ["DM", "  dm  ", "Sugar Diabetes"], related: ["sugar diabetes", "   "] }
+          }
+        }),
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    "synonyms_collected_from_array_shaped_disease_ontology": {
+      args: [],
+      expected: {
+        annotations: {
+          disease: {
+            descriptions: null,
+            curies: null,
+            synonyms: make_section(
+              ["pyloric stenosis", "gastric outlet obstruction", "gastric outflow obstruction"],
+              [SRC.DISEASE_ONTOLOGY("DOID:001")]
+            )
+          }
+        }
+      },
+      context: {
+        source: _make_attr_source({
+          disease_ontology: [
+            { doid: "DOID:001", name: "pyloric stenosis", synonyms: {} },
+            { doid: "DOID:002", name: "gastric outlet obstruction", synonyms: { exact: ["gastric outflow obstruction"] } }
+          ]
+        }),
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    "synonyms_exclude_identifiers": {
+      args: [],
+      expected: {
+        annotations: {
+          disease: {
+            descriptions: null,
+            curies: make_section(["MESH:D001"], [SRC.MONDO("MONDO:001")]),
+            synonyms: make_section(["diabetes"], [SRC.MONDO("MONDO:001")])
+          }
+        }
+      },
+      context: {
+        source: _make_attr_source({
+          mondo: {
+            mondo: "MONDO:001",
+            synonym: { exact: ["diabetes"] },
+            xrefs: { mesh: "D001", doid: ["DOID:9351"], umls: ["C0011849"] }
+          }
+        }),
         target: {}
       },
       post: test.apply_rule
