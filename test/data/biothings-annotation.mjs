@@ -119,7 +119,11 @@ function _test_make_rule_collect_chemical_annotations() {
             other_names: make_section({ commercial: ["aspirin"], generic: ["acetylsalicylic acid"] }, [SRC.PHARMGKB, SRC.NDC]),
             roles: null,
             otc_status: make_section({ code: 2, label: "Over the Counter" }, [SRC.CHEMBL("CHEMBL001")]),
-            clinical_trials: make_section(["NCT001"], [SRC.CLINICAL_TRIALS])
+            clinical_trials: make_section([
+              { id: "NCT001", disease_ids: ["MONDO:001"] },
+              { id: "NCT002", disease_ids: [] },
+              { id: "NCT003", disease_ids: [] }
+            ], [SRC.CLINICAL_TRIALS])
           }
         }
       },
@@ -140,7 +144,11 @@ function _test_make_rule_collect_chemical_annotations() {
           chebi: { id: "CHEBI:001", definition: "CHEBI definition" },
           pharmgkb: { trade_names: ["Aspirin"] },
           ndc: [{ proprietaryname: "Aspirin", nonproprietaryname: "Acetylsalicylic Acid" }],
-          clinical_trials: [{ id: "NCT001" }]
+          clinical_trials: [
+            { id: "NCT001", disease: { mondo: "MONDO:001", name: "disease one" } },
+            { id: "NCT002", disease: { name: "disease two" } },
+            { id: "NCT003" }
+          ]
         }),
         target: {}
       },
@@ -253,7 +261,8 @@ function _test_make_rule_collect_disease_annotations() {
           disease: {
             descriptions: make_section(["Disease text "], [SRC.DISEASE_ONTOLOGY("DOID:001")]),
             curies: make_section(["MESH:D001", "MESH:D002"], [SRC.MONDO("MONDO:001"), SRC.DISEASE_ONTOLOGY("DOID:001")]),
-            synonyms: null
+            synonyms: null,
+            clinical_trials: null
           }
         }
       },
@@ -280,7 +289,8 @@ function _test_make_rule_collect_disease_annotations() {
           disease: {
             descriptions: null,
             curies: null,
-            synonyms: null
+            synonyms: null,
+            clinical_trials: null
           }
         }
       },
@@ -300,7 +310,8 @@ function _test_make_rule_collect_disease_annotations() {
             synonyms: make_section(
               ["diabetes", "diabetes mellitus", "DM", "sugar diabetes"],
               [SRC.MONDO("MONDO:001"), SRC.DISEASE_ONTOLOGY("DOID:001")]
-            )
+            ),
+            clinical_trials: null
           }
         }
       },
@@ -327,7 +338,8 @@ function _test_make_rule_collect_disease_annotations() {
           disease: {
             descriptions: null,
             curies: null,
-            synonyms: make_section(["DM", "Sugar Diabetes"], [SRC.MONDO("MONDO:001")])
+            synonyms: make_section(["DM", "Sugar Diabetes"], [SRC.MONDO("MONDO:001")]),
+            clinical_trials: null
           }
         }
       },
@@ -352,7 +364,8 @@ function _test_make_rule_collect_disease_annotations() {
             synonyms: make_section(
               ["pyloric stenosis", "gastric outlet obstruction", "gastric outflow obstruction"],
               [SRC.DISEASE_ONTOLOGY("DOID:001")]
-            )
+            ),
+            clinical_trials: null
           }
         }
       },
@@ -374,7 +387,8 @@ function _test_make_rule_collect_disease_annotations() {
           disease: {
             descriptions: null,
             curies: make_section(["MESH:D001"], [SRC.MONDO("MONDO:001")]),
-            synonyms: make_section(["diabetes"], [SRC.MONDO("MONDO:001")])
+            synonyms: make_section(["diabetes"], [SRC.MONDO("MONDO:001")]),
+            clinical_trials: null
           }
         }
       },
