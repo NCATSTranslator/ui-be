@@ -2876,7 +2876,7 @@ function _test_message_to_endpoints() {
           }
         }
       ],
-      "expected": ["sn", "on"]
+      "expected": ["on", "sn"]
     }
   });
 }

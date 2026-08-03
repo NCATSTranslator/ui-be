@@ -15,6 +15,7 @@ const suite = {
     is_biolink_pred: _test_is_biolink_pred(),
     is_deprecated_pred: _test_is_deprecated_pred(),
     invert_biolink_pred: _test_invert_biolink_pred(),
+    is_canonical_pred: _test_is_canonical_pred(),
     get_predicate_description: _test_get_predicate_description(),
     get_node_type_description: _test_get_node_type_description(),
     is_valid_curie: _test_is_valid_curie(),
@@ -240,6 +241,51 @@ function _test_invert_biolink_pred() {
   });
 }
 
+function _test_is_canonical_pred() {
+  return test.make_function_test({
+    "canonical_predicate": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["affects"],
+      "expected": true
+    },
+    "noncanonical_predicate": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["affected by"],
+      "expected": false
+    },
+    "canonical_predicate_treats": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["treats"],
+      "expected": true
+    },
+    "noncanonical_predicate_treated_by": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["treated by"],
+      "expected": false
+    },
+    "symmetric_predicate_is_canonical": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["related to"],
+      "expected": true
+    },
+    "biolinkified_input_canonical": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["biolink:affects"],
+      "expected": true
+    },
+    "biolinkified_input_noncanonical": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["biolink:affected_by"],
+      "expected": false
+    },
+    "unknown_predicate_throws": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["not a real predicate"],
+      "expected": Error
+    }
+  });
+}
+
 function _test_get_predicate_description() {
   return test.make_function_test({
     "treats_description_starts_correctly": {
@@ -421,7 +467,7 @@ function _test_MissingInforesError() {
 
 function _test_biolink_config() {
   return {
-    "version": "4.2.1",
+    "version": "4.4.3",
     "support_deprecated_predicates": false,
     "infores_catalog": "infores-catalog-v1.1.4.json",
     "prefix_catalog": {
