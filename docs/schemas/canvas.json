@@ -215,30 +215,49 @@
         "type": "integer",
         "description": "The ID of the Canvas that contains this Canvas Annotation"
       },
-      "text": {
+      "content": {
         "type": "string",
         "description": "The text contained in this Canvas Annotation"
       },
-      "tags": {
-        "type": "object",
-        "additionalProperties": {
-          "nullable": true
-        },
-        "description": "Map of tag labels to null (tags are defined in the Canvas tags property)"
+      "x": {
+        "type": "number",
+        "format": "double",
+        "nullable": true,
+        "description": "The x-coordinate on the Canvas that contains this Canvas Annotation, or null if unplaced"
+      },
+      "y": {
+        "type": "number",
+        "format": "double",
+        "nullable": true,
+        "description": "The y-coordinate on the Canvas that contains this Canvas Annotation, or null if unplaced"
+      },
+      "width": {
+        "type": "number",
+        "format": "double",
+        "nullable": true,
+        "description": "The width of this Canvas Annotation, or null if unsized"
+      },
+      "height": {
+        "type": "number",
+        "format": "double",
+        "nullable": true,
+        "description": "The height of this Canvas Annotation, or null if unsized"
       },
       "time_created": {
         "type": "string",
         "format": "date-time",
         "description": "The time this Canvas Annotation was created"
       },
-      "time_edited": {
+      "time_updated": {
         "type": "string",
         "format": "date-time",
         "description": "The last time this Canvas Annotation was edited"
       },
-      "deleted": {
-        "type": "boolean",
-        "description": "A flag for if this Canvas Annotation has been soft deleted"
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this Canvas Annotation was soft deleted, or null if active"
       }
     }
   },
