@@ -153,8 +153,8 @@
     "/api/v1/users/me/canvas/{save_id}/graph": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1graph"
     },
-    "/api/v1/users/me/canvas/{save_id}/graph/move": {
-      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1graph~1move"
+    "/api/v1/users/me/canvas/{save_id}/graph/geometry": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1graph~1geometry"
     },
     "/api/v1/users/me/canvas/{save_id}/graph/trash": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1graph~1trash"

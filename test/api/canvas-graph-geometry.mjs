@@ -1,14 +1,18 @@
-/* Standalone API test: PUT /api/v1/users/me/canvas/:save_id/graph/move.
+/* Standalone API test: PUT /api/v1/users/me/canvas/:save_id/graph/geometry.
  *
- * Updates the x/y positions of one or more Canvas Nodes in a single atomic operation. This is the
- * dedicated move endpoint that the element-update endpoint (label/hidden) defers position changes to.
- * Only active nodes on the canvas are moved; the endpoint returns the updated Canvas Node rows.
+ * Updates the x/y positions of Canvas Nodes and the full rectangles of Canvas Annotations in a
+ * single atomic operation. This is the dedicated geometry endpoint that the element-update
+ * endpoint (label/hidden) defers position changes to. Only active elements are updated; the
+ * endpoint returns { nodes, annotations } carrying just the rows it actually touched.
+ *
+ * Annotation coverage is pending the annotation create endpoint -- there is currently no way to
+ * put an annotation on a canvas over HTTP, so only the node half is exercised here.
  *
  * Unique refs per run keep the test isolated from the shared entity pool. Assumes the server runs
  * with "auth_check": false (see mock/auth.mjs) against a real Postgres (the mock-ars server):
  *
  *   npm run mock-ars                         # shell 1: start the server (auth_check=false)
- *   node test/api/canvas-graph-move.mjs      # shell 2
+ *   node test/api/canvas-graph-geometry.mjs  # shell 2
  *
  * Pass --verbose (or -v, or set VERBOSE=1) to print the raw server response for each request.
  * Override the target host with API_BASE_URL=... if the server is elsewhere.
@@ -19,7 +23,7 @@ import { postCanvas, testNode, signNode, testEdge, signEdge, CANVAS_PATH } from 
 
 const { ok, fail, finish } = createHarness();
 
-console.log(`# PUT ${CANVAS_PATH}/:save_id/graph/move  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# PUT ${CANVAS_PATH}/:save_id/graph/geometry  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const s = Date.now();
   const refA = `API_TEST:move-A-${s}`;
@@ -47,7 +51,7 @@ try {
   const nodeBId = nodeDataId.get(refB);
   ok(nodeAId != null && nodeBId != null, 'read back the node data ids');
 
-  const movePath = `${CANVAS_PATH}/${id}/graph/move`;
+  const movePath = `${CANVAS_PATH}/${id}/graph/geometry`;
   const byId = (rows) => new Map((rows || []).map((n) => [n.data_id, n]));
 
   // Move both nodes in one request; the response carries the updated positions.
@@ -58,8 +62,11 @@ try {
     ],
   });
   ok(moveBoth.res.status === 200, `move both responds 200 (got ${moveBoth.res.status})`);
-  ok(Array.isArray(moveBoth.json) && moveBoth.json.length === 2, 'move returns both updated nodes');
-  const moved = byId(moveBoth.json);
+  ok(Array.isArray(moveBoth.json && moveBoth.json.nodes) && moveBoth.json.nodes.length === 2,
+    'move returns both updated nodes');
+  ok(Array.isArray(moveBoth.json && moveBoth.json.annotations) && moveBoth.json.annotations.length === 0,
+    'a node-only request returns an empty annotations array');
+  const moved = byId(moveBoth.json.nodes);
   ok(moved.get(nodeAId) && moved.get(nodeAId).x === 100.5 && moved.get(nodeAId).y === 200.5,
     `node A is at its new position (got ${moved.get(nodeAId) && moved.get(nodeAId).x},${moved.get(nodeAId) && moved.get(nodeAId).y})`);
   ok(moved.get(nodeBId) && moved.get(nodeBId).x === 300 && moved.get(nodeBId).y === 400,
@@ -76,21 +83,32 @@ try {
   // A single-node move works too.
   const moveOne = await putJson(movePath, { nodes: [{ data_id: nodeBId, x: 1, y: 2 }] });
   ok(moveOne.res.status === 200, `single move responds 200 (got ${moveOne.res.status})`);
-  ok(Array.isArray(moveOne.json) && moveOne.json.length === 1 && moveOne.json[0].x === 1 && moveOne.json[0].y === 2,
+  ok(Array.isArray(moveOne.json && moveOne.json.nodes) && moveOne.json.nodes.length === 1
+    && moveOne.json.nodes[0].x === 1 && moveOne.json.nodes[0].y === 2,
     'single move returns just the moved node at its new position');
 
   // An unknown data id on an existing canvas is a no-op for that id (no row updated), not an error.
   const moveUnknown = await putJson(movePath, { nodes: [{ data_id: 999999999, x: 5, y: 6 }] });
   ok(moveUnknown.res.status === 200, `move of an unknown node id responds 200 (got ${moveUnknown.res.status})`);
-  ok(Array.isArray(moveUnknown.json) && moveUnknown.json.length === 0, 'an unknown node id moves nothing');
+  ok(Array.isArray(moveUnknown.json && moveUnknown.json.nodes) && moveUnknown.json.nodes.length === 0,
+    'an unknown node id moves nothing');
 
   // --- Validation ---
 
   const emptyNodes = await putJson(movePath, { nodes: [] });
   ok(emptyNodes.res.status === 400, `empty nodes array -> 400 (got ${emptyNodes.res.status})`);
 
+  const bothEmpty = await putJson(movePath, { nodes: [], annotations: [] });
+  ok(bothEmpty.res.status === 400, `both collections empty -> 400 (got ${bothEmpty.res.status})`);
+
   const noNodes = await putJson(movePath, {});
-  ok(noNodes.res.status === 400, `missing nodes -> 400 (got ${noNodes.res.status})`);
+  ok(noNodes.res.status === 400, `missing nodes and annotations -> 400 (got ${noNodes.res.status})`);
+
+  const halfSized = await putJson(movePath, { annotations: [{ id: 1, x: 1, y: 2, width: 3 }] });
+  ok(halfSized.res.status === 400, `annotation width without height -> 400 (got ${halfSized.res.status})`);
+
+  const noPosition = await putJson(movePath, { annotations: [{ id: 1, width: 3, height: 4 }] });
+  ok(noPosition.res.status === 400, `annotation missing x/y -> 400 (got ${noPosition.res.status})`);
 
   const missingCoords = await putJson(movePath, { nodes: [{ data_id: nodeAId }] });
   ok(missingCoords.res.status === 400, `missing x/y -> 400 (got ${missingCoords.res.status})`);
@@ -102,10 +120,10 @@ try {
   ok(badDataId.res.status === 400, `non-integer data_id -> 400 (got ${badDataId.res.status})`);
 
   // Unknown canvas id is a 404; non-numeric ids are 400s.
-  const missingCanvas = await putJson(`${CANVAS_PATH}/999999999/graph/move`, { nodes: [{ data_id: nodeAId, x: 1, y: 2 }] });
+  const missingCanvas = await putJson(`${CANVAS_PATH}/999999999/graph/geometry`, { nodes: [{ data_id: nodeAId, x: 1, y: 2 }] });
   ok(missingCanvas.res.status === 404, `unknown canvas id -> 404 (got ${missingCanvas.res.status})`);
 
-  const badCanvasId = await putJson(`${CANVAS_PATH}/not-a-number/graph/move`, { nodes: [{ data_id: nodeAId, x: 1, y: 2 }] });
+  const badCanvasId = await putJson(`${CANVAS_PATH}/not-a-number/graph/geometry`, { nodes: [{ data_id: nodeAId, x: 1, y: 2 }] });
   ok(badCanvasId.res.status === 400, `non-numeric canvas id -> 400 (got ${badCanvasId.res.status})`);
 
   // A soft-deleted node cannot be moved (the update is gated on time_deleted IS NULL).
@@ -113,7 +131,8 @@ try {
   ok(trash.res.status === 200, `trash node responds 200 (got ${trash.res.status})`);
   const moveTrashed = await putJson(movePath, { nodes: [{ data_id: nodeAId, x: 7, y: 8 }] });
   ok(moveTrashed.res.status === 200, `moving a soft-deleted node responds 200 (got ${moveTrashed.res.status})`);
-  ok(Array.isArray(moveTrashed.json) && moveTrashed.json.length === 0, 'a soft-deleted node is not moved');
+  ok(Array.isArray(moveTrashed.json && moveTrashed.json.nodes) && moveTrashed.json.nodes.length === 0,
+    'a soft-deleted node is not moved');
 
   // A trashed canvas is gone: moving nodes on it is a 404 (distinct from the unknown-canvas 404 above,
   // this canvas exists but is soft-deleted), not the silent no-op an unknown data_id gets.

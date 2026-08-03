@@ -42,9 +42,15 @@ class CanvasStorePostgres {
              time_created, time_updated, time_deleted
       FROM canvas_edge
       WHERE canvas_id = $1${sql_entity_deleted}`, [canvas_id]);
+    const annotation_res = await pgExec(this._db_pool, `
+      SELECT id, canvas_id, content, x, y, width, height,
+             time_created, time_updated, time_deleted
+      FROM canvas_annotation
+      WHERE canvas_id = $1${sql_entity_deleted}`, [canvas_id]);
     return {
       nodes: node_res.rows,
       edges: edge_res.rows,
+      annotations: annotation_res.rows,
       tags: canvas.data?.tags ?? null
     };
   }
@@ -164,6 +170,99 @@ class CanvasStorePostgres {
     return [set_clauses.join(", "), { args, canvas_id_param, data_id_param, user_id_param }];
   }
 
+  async create_canvas_annotation(user_id, canvas_id, annotation) {
+    const res = await pgExec(this._db_pool, `
+      INSERT INTO canvas_annotation (canvas_id, content, x, y, width, height)
+      SELECT $1, $2, $3, $4, $5, $6
+      WHERE EXISTS (
+        SELECT 1 FROM user_to_canvas
+        JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+        WHERE canvas.id = $1
+          AND user_to_canvas.user_id = $7
+          AND canvas.time_deleted IS NULL)
+      RETURNING *`,
+      [canvas_id, annotation.content, annotation.x, annotation.y,
+       annotation.width, annotation.height, user_id]);
+    return res.rows.length > 0 ? res.rows[0] : null;
+  }
+
+  async update_canvas_annotation_content_by_user(user_id, canvas_id, annotation_id, content) {
+    const res = await pgExec(this._db_pool, `
+      UPDATE canvas_annotation
+      SET content = $1, time_updated = CURRENT_TIMESTAMP
+      WHERE canvas_annotation.canvas_id = $2
+        AND canvas_annotation.id = $3
+        AND canvas_annotation.time_deleted IS NULL
+        AND EXISTS (
+          SELECT 1 FROM user_to_canvas
+          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+          WHERE user_to_canvas.canvas_id = canvas_annotation.canvas_id
+            AND user_to_canvas.user_id = $4
+            AND canvas.time_deleted IS NULL)
+      RETURNING *`, [content, canvas_id, annotation_id, user_id]);
+    return res.rows.length > 0 ? res.rows[0] : null;
+  }
+
+  async _set_canvas_annotation_geometry(client, canvas_id, geometries) {
+    if (geometries.length === 0) return [];
+    const [params, args] = models_to_params_and_args(
+      geometries,
+      ["id", "x", "y", "width", "height"],
+      [SQL_TYPES.BIGINT, SQL_TYPES.DOUBLE, SQL_TYPES.DOUBLE, SQL_TYPES.DOUBLE, SQL_TYPES.DOUBLE]);
+    const canvas_id_param = args.length + 1;
+    args.push(canvas_id);
+    const res = await client.query(`
+      UPDATE canvas_annotation AS ca
+      SET x = v.x,
+          y = v.y,
+          width = COALESCE(v.width, ca.width),
+          height = COALESCE(v.height, ca.height),
+          time_updated = CURRENT_TIMESTAMP
+      FROM (VALUES ${params}) AS v(id, x, y, width, height)
+      WHERE ca.canvas_id = $${canvas_id_param}
+        AND ca.id = v.id
+        AND ca.time_deleted IS NULL
+      RETURNING ca.id, ca.canvas_id, ca.content, ca.x, ca.y, ca.width, ca.height,
+                ca.time_created, ca.time_updated, ca.time_deleted`, args);
+    return res.rows;
+  }
+
+  async trash_canvas_annotations_by_user(user_id, canvas_id, annotation_ids) {
+    if (annotation_ids.length === 0) return [];
+    const res = await pgExec(this._db_pool, `
+      UPDATE canvas_annotation
+      SET time_deleted = CURRENT_TIMESTAMP, time_updated = CURRENT_TIMESTAMP
+      WHERE canvas_annotation.canvas_id = $1
+        AND canvas_annotation.id = ANY($2::bigint[])
+        AND canvas_annotation.time_deleted IS NULL
+        AND EXISTS (
+          SELECT 1 FROM user_to_canvas
+          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+          WHERE user_to_canvas.canvas_id = canvas_annotation.canvas_id
+            AND user_to_canvas.user_id = $3
+            AND canvas.time_deleted IS NULL)
+      RETURNING id`, [canvas_id, annotation_ids, user_id]);
+    return res.rows.map((row) => row.id);
+  }
+
+  async restore_canvas_annotations_by_user(user_id, canvas_id, annotation_ids) {
+    if (annotation_ids.length === 0) return [];
+    const res = await pgExec(this._db_pool, `
+      UPDATE canvas_annotation
+      SET time_deleted = NULL, time_updated = CURRENT_TIMESTAMP
+      WHERE canvas_annotation.canvas_id = $1
+        AND canvas_annotation.id = ANY($2::bigint[])
+        AND canvas_annotation.time_deleted IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM user_to_canvas
+          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+          WHERE user_to_canvas.canvas_id = canvas_annotation.canvas_id
+            AND user_to_canvas.user_id = $3
+            AND canvas.time_deleted IS NULL)
+      RETURNING id`, [canvas_id, annotation_ids, user_id]);
+    return res.rows.map((row) => row.id);
+  }
+
   async trash_canvases_by_user(user_id, canvas_ids) {
     if (canvas_ids.length === 0) return [];
     const res = await pgExec(this._db_pool, `
@@ -218,11 +317,13 @@ class CanvasStorePostgres {
     return this.get_canvas_graph_by_user(user_id, canvas_id, false);
   }
 
-  async move_canvas_nodes_by_user(user_id, canvas_id, moves) {
+  async set_canvas_graph_geometry_by_user(user_id, canvas_id, node_moves, annotation_geometries) {
     return pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
       if (canvas === null) return null;
-      return this._move_canvas_nodes(client, canvas_id, moves);
+      const nodes = await this._move_canvas_nodes(client, canvas_id, node_moves);
+      const annotations = await this._set_canvas_annotation_geometry(client, canvas_id, annotation_geometries);
+      return { nodes: nodes, annotations: annotations };
     });
   }
 
@@ -251,6 +352,7 @@ class CanvasStorePostgres {
   }
 
   async _move_canvas_nodes(client, canvas_id, moves) {
+    if (moves.length === 0) return [];
     const [params, args] = models_to_params_and_args(
       moves,
       ["data_id", "x", "y"],

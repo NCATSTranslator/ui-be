@@ -442,15 +442,15 @@ class UserAPIController {
     }
   }
 
-  async move_user_canvas_nodes(req, res) {
+  async set_user_canvas_graph_geometry(req, res) {
     const user_id = wutil.request_to_user_id(req);
     const canvas_id = req.canvas_id;
     try {
-      const nodes = await this.user_service.move_canvas_nodes(user_id, canvas_id, req.body);
-      if (nodes === null) {
+      const geometry = await this.user_service.set_canvas_graph_geometry(user_id, canvas_id, req.body);
+      if (geometry === null) {
         return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No canvas found for id ${canvas_id}`);
       }
-      return res.status(cmn.HTTP_CODE.SUCCESS).json(nodes);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(geometry);
     } catch (err) {
       if (err instanceof CanvasRequestError) {
         return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);

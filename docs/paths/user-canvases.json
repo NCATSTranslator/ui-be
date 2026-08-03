@@ -435,10 +435,10 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}/graph/move": {
+  "/api/v1/users/me/canvas/{save_id}/graph/geometry": {
     "put": {
-      "summary": "Move Nodes on a Canvas",
-      "description": "Updates the x/y positions of the listed Canvas Nodes in a single atomic operation. Only active (non-deleted) nodes on the Canvas are moved. Returns the updated Canvas Nodes.",
+      "summary": "Place Nodes and Annotations on a Canvas",
+      "description": "Updates the (x, y) positions of the given Canvas Nodes and the full rectangles (x, y, width, height) of the given Canvas Annotations in a single atomic operation. Both collections are optional but at least one must be non-empty. Only active (non-deleted) elements on the Canvas are updated. Returns the elements that were actually updated.",
       "security": [
         {
           "cookieAuth": []
@@ -460,27 +460,24 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "../schemas/canvas.json#/GraphMove"
+              "$ref": "../schemas/canvas.json#/GraphGeometry"
             }
           }
         }
       },
       "responses": {
         "200": {
-          "description": "The updated Canvas Nodes after the move",
+          "description": "The Canvas Nodes and Canvas Annotations that were updated",
           "content": {
             "application/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "../schemas/canvas.json#/CanvasNode"
-                }
+                "$ref": "../schemas/canvas.json#/CanvasGeometry"
               }
             }
           }
         },
         "400": {
-          "description": "The request body is not a valid set of node positions"
+          "description": "The request body is not a valid set of node positions and annotation rectangles"
         },
         "404": {
           "description": "The Canvas does not exist"

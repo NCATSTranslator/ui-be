@@ -222,26 +222,22 @@
       "x": {
         "type": "number",
         "format": "double",
-        "nullable": true,
-        "description": "The x-coordinate on the Canvas that contains this Canvas Annotation, or null if unplaced"
+        "description": "The x-coordinate on the Canvas that contains this Canvas Annotation"
       },
       "y": {
         "type": "number",
         "format": "double",
-        "nullable": true,
-        "description": "The y-coordinate on the Canvas that contains this Canvas Annotation, or null if unplaced"
+        "description": "The y-coordinate on the Canvas that contains this Canvas Annotation"
       },
       "width": {
         "type": "number",
         "format": "double",
-        "nullable": true,
-        "description": "The width of this Canvas Annotation, or null if unsized"
+        "description": "The width of this Canvas Annotation"
       },
       "height": {
         "type": "number",
         "format": "double",
-        "nullable": true,
-        "description": "The height of this Canvas Annotation, or null if unsized"
+        "description": "The height of this Canvas Annotation"
       },
       "time_created": {
         "type": "string",
@@ -259,7 +255,8 @@
         "nullable": true,
         "description": "When this Canvas Annotation was soft deleted, or null if active"
       }
-    }
+    },
+    "required": ["id", "canvas_id", "content", "x", "y", "width", "height"]
   },
   "GraphNode": {
     "type": "object",
@@ -383,13 +380,12 @@
       }
     }
   },
-  "GraphMove": {
+  "GraphGeometry": {
     "type": "object",
-    "description": "A set of new positions for Canvas Nodes. Each entry moves the node with the given data id to the given x/y coordinates. Only active nodes on the Canvas are moved.",
+    "description": "New positions for Canvas Nodes and new rectangles for Canvas Annotations. Both collections are optional but at least one must be non-empty.",
     "properties": {
       "nodes": {
         "type": "array",
-        "minItems": 1,
         "items": {
           "type": "object",
           "properties": {
@@ -411,8 +407,62 @@
           "required": ["data_id", "x", "y"]
         },
         "description": "The Canvas Nodes to move with their new positions"
+      },
+      "annotations": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "description": "The id of the Canvas Annotation to place"
+            },
+            "x": {
+              "type": "number",
+              "format": "double",
+              "description": "The new x-coordinate for the annotation on the canvas"
+            },
+            "y": {
+              "type": "number",
+              "format": "double",
+              "description": "The new y-coordinate for the annotation on the canvas"
+            },
+            "width": {
+              "type": "number",
+              "format": "double",
+              "minimum": 0,
+              "description": "The new width of the annotation. Omit to leave the stored width unchanged; must be sent together with height and must not be null."
+            },
+            "height": {
+              "type": "number",
+              "format": "double",
+              "minimum": 0,
+              "description": "The new height of the annotation. Omit to leave the stored height unchanged; must be sent together with width and must not be null."
+            }
+          },
+          "required": ["id", "x", "y"]
+        },
+        "description": "The Canvas Annotations to place. Position (x, y) is required on every entry. Size (width, height) is optional and must be supplied as a pair. Send both to resize, or omit both to leave the stored size untouched. null is never accepted for any of the four fields; omitting a field is the only way to leave it unchanged."
+      }
+    }
+  },
+  "CanvasGeometry": {
+    "type": "object",
+    "description": "The Canvas Nodes and Canvas Annotations that were updated by a geometry request",
+    "properties": {
+      "nodes": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasNode"
+        }
+      },
+      "annotations": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasAnnotation"
+        }
       }
     },
-    "required": ["nodes"]
+    "required": ["nodes", "annotations"]
   }
 }

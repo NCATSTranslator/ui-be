@@ -4,10 +4,13 @@ export {
   make_canvas_element_update_from_req,
   make_graph_merge_from_req,
   make_graph_selection_from_req,
-  make_graph_move_from_req,
+  make_graph_geometry_from_req,
+  make_annotation_from_req,
+  make_annotation_content_update_from_req,
   Graph,
   UserCanvas,
   CanvasGraph,
+  CanvasAnnotation,
   CanvasRequestError
 }
 
@@ -31,7 +34,7 @@ function make_user_canvas_from_req(user_id, canvas_req) {
 }
 
 function make_canvas_update_from_req(canvas_req) {
-  if (cmn.is_missing(canvas_req) || !cmn.is_object(canvas_req)) {
+  if (!cmn.is_object(canvas_req)) {
     throw new CanvasRequestError(`Canvas update is malformed: ${JSON.stringify(canvas_req)}`);
   }
   const update = {};
@@ -54,7 +57,7 @@ function make_canvas_update_from_req(canvas_req) {
 }
 
 function make_canvas_element_update_from_req(element_req) {
-  if (cmn.is_missing(element_req) || !cmn.is_object(element_req)) {
+  if (!cmn.is_object(element_req)) {
     throw new CanvasRequestError(`Canvas element update is malformed: ${JSON.stringify(element_req)}`);
   }
   const update = {};
@@ -77,7 +80,7 @@ function make_canvas_element_update_from_req(element_req) {
 }
 
 function make_graph_merge_from_req(graph_req, secret) {
-  if (cmn.is_missing(graph_req) || !cmn.is_object(graph_req) || cmn.is_object_empty(graph_req)) {
+  if (!cmn.is_object(graph_req) || cmn.is_object_empty(graph_req)) {
     throw new CanvasRequestError(`Graph merge request is malformed: ${JSON.stringify(graph_req)}`);
   }
   const graph = Graph.from_req({ graph: graph_req }, secret);
@@ -86,7 +89,7 @@ function make_graph_merge_from_req(graph_req, secret) {
 }
 
 function make_graph_selection_from_req(graph_req) {
-  if (cmn.is_missing(graph_req) || !cmn.is_object(graph_req)) {
+  if (!cmn.is_object(graph_req)) {
     throw new CanvasRequestError(`Graph selection is malformed: ${JSON.stringify(graph_req)}`);
   }
   const node_ids = _validate_graph_id_array(graph_req.nodes, "nodes");
@@ -97,24 +100,111 @@ function make_graph_selection_from_req(graph_req) {
   return { node_ids: node_ids, edge_ids: edge_ids };
 }
 
-function make_graph_move_from_req(move_req) {
-  if (cmn.is_missing(move_req) || !cmn.is_object(move_req)) {
-    throw new CanvasRequestError(`Graph move is malformed: ${JSON.stringify(move_req)}`);
+function make_graph_geometry_from_req(geometry_req) {
+  if (!cmn.is_object(geometry_req)) {
+    throw new CanvasRequestError(`Graph geometry is malformed: ${JSON.stringify(geometry_req)}`);
   }
-  const raw_nodes = move_req.nodes;
-  if (!cmn.is_array(raw_nodes) || raw_nodes.length === 0) {
-    throw new CanvasRequestError(`Graph move must include a non-empty array of node positions: ${JSON.stringify(raw_nodes)}`);
+  const node_moves = __make_node_moves(geometry_req.nodes);
+  const annotation_geometries = __make_annotation_geometries(geometry_req.annotations);
+  if (node_moves.length === 0 && annotation_geometries.length === 0) {
+    throw new CanvasRequestError("Graph geometry must include at least one node or annotation");
   }
-  const moves = raw_nodes.map((raw) => {
-    if (!cmn.is_object(raw) || !Number.isInteger(raw.data_id)) {
-      throw new CanvasRequestError(`Graph move node requires an integer data_id: ${JSON.stringify(raw)}`);
+  return { node_moves: node_moves, annotation_geometries: annotation_geometries };
+
+  function __make_node_moves(raw_nodes) {
+    if (cmn.is_missing(raw_nodes)) return [];
+    if (!cmn.is_array(raw_nodes)) {
+      throw new CanvasRequestError(`Graph geometry nodes must be an array: ${JSON.stringify(raw_nodes)}`);
     }
-    if (!Number.isFinite(raw.x) || !Number.isFinite(raw.y)) {
-      throw new CanvasRequestError(`Graph move node requires numeric x and y coordinates: ${JSON.stringify(raw)}`);
+    return raw_nodes.map((raw) => {
+      if (!cmn.is_object(raw) || !Number.isInteger(raw.data_id)) {
+        throw new CanvasRequestError(`Graph geometry node requires an integer data_id: ${JSON.stringify(raw)}`);
+      }
+      _validate_coord_pair(raw);
+      return { data_id: raw.data_id, x: raw.x, y: raw.y };
+    });
+  }
+
+  function __make_annotation_geometries(raw_annotations) {
+    if (cmn.is_missing(raw_annotations)) return [];
+    if (!cmn.is_array(raw_annotations)) {
+      throw new CanvasRequestError(`Graph geometry annotations must be an array: ${JSON.stringify(raw_annotations)}`);
     }
-    return { data_id: raw.data_id, x: raw.x, y: raw.y };
-  });
-  return { moves: moves };
+    return raw_annotations.map((raw) => {
+      if (!cmn.is_object(raw) || !Number.isInteger(raw.id)) {
+        throw new CanvasRequestError(`Graph geometry annotation requires an integer id: ${JSON.stringify(raw)}`);
+      }
+      _validate_coord_pair(raw);
+      const size = _validate_annotation_size(raw);
+      return { id: raw.id, x: raw.x, y: raw.y, ...size };
+    });
+  }
+}
+
+function make_annotation_from_req(canvas_id, annotation_req) {
+  const annotation = __validate_annotation_req(annotation_req);
+  return new CanvasAnnotation({ canvas_id: canvas_id, ...annotation });
+
+  function __validate_annotation_req(annotation_req) {
+    if (!cmn.is_object(annotation_req)) {
+      throw new CanvasRequestError(`Canvas annotation is malformed: ${JSON.stringify(annotation_req)}`);
+    }
+    if ("string" !== typeof annotation_req.content) {
+      throw new CanvasRequestError(`Canvas annotation content must be a string: ${JSON.stringify(annotation_req.content)}`);
+    }
+    _validate_coord_pair(annotation_req);
+    _validate_extent(annotation_req.width, "width");
+    _validate_extent(annotation_req.height, "height");
+    return {
+      content: annotation_req.content,
+      x: annotation_req.x,
+      y: annotation_req.y,
+      width: annotation_req.width,
+      height: annotation_req.height
+    };
+  }
+}
+
+function make_annotation_content_update_from_req(annotation_req) {
+  if (!cmn.is_object(annotation_req)) {
+    throw new CanvasRequestError(`Canvas annotation update is malformed: ${JSON.stringify(annotation_req)}`);
+  }
+  if ("string" !== typeof annotation_req.content) {
+    throw new CanvasRequestError(`Canvas annotation content must be a string: ${JSON.stringify(annotation_req.content)}`);
+  }
+  return { content: annotation_req.content };
+}
+
+function _validate_annotation_size(raw) {
+  const has_width = raw.width !== undefined;
+  const has_height = raw.height !== undefined;
+  if (has_width !== has_height) {
+    throw new CanvasRequestError(`Graph geometry annotation requires width and height together: ${JSON.stringify(raw)}`);
+  }
+  if (!has_width) return { width: null, height: null };
+  _validate_extent(raw.width, "width");
+  _validate_extent(raw.height, "height");
+  return { width: raw.width, height: raw.height };
+}
+
+function _validate_coord_pair(raw) {
+  _validate_coord(raw.x, "x");
+  _validate_coord(raw.y, "y");
+}
+
+function _validate_coord(value, field) {
+  if (!Number.isFinite(value)) {
+    throw new CanvasRequestError(`Canvas geometry ${field} must be a number: ${JSON.stringify(value)}`);
+  }
+}
+
+function _validate_extent(value, field) {
+  if (!Number.isFinite(value)) {
+    throw new CanvasRequestError(`Canvas geometry ${field} must be a number: ${JSON.stringify(value)}`);
+  }
+  if (value < 0) {
+    throw new CanvasRequestError(`Canvas geometry ${field} must not be negative: ${JSON.stringify(value)}`);
+  }
 }
 
 function _validate_graph_id_array(ids, field) {
@@ -286,6 +376,32 @@ class CanvasEdgeData {
   }
 }
 
+class CanvasAnnotation {
+  constructor({
+    id = null,
+    canvas_id = null,
+    content,
+    x = null,
+    y = null,
+    width = null,
+    height = null,
+    time_created = new Date(),
+    time_updated = new Date(),
+    time_deleted = null
+  } = {}) {
+    this.id = id;
+    this.canvas_id = canvas_id;
+    this.content = content;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.time_created = time_created;
+    this.time_updated = time_updated;
+    this.time_deleted = time_deleted;
+  }
+}
+
 class GraphNode {
   constructor({
     data,
@@ -452,9 +568,10 @@ class Graph {
 }
 
 class CanvasGraph {
-  constructor({ nodes = [], edges = [], tags = null } = {}) {
+  constructor({ nodes = [], edges = [], annotations = [], tags = null } = {}) {
     this.nodes = nodes;
     this.edges = edges;
+    this.annotations = annotations;
     this.tags = tags;
   }
 }
