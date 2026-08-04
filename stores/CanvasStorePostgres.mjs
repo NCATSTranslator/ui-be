@@ -227,42 +227,6 @@ class CanvasStorePostgres {
     return res.rows;
   }
 
-  async trash_canvas_annotations_by_user(user_id, canvas_id, annotation_ids) {
-    if (annotation_ids.length === 0) return [];
-    const res = await pgExec(this._db_pool, `
-      UPDATE canvas_annotation
-      SET time_deleted = CURRENT_TIMESTAMP, time_updated = CURRENT_TIMESTAMP
-      WHERE canvas_annotation.canvas_id = $1
-        AND canvas_annotation.id = ANY($2::bigint[])
-        AND canvas_annotation.time_deleted IS NULL
-        AND EXISTS (
-          SELECT 1 FROM user_to_canvas
-          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
-          WHERE user_to_canvas.canvas_id = canvas_annotation.canvas_id
-            AND user_to_canvas.user_id = $3
-            AND canvas.time_deleted IS NULL)
-      RETURNING id`, [canvas_id, annotation_ids, user_id]);
-    return res.rows.map((row) => row.id);
-  }
-
-  async restore_canvas_annotations_by_user(user_id, canvas_id, annotation_ids) {
-    if (annotation_ids.length === 0) return [];
-    const res = await pgExec(this._db_pool, `
-      UPDATE canvas_annotation
-      SET time_deleted = NULL, time_updated = CURRENT_TIMESTAMP
-      WHERE canvas_annotation.canvas_id = $1
-        AND canvas_annotation.id = ANY($2::bigint[])
-        AND canvas_annotation.time_deleted IS NOT NULL
-        AND EXISTS (
-          SELECT 1 FROM user_to_canvas
-          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
-          WHERE user_to_canvas.canvas_id = canvas_annotation.canvas_id
-            AND user_to_canvas.user_id = $3
-            AND canvas.time_deleted IS NULL)
-      RETURNING id`, [canvas_id, annotation_ids, user_id]);
-    return res.rows.map((row) => row.id);
-  }
-
   async trash_canvases_by_user(user_id, canvas_ids) {
     if (canvas_ids.length === 0) return [];
     const res = await pgExec(this._db_pool, `
@@ -327,24 +291,26 @@ class CanvasStorePostgres {
     });
   }
 
-  async trash_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids) {
+  async trash_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids, annotation_ids) {
     const trashed = await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
       if (canvas === null) return false;
       await this._trash_canvas_edges(client, canvas_id, node_ids, edge_ids);
       await this._trash_canvas_nodes(client, canvas_id, node_ids);
+      await this._trash_canvas_annotations(client, canvas_id, annotation_ids);
       return true;
     });
     if (!trashed) return null;
     return this.get_canvas_graph_by_user(user_id, canvas_id, false);
   }
 
-  async restore_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids) {
+  async restore_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids, annotation_ids) {
     const restored = await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
       if (canvas === null) return false;
       await this._restore_canvas_nodes(client, canvas_id, node_ids);
       await this._restore_canvas_edges(client, canvas_id, edge_ids);
+      await this._restore_canvas_annotations(client, canvas_id, annotation_ids);
       return true;
     });
     if (!restored) return null;
@@ -388,6 +354,22 @@ class CanvasStorePostgres {
       SET time_deleted = CURRENT_TIMESTAMP, time_updated = CURRENT_TIMESTAMP
       WHERE canvas_id = $1 AND time_deleted IS NULL AND data_id = ANY($2::bigint[])`,
       [canvas_id, node_ids]);
+  }
+
+  async _trash_canvas_annotations(client, canvas_id, annotation_ids) {
+    await client.query(`
+      UPDATE canvas_annotation
+      SET time_deleted = CURRENT_TIMESTAMP, time_updated = CURRENT_TIMESTAMP
+      WHERE canvas_id = $1 AND time_deleted IS NULL AND id = ANY($2::bigint[])`,
+      [canvas_id, annotation_ids]);
+  }
+
+  async _restore_canvas_annotations(client, canvas_id, annotation_ids) {
+    await client.query(`
+      UPDATE canvas_annotation
+      SET time_deleted = NULL, time_updated = CURRENT_TIMESTAMP
+      WHERE canvas_id = $1 AND time_deleted IS NOT NULL AND id = ANY($2::bigint[])`,
+      [canvas_id, annotation_ids]);
   }
 
   async _restore_canvas_nodes(client, canvas_id, node_ids) {

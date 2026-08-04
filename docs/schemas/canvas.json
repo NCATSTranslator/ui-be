@@ -362,7 +362,7 @@
   },
   "GraphSelection": {
     "type": "object",
-    "description": "A selection of Canvas Node and Edge data ids to soft delete or restore. At least one node or edge id is required. Soft deleting a node also soft deletes every edge attached to it; restoring an edge requires both of its endpoint nodes to be active.",
+    "description": "A selection of Canvas Node and Edge data ids and Canvas Annotation ids to soft delete or restore. At least one id across the three collections is required. Soft deleting a node also soft deletes every edge attached to it; restoring an edge requires both of its endpoint nodes to be active. Annotations are independent: they neither cascade nor depend on anything else.",
     "properties": {
       "nodes": {
         "type": "array",
@@ -377,8 +377,59 @@
           "type": "integer"
         },
         "description": "The data ids of the Canvas Edges to soft delete or restore"
+      },
+      "annotations": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "description": "The ids of the Canvas Annotations to soft delete or restore"
       }
     }
+  },
+  "CreateAnnotationRequest": {
+    "type": "object",
+    "description": "A new Canvas Annotation. Content and the full rectangle are all required; null is not accepted for any field.",
+    "properties": {
+      "content": {
+        "type": "string",
+        "description": "The text for the annotation"
+      },
+      "x": {
+        "type": "number",
+        "format": "double",
+        "description": "The x-coordinate for the annotation on the canvas"
+      },
+      "y": {
+        "type": "number",
+        "format": "double",
+        "description": "The y-coordinate for the annotation on the canvas"
+      },
+      "width": {
+        "type": "number",
+        "format": "double",
+        "minimum": 0,
+        "description": "The width of the annotation"
+      },
+      "height": {
+        "type": "number",
+        "format": "double",
+        "minimum": 0,
+        "description": "The height of the annotation"
+      }
+    },
+    "required": ["content", "x", "y", "width", "height"]
+  },
+  "UpdateAnnotationContentRequest": {
+    "type": "object",
+    "description": "A new body of text for a Canvas Annotation. Position and size are updated through the graph geometry endpoint, not here.",
+    "properties": {
+      "content": {
+        "type": "string",
+        "description": "The new text for the annotation"
+      }
+    },
+    "required": ["content"]
   },
   "GraphGeometry": {
     "type": "object",

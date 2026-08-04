@@ -168,6 +168,12 @@
     "/api/v1/users/me/canvas/{save_id}/edge/{data_id}": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1edge~1{data_id}"
     },
+    "/api/v1/users/me/canvas/{save_id}/annotation": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1annotation"
+    },
+    "/api/v1/users/me/canvas/{save_id}/annotation/{annotation_id}": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1annotation~1{annotation_id}"
+    },
     "/demo/disease/{disease_id}": {
       "$ref": "paths/demo.json#/~1demo~1disease~1{disease_id}"
     },

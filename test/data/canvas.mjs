@@ -187,23 +187,27 @@ function _test_make_graph_merge_from_req() {
 function _test_make_graph_selection_from_req() {
   return test.make_function_test({
     "nodes_only": {
-      "args": [{ nodes: [1, 2, 3] }],
-      "expected": { node_ids: [1, 2, 3], edge_ids: [] }
+      "args": [{ nodes: [1, 2] }],
+      "expected": { node_ids: [1, 2], edge_ids: [], annotation_ids: [] }
     },
     "edges_only": {
-      "args": [{ edges: [4, 5] }],
-      "expected": { node_ids: [], edge_ids: [4, 5] }
+      "args": [{ edges: [3] }],
+      "expected": { node_ids: [], edge_ids: [3], annotation_ids: [] }
     },
-    "nodes_and_edges": {
-      "args": [{ nodes: [1], edges: [2] }],
-      "expected": { node_ids: [1], edge_ids: [2] }
+    "annotations_only": {
+      "args": [{ annotations: [7] }],
+      "expected": { node_ids: [], edge_ids: [], annotation_ids: [7] }
+    },
+    "all_three_collections": {
+      "args": [{ nodes: [1], edges: [2], annotations: [3] }],
+      "expected": { node_ids: [1], edge_ids: [2], annotation_ids: [3] }
     },
     "empty_selection_throws": {
       "args": [{}],
       "expected": CanvasRequestError
     },
     "empty_arrays_throw": {
-      "args": [{ nodes: [], edges: [] }],
+      "args": [{ nodes: [], edges: [], annotations: [] }],
       "expected": CanvasRequestError
     },
     "missing_throws": {
@@ -211,19 +215,27 @@ function _test_make_graph_selection_from_req() {
       "expected": CanvasRequestError
     },
     "non_object_throws": {
-      "args": ["x"],
+      "args": [5],
       "expected": CanvasRequestError
     },
     "non_array_nodes_throws": {
-      "args": [{ nodes: "1,2" }],
+      "args": [{ nodes: 1 }],
+      "expected": CanvasRequestError
+    },
+    "non_array_annotations_throws": {
+      "args": [{ annotations: 1 }],
       "expected": CanvasRequestError
     },
     "non_integer_node_id_throws": {
-      "args": [{ nodes: [1, 2.5] }],
+      "args": [{ nodes: [1.5] }],
+      "expected": CanvasRequestError
+    },
+    "non_integer_annotation_id_throws": {
+      "args": [{ annotations: [1.5] }],
       "expected": CanvasRequestError
     },
     "string_id_throws": {
-      "args": [{ edges: ["4"] }],
+      "args": [{ nodes: ["1"] }],
       "expected": CanvasRequestError
     }
   });

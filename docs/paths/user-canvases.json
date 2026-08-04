@@ -326,7 +326,7 @@
   "/api/v1/users/me/canvas/{save_id}/graph/trash": {
     "put": {
       "summary": "Soft delete Nodes and Edges from a Canvas",
-      "description": "Soft deletes the listed Canvas Nodes and Edges. Soft deleting a node also soft deletes every edge attached to it. Returns the resulting Canvas graph.",
+      "description": "Soft deletes the listed Canvas Nodes, Edges and Annotations in a single atomic operation. Soft deleting a node also soft deletes every edge attached to it; annotations are independent and cascade to nothing. Returns the resulting Canvas graph.",
       "security": [
         {
           "cookieAuth": []
@@ -382,7 +382,7 @@
   "/api/v1/users/me/canvas/{save_id}/graph/restore": {
     "put": {
       "summary": "Restore soft deleted Nodes and Edges in a Canvas",
-      "description": "Restores the listed Canvas Nodes and Edges. An edge is only restored if both of its endpoint nodes are active. Returns the resulting Canvas graph.",
+      "description": "Restores the listed Canvas Nodes, Edges and Annotations in a single atomic operation. An edge is only restored if both of its endpoint nodes are active; annotations restore unconditionally. Returns the resulting Canvas graph.",
       "security": [
         {
           "cookieAuth": []
@@ -481,6 +481,127 @@
         },
         "404": {
           "description": "The Canvas does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas/{save_id}/annotation": {
+    "post": {
+      "summary": "Create an Annotation on a Canvas",
+      "description": "Creates a Canvas Annotation with the given text and rectangle. Content, x, y, width and height are all required; null is not accepted for any of them. Position and size are changed afterwards through the graph geometry endpoint, and the text through the annotation update endpoint.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/CreateAnnotationRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The created Canvas Annotation",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasAnnotation"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The annotation request is malformed"
+        },
+        "404": {
+          "description": "The Canvas does not exist"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas/{save_id}/annotation/{annotation_id}": {
+    "put": {
+      "summary": "Update the text of a Canvas Annotation",
+      "description": "Replaces a Canvas Annotation's content. Position and size are updated through the graph geometry endpoint, not here. Returns the updated Canvas Annotation.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Save ID"
+        },
+        {
+          "name": "annotation_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Annotation ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/UpdateAnnotationContentRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The updated Canvas Annotation",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasAnnotation"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The update request is malformed"
+        },
+        "404": {
+          "description": "No active annotation with the given id exists on the Canvas"
         },
         "401": {
           "description": "Authentication Required"

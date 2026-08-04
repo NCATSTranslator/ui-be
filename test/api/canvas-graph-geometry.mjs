@@ -5,8 +5,8 @@
  * endpoint (label/hidden) defers position changes to. Only active elements are updated; the
  * endpoint returns { nodes, annotations } carrying just the rows it actually touched.
  *
- * Annotation coverage is pending the annotation create endpoint -- there is currently no way to
- * put an annotation on a canvas over HTTP, so only the node half is exercised here.
+ * Only the node half is exercised here; the annotation half lives in canvas-annotation.mjs, next
+ * to the endpoint that creates the annotations it moves.
  *
  * Unique refs per run keep the test isolated from the shared entity pool. Assumes the server runs
  * with "auth_check": false (see mock/auth.mjs) against a real Postgres (the mock-ars server):

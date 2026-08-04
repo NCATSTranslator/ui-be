@@ -306,6 +306,15 @@ class UserAPIController {
     return next();
   }
 
+  parse_canvas_annotation_id(req, res, next, value) {
+    const annotation_id = parseInt(value, 10);
+    if (!Number.isInteger(annotation_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid annotation ID: ${value}`);
+    }
+    req.annotation_id = annotation_id;
+    return next();
+  }
+
   async get_user_canvases(req, res) {
     const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === "true";
@@ -487,6 +496,45 @@ class UserAPIController {
         return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No canvas found for id ${canvas_id}`);
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(graph);
+    } catch (err) {
+      if (err instanceof CanvasRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async create_user_canvas_annotation(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const canvas_id = req.canvas_id;
+    try {
+      const annotation = await this.user_service.create_canvas_annotation(user_id, canvas_id, req.body);
+      if (annotation === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No canvas found for id ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(annotation);
+    } catch (err) {
+      if (err instanceof CanvasRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async update_user_canvas_annotation_content(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const canvas_id = req.canvas_id;
+    const annotation_id = req.annotation_id;
+    try {
+      const annotation = await this.user_service.update_canvas_annotation_content(
+        user_id, canvas_id, annotation_id, req.body);
+      if (annotation === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND,
+          `No annotation found for id ${annotation_id} on canvas ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(annotation);
     } catch (err) {
       if (err instanceof CanvasRequestError) {
         return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);

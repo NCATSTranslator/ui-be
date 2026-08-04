@@ -166,6 +166,7 @@ export function start_server(config, services) {
   const canvas_router = express.Router();
   canvas_router.param('save_id', user_api_controller.parse_canvas_id.bind(user_api_controller));
   canvas_router.param('data_id', user_api_controller.parse_canvas_data_id.bind(user_api_controller));
+  canvas_router.param('annotation_id', user_api_controller.parse_canvas_annotation_id.bind(user_api_controller));
   canvas_router.get('/', user_api_controller.get_user_canvases.bind(user_api_controller));
   canvas_router.post('/', user_api_controller.create_user_canvas.bind(user_api_controller));
   canvas_router.put('/trash', user_api_controller.trash_user_canvases.bind(user_api_controller));
@@ -180,6 +181,8 @@ export function start_server(config, services) {
   canvas_router.put('/:save_id/node/:data_id', user_api_controller.update_user_canvas_node.bind(user_api_controller));
   canvas_router.get('/:save_id/edge/:data_id', user_api_controller.get_user_canvas_edge_data.bind(user_api_controller));
   canvas_router.put('/:save_id/edge/:data_id', user_api_controller.update_user_canvas_edge.bind(user_api_controller));
+  canvas_router.post('/:save_id/annotation', user_api_controller.create_user_canvas_annotation.bind(user_api_controller));
+  canvas_router.put('/:save_id/annotation/:annotation_id', user_api_controller.update_user_canvas_annotation_content.bind(user_api_controller));
   app.use(`${API_PATH_V1}/users/me/canvas`, canvas_router);
 
   app.all(['/api', '/api/*'], (req, res) => {

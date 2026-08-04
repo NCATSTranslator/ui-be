@@ -2,7 +2,8 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, make_canvas_element_update_from_req, make_graph_merge_from_req, make_graph_selection_from_req, make_graph_geometry_from_req, Graph } from "#model/Canvas.mjs";
+import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, make_canvas_element_update_from_req, make_graph_merge_from_req, make_graph_selection_from_req, make_graph_geometry_from_req, make_annotation_from_req,
+  make_annotation_content_update_from_req, Graph } from "#model/Canvas.mjs";
 
 class UserService {
   constructor(
@@ -120,17 +121,29 @@ class UserService {
   }
 
   async trash_canvas_graph(user_id, canvas_id, graph_req) {
-    const { node_ids, edge_ids } = make_graph_selection_from_req(graph_req);
-    const graph = await this.canvasStore.trash_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids);
+    const { node_ids, edge_ids, annotation_ids } = make_graph_selection_from_req(graph_req);
+    const graph = await this.canvasStore.trash_canvas_graph_by_user(
+      user_id, canvas_id, node_ids, edge_ids, annotation_ids);
     if (graph === null) return null;
     return new CanvasGraph(graph);
   }
 
   async restore_canvas_graph(user_id, canvas_id, graph_req) {
-    const { node_ids, edge_ids } = make_graph_selection_from_req(graph_req);
-    const graph = await this.canvasStore.restore_canvas_graph_by_user(user_id, canvas_id, node_ids, edge_ids);
+    const { node_ids, edge_ids, annotation_ids } = make_graph_selection_from_req(graph_req);
+    const graph = await this.canvasStore.restore_canvas_graph_by_user(
+      user_id, canvas_id, node_ids, edge_ids, annotation_ids);
     if (graph === null) return null;
     return new CanvasGraph(graph);
+  }
+
+  async create_canvas_annotation(user_id, canvas_id, annotation_req) {
+    const annotation = make_annotation_from_req(canvas_id, annotation_req);
+    return this.canvasStore.create_canvas_annotation(user_id, canvas_id, annotation);
+  }
+
+  async update_canvas_annotation_content(user_id, canvas_id, annotation_id, annotation_req) {
+    const { content } = make_annotation_content_update_from_req(annotation_req);
+    return this.canvasStore.update_canvas_annotation_content_by_user(user_id, canvas_id, annotation_id, content);
   }
 
   async get_node_data(user_id, canvas_id, data_id) {

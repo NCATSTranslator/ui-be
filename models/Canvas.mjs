@@ -94,10 +94,11 @@ function make_graph_selection_from_req(graph_req) {
   }
   const node_ids = _validate_graph_id_array(graph_req.nodes, "nodes");
   const edge_ids = _validate_graph_id_array(graph_req.edges, "edges");
-  if (node_ids.length === 0 && edge_ids.length === 0) {
-    throw new CanvasRequestError("Graph selection must include at least one node or edge id");
+  const annotation_ids = _validate_graph_id_array(graph_req.annotations, "annotations");
+  if (node_ids.length === 0 && edge_ids.length === 0 && annotation_ids.length === 0) {
+    throw new CanvasRequestError("Graph selection must include at least one node, edge, or annotation id");
   }
-  return { node_ids: node_ids, edge_ids: edge_ids };
+  return { node_ids: node_ids, edge_ids: edge_ids, annotation_ids: annotation_ids };
 }
 
 function make_graph_geometry_from_req(geometry_req) {
