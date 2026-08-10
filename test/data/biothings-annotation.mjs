@@ -116,7 +116,7 @@ function _test_make_rule_collect_chemical_annotations() {
               ids: ["MONDO:001", "UMLS:001"],
               urls: ["https://kp.example/mondo001a", "https://kp.example/umls001", "https://kp.example/mondo001b"]
             }], [SRC.DRUG_APPROVALS]),
-            other_names: make_section({ commercial: ["aspirin"], generic: ["acetylsalicylic acid"] }, [SRC.PHARMGKB, SRC.NDC]),
+            synonyms: make_section({ commercial: ["aspirin"], generic: ["acetylsalicylic acid"] }, [SRC.PHARMGKB, SRC.NDC]),
             roles: null,
             otc_status: make_section({ code: 2, label: "Over the Counter" }, [SRC.CHEMBL("CHEMBL001")]),
             clinical_trials: make_section([
@@ -162,7 +162,7 @@ function _test_make_rule_collect_chemical_annotations() {
             approval: null,
             descriptions: null,
             indications: null,
-            other_names: null,
+            synonyms: null,
             roles: null,
             otc_status: make_section({ code: 1, label: "Prescription" }, [{ name: "ChEMBL", url: "https://www.ebi.ac.uk/chembl/" }]),
             clinical_trials: null
@@ -185,7 +185,7 @@ function _test_make_rule_collect_chemical_annotations() {
             approval: null,
             descriptions: null,
             indications: null,
-            other_names: null,
+            synonyms: null,
             roles: null,
             otc_status: null,
             clinical_trials: null
