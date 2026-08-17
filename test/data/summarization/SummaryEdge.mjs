@@ -28,6 +28,10 @@ function _test_SummaryEdge() {
     trials: [],
     source_time: null
   };
+  const { support: _unstored_support, type: _unstored_type, ...default_raw_obj } = {
+    ...default_state,
+    tags: {}
+  };
   const default_other = {
     id: EDGE_ID,
     metadata: null,
@@ -87,6 +91,26 @@ function _test_SummaryEdge() {
       class_constructor: { args: [EDGE_ID, [], ["edge_id_1"]] },
       steps: [
         { method: "has_support", args: [], expected: true }
+      ]
+    },
+    to_raw_obj_omits_support_and_type: {
+      injected: {
+        id: EDGE_ID,
+        support: ["path_1", "path_2"],
+        type: "indirect"
+      },
+      steps: [
+        { method: "to_raw_obj", args: [], expected: default_raw_obj }
+      ]
+    },
+    to_raw_obj_is_unchanged_by_support_and_type: {
+      injected: {
+        id: EDGE_ID,
+        support: [],
+        type: "direct"
+      },
+      steps: [
+        { method: "to_raw_obj", args: [], expected: default_raw_obj }
       ]
     },
     is_inverted_null_metadata_is_false: {

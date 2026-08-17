@@ -10,6 +10,9 @@
  *   - an edge whose endpoint is not among the submitted nodes (would otherwise hit a foreign-key
  *     violation -> 500; the edge is signed correctly so it specifically exercises the endpoint check)
  *
+ * Also asserts the other side of the boundary: `support` and `type` are outside the signed edge
+ * payload, so altering or omitting them must NOT invalidate the signature.
+ *
  * Assumes the server is running with "auth_check": false (see mock/auth.mjs). This hits a real
  * Postgres, so run it against the mock-ars server (host=mock allows the auth bypass):
  *
@@ -69,6 +72,22 @@ try {
   dangling.edges[EDGE_REF_1] = signEdge(EDGE_REF_1, testEdge(NODE_REF_1, 'API_TEST:not-in-graph', 'biolink:treats'));
   const danglingRes = await postCanvas({ label: `${label} (dangling edge)`, layout, graph: dangling });
   ok(danglingRes.res.status === 400, `edge referencing a node not in the graph is rejected with 400 (got ${danglingRes.res.status})`);
+
+  // support and type are excluded from the signed edge payload, so mutating them after signing must
+  // still be accepted. This is the inverse of the tampered-predicate case above.
+  const mutatedUnsigned = graphWithNodesAndEdges();
+  mutatedUnsigned.edges[EDGE_REF_1].support = ['not-a-real-path-id'];
+  mutatedUnsigned.edges[EDGE_REF_1].type = 'indirect';
+  const mutatedRes = await postCanvas({ label: `${label} (support/type altered)`, layout, graph: mutatedUnsigned });
+  ok(mutatedRes.res.status === 200, `edge with altered support/type is accepted with 200 (got ${mutatedRes.res.status})`);
+
+  // A client that omits support and type entirely must also be accepted; they are neither required
+  // nor signed, and the server defaults them to [] and null.
+  const omitted = graphWithNodesAndEdges();
+  delete omitted.edges[EDGE_REF_1].support;
+  delete omitted.edges[EDGE_REF_1].type;
+  const omittedRes = await postCanvas({ label: `${label} (support/type omitted)`, layout, graph: omitted });
+  ok(omittedRes.res.status === 200, `edge omitting support/type is accepted with 200 (got ${omittedRes.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
 }

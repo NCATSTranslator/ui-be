@@ -289,7 +289,7 @@
       },
       "signature": {
         "type": "string",
-        "description": "Server-minted HMAC over this node's data to ensure authenticity"
+        "description": "Server-minted HMAC over this node's data to ensure authenticity. Covers every other property of this object; must be echoed back unchanged when placing the node on a canvas"
       }
     },
     "required": [
@@ -423,7 +423,7 @@
       },
       "signature": {
         "type": "string",
-        "description": "Server-minted HMAC over this edge's data to ensure authenticity"
+        "description": "Server-minted HMAC over this edge's data to ensure authenticity. Covers every other property of this object except `support` and `type`, which are summary-response only: they are neither signed nor persisted, so a client may alter or omit them. Must be echoed back unchanged when placing the edge on a canvas"
       }
     },
     "required": [

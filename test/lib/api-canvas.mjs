@@ -61,8 +61,8 @@ export function testNode(ref, name, type, x, y, extra = {}) {
   };
 }
 
-// Sign a node exactly as the server does: over SummaryNode.from_object(node).to_raw_obj() with the
-// map key supplied as the authoritative id. Returns the node with its `signature` attached.
+// Sign a node exactly as the server does: over SummaryNode.from_object(node).to_raw_obj() with
+// the map key supplied as the authoritative id. Returns the node with its `signature` attached.
 export function signNode(ref, node) {
   const raw = SummaryNode.from_object({ ...node, id: ref }).to_raw_obj();
   return { ...node, signature: cmn.sign_entity_data(raw, SIGNING_SECRET) };
@@ -92,8 +92,9 @@ export function testEdge(subject, object, predicate, extra = {}) {
   };
 }
 
-// Sign an edge exactly as the server does: over SummaryEdge.from_object(edge).to_raw_obj() with the
-// map key supplied as the authoritative id. Returns the edge with its `signature` attached.
+// Sign an edge exactly as the server does: over SummaryEdge.from_object(edge).to_raw_obj() with
+// the map key supplied as the authoritative id. `support` and `type` are outside the signed payload,
+// so the fixture below still carries them but they do not affect the signature.
 export function signEdge(ref, edge) {
   const raw = SummaryEdge.from_object({ ...edge, id: ref }).to_raw_obj();
   return { ...edge, signature: cmn.sign_entity_data(raw, SIGNING_SECRET) };

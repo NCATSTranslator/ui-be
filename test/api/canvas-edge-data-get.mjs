@@ -7,6 +7,9 @@
  * must belong to a Canvas the current user owns (and that is not trashed). A data_id that is not on
  * this Canvas - or an unknown id - is a 404, and a non-numeric id is a 400.
  *
+ * Also asserts the pool row does NOT carry `support` or `type`: those live on the summary response
+ * only, and are dropped by SummaryEdge.to_raw_obj() before the entity is stored or signed.
+ *
  * This test mints unique refs per run so the pool row it reads back is exactly what it submitted -
  * the suite's stable-ref fixtures share pool rows whose newest-source_time version (or a legacy row
  * with no source_time at all) may differ from any single submission.
@@ -80,6 +83,11 @@ try {
   // Tags here are the FULL objects (not the canvas_edge id-set): the data pool retains descriptions.
   ok(data && data.tags && data.tags[EDGE_TAG_CLINICAL] && data.tags[EDGE_TAG_CLINICAL].description.name === 'Clinical Evidence',
     'edge data carries the full clinical tag object');
+
+  // support and type are not persisted. testEdge submits both, so this asserts the server drops them
+  // on the way into the pool rather than the client having omitted them.
+  ok(data && !('support' in data), `edge data does not persist support (got ${JSON.stringify(data && data.support)})`);
+  ok(data && !('type' in data), `edge data does not persist type (got ${JSON.stringify(data && data.type)})`);
 
   // A data_id that does not exist in the pool is a 404.
   const missing = await getJson(`${CANVAS_PATH}/${canvas.id}/edge/999999999`);
