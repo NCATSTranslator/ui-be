@@ -319,13 +319,6 @@
         },
         "description": "Array of ARA agent names"
       },
-      "support": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        },
-        "description": "Array of supporting path IDs"
-      },
       "is_root": {
         "type": "boolean",
         "description": "Whether this is a root path edge"
@@ -415,13 +408,12 @@
       },
       "signature": {
         "type": "string",
-        "description": "Server-minted HMAC over this edge's data to ensure authenticity. Covers every other property of this object except `support`, which is summary-response only: it is neither signed nor persisted, so a client may alter or omit it. Must be echoed back unchanged when placing the edge on a canvas"
+        "description": "Server-minted HMAC over this edge's data to ensure authenticity. Covers every other property of this object; must be echoed back unchanged when placing the edge on a canvas"
       }
     },
     "required": [
       "id",
       "aras",
-      "support",
       "is_root",
       "knowledge_level",
       "subject",

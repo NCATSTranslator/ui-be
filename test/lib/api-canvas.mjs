@@ -73,7 +73,6 @@ export function signNode(ref, node) {
 export function testEdge(subject, object, predicate, extra = {}) {
   return {
     aras: ['api-test-ara'],
-    support: [],
     is_root: true,
     knowledge_level: 'trusted',
     description: null,
@@ -92,8 +91,7 @@ export function testEdge(subject, object, predicate, extra = {}) {
 }
 
 // Sign an edge exactly as the server does: over SummaryEdge.from_object(edge).to_raw_obj() with
-// the map key supplied as the authoritative id. `support` is outside the signed payload, so the
-// fixture below still carries it but it does not affect the signature.
+// the map key supplied as the authoritative id. Returns the edge with its `signature` attached.
 export function signEdge(ref, edge) {
   const raw = SummaryEdge.from_object({ ...edge, id: ref }).to_raw_obj();
   return { ...edge, signature: cmn.sign_entity_data(raw, SIGNING_SECRET) };

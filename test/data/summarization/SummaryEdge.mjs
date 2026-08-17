@@ -13,7 +13,6 @@ function _test_SummaryEdge() {
   const default_state = {
     id: EDGE_ID,
     aras: [],
-    support: [],
     is_root: false,
     knowledge_level: null,
     description: null,
@@ -27,7 +26,7 @@ function _test_SummaryEdge() {
     trials: [],
     source_time: null
   };
-  const { support: _unstored_support, ...default_raw_obj } = {
+  const default_raw_obj = {
     ...default_state,
     tags: {}
   };
@@ -35,7 +34,6 @@ function _test_SummaryEdge() {
     id: EDGE_ID,
     metadata: null,
     aras: [],
-    support: [],
     is_root: false,
     description: null,
     knowledge_level: null,
@@ -56,7 +54,7 @@ function _test_SummaryEdge() {
     },
     null_args_default_to_empty: {
       class_constructor: {
-        args: [EDGE_ID, null, null, null],
+        args: [EDGE_ID, null, null],
         expected: default_state
       }
     },
@@ -69,42 +67,8 @@ function _test_SummaryEdge() {
         }
       }
     },
-    with_support_and_is_root: {
-      class_constructor: {
-        args: [EDGE_ID, [], ["edge_id_1", "edge_id_2"], true],
-        expected: {
-          ...default_state,
-          support: ["edge_id_1", "edge_id_2"],
-          is_root: true
-        }
-      }
-    },
-    has_support_empty_is_false: {
+    to_raw_obj_serializes_all_persisted_fields: {
       class_constructor: { args: [EDGE_ID] },
-      steps: [
-        { method: "has_support", args: [], expected: false }
-      ]
-    },
-    has_support_with_support_is_true: {
-      class_constructor: { args: [EDGE_ID, [], ["edge_id_1"]] },
-      steps: [
-        { method: "has_support", args: [], expected: true }
-      ]
-    },
-    to_raw_obj_omits_support: {
-      injected: {
-        id: EDGE_ID,
-        support: ["path_1", "path_2"]
-      },
-      steps: [
-        { method: "to_raw_obj", args: [], expected: default_raw_obj }
-      ]
-    },
-    to_raw_obj_is_unchanged_by_support: {
-      injected: {
-        id: EDGE_ID,
-        support: []
-      },
       steps: [
         { method: "to_raw_obj", args: [], expected: default_raw_obj }
       ]
@@ -133,9 +97,9 @@ function _test_SummaryEdge() {
         { method: "is_inverted", args: [], expected: false }
       ]
     },
-    merge_accumulates_aras_support_and_is_root: {
+    merge_accumulates_aras_and_is_root: {
       class_constructor: {
-        args: [EDGE_ID, ["ara1"], ["edge1"], true]
+        args: [EDGE_ID, ["ara1"], true]
       },
       steps: [
         {
@@ -143,13 +107,11 @@ function _test_SummaryEdge() {
           args: [{
             ...default_other,
             aras: ["ara2"],
-            support: ["edge2", "edge3"],
             is_root: false
           }],
           expected: {
             ...default_state,
             aras: ["ara1", "ara2"],
-            support: ["edge1", "edge2", "edge3"],
             is_root: true
           }
         }

@@ -4,7 +4,8 @@ import * as test from "#test/lib/common.mjs";
 import * as bl from "#lib/biolink-model.mjs";
 import {
   analysis_to_summary_analysis,
-  gen_analysis_paths
+  gen_analysis_paths,
+  MissingSupportPathsError
 } from "#lib/summarization/summary-analysis.mjs";
 import { SummaryEdge } from "#lib/summarization/SummaryEdge.mjs";
 import { SummaryPath } from "#lib/summarization/SummaryPath.mjs";
@@ -279,6 +280,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
   return test.make_function_test({
     simple: __simple_test_case(),
     with_support: __with_support_test_case(),
+    support_graph_with_no_paths_fails_the_analysis: __dead_support_test_case(),
     with_nested_support: await __with_nested_support_test_case()
   });
 
@@ -295,7 +297,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
           new SummaryPath(["nb1", _eid_1, "nb2"])
         ],
         {
-          [_eid_1]: _make_summary_edge(_eid_1, "eb1", [], true)
+          [_eid_1]: _make_summary_edge(_eid_1, "eb1", true)
         }
       ]
     }
@@ -318,11 +320,22 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
           _support_path_1
         ],
         {
-          [_eid_1]: _make_summary_edge(_eid_1, "eb1", [_support_path_1.id], true),
-          [_eid_2]: _make_summary_edge(_eid_2, "eb2", [], false),
-          [_eid_3]: _make_summary_edge(_eid_3, "eb3", [], false)
+          [_eid_1]: _make_summary_edge(_eid_1, "eb1", true),
+          [_eid_2]: _make_summary_edge(_eid_2, "eb2", false),
+          [_eid_3]: _make_summary_edge(_eid_3, "eb3", false)
         }
       ]
+    }
+  }
+
+  function __dead_support_test_case() {
+    return {
+      args: [
+        _dead_support_summary_analysis(),
+        _dead_support_analysis_paths(),
+        _dead_support_kgraph()
+      ],
+      expected: MissingSupportPathsError
     }
   }
 
@@ -378,18 +391,17 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
           [_inverted_eid[0]]: _make_summary_edge(
             _inverted_eid[0],
             "eb1",
-            [_support_path[0].id, _support_path[1].id],
             true,
             _eid[0]),
-          [_inverted_eid[1]]: _make_summary_edge(_inverted_eid[1], "eb2", [_support_path[2].id], true, _eid[1]),
-          [_inverted_eid[2]]: _make_summary_edge(_inverted_eid[2], "ax1-eb1", [], false, _eid[2]),
-          [_inverted_eid[3]]: _make_summary_edge(_inverted_eid[3], "ax1-eb2", [], false, _eid[3]),
-          [_inverted_eid[4]]: _make_summary_edge(_inverted_eid[4], "ax2-eb1", [], false, _eid[4]),
-          [_inverted_eid[5]]: _make_summary_edge(_inverted_eid[5], "ax3-eb1", [], false, _eid[5]),
-          [_inverted_eid[6]]: _make_summary_edge(_inverted_eid[6], "ax3-eb2", [_nested_support.id], false, _eid[6]),
-          [_inverted_eid[7]]: _make_summary_edge(_inverted_eid[7], "ax3-eb3", [], false, _eid[7]),
-          [_inverted_eid[8]]: _make_summary_edge(_inverted_eid[8], "ax4-eb1", [], false, _eid[8]),
-          [_inverted_eid[9]]: _make_summary_edge(_inverted_eid[9], "ax4-eb2", [], false, _eid[9])
+          [_inverted_eid[1]]: _make_summary_edge(_inverted_eid[1], "eb2", true, _eid[1]),
+          [_inverted_eid[2]]: _make_summary_edge(_inverted_eid[2], "ax1-eb1", false, _eid[2]),
+          [_inverted_eid[3]]: _make_summary_edge(_inverted_eid[3], "ax1-eb2", false, _eid[3]),
+          [_inverted_eid[4]]: _make_summary_edge(_inverted_eid[4], "ax2-eb1", false, _eid[4]),
+          [_inverted_eid[5]]: _make_summary_edge(_inverted_eid[5], "ax3-eb1", false, _eid[5]),
+          [_inverted_eid[6]]: _make_summary_edge(_inverted_eid[6], "ax3-eb2", false, _eid[6]),
+          [_inverted_eid[7]]: _make_summary_edge(_inverted_eid[7], "ax3-eb3", false, _eid[7]),
+          [_inverted_eid[8]]: _make_summary_edge(_inverted_eid[8], "ax4-eb1", false, _eid[8]),
+          [_inverted_eid[9]]: _make_summary_edge(_inverted_eid[9], "ax4-eb2", false, _eid[9])
         }
       ]
     }
@@ -665,14 +677,79 @@ function _with_nested_support_analysis_paths() {
   });
 }
 
-function _make_summary_edge(eid, edge_binding, support, is_root, inverted_id = null) {
+function _make_summary_edge(eid, edge_binding, is_root, inverted_id = null) {
   const summary_edge = new SummaryEdge(eid);
   summary_edge.is_root = is_root;
-  summary_edge.support = support;
   summary_edge.metadata = {
     edge_bindings: [edge_binding],
     inverted_id: inverted_id,
     is_root: is_root
   }
   return summary_edge;
+}
+
+// eb1 (nb1 -> nb2) declares support graph ax1, but ax1 holds only eb2 (nb1 -> nb2.1) and so can
+// never reach nb2. gen_analysis_paths visits ax1 and records zero complete paths for it.
+function _dead_support_kgraph() {
+  return {
+    "nodes": {
+      "nb1": { "name": "node 1" },
+      "nb2": { "name": "node 2" },
+      "nb2.1": { "name": "node 2.1" }
+    },
+    "edges": {
+      "eb1": {
+        "subject": "nb1",
+        "predicate": "biolink:treats",
+        "object": "nb2",
+        "attributes": [
+          {
+            "attribute_type_id": "biolink:support_graphs",
+            "value": [ "ax1" ]
+          }
+        ]
+      },
+      "eb2": {
+        "subject": "nb1",
+        "predicate": "biolink:treats",
+        "object": "nb2.1"
+      }
+    }
+  };
+}
+
+function _dead_support_summary_analysis() {
+  return test.make_lazy({
+    call: analysis_to_summary_analysis,
+    args: [
+      {
+        "edge_bindings": {
+          "ab1": [
+            { "id": "eb1" }
+          ]
+        }
+      },
+      _dead_support_kgraph(),
+      {
+        "ax1": {
+          "edges": [
+            "eb2"
+          ]
+        }
+      }
+    ],
+  });
+}
+
+function _dead_support_analysis_paths() {
+  return test.make_lazy({
+    call: gen_analysis_paths,
+    args: [
+      _dead_support_summary_analysis(),
+      _dead_support_kgraph(),
+      "nb1",
+      ["nb2"],
+      4
+    ]
+  });
 }

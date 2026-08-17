@@ -10,8 +10,8 @@
  *   - an edge whose endpoint is not among the submitted nodes (would otherwise hit a foreign-key
  *     violation -> 500; the edge is signed correctly so it specifically exercises the endpoint check)
  *
- * Also asserts the other side of the boundary: `support` is outside the signed edge payload, so
- * altering or omitting it must NOT invalidate the signature.
+ * Also asserts the other side of the boundary: `support` is not part of the edge model at all, so
+ * a stale client that still sends it must be tolerated rather than rejected.
  *
  * Assumes the server is running with "auth_check": false (see mock/auth.mjs). This hits a real
  * Postgres, so run it against the mock-ars server (host=mock allows the auth bypass):
@@ -73,15 +73,14 @@ try {
   const danglingRes = await postCanvas({ label: `${label} (dangling edge)`, layout, graph: dangling });
   ok(danglingRes.res.status === 400, `edge referencing a node not in the graph is rejected with 400 (got ${danglingRes.res.status})`);
 
-  // support is excluded from the signed edge payload, so mutating it after signing must still be
-  // accepted. This is the inverse of the tampered-predicate case above.
+  // support is not a field on the edge model, so a stale client sending it is ignored rather than
+  // rejected. This is the inverse of the tampered-predicate case above.
   const mutatedUnsigned = graphWithNodesAndEdges();
   mutatedUnsigned.edges[EDGE_REF_1].support = ['not-a-real-path-id'];
   const mutatedRes = await postCanvas({ label: `${label} (support altered)`, layout, graph: mutatedUnsigned });
   ok(mutatedRes.res.status === 200, `edge with altered support is accepted with 200 (got ${mutatedRes.res.status})`);
 
-  // A client that omits support entirely must also be accepted; it is neither required nor signed,
-  // and the server defaults it to []. A stray `type` is ignored rather than rejected.
+  // Omitting it is likewise fine: it is neither required nor read. A stray `type` is also ignored.
   const omitted = graphWithNodesAndEdges();
   delete omitted.edges[EDGE_REF_1].support;
   omitted.edges[EDGE_REF_1].type = 'indirect';

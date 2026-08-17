@@ -52,6 +52,7 @@ try {
     edges: {
       [edgeRef]: signEdge(edgeRef, testEdge(subjectRef, objectRef, 'biolink:treats', {
         description: 'edge data test',
+        support: ['not-a-real-path-id'],
         type: 'indirect',
         tags: { [EDGE_TAG_CLINICAL]: tagObject(EDGE_TAG_CLINICAL, 'Clinical Evidence') },
       })),
@@ -86,9 +87,8 @@ try {
   ok(data && data.tags && data.tags[EDGE_TAG_CLINICAL] && data.tags[EDGE_TAG_CLINICAL].description.name === 'Clinical Evidence',
     'edge data carries the full clinical tag object');
 
-  // support is not persisted; testEdge submits it, so this asserts the server drops it on the way
-  // into the pool rather than the client having omitted it. type is gone from the model outright, so
-  // it is submitted explicitly here to prove a stray client field never reaches the pool.
+  // support and type are both gone from the edge model, so neither can reach the pool. Both are
+  // submitted explicitly below to prove a stray client field is dropped rather than stored.
   ok(data && !('support' in data), `edge data does not persist support (got ${JSON.stringify(data && data.support)})`);
   ok(data && !('type' in data), `edge data does not persist type (got ${JSON.stringify(data && data.type)})`);
 
