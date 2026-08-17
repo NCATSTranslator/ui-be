@@ -17,7 +17,6 @@ function _test_SummaryEdge() {
     is_root: false,
     knowledge_level: null,
     description: null,
-    type: null,
     subject: null,
     object: null,
     predicate: null,
@@ -28,7 +27,7 @@ function _test_SummaryEdge() {
     trials: [],
     source_time: null
   };
-  const { support: _unstored_support, type: _unstored_type, ...default_raw_obj } = {
+  const { support: _unstored_support, ...default_raw_obj } = {
     ...default_state,
     tags: {}
   };
@@ -40,7 +39,6 @@ function _test_SummaryEdge() {
     is_root: false,
     description: null,
     knowledge_level: null,
-    type: null,
     subject: null,
     predicate: null,
     object: null,
@@ -93,21 +91,19 @@ function _test_SummaryEdge() {
         { method: "has_support", args: [], expected: true }
       ]
     },
-    to_raw_obj_omits_support_and_type: {
+    to_raw_obj_omits_support: {
       injected: {
         id: EDGE_ID,
-        support: ["path_1", "path_2"],
-        type: "indirect"
+        support: ["path_1", "path_2"]
       },
       steps: [
         { method: "to_raw_obj", args: [], expected: default_raw_obj }
       ]
     },
-    to_raw_obj_is_unchanged_by_support_and_type: {
+    to_raw_obj_is_unchanged_by_support: {
       injected: {
         id: EDGE_ID,
-        support: [],
-        type: "direct"
+        support: []
       },
       steps: [
         { method: "to_raw_obj", args: [], expected: default_raw_obj }
@@ -164,7 +160,6 @@ function _test_SummaryEdge() {
         id: EDGE_ID,
         description: "existing description",
         knowledge_level: "primary",
-        type: "direct",
         subject: "subj_a",
         predicate: "pred_a",
         object: "obj_a",
@@ -177,7 +172,6 @@ function _test_SummaryEdge() {
             ...default_other,
             description: "ignored description",
             knowledge_level: "ignored",
-            type: "direct",
             subject: "ignored_subj",
             predicate: "ignored_pred",
             object: "ignored_obj",
@@ -187,7 +181,6 @@ function _test_SummaryEdge() {
             ...default_state,
             description: "existing description",
             knowledge_level: "primary",
-            type: "direct",
             subject: "subj_a",
             predicate: "pred_a",
             object: "obj_a",
@@ -205,7 +198,6 @@ function _test_SummaryEdge() {
             ...default_other,
             description: "other description",
             knowledge_level: "primary",
-            type: "direct",
             subject: "subj_b",
             predicate: "pred_b",
             object: "obj_b",
@@ -215,30 +207,10 @@ function _test_SummaryEdge() {
             ...default_state,
             description: "other description",
             knowledge_level: "primary",
-            type: "direct",
             subject: "subj_b",
             predicate: "pred_b",
             object: "obj_b",
             predicate_url: "http://example.com/b"
-          }
-        }
-      ]
-    },
-    merge_indirect_type_overrides_direct: {
-      injected: {
-        id: EDGE_ID,
-        type: "direct"
-      },
-      steps: [
-        {
-          method: "merge",
-          args: [{
-            ...default_other,
-            type: "indirect"
-          }],
-          expected: {
-            ...default_state,
-            type: "indirect"
           }
         }
       ]

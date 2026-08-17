@@ -2,7 +2,6 @@ export { suite }
 
 import * as test from "#test/lib/common.mjs";
 import * as bl from "#lib/biolink-model.mjs";
-import { CONSTANTS as TRAPI_CONSTANTS } from "#lib/trapi/core.mjs";
 import {
   analysis_to_summary_analysis,
   gen_analysis_paths
@@ -10,9 +9,6 @@ import {
 import { SummaryEdge } from "#lib/summarization/SummaryEdge.mjs";
 import { SummaryPath } from "#lib/summarization/SummaryPath.mjs";
 import * as id from "#lib/summarization/identifiers.mjs";
-
-const DIRECT = TRAPI_CONSTANTS.GRAPH.EDGE.TYPE.DIRECT;
-const INDIRECT = TRAPI_CONSTANTS.GRAPH.EDGE.TYPE.INDIRECT;
 
 const suite = {
   tests: {
@@ -299,7 +295,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
           new SummaryPath(["nb1", _eid_1, "nb2"])
         ],
         {
-          [_eid_1]: _make_summary_edge(_eid_1, "eb1", [], true, DIRECT)
+          [_eid_1]: _make_summary_edge(_eid_1, "eb1", [], true)
         }
       ]
     }
@@ -322,9 +318,9 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
           _support_path_1
         ],
         {
-          [_eid_1]: _make_summary_edge(_eid_1, "eb1", [_support_path_1.id], true, INDIRECT),
-          [_eid_2]: _make_summary_edge(_eid_2, "eb2", [], false, DIRECT),
-          [_eid_3]: _make_summary_edge(_eid_3, "eb3", [], false, DIRECT)
+          [_eid_1]: _make_summary_edge(_eid_1, "eb1", [_support_path_1.id], true),
+          [_eid_2]: _make_summary_edge(_eid_2, "eb2", [], false),
+          [_eid_3]: _make_summary_edge(_eid_3, "eb3", [], false)
         }
       ]
     }
@@ -384,17 +380,16 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "eb1",
             [_support_path[0].id, _support_path[1].id],
             true,
-            INDIRECT,
             _eid[0]),
-          [_inverted_eid[1]]: _make_summary_edge(_inverted_eid[1], "eb2", [_support_path[2].id], true, INDIRECT, _eid[1]),
-          [_inverted_eid[2]]: _make_summary_edge(_inverted_eid[2], "ax1-eb1", [], false, DIRECT, _eid[2]),
-          [_inverted_eid[3]]: _make_summary_edge(_inverted_eid[3], "ax1-eb2", [], false, DIRECT, _eid[3]),
-          [_inverted_eid[4]]: _make_summary_edge(_inverted_eid[4], "ax2-eb1", [], false, DIRECT, _eid[4]),
-          [_inverted_eid[5]]: _make_summary_edge(_inverted_eid[5], "ax3-eb1", [], false, DIRECT, _eid[5]),
-          [_inverted_eid[6]]: _make_summary_edge(_inverted_eid[6], "ax3-eb2", [_nested_support.id], false, INDIRECT, _eid[6]),
-          [_inverted_eid[7]]: _make_summary_edge(_inverted_eid[7], "ax3-eb3", [], false, DIRECT, _eid[7]),
-          [_inverted_eid[8]]: _make_summary_edge(_inverted_eid[8], "ax4-eb1", [], false, DIRECT, _eid[8]),
-          [_inverted_eid[9]]: _make_summary_edge(_inverted_eid[9], "ax4-eb2", [], false, DIRECT, _eid[9])
+          [_inverted_eid[1]]: _make_summary_edge(_inverted_eid[1], "eb2", [_support_path[2].id], true, _eid[1]),
+          [_inverted_eid[2]]: _make_summary_edge(_inverted_eid[2], "ax1-eb1", [], false, _eid[2]),
+          [_inverted_eid[3]]: _make_summary_edge(_inverted_eid[3], "ax1-eb2", [], false, _eid[3]),
+          [_inverted_eid[4]]: _make_summary_edge(_inverted_eid[4], "ax2-eb1", [], false, _eid[4]),
+          [_inverted_eid[5]]: _make_summary_edge(_inverted_eid[5], "ax3-eb1", [], false, _eid[5]),
+          [_inverted_eid[6]]: _make_summary_edge(_inverted_eid[6], "ax3-eb2", [_nested_support.id], false, _eid[6]),
+          [_inverted_eid[7]]: _make_summary_edge(_inverted_eid[7], "ax3-eb3", [], false, _eid[7]),
+          [_inverted_eid[8]]: _make_summary_edge(_inverted_eid[8], "ax4-eb1", [], false, _eid[8]),
+          [_inverted_eid[9]]: _make_summary_edge(_inverted_eid[9], "ax4-eb2", [], false, _eid[9])
         }
       ]
     }
@@ -670,7 +665,7 @@ function _with_nested_support_analysis_paths() {
   });
 }
 
-function _make_summary_edge(eid, edge_binding, support, is_root, type, inverted_id = null) {
+function _make_summary_edge(eid, edge_binding, support, is_root, inverted_id = null) {
   const summary_edge = new SummaryEdge(eid);
   summary_edge.is_root = is_root;
   summary_edge.support = support;
@@ -679,6 +674,5 @@ function _make_summary_edge(eid, edge_binding, support, is_root, type, inverted_
     inverted_id: inverted_id,
     is_root: is_root
   }
-  summary_edge.type = type;
   return summary_edge;
 }

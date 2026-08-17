@@ -344,14 +344,6 @@
         "nullable": true,
         "description": "Human-readable description of the predicate"
       },
-      "type": {
-        "type": "string",
-        "enum": [
-          "direct",
-          "indirect"
-        ],
-        "description": "Edge type - direct lookup or indirect with supporting evidence"
-      },
       "subject": {
         "type": "string",
         "description": "Subject node ID"
@@ -423,7 +415,7 @@
       },
       "signature": {
         "type": "string",
-        "description": "Server-minted HMAC over this edge's data to ensure authenticity. Covers every other property of this object except `support` and `type`, which are summary-response only: they are neither signed nor persisted, so a client may alter or omit them. Must be echoed back unchanged when placing the edge on a canvas"
+        "description": "Server-minted HMAC over this edge's data to ensure authenticity. Covers every other property of this object except `support`, which is summary-response only: it is neither signed nor persisted, so a client may alter or omit it. Must be echoed back unchanged when placing the edge on a canvas"
       }
     },
     "required": [
@@ -432,7 +424,6 @@
       "support",
       "is_root",
       "knowledge_level",
-      "type",
       "subject",
       "object",
       "predicate",

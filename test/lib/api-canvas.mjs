@@ -77,7 +77,6 @@ export function testEdge(subject, object, predicate, extra = {}) {
     is_root: true,
     knowledge_level: 'trusted',
     description: null,
-    type: 'direct',
     subject: subject,
     object: object,
     predicate: predicate,
@@ -93,8 +92,8 @@ export function testEdge(subject, object, predicate, extra = {}) {
 }
 
 // Sign an edge exactly as the server does: over SummaryEdge.from_object(edge).to_raw_obj() with
-// the map key supplied as the authoritative id. `support` and `type` are outside the signed payload,
-// so the fixture below still carries them but they do not affect the signature.
+// the map key supplied as the authoritative id. `support` is outside the signed payload, so the
+// fixture below still carries it but it does not affect the signature.
 export function signEdge(ref, edge) {
   const raw = SummaryEdge.from_object({ ...edge, id: ref }).to_raw_obj();
   return { ...edge, signature: cmn.sign_entity_data(raw, SIGNING_SECRET) };
