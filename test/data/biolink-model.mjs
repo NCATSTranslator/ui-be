@@ -307,6 +307,8 @@ function _test_get_predicate_description() {
 }
 
 function _test_get_node_type_description() {
+  const gene_description = "A region (or regions) that includes all of the sequence elements necessary to encode a functional transcript. A gene locus may include regulatory regions, transcribed regions and/or other functional sequence regions.";
+  const small_molecule_description = "A small molecule entity is a molecular entity characterized by availability in small-molecule databases of SMILES, InChI, IUPAC, or other unambiguous representation of its precise chemical structure; for convenience of representation, any valid chemical representation is included, even if it is not strictly molecular (e.g., sodium ion).";
   return test.make_function_test({
     "known_class": {
       config_loader: () => load_biolink(_test_biolink_config()),
@@ -316,6 +318,71 @@ function _test_get_node_type_description() {
     "unknown_class_returns_null": {
       config_loader: () => load_biolink(_test_biolink_config()),
       "args": ["biolink:NotAClass"],
+      "expected": null
+    },
+    "bare_class_name": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["Gene"],
+      "expected": gene_description
+    },
+    "lowercase_class_name": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["gene"],
+      "expected": gene_description
+    },
+    "biolinkified_class_name": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["biolink:Gene"],
+      "expected": gene_description
+    },
+    "surrounding_whitespace": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["  gene  "],
+      "expected": gene_description
+    },
+    "spaced_multiword_class": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["small molecule"],
+      "expected": small_molecule_description
+    },
+    "underscored_multiword_class": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["small_molecule"],
+      "expected": small_molecule_description
+    },
+    "biolinkified_underscored_multiword_class": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["biolink:small_molecule"],
+      "expected": small_molecule_description
+    },
+    "empty_string_returns_null": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": [""],
+      "expected": null
+    },
+    "whitespace_only_returns_null": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["   "],
+      "expected": null
+    },
+    "prefix_only_returns_null": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["biolink:"],
+      "expected": null
+    },
+    "non_string_input_returns_null": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": [123],
+      "expected": null
+    },
+    "null_input_returns_null": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": [null],
+      "expected": null
+    },
+    "undefined_input_returns_null": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": [undefined],
       "expected": null
     }
   });

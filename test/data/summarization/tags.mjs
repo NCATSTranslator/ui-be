@@ -3,6 +3,7 @@ export { suite }
 import * as taglib from "#lib/taglib.mjs";
 import * as trapi from "#lib/trapi/core.mjs";
 import * as tags from "#lib/summarization/tags.mjs";
+import { make_section } from "#lib/biothings-annotation.mjs";
 import { SummaryNode } from "#lib/summarization/SummaryNode.mjs";
 import { SummaryPath } from "#lib/summarization/SummaryPath.mjs";
 import * as test from "#test/lib/common.mjs";
@@ -284,17 +285,17 @@ function _test_promote_internal_node_tags_to_path() {
 function _test_decorate_clinical_tag() {
   return test.make_function_test({
     approved: {
-      args: [_make_chemical_node({approval: 4})],
+      args: [_make_chemical_node({approval: make_section(4, [])})],
       post: _raw_tags,
       expected: {'n/fda/4': _raw('n/fda/4', 'FDA Approved')}
     },
     not_approved: {
-      args: [_make_chemical_node({approval: 0})],
+      args: [_make_chemical_node({approval: make_section(0, [])})],
       post: _raw_tags,
       expected: {'n/fda/0': _raw('n/fda/0', 'Not FDA Approved')}
     },
     intermediate_phase: {
-      args: [_make_chemical_node({approval: 2})],
+      args: [_make_chemical_node({approval: make_section(2, [])})],
       post: _raw_tags,
       expected: {'n/fda/2': _raw('n/fda/2', 'Clinical Trial Phase 2')}
     },
@@ -310,10 +311,10 @@ function _test_decorate_role_tags() {
   return test.make_function_test({
     titleizes_role_names: {
       args: [_make_chemical_node({
-        roles: [
+        roles: make_section([
           {id: 'CHEBI:35480', name: 'analgesic'},
           {id: 'CHEBI:35472', name: 'anti-inflammatory drug'}
-        ]
+        ], [])
       })],
       post: _raw_tags,
       expected: {
@@ -332,27 +333,27 @@ function _test_decorate_role_tags() {
 function _test_decorate_otc_tag() {
   return test.make_function_test({
     over_the_counter: {
-      args: [_make_chemical_node({otc_status: {code: 2}})],
+      args: [_make_chemical_node({otc_status: make_section({code: 2}, [])})],
       post: _raw_tags,
       expected: {'n/otc/t': _raw('n/otc/t', 'Over the counter')}
     },
     prescription: {
-      args: [_make_chemical_node({otc_status: {code: 1}})],
+      args: [_make_chemical_node({otc_status: make_section({code: 1}, [])})],
       post: _raw_tags,
       expected: {'n/otc/f': _raw('n/otc/f', 'Prescription only')}
     },
     discontinued: {
-      args: [_make_chemical_node({otc_status: {code: 0}})],
+      args: [_make_chemical_node({otc_status: make_section({code: 0}, [])})],
       post: _raw_tags,
       expected: {'n/otc/d': _raw('n/otc/d', 'Discontinued')}
     },
     withdrawn: {
-      args: [_make_chemical_node({otc_status: {code: -2}})],
+      args: [_make_chemical_node({otc_status: make_section({code: -2}, [])})],
       post: _raw_tags,
       expected: {'n/otc/w': _raw('n/otc/w', 'Withdrawn')}
     },
     explicit_unknown: {
-      args: [_make_chemical_node({otc_status: {code: -1}})],
+      args: [_make_chemical_node({otc_status: make_section({code: -1}, [])})],
       post: _raw_tags,
       expected: {'n/otc/o': _raw('n/otc/o', 'Other')}
     },
@@ -365,7 +366,7 @@ function _test_decorate_otc_tag() {
 }
 
 function _test_decorate_indication_tag() {
-  const _indication_case = (chemical, end_curies, node_tags) => {
+  const _indication_case = (chemical, end_curies, node_tags = []) => {
     return [
       _make_path(),
       {
@@ -375,54 +376,46 @@ function _test_decorate_indication_tag() {
     ];
   };
   return test.make_function_test({
-    approved_and_indicated: {
+    indicated_when_path_disease_matches: {
       args: _indication_case(
-        {indications: ['MESH:D000001']},
-        ['MESH:D000001'],
-        [tags.TAGS.NODE.FDA.APPROVED]),
+        {indications: make_section([{name: 'disease one', ids: ['MONDO:0000001'], urls: []}], [])},
+        ['MONDO:0000001']),
       post: _raw_tags,
-      expected: {
-        'n/fda/4': _raw('n/fda/4', 'FDA Approved'),
-        'n/di/ind': _raw('n/di/ind', 'Has Been in Trial')
-      }
+      expected: {'n/di/ind': _raw('n/di/ind', 'Has Been in Trial')}
     },
-    approved_but_no_matching_indication: {
+    not_indicated_when_no_disease_matches: {
       args: _indication_case(
-        {indications: ['MESH:D999999']},
-        ['MESH:D000001'],
-        [tags.TAGS.NODE.FDA.APPROVED]),
-      post: _raw_tags,
-      expected: {
-        'n/fda/4': _raw('n/fda/4', 'FDA Approved'),
-        'n/di/not': _raw('n/di/not', 'Has Not Been in Trial')
-      }
-    },
-    indicated_but_not_fda_approved: {
-      args: _indication_case(
-        {indications: ['MESH:D000001']},
-        ['MESH:D000001'],
-        []),
+        {indications: make_section([{name: 'disease two', ids: ['MONDO:0000002'], urls: []}], [])},
+        ['MONDO:0000001']),
       post: _raw_tags,
       expected: {'n/di/not': _raw('n/di/not', 'Has Not Been in Trial')}
     },
-    non_mesh_curies_are_ignored: {
+    matches_any_end_curie: {
       args: _indication_case(
-        {indications: ['MONDO:0000001']},
-        ['MONDO:0000001'],
-        [tags.TAGS.NODE.FDA.APPROVED]),
+        {indications: make_section([{name: 'phenotype one', ids: ['HP:0000001'], urls: []}], [])},
+        ['MONDO:0000001', 'HP:0000001']),
       post: _raw_tags,
-      expected: {
-        'n/fda/4': _raw('n/fda/4', 'FDA Approved'),
-        'n/di/not': _raw('n/di/not', 'Has Not Been in Trial')
-      }
+      expected: {'n/di/ind': _raw('n/di/ind', 'Has Been in Trial')}
+    },
+    matches_any_merged_id: {
+      args: _indication_case(
+        {indications: make_section([{name: 'disease one', ids: ['MONDO:0000001', 'UMLS:0000001'], urls: []}], [])},
+        ['UMLS:0000001']),
+      post: _raw_tags,
+      expected: {'n/di/ind': _raw('n/di/ind', 'Has Been in Trial')}
+    },
+    fda_approval_not_required: {
+      args: _indication_case(
+        {indications: make_section([{name: 'disease one', ids: ['MONDO:0000001'], urls: []}], [])},
+        ['MONDO:0000001'],
+        []),
+      post: _raw_tags,
+      expected: {'n/di/ind': _raw('n/di/ind', 'Has Been in Trial')}
     },
     missing_indications: {
-      args: _indication_case({}, ['MESH:D000001'], [tags.TAGS.NODE.FDA.APPROVED]),
+      args: _indication_case({}, ['MONDO:0000001']),
       post: _raw_tags,
-      expected: {
-        'n/fda/4': _raw('n/fda/4', 'FDA Approved'),
-        'n/di/not': _raw('n/di/not', 'Has Not Been in Trial')
-      }
+      expected: {'n/di/not': _raw('n/di/not', 'Has Not Been in Trial')}
     }
   });
 }

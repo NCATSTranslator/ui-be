@@ -3106,7 +3106,7 @@
               "example": "MESH:D000077192"
             }
           },
-          "other_names": {
+          "synonyms": {
             "type": "object",
             "nullable": true,
             "properties": {
