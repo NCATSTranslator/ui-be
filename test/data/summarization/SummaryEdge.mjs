@@ -13,11 +13,9 @@ function _test_SummaryEdge() {
   const default_state = {
     id: EDGE_ID,
     aras: [],
-    support: [],
     is_root: false,
     knowledge_level: null,
     description: null,
-    type: null,
     subject: null,
     object: null,
     predicate: null,
@@ -25,17 +23,20 @@ function _test_SummaryEdge() {
     provenance: [],
     publications: {},
     metadata: null,
-    trials: []
+    trials: [],
+    source_time: null
+  };
+  const default_raw_obj = {
+    ...default_state,
+    tags: {}
   };
   const default_other = {
     id: EDGE_ID,
     metadata: null,
     aras: [],
-    support: [],
     is_root: false,
     description: null,
     knowledge_level: null,
-    type: null,
     subject: null,
     predicate: null,
     object: null,
@@ -53,7 +54,7 @@ function _test_SummaryEdge() {
     },
     null_args_default_to_empty: {
       class_constructor: {
-        args: [EDGE_ID, null, null, null],
+        args: [EDGE_ID, null, null],
         expected: default_state
       }
     },
@@ -66,26 +67,10 @@ function _test_SummaryEdge() {
         }
       }
     },
-    with_support_and_is_root: {
-      class_constructor: {
-        args: [EDGE_ID, [], ["edge_id_1", "edge_id_2"], true],
-        expected: {
-          ...default_state,
-          support: ["edge_id_1", "edge_id_2"],
-          is_root: true
-        }
-      }
-    },
-    has_support_empty_is_false: {
+    to_raw_obj_serializes_all_persisted_fields: {
       class_constructor: { args: [EDGE_ID] },
       steps: [
-        { method: "has_support", args: [], expected: false }
-      ]
-    },
-    has_support_with_support_is_true: {
-      class_constructor: { args: [EDGE_ID, [], ["edge_id_1"]] },
-      steps: [
-        { method: "has_support", args: [], expected: true }
+        { method: "to_raw_obj", args: [], expected: default_raw_obj }
       ]
     },
     is_inverted_null_metadata_is_false: {
@@ -112,9 +97,9 @@ function _test_SummaryEdge() {
         { method: "is_inverted", args: [], expected: false }
       ]
     },
-    merge_accumulates_aras_support_and_is_root: {
+    merge_accumulates_aras_and_is_root: {
       class_constructor: {
-        args: [EDGE_ID, ["ara1"], ["edge1"], true]
+        args: [EDGE_ID, ["ara1"], true]
       },
       steps: [
         {
@@ -122,13 +107,11 @@ function _test_SummaryEdge() {
           args: [{
             ...default_other,
             aras: ["ara2"],
-            support: ["edge2", "edge3"],
             is_root: false
           }],
           expected: {
             ...default_state,
             aras: ["ara1", "ara2"],
-            support: ["edge1", "edge2", "edge3"],
             is_root: true
           }
         }
@@ -139,7 +122,6 @@ function _test_SummaryEdge() {
         id: EDGE_ID,
         description: "existing description",
         knowledge_level: "primary",
-        type: "direct",
         subject: "subj_a",
         predicate: "pred_a",
         object: "obj_a",
@@ -152,7 +134,6 @@ function _test_SummaryEdge() {
             ...default_other,
             description: "ignored description",
             knowledge_level: "ignored",
-            type: "direct",
             subject: "ignored_subj",
             predicate: "ignored_pred",
             object: "ignored_obj",
@@ -162,7 +143,6 @@ function _test_SummaryEdge() {
             ...default_state,
             description: "existing description",
             knowledge_level: "primary",
-            type: "direct",
             subject: "subj_a",
             predicate: "pred_a",
             object: "obj_a",
@@ -180,7 +160,6 @@ function _test_SummaryEdge() {
             ...default_other,
             description: "other description",
             knowledge_level: "primary",
-            type: "direct",
             subject: "subj_b",
             predicate: "pred_b",
             object: "obj_b",
@@ -190,30 +169,10 @@ function _test_SummaryEdge() {
             ...default_state,
             description: "other description",
             knowledge_level: "primary",
-            type: "direct",
             subject: "subj_b",
             predicate: "pred_b",
             object: "obj_b",
             predicate_url: "http://example.com/b"
-          }
-        }
-      ]
-    },
-    merge_indirect_type_overrides_direct: {
-      injected: {
-        id: EDGE_ID,
-        type: "direct"
-      },
-      steps: [
-        {
-          method: "merge",
-          args: [{
-            ...default_other,
-            type: "indirect"
-          }],
-          expected: {
-            ...default_state,
-            type: "indirect"
           }
         }
       ]

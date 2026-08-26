@@ -2,6 +2,7 @@
   "document_root": false,
   "port": 8386,
   "response_timeout": 300,
+  "auth_check": true,
   "json_payload_limit": "20mb",
   "trapi": {
     "query_subject_key": "sn",
@@ -31,7 +32,7 @@
   "biolink": {
     "version": "4.4.3",
     "support_deprecated_predicates": false,
-    "infores_catalog": "infores-catalog-v1.1.7.json",
+    "infores_catalog": "infores-catalog-v1.1.8.json",
     "prefix_catalog": {
       "path": "prefix-catalog.json",
       "exclude": [

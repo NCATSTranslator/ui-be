@@ -1,0 +1,154 @@
+{
+  "Annotation": {
+    "type": "object",
+    "properties": {
+      "chemical": {
+        "$ref": "./annotation.json#/ChemicalAnnotation"
+      },
+      "disease": {
+        "$ref": "./annotation.json#/DiseaseAnnotation"
+      },
+      "gene": {
+        "$ref": "./annotation.json#/GeneAnnotation"
+      }
+    },
+    "description": "Biothings annotations grouped by node type. Only the relevant type(s) will have non-null values."
+  },
+  "ChemicalAnnotation": {
+    "type": "object",
+    "properties": {
+      "approval": {
+        "type": "integer",
+        "nullable": true,
+        "example": 4
+      },
+      "descriptions": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "string"
+        }
+      },
+      "indications": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "string",
+          "description": "MESH identifier",
+          "example": "MESH:D000077192"
+        }
+      },
+      "other_names": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "commercial": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "generic": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "roles": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "example": "CHEBI:35705"
+            },
+            "name": {
+              "type": "string",
+              "example": "immunosuppressive agent"
+            }
+          }
+        }
+      },
+      "otc_status": {
+        "type": "object",
+        "nullable": true,
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 1
+          },
+          "label": {
+            "type": "string",
+            "example": "Prescription"
+          }
+        }
+      },
+      "clinical_trials": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "string",
+          "description": "ClinicalTrials.gov identifier",
+          "example": "NCT01197144"
+        }
+      }
+    }
+  },
+  "GeneAnnotation": {
+    "type": "object",
+    "properties": {
+      "descriptions": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "string"
+        }
+      },
+      "name": {
+        "type": "string",
+        "nullable": true,
+        "example": "AKT serine/threonine kinase 1"
+      },
+      "species": {
+        "type": "string",
+        "nullable": true
+      },
+      "tdl": {
+        "type": "string",
+        "nullable": true,
+        "description": "Target Development Level",
+        "example": "Tchem",
+        "enum": [
+          "Tclin",
+          "Tchem",
+          "Tbio"
+        ]
+      }
+    }
+  },
+  "DiseaseAnnotation": {
+    "type": "object",
+    "properties": {
+      "descriptions": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "string"
+        }
+      },
+      "curies": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "string",
+          "description": "MESH identifier",
+          "example": "MESH:D006223"
+        }
+      }
+    }
+  }
+}

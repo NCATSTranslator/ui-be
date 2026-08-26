@@ -1,0 +1,175 @@
+{
+  "/api/v1/users/me/tags": {
+    "get": {
+      "summary": "Get user tags",
+      "description": "Get all tags for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted tags"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User tags",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/user-data.json#/UserSavedData"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Update user tags",
+      "description": "Update user tags",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/UserSavedData"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Tag updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserSavedData"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/tags/{save_id}": {
+    "post": {
+      "summary": "Update user tag by ID",
+      "description": "Update a specific user tag",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Tag ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/UserSavedData"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Tag updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserSavedData"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "404": {
+          "description": "Tag not found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Delete user tag by ID",
+      "description": "Delete a specific user tag",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Tag ID"
+        }
+      ],
+      "responses": {
+        "204": {
+          "description": "Tag deleted"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "404": {
+          "description": "Tag not found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+}

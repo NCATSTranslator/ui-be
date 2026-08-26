@@ -343,5 +343,6 @@
   "include_projects": true,
   "include_hashed_parameters": true,
   "include_lookup": false,
+  "include_canvas": true,
   "show_novelty_boost": false
 }

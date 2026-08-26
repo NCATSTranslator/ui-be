@@ -100,6 +100,7 @@ async function _class_test({test_class, test_cases}) {
   const class_name = test_class.name;
   console.log(`Running tests for ${class_name}`);
   for (let case_name of Object.keys(test_cases)) {
+    console.log(`-- Running ${case_name}`);
     const tc = test_cases[case_name];
     if (tc.config) {
       await tc.config_loader();
