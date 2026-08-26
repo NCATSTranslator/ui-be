@@ -1,0 +1,141 @@
+{
+  "/api/v1/users/me/bookmarks": {
+    "get": {
+      "summary": "Get user bookmarks",
+      "description": "Get all bookmarks for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted bookmarks"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User bookmarks",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/user-data.json#/UserSavedData"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Update user bookmarks",
+      "description": "Update user bookmarks",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/UserSavedData"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Bookmark updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserSavedData"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/bookmarks/{save_id}": {
+    "post": {
+      "summary": "Update user bookmark by ID",
+      "description": "Update a specific user bookmark",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "save_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Bookmark ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/UserSavedData"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Bookmark updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserSavedData"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "404": {
+          "description": "Bookmark not found"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "SessionStatus": {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "valid",
+          "token_expired",
+          "invalid",
+          "not_found"
+        ],
+        "description": "Session status"
+      },
+      "user": {
+        "$ref": "./user.json#/User"
+      }
+    }
+  },
+  "SessionUpdateRequest": {
+    "type": "object",
+    "properties": {
+      "update": {
+        "type": "boolean",
+        "description": "Update session timestamp"
+      },
+      "expire": {
+        "type": "boolean",
+        "description": "Expire the session"
+      }
+    }
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "/api/v1/query": {
+    "post": {
+      "summary": "Submit a query",
+      "description": "Submit a new query for processing",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/query.json#/QueryRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Query submitted successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/query.json#/QuerySubmitResponse"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Malformed request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/query/{qid}/status": {
+    "get": {
+      "summary": "Get query status",
+      "description": "Get the current status of a submitted query",
+      "parameters": [
+        {
+          "name": "qid",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Query ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Query status",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/query.json#/QueryStatus"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Malformed request"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/query/{qid}/result": {
+    "get": {
+      "summary": "Get query results",
+      "description": "Get the results of a completed query",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "qid",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Query ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Query results",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/query.json#/QueryResults"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Malformed request"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/query/update": {
+    "post": {
+      "summary": "Update query status (callback)",
+      "description": "Webhook endpoint for external services to update query status",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/query.json#/QueryUpdateRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Update processed successfully"
+        },
+        "400": {
+          "description": "Bad request - signature not provided"
+        },
+        "401": {
+          "description": "Unauthorized - invalid signature"
+        },
+        "410": {
+          "description": "Query already complete"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+}

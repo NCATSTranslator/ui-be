@@ -1,0 +1,20 @@
+{
+  "/api/v1/config": {
+    "get": {
+      "summary": "Get application configuration",
+      "description": "Returns public configuration data for the frontend application",
+      "responses": {
+        "200": {
+          "description": "Configuration data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/config.json#/Config"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,243 @@
+{
+  "/api/v1/users/me/projects": {
+    "get": {
+      "summary": "Get user projects",
+      "description": "Get all projects for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted projects"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User projects",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/user-data.json#/UserProject"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create user project",
+      "description": "Create a new project for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/CreateProjectRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Project created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserProject"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Missing required fields"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update user projects",
+      "description": "Update multiple user projects",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "../schemas/user-data.json#/ProjectUpdateRequest"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Projects updated",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/user-data.json#/UserProject"
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Permanently delete user projects",
+      "description": "Permanently delete multiple user projects (cannot be restored)",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "204": {
+          "description": "Projects permanently deleted successfully"
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/projects/trash": {
+    "put": {
+      "summary": "Trash user projects",
+      "description": "Move multiple user projects to trash",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Projects trashed successfully"
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/projects/restore": {
+    "put": {
+      "summary": "Restore user projects",
+      "description": "Restore deleted user projects",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Projects restored successfully"
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+}

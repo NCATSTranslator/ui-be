@@ -1,0 +1,264 @@
+{
+  "/api/v1/users/me/queries": {
+    "get": {
+      "summary": "Get user queries",
+      "description": "Get all queries for the current user",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include deleted queries"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "User queries",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/user-data.json#/UserQuery"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update user query",
+      "description": "Update a user query",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-data.json#/UserQuery"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Updated query",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-data.json#/UserQuery"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "delete": {
+      "summary": "Permanently delete user queries",
+      "description": "Permanently delete multiple user queries (cannot be restored)",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "204": {
+          "description": "Queries permanently deleted successfully"
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/queries/trash": {
+    "put": {
+      "summary": "Trash user queries",
+      "description": "Move multiple user queries to trash",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Queries trashed successfully"
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/queries/restore": {
+    "put": {
+      "summary": "Restore user queries",
+      "description": "Restore deleted user queries",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Queries restored successfully"
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/queries/touch": {
+    "put": {
+      "summary": "Touch user query",
+      "description": "Update the last_seen timestamp for a user query",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sid": {
+                  "type": "integer",
+                  "description": "Save ID of the query to touch"
+                }
+              },
+              "required": [
+                "sid"
+              ]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Query touched successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sid": {
+                    "type": "integer",
+                    "description": "Save ID"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "last_seen": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Updated last seen timestamp"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+}

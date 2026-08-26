@@ -10,8 +10,9 @@ export { TranslatorServicexFEAdapter };
 // msg: ARS client message with trace=y
 
 class TranslatorServicexFEAdapter {
-  constructor(feature_config) {
+  constructor(feature_config, entity_signing_secret = null) {
     this.feature_config = feature_config;
+    this.entity_signing_secret = entity_signing_secret;
   }
 
   querySubmitToFE(msg) {
@@ -33,6 +34,12 @@ class TranslatorServicexFEAdapter {
   }
 
   async queryResultsToFE(msg, maxHops) {
+    if (cmn.is_missing(this.entity_signing_secret)) {
+      throw new Error('Cannot summarize results for canvas: entity signing secret is not configured');
+    }
+    if (cmn.is_missing(msg.meta.timestamp)) {
+      throw new Error('Cannot summarize results for canvas: message timestamp (source_time) is missing');
+    }
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
     const data = msg.completed.filter(e => {
@@ -49,11 +56,19 @@ class TranslatorServicexFEAdapter {
       data,
       this.feature_config);
     summary.set_timestamp(msg.meta.timestamp);
+    this._sign_entities(summary.nodes);
+    this._sign_entities(summary.edges);
 
     return {
       status: _determine_status(msg),
       data: summary
     };
+  }
+
+  _sign_entities(entities) {
+    for (const entity of Object.values(entities)) {
+      entity.signature = cmn.sign_entity_data(entity.to_raw_obj(), this.entity_signing_secret);
+    }
   }
 }
 
