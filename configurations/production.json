@@ -63,7 +63,6 @@
     }
   },
   "feature_config": {
-    "pull_source_records": false,
     "max_hops": 4
   },
   "google_analytics_id": "G-MQ5SCJJ6Q3",
