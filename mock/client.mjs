@@ -1,12 +1,25 @@
-export { ARSClient };
+export { ARSClient, PK_ALIASES };
 import { logger } from "#lib/logger.mjs";
 import * as cmn from "#lib/common.mjs";
 import * as fs from "node:fs";
+
+/* This client keys its fixtures by directory name ("1".."8"), but the DB stores ARS pks in a
+ * uuid column, so a fixture cannot be seeded into user_saved_data under its bare name. Each
+ * alias below makes a fixture addressable by a stable uuid as well, leaving the short names
+ * working for ad-hoc use. */
+const PK_ALIASES = Object.freeze({
+  '00000000-0000-4000-8000-000000000003': '3'
+});
 
 class ARSClient {
   constructor(base_path) {
     this.data = {};
     this._assign_data_from([base_path]);
+    for (const [alias, pk] of Object.entries(PK_ALIASES)) {
+      if (this.data[pk] !== undefined) {
+        this.data[alias] = this.data[pk];
+      }
+    }
   }
 
   _assign_data_from(path) {
