@@ -1,0 +1,142 @@
+{
+  "/api/v1/users/me/api-keys": {
+    "get": {
+      "summary": "List API keys",
+      "description": "List the current user's API keys. Requires a logged-in session: API keys cannot be used to manage API keys.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_revoked",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean",
+            "default": false
+          },
+          "description": "Include revoked keys in the listing"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The user's API keys",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/api-key.json#/ApiKey"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "403": {
+          "description": "Request was authenticated with an API key; a logged-in session is required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create an API key",
+      "description": "Create a new API key for the current user. The response contains the key itself, which is not recoverable afterwards. Requires a logged-in session: API keys cannot be used to mint API keys. Demo limitation: keys are currently held in server memory, so they are lost when the server restarts.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/api-key.json#/CreateApiKeyRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The created key and its metadata",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/api-key.json#/CreateApiKeyResponse"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Missing or invalid \"name\" field"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "403": {
+          "description": "Request was authenticated with an API key; a logged-in session is required"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/api-keys/{key_id}": {
+    "delete": {
+      "summary": "Revoke an API key",
+      "description": "Revoke one of the current user's API keys. The key stops authenticating immediately. Requires a logged-in session: API keys cannot be used to revoke API keys.",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "key_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "ID of the key to revoke"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The revoked key",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/api-key.json#/ApiKey"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid API key ID"
+        },
+        "401": {
+          "description": "Authentication required"
+        },
+        "403": {
+          "description": "Request was authenticated with an API key; a logged-in session is required"
+        },
+        "404": {
+          "description": "No active API key with that ID for the current user"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+}

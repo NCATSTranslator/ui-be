@@ -3,6 +3,7 @@
 import * as AuthService from '../services/AuthService.mjs';
 import * as wutil from '../lib/webutils.mjs';
 import * as cmn from '../lib/common.mjs';
+import { API_KEY_PREFIX } from '../models/ApiKey.mjs';
 
 export { SessionController };
 
@@ -14,6 +15,33 @@ class SessionController {
 
   // All subsequent Session Controller middleware functions assume that this has been done
   async attachSessionData(req, res, next) {
+    /* An API key is an explicit, deliberately-presented credential, so it decides the outcome
+     * of the request: if one is presented we do not fall back to the cookie, and a bad key
+     * fails rather than silently downgrading to whatever session the browser happens to hold.
+     * Key-authenticated requests get a sessionData shaped like a session (so every downstream
+     * handler keeps reading req.sessionData.user) but with no session row behind it.
+     * req.apiKeyData marks them, so the authenticate* middleware below can check the key
+     * instead of running the session-refresh machinery. */
+    const apiKeyData = await this._fetchApiKeyStatus(req);
+    if (apiKeyData) {
+      req.apiKeyData = apiKeyData;
+      if (this.authService.isApiKeyStatusValid(apiKeyData.status)) {
+        req.sessionData = {
+          status: AuthService.SESSION_VALID,
+          user: apiKeyData.user,
+          session: null
+        };
+        await this.authService.touchApiKey(apiKeyData.apiKey);
+      } else {
+        req.sessionData = {
+          status: AuthService.SESSION_INVALID_TOKEN,
+          user: null,
+          session: null
+        };
+      }
+      return next();
+    }
+
     let sessionData = await this._fetchStatus(req);
     if (!sessionData) {
       return res.status(500).send(`Server error retrieving session status.`);
@@ -26,6 +54,32 @@ class SessionController {
     let token = req.cookies[this.config.session_cookie.name];
     let retval = await this.authService.getSessionData(token);
     return retval;
+  }
+
+  async _fetchApiKeyStatus(req) {
+    const rawKey = this._extractApiKey(req);
+    if (!rawKey) {
+      return null;
+    }
+    return this.authService.getApiKeyData(rawKey);
+  }
+
+  /* Only a credential carrying our key prefix counts as an API key attempt. Anything else in
+   * the Authorization header (a proxy's Basic credentials, say) is ignored so that it cannot
+   * knock a normal cookie-authenticated browser request off the session path. */
+  _extractApiKey(req) {
+    const authorization = req.get('authorization');
+    if (authorization) {
+      const match = authorization.match(/^Bearer\s+(\S+)$/i);
+      if (match && match[1].startsWith(API_KEY_PREFIX)) {
+        return match[1];
+      }
+    }
+    const header = req.get('x-api-key');
+    if (header && header.startsWith(API_KEY_PREFIX)) {
+      return header;
+    }
+    return null;
   }
 
   async getStatus(req, res, next) {
@@ -50,6 +104,13 @@ class SessionController {
       return res.status(500).send('Server error retrieving session status');
     }
 
+    if (req.apiKeyData) {
+      if (!this.authService.isApiKeyStatusValid(req.apiKeyData.status)) {
+        return res.status(401).send('Invalid API key. Cannot service request.');
+      }
+      return next();
+    }
+
     if (!this.authService.isSessionStatusValid(oldSession.status)) {
       return res.status(401).send('Invalid session status. Cannot service request.');
     }
@@ -62,6 +123,9 @@ class SessionController {
   }
 
   async authenticateUnprivilegedRequest(req, res, next) {
+    if (req.apiKeyData) {
+      return next();
+    }
     let oldSession = req.sessionData;
     if (oldSession && this.authService.isSessionStatusValid(oldSession.status)) {
       let [success, errstr] = await this._refreshSession(req, res, oldSession);
@@ -72,6 +136,16 @@ class SessionController {
     next();
   }
 
+
+  /* Gate for routes that must be driven by a human who is actually logged in. API key
+   * management is the case that matters: a leaked key must not be able to mint further keys
+   * or revoke the ones the owner is using. Must run after authenticatePrivilegedRequest. */
+  requireSessionAuth(req, res, next) {
+    if (req.apiKeyData) {
+      return res.status(403).send('API keys cannot be used for this request. Log in to continue.');
+    }
+    next();
+  }
 
   /* This function smells awful: it side-effects req, the DB, and cookies.
    * The possible saving grace is that this exact sequence is needed in two cases
@@ -140,6 +214,10 @@ class SessionController {
 
   async updateStatus(req, res, next) {
     let curSession = req.sessionData;
+    /* Key-authenticated requests carry no session row to refresh or expire. */
+    if (req.apiKeyData) {
+      return res.status(403).send('API keys cannot be used for this request. Log in to continue.');
+    }
     if (!this.authService.isSessionStatusValid(curSession.status)) {
       return res.status(401).send('Invalid session status. Cannot service request');
     }

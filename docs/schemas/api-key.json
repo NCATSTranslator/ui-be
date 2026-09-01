@@ -1,0 +1,79 @@
+{
+  "ApiKey": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "API key ID"
+      },
+      "user_id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "ID of the user that owns the key"
+      },
+      "name": {
+        "type": "string",
+        "description": "User-supplied label for the key"
+      },
+      "key_display": {
+        "type": "string",
+        "description": "Truncated form of the key, safe to display. The key itself is only ever returned once, at creation."
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "When the key was created"
+      },
+      "time_last_used": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When the key was last presented on a request, or null if never used"
+      },
+      "time_revoked": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When the key was revoked, or null if the key is still active"
+      }
+    },
+    "required": [
+      "id",
+      "user_id",
+      "name",
+      "key_display",
+      "time_created"
+    ],
+    "description": "API key metadata. Never includes the key itself. Demo limitation: keys are currently held in server memory and do not survive a server restart."
+  },
+  "CreateApiKeyRequest": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "maxLength": 128,
+        "description": "Label used to identify the key later"
+      }
+    },
+    "required": [
+      "name"
+    ]
+  },
+  "CreateApiKeyResponse": {
+    "type": "object",
+    "properties": {
+      "api_key": {
+        "$ref": "./api-key.json#/ApiKey"
+      },
+      "key": {
+        "type": "string",
+        "description": "The API key itself. Returned only in this response and never recoverable afterwards; store it now."
+      }
+    },
+    "required": [
+      "api_key",
+      "key"
+    ]
+  }
+}

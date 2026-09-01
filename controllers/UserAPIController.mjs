@@ -5,6 +5,9 @@ import * as wutil from '../lib/webutils.mjs';
 import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 import * as cmn from '../lib/common.mjs';
 import { CanvasRequestError } from "../models/Canvas.mjs";
+import { validate as uuid_validate } from 'uuid';
+
+const API_KEY_NAME_MAX_LEN = 128;
 
 class UserAPIController {
   constructor(config, user_service, translator_service) {
@@ -19,6 +22,68 @@ class UserAPIController {
       return res.status(cmn.HTTP_CODE.SUCCESS).json(session_data.user);
     } else {
       wutil.send_internal_server_error(res, 'Server error: couldn\'t find attached user');
+    }
+  }
+
+  // API keys
+  async get_user_api_keys(req, res, _next) {
+    const user_id = wutil.request_to_user_id(req);
+    const include_revoked = req.query.include_revoked === 'true';
+    try {
+      const result = await this.user_service.getUserApiKeys(user_id, include_revoked);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  /* The raw key is included in this response and nowhere else, ever again. */
+  async create_user_api_key(req, res, _next) {
+    const user_id = wutil.request_to_user_id(req);
+    const raw_name = req.body ? req.body.name : null;
+    if (!cmn.is_string(raw_name)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing or invalid "name" field');
+    }
+    const name = raw_name.trim();
+    if (name.length === 0) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing or invalid "name" field');
+    }
+    if (name.length > API_KEY_NAME_MAX_LEN) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST,
+        `"name" exceeds the maximum length of ${API_KEY_NAME_MAX_LEN} characters`);
+    }
+    try {
+      const result = await this.user_service.createUserApiKey(user_id, name);
+      if (!result) {
+        return wutil.send_internal_server_error(res, 'Failed to create API key');
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json({
+        api_key: result.apiKey,
+        key: result.key
+      });
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async revoke_user_api_key(req, res, _next) {
+    const user_id = wutil.request_to_user_id(req);
+    const key_id = req.params.key_id;
+    if (!uuid_validate(key_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid API key ID: ${key_id}`);
+    }
+    try {
+      const result = await this.user_service.revokeUserApiKey(user_id, key_id);
+      if (!result) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND,
+          `No active API key ${key_id} for user ${user_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(result);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
     }
   }
 
