@@ -97,6 +97,14 @@ if (SERVER_CONFIG.auth_check === false) {
   await bypassSessionAuth(AUTH_SERVICE);
 }
 
+/* Seed the fixed demo API key. It rides the same rail as the auth bypass above: the key is
+ * hardcoded and therefore public, so it is only ever registered under the mock configuration
+ * and can never grant access in a real deployment. */
+if (IS_MOCK_CONFIG) {
+  const { seedDemoApiKey } = await import('./mock/api-key.mjs');
+  await seedDemoApiKey(API_KEY_STORE, AUTH_SERVICE.userStore);
+}
+
 // Bootstrap the user service
 const USER_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
@@ -113,6 +121,13 @@ const USER_SERVICE = (function (config) {
     API_KEY_STORE
   );
 })(SERVER_CONFIG);
+
+/* Seed the demo user's query list. Same mock-only rail as the demo API key above. Unlike the
+ * key, this writes to Postgres and persists, so the seeder is idempotent. */
+if (IS_MOCK_CONFIG) {
+  const { seedDemoUserQuery } = await import('./mock/query.mjs');
+  await seedDemoUserQuery(USER_SERVICE);
+}
 
 const QUERY_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
