@@ -21,6 +21,7 @@ import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgre
 import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
 import { CanvasStorePostgres } from './stores/CanvasStorePostgres.mjs';
 import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
+import { ApiKeyStoreMemory } from './stores/ApiKeyStoreMemory.mjs';
 
 
 // Load the config asap as basically everything depends on it
@@ -55,6 +56,13 @@ const TRANSLATOR_SERVICE = await (async function (config) {
   return new TranslatorService(query_client);
 })(SERVER_CONFIG);
 
+/* API keys are demo-only for now and live in memory rather than in a table, so there is no
+ * api_keys migration to run. Unlike the Postgres stores below -- which are constructed
+ * per-service but all reach the same database -- this store IS the table, so the auth service
+ * and the user service must share this one instance or keys minted through one would be
+ * invisible to the other. Keys do not survive a restart. */
+const API_KEY_STORE = new ApiKeyStoreMemory();
+
 // Bootstrap the auth service
 const AUTH_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
@@ -69,7 +77,8 @@ const AUTH_SERVICE = (function (config) {
     loginRequestTTLSec: config.sessions.login_request_ttl_sec
   },
   new SessionStorePostgres(dbPool),
-  new UserStorePostgres(dbPool));
+  new UserStorePostgres(dbPool),
+  API_KEY_STORE);
 })(SERVER_CONFIG);
 
 /* Session auth checking is controlled from here so the HTTP layer and SessionController stay
@@ -100,7 +109,8 @@ const USER_SERVICE = (function (config) {
     new UserPreferenceStorePostgres(dbPool),
     new UserSavedDataStorePostgres(dbPool),
     new CanvasStorePostgres(dbPool),
-    config.secrets.hmac.key
+    config.secrets.hmac.key,
+    API_KEY_STORE
   );
 })(SERVER_CONFIG);
 

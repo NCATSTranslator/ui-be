@@ -6,9 +6,12 @@
       },
       {
         "$ref": "./query.json#/PathfinderQuery"
+      },
+      {
+        "$ref": "./query.json#/LookupQuery"
       }
     ],
-    "description": "Query submission request - can be either a smart query or pathfinder query"
+    "description": "Query submission request - can be a smart query, pathfinder query, or lookup query"
   },
   "SmartQuery": {
     "type": "object",
@@ -99,6 +102,68 @@
       "id",
       "category"
     ]
+  },
+  "LookupQuery": {
+    "type": "object",
+    "properties": {
+      "pid": {
+        "type": "integer",
+        "description": "Project ID to associate with the query",
+        "nullable": true
+      },
+      "type": {
+        "type": "string",
+        "enum": [
+          "lookup"
+        ],
+        "description": "Query type for lookup queries"
+      },
+      "subject": {
+        "$ref": "./query.json#/LookupSubject",
+        "description": "The entity to look up from"
+      },
+      "object": {
+        "$ref": "./query.json#/LookupObject",
+        "description": "The category of entities to find"
+      }
+    },
+    "required": [
+      "type",
+      "subject",
+      "object"
+    ],
+    "description": "Lookup query for finding entities of a given category that are directly related to a subject entity. Sent to the ARS as a single biolink:related_to query edge with knowledge_type 'lookup', so only edges asserted in a knowledge graph are returned - no inferred (creative) results"
+  },
+  "LookupSubject": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "description": "CURIE identifier for the subject entity (e.g., MONDO:0007254)"
+      },
+      "category": {
+        "type": "string",
+        "description": "Biolink category for the subject entity, with or without the biolink: prefix (e.g., Disease)"
+      }
+    },
+    "required": [
+      "id",
+      "category"
+    ],
+    "description": "Subject entity of a lookup query - both id and category are required"
+  },
+  "LookupObject": {
+    "type": "object",
+    "properties": {
+      "category": {
+        "type": "string",
+        "description": "Biolink category of the entities to find, with or without the biolink: prefix (e.g., ChemicalEntity)"
+      }
+    },
+    "required": [
+      "category"
+    ],
+    "description": "Object of a lookup query - only the category is used, the ids are resolved by the query"
   },
   "QuerySubmitResponse": {
     "type": "object",

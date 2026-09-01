@@ -44,37 +44,33 @@ export function showResponse(method, path, res, rawBody) {
   console.log(body ? body.replace(/^/gm, '      ') : '      (empty body)');
 }
 
-export async function postJson(path, body) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+// headers lets a test send credentials of its own, e.g. an API key instead of the session cookie.
+async function requestJson(method, path, body, headers = {}) {
+  const init = { method: method, headers: { ...headers } };
+  if (body !== undefined) {
+    init.headers['Content-Type'] = 'application/json';
+    init.body = JSON.stringify(body);
+  }
+  const res = await fetch(`${BASE_URL}${path}`, init);
   const raw = await res.text();
-  showResponse('POST', path, res, raw);
+  showResponse(method, path, res, raw);
   let json = null;
   if (raw) { try { json = JSON.parse(raw); } catch { /* non-JSON */ } }
   return { res, json, raw };
 }
 
-export async function putJson(path, body) {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const raw = await res.text();
-  showResponse('PUT', path, res, raw);
-  let json = null;
-  if (raw) { try { json = JSON.parse(raw); } catch { /* non-JSON */ } }
-  return { res, json, raw };
+export async function postJson(path, body, headers = {}) {
+  return requestJson('POST', path, body, headers);
 }
 
-export async function getJson(path) {
-  const res = await fetch(`${BASE_URL}${path}`);
-  const raw = await res.text();
-  showResponse('GET', path, res, raw);
-  let json = null;
-  if (raw) { try { json = JSON.parse(raw); } catch { /* non-JSON */ } }
-  return { res, json, raw };
+export async function putJson(path, body, headers = {}) {
+  return requestJson('PUT', path, body, headers);
+}
+
+export async function getJson(path, headers = {}) {
+  return requestJson('GET', path, undefined, headers);
+}
+
+export async function deleteJson(path, headers = {}) {
+  return requestJson('DELETE', path, undefined, headers);
 }
