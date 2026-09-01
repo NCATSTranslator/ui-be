@@ -225,6 +225,6 @@ export function start_server(config, services) {
     res.sendFile(path.join(build_dir, 'index.html'));
   });
 
-  app.listen(8386);
+  app.listen(config.port ?? 8386);
   logger.info("Der Anfang ist das Ende und das Ende ist der Anfang");
 }
