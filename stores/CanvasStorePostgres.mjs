@@ -114,47 +114,49 @@ class CanvasStorePostgres {
   }
 
   async update_canvas_node_by_user(user_id, canvas_id, data_id, fields) {
-    const [set_clause, values] = this._build_element_update(fields, canvas_id, data_id, user_id);
-    const res = await pgExec(this._db_pool, `
-      UPDATE canvas_node
-      SET ${set_clause}
-      WHERE canvas_node.canvas_id = $${values.canvas_id_param}
-        AND canvas_node.data_id = $${values.data_id_param}
-        AND canvas_node.time_deleted IS NULL
-        AND EXISTS (
-          SELECT 1 FROM user_to_canvas
-          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
-          WHERE user_to_canvas.canvas_id = canvas_node.canvas_id
-            AND user_to_canvas.user_id = $${values.user_id_param}
-            AND canvas.time_deleted IS NULL)
-      RETURNING *`, values.args);
-    return res.rows.length > 0 ? res.rows[0] : null;
+    return this._update_canvas_element_by_user(
+      "canvas_node", user_id, canvas_id, "data_id", data_id, fields);
   }
 
   async update_canvas_edge_by_user(user_id, canvas_id, data_id, fields) {
-    const [set_clause, values] = this._build_element_update(fields, canvas_id, data_id, user_id);
-    const res = await pgExec(this._db_pool, `
-      UPDATE canvas_edge
-      SET ${set_clause}
-      WHERE canvas_edge.canvas_id = $${values.canvas_id_param}
-        AND canvas_edge.data_id = $${values.data_id_param}
-        AND canvas_edge.time_deleted IS NULL
-        AND EXISTS (
-          SELECT 1 FROM user_to_canvas
-          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
-          WHERE user_to_canvas.canvas_id = canvas_edge.canvas_id
-            AND user_to_canvas.user_id = $${values.user_id_param}
-            AND canvas.time_deleted IS NULL)
-      RETURNING *`, values.args);
-    return res.rows.length > 0 ? res.rows[0] : null;
+    return this._update_canvas_element_by_user(
+      "canvas_edge", user_id, canvas_id, "data_id", data_id, fields);
   }
 
-  _build_element_update(fields, canvas_id, data_id, user_id) {
+  async _update_canvas_element_by_user(table, user_id, canvas_id, id_column, id_value, fields) {
+    const [set_clause, change_clause, values] = this._build_element_update(
+      fields, canvas_id, id_value, user_id);
+    return pgExecTrans(this._db_pool, async (client) => {
+      const res = await client.query(`
+        UPDATE ${table}
+        SET ${set_clause}
+        WHERE ${table}.canvas_id = $${values.canvas_id_param}
+          AND ${table}.${id_column} = $${values.id_param}
+          AND ${table}.time_deleted IS NULL
+          AND (${change_clause})
+          AND EXISTS (
+            SELECT 1 FROM user_to_canvas
+            JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+            WHERE user_to_canvas.canvas_id = ${table}.canvas_id
+              AND user_to_canvas.user_id = $${values.user_id_param}
+              AND canvas.time_deleted IS NULL)
+        RETURNING *`, values.args);
+      if (res.rows.length > 0) {
+        await this._touch_canvas(client, canvas_id);
+        return res.rows[0];
+      }
+      return this._fetch_active_canvas_element(client, table, user_id, canvas_id, id_column, id_value);
+    });
+  }
+
+  _build_element_update(fields, canvas_id, id_value, user_id) {
     const set_clauses = [];
+    const change_clauses = [];
     const args = [];
     let i = 1;
     for (const col of Object.keys(fields)) {
       set_clauses.push(`${col} = $${i}`);
+      change_clauses.push(`${col} IS DISTINCT FROM $${i}`);
       args.push(fields[col]);
       i += 1;
     }
@@ -162,45 +164,78 @@ class CanvasStorePostgres {
     const canvas_id_param = i;
     args.push(canvas_id);
     i += 1;
-    const data_id_param = i;
-    args.push(data_id);
+    const id_param = i;
+    args.push(id_value);
     i += 1;
     const user_id_param = i;
     args.push(user_id);
-    return [set_clauses.join(", "), { args, canvas_id_param, data_id_param, user_id_param }];
+    return [
+      set_clauses.join(", "),
+      change_clauses.join(" OR "),
+      { args, canvas_id_param, id_param, user_id_param },
+    ];
   }
 
-  async create_canvas_annotation(user_id, canvas_id, annotation) {
-    const res = await pgExec(this._db_pool, `
-      INSERT INTO canvas_annotation (canvas_id, content, x, y, width, height)
-      SELECT $1, $2, $3, $4, $5, $6
-      WHERE EXISTS (
-        SELECT 1 FROM user_to_canvas
-        JOIN canvas ON user_to_canvas.canvas_id = canvas.id
-        WHERE canvas.id = $1
-          AND user_to_canvas.user_id = $7
-          AND canvas.time_deleted IS NULL)
-      RETURNING *`,
-      [canvas_id, annotation.content, annotation.x, annotation.y,
-       annotation.width, annotation.height, user_id]);
-    return res.rows.length > 0 ? res.rows[0] : null;
-  }
-
-  async update_canvas_annotation_content_by_user(user_id, canvas_id, annotation_id, content) {
-    const res = await pgExec(this._db_pool, `
-      UPDATE canvas_annotation
-      SET content = $1, time_updated = CURRENT_TIMESTAMP
-      WHERE canvas_annotation.canvas_id = $2
-        AND canvas_annotation.id = $3
-        AND canvas_annotation.time_deleted IS NULL
+  async _fetch_active_canvas_element(client, table, user_id, canvas_id, id_column, id_value) {
+    const res = await client.query(`
+      SELECT ${table}.*
+      FROM ${table}
+      WHERE ${table}.canvas_id = $1
+        AND ${table}.${id_column} = $2
+        AND ${table}.time_deleted IS NULL
         AND EXISTS (
           SELECT 1 FROM user_to_canvas
           JOIN canvas ON user_to_canvas.canvas_id = canvas.id
-          WHERE user_to_canvas.canvas_id = canvas_annotation.canvas_id
-            AND user_to_canvas.user_id = $4
-            AND canvas.time_deleted IS NULL)
-      RETURNING *`, [content, canvas_id, annotation_id, user_id]);
+          WHERE user_to_canvas.canvas_id = ${table}.canvas_id
+            AND user_to_canvas.user_id = $3
+            AND canvas.time_deleted IS NULL)`,
+      [canvas_id, id_value, user_id]);
     return res.rows.length > 0 ? res.rows[0] : null;
+  }
+
+  async create_canvas_annotation(user_id, canvas_id, annotation) {
+    return pgExecTrans(this._db_pool, async (client) => {
+      const res = await client.query(`
+        INSERT INTO canvas_annotation (canvas_id, content, x, y, width, height)
+        SELECT $1, $2, $3, $4, $5, $6
+        WHERE EXISTS (
+          SELECT 1 FROM user_to_canvas
+          JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+          WHERE canvas.id = $1
+            AND user_to_canvas.user_id = $7
+            AND canvas.time_deleted IS NULL)
+        RETURNING *`,
+        [canvas_id, annotation.content, annotation.x, annotation.y,
+         annotation.width, annotation.height, user_id]);
+      if (res.rows.length === 0) return null;
+      await this._touch_canvas(client, canvas_id);
+      return res.rows[0];
+    });
+  }
+
+  async update_canvas_annotation_content_by_user(user_id, canvas_id, annotation_id, content) {
+    return pgExecTrans(this._db_pool, async (client) => {
+      const res = await client.query(`
+        UPDATE canvas_annotation
+        SET content = $1, time_updated = CURRENT_TIMESTAMP
+        WHERE canvas_annotation.canvas_id = $2
+          AND canvas_annotation.id = $3
+          AND canvas_annotation.time_deleted IS NULL
+          AND canvas_annotation.content IS DISTINCT FROM $1
+          AND EXISTS (
+            SELECT 1 FROM user_to_canvas
+            JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+            WHERE user_to_canvas.canvas_id = canvas_annotation.canvas_id
+              AND user_to_canvas.user_id = $4
+              AND canvas.time_deleted IS NULL)
+        RETURNING *`, [content, canvas_id, annotation_id, user_id]);
+      if (res.rows.length > 0) {
+        await this._touch_canvas(client, canvas_id);
+        return res.rows[0];
+      }
+      return this._fetch_active_canvas_element(
+        client, "canvas_annotation", user_id, canvas_id, "id", annotation_id);
+    });
   }
 
   async _set_canvas_annotation_geometry(client, canvas_id, geometries) {
@@ -273,8 +308,11 @@ class CanvasStorePostgres {
       if (canvas === null) return false;
       const known_node_refs = await this._get_canvas_node_refs(client, canvas_id);
       graph.assert_edges_reference_nodes(known_node_refs);
-      await this._create_canvas_graph(client, canvas_id, graph);
-      await this._merge_canvas_tags(client, canvas, tag_descriptions);
+      const graph_touched = await this._create_canvas_graph(client, canvas_id, graph);
+      const tags_touched = await this._merge_canvas_tags(client, canvas, tag_descriptions);
+      if (graph_touched > 0 || tags_touched > 0) {
+        await this._touch_canvas(client, canvas_id);
+      }
       return true;
     });
     if (!merged) return null;
@@ -287,6 +325,9 @@ class CanvasStorePostgres {
       if (canvas === null) return null;
       const nodes = await this._move_canvas_nodes(client, canvas_id, node_moves);
       const annotations = await this._set_canvas_annotation_geometry(client, canvas_id, annotation_geometries);
+      if (nodes.length > 0 || annotations.length > 0) {
+        await this._touch_canvas(client, canvas_id);
+      }
       return { nodes: nodes, annotations: annotations };
     });
   }
@@ -295,9 +336,10 @@ class CanvasStorePostgres {
     const trashed = await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
       if (canvas === null) return false;
-      await this._trash_canvas_edges(client, canvas_id, node_ids, edge_ids);
-      await this._trash_canvas_nodes(client, canvas_id, node_ids);
-      await this._trash_canvas_annotations(client, canvas_id, annotation_ids);
+      const touched = await this._trash_canvas_edges(client, canvas_id, node_ids, edge_ids)
+        + await this._trash_canvas_nodes(client, canvas_id, node_ids)
+        + await this._trash_canvas_annotations(client, canvas_id, annotation_ids);
+      if (touched > 0) await this._touch_canvas(client, canvas_id);
       return true;
     });
     if (!trashed) return null;
@@ -308,9 +350,10 @@ class CanvasStorePostgres {
     const restored = await pgExecTrans(this._db_pool, async (client) => {
       const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
       if (canvas === null) return false;
-      await this._restore_canvas_nodes(client, canvas_id, node_ids);
-      await this._restore_canvas_edges(client, canvas_id, edge_ids);
-      await this._restore_canvas_annotations(client, canvas_id, annotation_ids);
+      const touched = await this._restore_canvas_nodes(client, canvas_id, node_ids)
+        + await this._restore_canvas_edges(client, canvas_id, edge_ids)
+        + await this._restore_canvas_annotations(client, canvas_id, annotation_ids);
+      if (touched > 0) await this._touch_canvas(client, canvas_id);
       return true;
     });
     if (!restored) return null;
@@ -338,7 +381,7 @@ class CanvasStorePostgres {
   }
 
   async _trash_canvas_edges(client, canvas_id, node_ids, edge_ids) {
-    await client.query(`
+    const res = await client.query(`
       UPDATE canvas_edge
       SET time_deleted = CURRENT_TIMESTAMP, time_updated = CURRENT_TIMESTAMP
       WHERE canvas_id = $1 AND time_deleted IS NULL
@@ -346,42 +389,47 @@ class CanvasStorePostgres {
              OR subject_id = ANY($3::bigint[])
              OR object_id = ANY($3::bigint[]))`,
       [canvas_id, edge_ids, node_ids]);
+    return res.rowCount;
   }
 
   async _trash_canvas_nodes(client, canvas_id, node_ids) {
-    await client.query(`
+    const res = await client.query(`
       UPDATE canvas_node
       SET time_deleted = CURRENT_TIMESTAMP, time_updated = CURRENT_TIMESTAMP
       WHERE canvas_id = $1 AND time_deleted IS NULL AND data_id = ANY($2::bigint[])`,
       [canvas_id, node_ids]);
+    return res.rowCount;
   }
 
   async _trash_canvas_annotations(client, canvas_id, annotation_ids) {
-    await client.query(`
+    const res = await client.query(`
       UPDATE canvas_annotation
       SET time_deleted = CURRENT_TIMESTAMP, time_updated = CURRENT_TIMESTAMP
       WHERE canvas_id = $1 AND time_deleted IS NULL AND id = ANY($2::bigint[])`,
       [canvas_id, annotation_ids]);
+    return res.rowCount;
   }
 
   async _restore_canvas_annotations(client, canvas_id, annotation_ids) {
-    await client.query(`
+    const res = await client.query(`
       UPDATE canvas_annotation
       SET time_deleted = NULL, time_updated = CURRENT_TIMESTAMP
       WHERE canvas_id = $1 AND time_deleted IS NOT NULL AND id = ANY($2::bigint[])`,
       [canvas_id, annotation_ids]);
+    return res.rowCount;
   }
 
   async _restore_canvas_nodes(client, canvas_id, node_ids) {
-    await client.query(`
+    const res = await client.query(`
       UPDATE canvas_node
       SET time_deleted = NULL, time_updated = CURRENT_TIMESTAMP
       WHERE canvas_id = $1 AND time_deleted IS NOT NULL AND data_id = ANY($2::bigint[])`,
       [canvas_id, node_ids]);
+    return res.rowCount;
   }
 
   async _restore_canvas_edges(client, canvas_id, edge_ids) {
-    await client.query(`
+    const res = await client.query(`
       UPDATE canvas_edge ce
       SET time_deleted = NULL, time_updated = CURRENT_TIMESTAMP
       WHERE ce.canvas_id = $1 AND ce.time_deleted IS NOT NULL AND ce.data_id = ANY($2::bigint[])
@@ -392,6 +440,17 @@ class CanvasStorePostgres {
                     WHERE obn.canvas_id = ce.canvas_id AND obn.data_id = ce.object_id
                       AND obn.time_deleted IS NULL)`,
       [canvas_id, edge_ids]);
+    return res.rowCount;
+  }
+
+  /* Bumps the parent canvas so a change to any child row (node, edge, annotation) is visible to
+   * clients that poll the canvas list. Callers run this inside the same transaction as the child
+   * write, and only when that write actually changed a row. */
+  async _touch_canvas(client, canvas_id) {
+    await client.query(`
+      UPDATE canvas
+      SET time_updated = CURRENT_TIMESTAMP
+      WHERE id = $1 AND time_deleted IS NULL`, [canvas_id]);
   }
 
   async _lock_active_canvas_for_user(client, user_id, canvas_id) {
@@ -411,25 +470,29 @@ class CanvasStorePostgres {
   }
 
   async _merge_canvas_tags(client, canvas, tag_descriptions) {
-    if (tag_descriptions === null || Object.keys(tag_descriptions).length === 0) return;
+    if (tag_descriptions === null || Object.keys(tag_descriptions).length === 0) return 0;
     const existing = canvas.data?.tags ?? {};
     const merged = { ...existing, ...tag_descriptions };
+    if (JSON.stringify(merged) === JSON.stringify(existing)) return 0;
     const new_data = { ...(canvas.data ?? {}), tags: merged };
-    await client.query(
-      `UPDATE canvas SET data = $1, time_updated = CURRENT_TIMESTAMP WHERE id = $2`,
-      [new_data, canvas.id]);
+    await client.query(`UPDATE canvas SET data = $1 WHERE id = $2`, [new_data, canvas.id]);
+    return 1;
   }
 
   async _create_canvas_graph(client, canvas_id, graph) {
     const graph_nodes = graph.nodes();
     const graph_edges = graph.edges();
+    let touched = 0;
     let node_data_id_by_ref = new Map();
     if (graph_nodes.length > 0) {
-      node_data_id_by_ref = await this._create_canvas_nodes(client, canvas_id, graph_nodes);
+      const created = await this._create_canvas_nodes(client, canvas_id, graph_nodes);
+      node_data_id_by_ref = created.data_id_by_ref;
+      touched += created.touched;
     }
     if (graph_edges.length > 0) {
-      await this._create_canvas_edges(client, canvas_id, graph_edges, node_data_id_by_ref);
+      touched += await this._create_canvas_edges(client, canvas_id, graph_edges, node_data_id_by_ref);
     }
+    return touched;
   }
 
   async _create_canvas_nodes(client, canvas_id, graph_nodes) {
@@ -438,8 +501,8 @@ class CanvasStorePostgres {
     const data_id_by_ref = new Map(upserted.map((row) => [row.ref, row.id]));
     const canvas_nodes = graph_nodes.map((gn) =>
       gn.to_canvas_node(canvas_id, data_id_by_ref.get(gn.ref())));
-    await this.batch_create_canvas_node(canvas_nodes, client);
-    return data_id_by_ref;
+    const rows = await this.batch_create_canvas_node(canvas_nodes, client);
+    return { data_id_by_ref: data_id_by_ref, touched: rows.length };
   }
 
   async _create_canvas_edges(client, canvas_id, graph_edges, node_data_id_by_ref) {
@@ -453,7 +516,8 @@ class CanvasStorePostgres {
         data_id_by_ref.get(ge.ref()),
         endpoint_ids.get(ge.subject_ref()),
         endpoint_ids.get(ge.object_ref())));
-    return this.batch_create_canvas_edge(canvas_edges, client);
+    const rows = await this.batch_create_canvas_edge(canvas_edges, client);
+    return rows.length;
   }
 
   async _resolve_edge_endpoint_ids(client, graph_edges, node_data_id_by_ref) {
