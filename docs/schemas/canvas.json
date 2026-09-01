@@ -6,23 +6,55 @@
   },
   "UserCanvas": {
     "type": "object",
-    "allOf": [
-      {
-        "$ref": "./user-data.json#/UserSavedData"
-      }
-    ],
     "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The Canvas Save ID"
+      },
+      "user_id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The ID of the User that owns this Canvas"
+      },
+      "label": {
+        "type": "string",
+        "description": "The user friendly label for this Canvas"
+      },
+      "layout": {
+        "$ref": "./canvas.json#/CanvasLayout"
+      },
       "data": {
         "type": "object",
         "properties": {
-          "layout": {
-            "$ref": "./canvas.json#/CanvasLayout"
+          "tags": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": {
+              "$ref": "./summary.json#/TagObject"
+            },
+            "description": "The tag descriptions carried by the graph the Canvas was created with, or null if it was created without one"
           }
         },
-        "required": ["layout"]
+        "required": ["tags"]
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this Canvas was created"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this Canvas was edited"
+      },
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this Canvas was soft deleted, or null if active"
       }
     },
-    "required": ["data"]
+    "required": ["id", "user_id", "label", "layout", "data"]
   },
   "CreateCanvasRequest": {
     "type": "object",
