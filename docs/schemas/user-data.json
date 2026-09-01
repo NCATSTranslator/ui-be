@@ -103,11 +103,19 @@
               "type": "string"
             },
             "description": "Query PKs associated with the project"
+          },
+          "canvas_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Canvas IDs associated with the project"
           }
         },
         "required": [
           "title",
-          "pks"
+          "pks",
+          "canvas_ids"
         ]
       }
     }
@@ -125,6 +133,13 @@
           "type": "string"
         },
         "description": "Query PKs to associate with the project"
+      },
+      "canvas_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "description": "Canvas IDs to associate with the project"
       }
     },
     "required": [
@@ -149,6 +164,13 @@
           "type": "string"
         },
         "description": "Query PKs to associate with the project"
+      },
+      "canvas_ids": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "description": "Canvas IDs to associate with the project"
       }
     },
     "required": [

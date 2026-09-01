@@ -77,6 +77,9 @@ class UserAPIController {
       wutil.log_internal_server_error(req, `Failed to fetch projects from the database. Got error: ${err}`);
       return wutil.send_internal_server_error(res, 'Failed to fetch projects from the database');
     }
+    for (const project of projects) {
+      _backfill_project_canvas_ids(project);
+    }
     return res.status(cmn.HTTP_CODE.SUCCESS).json(projects);
   }
 
@@ -84,9 +87,13 @@ class UserAPIController {
     const project = await req.body;
     if (project.title === undefined) return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing "title" field');
     if (!project.pks) return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Missing "pks" field');
+    if (!_is_valid_canvas_ids(project.canvas_ids)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST,
+        `Expected "canvas_ids" to be a JSON array of canvas IDs. Got: ${JSON.stringify(project.canvas_ids)}`);
+    }
     const user_save = {
       save_type: SAVE_TYPE.PROJECT,
-      data: project
+      data: { ...project, canvas_ids: project.canvas_ids ?? [] }
     };
     req.body = user_save;
     return this.update_user_saves(req, res, next);
@@ -101,6 +108,10 @@ class UserAPIController {
       if (!update.id) {
         return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'All project updates require an ID');
       }
+      if (!_is_valid_canvas_ids(update.canvas_ids)) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST,
+          `Expected "canvas_ids" to be a JSON array of canvas IDs. Got: ${JSON.stringify(update.canvas_ids)}`);
+      }
     }
     const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === 'true';
@@ -113,11 +124,15 @@ class UserAPIController {
     for (const update of project_updates) {
       for (const project of projects) {
         if (project.id === update.id) {
+          _backfill_project_canvas_ids(project);
           if (update.title) {
             project.data.title = update.title;
           }
           if (update.pks) {
             project.data.pks = update.pks;
+          }
+          if (update.canvas_ids) {
+            project.data.canvas_ids = update.canvas_ids;
           }
           database_updates.push(project);
         }
@@ -602,5 +617,16 @@ class UserAPIController {
     } catch (err) {
       return [null, err];
     }
+  }
+}
+
+function _is_valid_canvas_ids(canvas_ids) {
+  return canvas_ids === undefined || cmn.is_integer_array(canvas_ids);
+}
+
+function _backfill_project_canvas_ids(project) {
+  if (!cmn.is_object(project.data)) return;
+  if (!cmn.is_array(project.data.canvas_ids)) {
+    project.data.canvas_ids = [];
   }
 }

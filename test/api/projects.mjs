@@ -53,6 +53,7 @@ async function req(method, path, body) {
 }
 
 const findById = (arr, id) => Array.isArray(arr) ? arr.find((p) => p.id === id) : undefined;
+const sameIds = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 console.log(`# user projects lifecycle  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
@@ -66,6 +67,8 @@ try {
   ok(project && project.user_id === TEST_USER_ID, 'created project belongs to the test user');
   ok(project && project.save_type === 'project', 'created project has save_type "project"');
   ok(project && project.data && project.data.title === title, 'created project stores the title under data');
+  ok(project && project.data && sameIds(project.data.canvas_ids, []),
+    'created project defaults canvas_ids to an empty array');
 
   const projectId = project ? project.id : null;
 
@@ -82,6 +85,31 @@ try {
   const listAfterUpdate = await req('GET', '/api/v1/users/me/projects');
   const updated = findById(listAfterUpdate.json, projectId);
   ok(updated && updated.data && updated.data.title === newTitle, 'updated title persisted');
+  ok(updated && updated.data && sameIds(updated.data.canvas_ids, []),
+    'update without canvas_ids leaves canvas_ids untouched');
+
+  const canvasIds = [101, 202];
+  const canvasUpdate = await req('PUT', '/api/v1/users/me/projects', [{ id: projectId, canvas_ids: canvasIds }]);
+  ok(canvasUpdate.res.status === 200, `canvas_ids update responds 200 (got ${canvasUpdate.res.status})`);
+
+  const listAfterCanvasUpdate = await req('GET', '/api/v1/users/me/projects');
+  const withCanvases = findById(listAfterCanvasUpdate.json, projectId);
+  ok(withCanvases && withCanvases.data && sameIds(withCanvases.data.canvas_ids, canvasIds),
+    'updated canvas_ids persisted');
+  ok(withCanvases && withCanvases.data && withCanvases.data.title === newTitle,
+    'canvas_ids update leaves the title untouched');
+
+  const clearCanvases = await req('PUT', '/api/v1/users/me/projects', [{ id: projectId, canvas_ids: [] }]);
+  ok(clearCanvases.res.status === 200, `canvas_ids clear responds 200 (got ${clearCanvases.res.status})`);
+  const listAfterClear = await req('GET', '/api/v1/users/me/projects');
+  const cleared = findById(listAfterClear.json, projectId);
+  ok(cleared && cleared.data && sameIds(cleared.data.canvas_ids, []), 'canvas_ids can be cleared to an empty array');
+
+  const seeded = await req('POST', '/api/v1/users/me/projects',
+    { title: `${title} (seeded)`, pks: [], canvas_ids: [303] });
+  ok(seeded.res.status === 200, `create with canvas_ids responds 200 (got ${seeded.res.status})`);
+  ok(seeded.json && seeded.json.data && sameIds(seeded.json.data.canvas_ids, [303]),
+    'create stores the supplied canvas_ids');
 
   // Trash (soft-delete)
   const trash = await req('PUT', '/api/v1/users/me/projects/trash', [projectId]);

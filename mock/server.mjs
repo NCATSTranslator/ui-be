@@ -266,6 +266,11 @@ app.get('/api/v1/users/me/projects', (req, res) => {
     if (include_deleted !== 'true') {
       data = data.filter(project => !project.deleted);
     }
+    data.forEach(project => {
+      if (project.data && !cmn.is_array(project.data.canvas_ids)) {
+        project.data.canvas_ids = [];
+      }
+    });
     res.status(200).json(data);
   } else {
     res.status(500).json({ error: 'Mock data not available' });
@@ -291,6 +296,11 @@ app.put('/api/v1/users/me/projects', (req, res) => {
         // Update existing project
         data[index].data.title = updateProject.title;
         data[index].data.pks = updateProject.pks;
+        if (updateProject.canvas_ids) {
+          data[index].data.canvas_ids = updateProject.canvas_ids;
+        } else if (!cmn.is_array(data[index].data.canvas_ids)) {
+          data[index].data.canvas_ids = [];
+        }
         data[index].time_updated = new Date().toISOString();
         updatedProjects.push(data[index]);
       }
