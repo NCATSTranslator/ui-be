@@ -52,7 +52,6 @@ try {
       [edgeRef]: signEdge(edgeRef, testEdge(nodeRef, node2Ref, 'biolink:treats', { source_time: sourceTime })),
     },
     tag_descriptions: {},
-    source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   });
 
   // Read the primary node's stored data-pool entity through a canvas that carries it.

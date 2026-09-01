@@ -21,7 +21,7 @@
  */
 
 import { createHarness, getJson, BASE_URL, TEST_USER_ID } from '../lib/api-harness.mjs';
-import { postCanvas, graphWithNodesAndEdges, CANVAS_PATH } from '../lib/api-canvas.mjs';
+import { postCanvas, graphWithNodesAndEdges, CANVAS_PATH, NODE_TAG_DRUG } from '../lib/api-canvas.mjs';
 
 const { ok, fail, finish } = createHarness();
 
@@ -37,9 +37,9 @@ try {
   ok(canvas && canvas.label === label, 'created canvas echoes the label');
   ok(canvas && canvas.layout === layout, 'created canvas echoes the layout');
   ok(canvas && canvas.user_id === TEST_USER_ID, 'created canvas belongs to the test user');
-  // The graph's source is stored on canvas.data (see make_user_canvas_from_req).
-  ok(canvas && canvas.data && canvas.data.query_ref === 'API_TEST_QID', 'canvas data carries graph source query_ref');
-  ok(canvas && canvas.data && canvas.data.result_ref === 'API_TEST_RID', 'canvas data carries graph source result_ref');
+  // The graph's tag descriptions are stored on canvas.data (see make_user_canvas_from_req).
+  ok(canvas && canvas.data && canvas.data.tags && canvas.data.tags[NODE_TAG_DRUG],
+    'canvas data carries the graph tag descriptions');
 
   // Round-trip: the new canvas appears in the user's canvas list.
   const list = await getJson(CANVAS_PATH);

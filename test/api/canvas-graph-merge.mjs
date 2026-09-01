@@ -26,7 +26,6 @@ import {
 const { ok, fail, finish } = createHarness();
 
 const byRef = (rows, ref) => (Array.isArray(rows) ? rows.find((r) => r.ref === ref) : null);
-const source = { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' };
 
 // Two tag id-sets are equal iff they carry the same ids (the values are always the null marker).
 const sameTagIds = (actual, expected) => {
@@ -121,7 +120,6 @@ try {
     },
     edges: { [eAB]: signEdge(eAB, testEdge(refA, refB, 'biolink:treats')) },
     tag_descriptions: { [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug') },
-    source,
   };
   const create = await postCanvas({ label: `api-test merge ${s}`, layout: 'horizontal', graph: createGraph });
   ok(create.res.status === 200, `create responds 200 (got ${create.res.status})`);
@@ -139,7 +137,6 @@ try {
       [eCA]: signEdge(eCA, testEdge(refC, refA, 'biolink:treats')),
     },
     tag_descriptions: { [NODE_TAG_FDA]: tagObject(NODE_TAG_FDA, 'FDA Approved') },
-    source,
   };
   const merge = await postJson(`${CANVAS_PATH}/${id}/graph`, mergeGraph);
   ok(merge.res.status === 200, `merge responds 200 (got ${merge.res.status})`);
@@ -169,7 +166,7 @@ try {
   const moveA = {
     nodes: { [refA]: signNode(refA, testNode(refA, 'Merge A moved', 'biolink:Disease', 999, 888,
       { tags: { [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug') } })) },
-    edges: {}, tag_descriptions: {}, source,
+    edges: {}, tag_descriptions: {},
   };
   const remerge = await postJson(`${CANVAS_PATH}/${id}/graph`, moveA);
   ok(remerge.res.status === 200, `re-merge of existing node responds 200 (got ${remerge.res.status})`);
@@ -184,7 +181,7 @@ try {
   // Merging a single node with no edges adds just that node.
   const singleNode = {
     nodes: { [refF]: signNode(refF, testNode(refF, 'Merge F', 'biolink:Gene', 70, 80)) },
-    edges: {}, tag_descriptions: {}, source,
+    edges: {}, tag_descriptions: {},
   };
   const single = await postJson(`${CANVAS_PATH}/${id}/graph`, singleNode);
   ok(single.res.status === 200, `single-node merge responds 200 (got ${single.res.status})`);
@@ -196,7 +193,7 @@ try {
   // An edge to a node neither submitted nor on the canvas is a 400.
   const dangling = {
     nodes: {}, edges: { [`${refA}->${refD}`]: signEdge(`${refA}->${refD}`, testEdge(refA, refD, 'biolink:treats')) },
-    tag_descriptions: {}, source,
+    tag_descriptions: {},
   };
   const danglingRes = await postJson(`${CANVAS_PATH}/${id}/graph`, dangling);
   ok(danglingRes.res.status === 400, `edge to an absent node -> 400 (got ${danglingRes.res.status})`);
@@ -204,7 +201,7 @@ try {
   // A tampered signature is a 400.
   const refE = `API_TEST:merge-E-${s}`;
   const tampered = { ...signNode(refE, testNode(refE, 'Merge E', 'biolink:Disease', 1, 2)), signature: 'deadbeef' };
-  const badSig = await postJson(`${CANVAS_PATH}/${id}/graph`, { nodes: { [refE]: tampered }, edges: {}, tag_descriptions: {}, source });
+  const badSig = await postJson(`${CANVAS_PATH}/${id}/graph`, { nodes: { [refE]: tampered }, edges: {}, tag_descriptions: {} });
   ok(badSig.res.status === 400, `bad signature -> 400 (got ${badSig.res.status})`);
 
   // A missing/empty body is a 400.
@@ -212,11 +209,11 @@ try {
   ok(emptyBody.res.status === 400, `empty merge body -> 400 (got ${emptyBody.res.status})`);
 
   // Merging into a canvas that does not exist is a 404.
-  const missing = await postJson(`${CANVAS_PATH}/999999999/graph`, { nodes: {}, edges: {}, tag_descriptions: {}, source });
+  const missing = await postJson(`${CANVAS_PATH}/999999999/graph`, { nodes: {}, edges: {}, tag_descriptions: {} });
   ok(missing.res.status === 404, `unknown canvas id -> 404 (got ${missing.res.status})`);
 
   // A non-numeric id is a 400.
-  const badId = await postJson(`${CANVAS_PATH}/not-a-number/graph`, { nodes: {}, edges: {}, tag_descriptions: {}, source });
+  const badId = await postJson(`${CANVAS_PATH}/not-a-number/graph`, { nodes: {}, edges: {}, tag_descriptions: {} });
   ok(badId.res.status === 400, `non-numeric canvas id -> 400 (got ${badId.res.status})`);
 
   // The end state matches what we expected up front; the failed requests above left it intact.
@@ -236,7 +233,7 @@ try {
     label: `api-test merge revive ${rs}`, layout: 'horizontal',
     graph: {
       nodes: { ...reviveNodes, [rB]: signNode(rB, testNode(rB, 'Revive B', 'biolink:ChemicalEntity', 3, 4)) },
-      edges: reviveEdge, tag_descriptions: {}, source,
+      edges: reviveEdge, tag_descriptions: {},
     },
   });
   ok(reviveCreate.res.status === 200, `revive: create responds 200 (got ${reviveCreate.res.status})`);
@@ -252,7 +249,7 @@ try {
 
   // Merge the same node A and edge A->B back in: both are un-deleted (time_deleted cleared).
   const reviveMerge = await postJson(`${CANVAS_PATH}/${reviveId}/graph`,
-    { nodes: reviveNodes, edges: reviveEdge, tag_descriptions: {}, source });
+    { nodes: reviveNodes, edges: reviveEdge, tag_descriptions: {} });
   ok(reviveMerge.res.status === 200, `revive: merge responds 200 (got ${reviveMerge.res.status})`);
   ok(byRef(reviveMerge.json.nodes, rA), 'revive: soft-deleted node A is re-added by the merge');
   ok(byRef(reviveMerge.json.edges, rAB), 'revive: cascaded edge A->B is re-added by the merge');
@@ -263,7 +260,7 @@ try {
   // unknown-canvas 404 above.
   const trashOriginal = await putJson(`${CANVAS_PATH}/trash`, [id]);
   ok(trashOriginal.res.status === 200, `trash canvas responds 200 (got ${trashOriginal.res.status})`);
-  const mergeTrashed = await postJson(`${CANVAS_PATH}/${id}/graph`, { nodes: {}, edges: {}, tag_descriptions: {}, source });
+  const mergeTrashed = await postJson(`${CANVAS_PATH}/${id}/graph`, { nodes: {}, edges: {}, tag_descriptions: {} });
   ok(mergeTrashed.res.status === 404, `merging into a trashed canvas -> 404 (got ${mergeTrashed.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);

@@ -34,7 +34,6 @@ try {
     },
     edges: { [eAB]: signEdge(eAB, testEdge(refA, refB, 'biolink:treats')) },
     tag_descriptions: {},
-    source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   };
   const create = await postCanvas({ label: `api-test element-update ${s}`, layout: 'horizontal', graph: createGraph });
   ok(create.res.status === 200, `create responds 200 (got ${create.res.status})`);

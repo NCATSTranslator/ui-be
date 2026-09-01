@@ -32,7 +32,7 @@ function _test_make_user_canvas_from_req() {
         user_id: "user-1",
         label: "My Canvas",
         layout: "horizontal",
-        data: { tags: null, query_ref: null, result_ref: null },
+        data: { tags: null },
         time_created: "*",
         time_updated: "*",
         time_deleted: null
@@ -43,8 +43,7 @@ function _test_make_user_canvas_from_req() {
         label: "With Graph",
         layout: "custom",
         graph: {
-          tag_descriptions: { "t/x": { id: "t/x" } },
-          source: { query_ref: "Q1", result_ref: "R1" }
+          tag_descriptions: { "t/x": { id: "t/x" } }
         }
       }],
       "expected": {
@@ -52,7 +51,7 @@ function _test_make_user_canvas_from_req() {
         user_id: "user-2",
         label: "With Graph",
         layout: "custom",
-        data: { tags: { "t/x": { id: "t/x" } }, query_ref: "Q1", result_ref: "R1" },
+        data: { tags: { "t/x": { id: "t/x" } } },
         time_created: "*",
         time_updated: "*",
         time_deleted: null

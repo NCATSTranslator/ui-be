@@ -60,7 +60,6 @@ try {
     tag_descriptions: {
       [EDGE_TAG_CLINICAL]: tagObject(EDGE_TAG_CLINICAL, 'Clinical Evidence'),
     },
-    source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   };
 
   const create = await postCanvas({ label, layout, graph });

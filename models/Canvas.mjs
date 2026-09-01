@@ -26,9 +26,7 @@ function make_user_canvas_from_req(user_id, canvas_req) {
     label: canvas_req.label,
     layout: canvas_req.layout,
     data: {
-      tags: canvas_req.graph?.tag_descriptions ?? null,
-      query_ref: canvas_req.graph?.source?.query_ref ?? null,
-      result_ref: canvas_req.graph?.source?.result_ref ?? null
+      tags: canvas_req.graph?.tag_descriptions ?? null
     }
   });
 }

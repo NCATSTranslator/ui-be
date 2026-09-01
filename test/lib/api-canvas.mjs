@@ -134,6 +134,5 @@ export function graphWithNodesAndEdges(variant = '', sourceTime = SOURCE_TIME) {
       [NODE_TAG_FDA]: tagObject(NODE_TAG_FDA, 'FDA Approved'),
       [EDGE_TAG_CLINICAL]: tagObject(EDGE_TAG_CLINICAL, 'Clinical Evidence'),
     },
-    source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   };
 }

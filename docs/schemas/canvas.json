@@ -329,21 +329,9 @@
         "additionalProperties": {
           "$ref": "./summary.json#/TagObject"
         }
-      },
-      "source": {
-        "type": "object",
-        "properties": {
-          "query_ref": {
-            "type": "string"
-          },
-          "result_ref": {
-            "type": "string"
-          }
-        },
-        "required": ["query_ref", "result_ref"]
       }
     },
-    "required": ["nodes", "edges", "source"]
+    "required": ["nodes", "edges"]
   },
   "UpdateCanvasElementRequest": {
     "type": "object",

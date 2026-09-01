@@ -50,7 +50,6 @@ try {
       [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug'),
       [NODE_TAG_FDA]: tagObject(NODE_TAG_FDA, 'FDA Approved'),
     },
-    source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   };
 
   const create = await postCanvas({ label, layout, graph });
