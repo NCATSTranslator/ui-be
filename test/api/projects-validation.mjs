@@ -53,12 +53,20 @@ try {
     'create missing title -> 400');
   ok((await status('POST', '/api/v1/users/me/projects', { title: 'no pks' })) === 400,
     'create missing pks -> 400');
+  ok((await status('POST', '/api/v1/users/me/projects', { title: 'bad canvases', pks: [], canvas_ids: 'nope' })) === 400,
+    'create with non-array canvas_ids -> 400');
+  ok((await status('POST', '/api/v1/users/me/projects', { title: 'bad canvases', pks: [], canvas_ids: ['1'] })) === 400,
+    'create with non-integer canvas_ids -> 400');
 
   // Update validation
   ok((await status('PUT', '/api/v1/users/me/projects', { not: 'an array' })) === 400,
     'update with non-array body -> 400');
   ok((await status('PUT', '/api/v1/users/me/projects', [{ title: 'no id' }])) === 400,
     'update entry without an id -> 400');
+  ok((await status('PUT', '/api/v1/users/me/projects', [{ id: 1, canvas_ids: 'nope' }])) === 400,
+    'update with non-array canvas_ids -> 400');
+  ok((await status('PUT', '/api/v1/users/me/projects', [{ id: 1, canvas_ids: [1.5] }])) === 400,
+    'update with non-integer canvas_ids -> 400');
 
   // Trash / restore validation
   ok((await status('PUT', '/api/v1/users/me/projects/trash', { not: 'an array' })) === 400,
