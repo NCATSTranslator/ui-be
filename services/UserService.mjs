@@ -2,6 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
+import { ApiKey, generate_api_key } from '../models/ApiKey.mjs';
 import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, make_canvas_element_update_from_req, make_graph_merge_from_req, make_graph_selection_from_req, make_graph_geometry_from_req, make_annotation_from_req,
   make_annotation_content_update_from_req, Graph } from "#model/Canvas.mjs";
 
@@ -11,16 +12,38 @@ class UserService {
       userPreferenceStore,
       userSavedDataStore,
       canvasStore,
+      apiKeyStore,
       entitySigningSecret = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
     this.savedDataStore = userSavedDataStore;
     this.canvasStore = canvasStore;
     this.entitySigningSecret = entitySigningSecret;
+    this.apiKeyStore = apiKeyStore;
   }
 
   async getUserById(uid) {
     return this.userStore.retrieveUserById(uid);
+  }
+
+  // API keys
+  async getUserApiKeys(uid, includeRevoked=false) {
+    return this.apiKeyStore.retrieve_api_keys_by_user_id(uid, includeRevoked);
+  }
+
+  /* We store the raw key's hash and hand the plaintext back to the caller.
+   * It cannot be recovered afterwards.
+   */
+  async createUserApiKey(uid, name, timeExpires = null) {
+    const rawKey = generate_api_key();
+    const apiKey = await this.apiKeyStore.create_api_key(
+      ApiKey.from_raw_key(uid, name, rawKey, timeExpires));
+    if (apiKey === null) return null;
+    return { apiKey: apiKey, key: rawKey };
+  }
+
+  async revokeUserApiKey(uid, keyId) {
+    return this.apiKeyStore.revoke_api_key_by_id(keyId, uid);
   }
 
   // Preferences

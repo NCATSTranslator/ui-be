@@ -131,7 +131,7 @@ function gen_user_query(uq_data) {
     aras: aras,
     query: uq_data.data.description,
     title: uq_data.data.title ?? null,
-    statistics: uq_data.metadata.statistics ?? new QueryStatistics(),
+    statistics: uq_data.metadata?.statistics ?? new QueryStatistics(),
     time_viewed: uq_data.data.last_seen ?? null,
     time_created: uq_data.time_created,
     time_updated: uq_data.time_updated,

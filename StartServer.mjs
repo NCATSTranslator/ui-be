@@ -21,6 +21,7 @@ import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgre
 import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
 import { CanvasStorePostgres } from './stores/CanvasStorePostgres.mjs';
 import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
+import { ApiKeyStorePostgres } from './stores/ApiKeyStorePostgres.mjs';
 
 
 // Load the config asap as basically everything depends on it
@@ -69,7 +70,8 @@ const AUTH_SERVICE = (function (config) {
     loginRequestTTLSec: config.sessions.login_request_ttl_sec
   },
   new SessionStorePostgres(dbPool),
-  new UserStorePostgres(dbPool));
+  new UserStorePostgres(dbPool),
+  new ApiKeyStorePostgres(dbPool));
 })(SERVER_CONFIG);
 
 /* Session auth checking is controlled from here so the HTTP layer and SessionController stay
@@ -100,6 +102,7 @@ const USER_SERVICE = (function (config) {
     new UserPreferenceStorePostgres(dbPool),
     new UserSavedDataStorePostgres(dbPool),
     new CanvasStorePostgres(dbPool),
+    new ApiKeyStorePostgres(dbPool),
     config.secrets.hmac.key
   );
 })(SERVER_CONFIG);

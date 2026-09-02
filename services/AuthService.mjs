@@ -1,9 +1,11 @@
 'use strict';
 
 import { logger } from '../lib/logger.mjs';
+import * as cmn from '../lib/common.mjs';
 import { Session } from '../models/Session.mjs';
 import { User } from '../models/User.mjs';
 import * as sso from '../lib/SocialSignOn.mjs';
+import { hash_api_key, is_api_key_syntactically_valid } from '../models/ApiKey.mjs';
 
 export {
   AuthService,
@@ -25,7 +27,16 @@ export {
   LOGIN_FORCE_KILLED,
   LOGIN_BAD_INTERNAL_DATA,
   LOGIN_TTL_EXCEEDED,
-  LOGIN_STATE_VALID
+  LOGIN_STATE_VALID,
+
+  APIKEY_NO_KEY,
+  APIKEY_INVALID_KEY,
+  APIKEY_KEY_NOT_FOUND,
+  APIKEY_KEY_REVOKED,
+  APIKEY_KEY_EXPIRED,
+  APIKEY_NO_USER,
+  APIKEY_INVALID_USER,
+  APIKEY_VALID
 };
 
 const SESSION_NO_TOKEN = 0;
@@ -47,9 +58,18 @@ const LOGIN_BAD_INTERNAL_DATA = 5;
 const LOGIN_TTL_EXCEEDED = 6;
 const LOGIN_STATE_VALID = 7;
 
+const APIKEY_NO_KEY = 0;
+const APIKEY_INVALID_KEY = 1;
+const APIKEY_KEY_NOT_FOUND = 2;
+const APIKEY_KEY_REVOKED = 3;
+const APIKEY_KEY_EXPIRED = 4;
+const APIKEY_NO_USER = 5;
+const APIKEY_INVALID_USER = 6;
+const APIKEY_VALID = 7;
+
 
 class AuthService {
-  constructor(sessionParams, sessionStore, userStore) {
+  constructor(sessionParams, sessionStore, userStore, apiKeyStore) {
     this.tokenTTLSec = sessionParams.tokenTTLSec;
     this.sessionAbsoluteTTLSec = sessionParams.sessionAbsoluteTTLSec;
     this.sessionMaxIdleTimeSec = sessionParams.sessionMaxIdleTimeSec;
@@ -57,6 +77,7 @@ class AuthService {
 
     this.sessionStore = sessionStore;
     this.userStore = userStore;
+    this.apiKeyStore = apiKeyStore;
   }
 
   async getUserById(id) {
@@ -127,6 +148,79 @@ class AuthService {
 
   isSessionStatusValid(status) {
     return (status === SESSION_TOKEN_EXPIRED || status === SESSION_VALID);
+  }
+
+  isApiKeyStatusValid(status) {
+    return status === APIKEY_VALID;
+  }
+
+  /* Resolves a raw API key presented by a client to the user that owns it. */
+  async getApiKeyData(rawKey) {
+    let retval = {
+      status: null,
+      user: null,
+      apiKey: null
+    };
+
+    if (cmn.is_missing(rawKey)) {
+      retval.status = APIKEY_NO_KEY;
+      return retval;
+    }
+
+    if (!is_api_key_syntactically_valid(rawKey)) {
+      retval.status = APIKEY_INVALID_KEY;
+      return retval;
+    }
+
+    retval.apiKey = await this.retrieveApiKeyByRawKey(rawKey);
+    if (null === retval.apiKey) {
+      retval.status = APIKEY_KEY_NOT_FOUND;
+      return retval;
+    }
+
+    if (retval.apiKey.is_revoked()) {
+      retval.status = APIKEY_KEY_REVOKED;
+      return retval;
+    }
+
+    if (retval.apiKey.is_expired()) {
+      retval.status = APIKEY_KEY_EXPIRED;
+      return retval;
+    }
+
+    retval.user = await this.getUserById(retval.apiKey.user_id);
+    if (null === retval.user) {
+      retval.status = APIKEY_NO_USER;
+      return retval;
+    }
+
+    if (retval.user.deleted) {
+      retval.status = APIKEY_INVALID_USER;
+      return retval;
+    }
+
+    retval.status = APIKEY_VALID;
+    return retval;
+  }
+
+  async retrieveApiKeyByRawKey(rawKey) {
+    let res = null;
+    try {
+      res = await this.apiKeyStore.retrieve_api_key_by_hash(hash_api_key(rawKey));
+      return res;
+    } catch (err) {
+      logger.error(err);
+      return res;
+    }
+  }
+
+  async touchApiKey(apiKey) {
+    try {
+      return await this.apiKeyStore.update_last_used_by_id(apiKey.id);
+    } catch (err) {
+      logger.error(err);
+      return null;
+    }
   }
 
   async getLoginRequestData(token) {

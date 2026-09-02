@@ -3,6 +3,7 @@
 import * as AuthService from '../services/AuthService.mjs';
 import * as wutil from '../lib/webutils.mjs';
 import * as cmn from '../lib/common.mjs';
+import { API_KEY_PREFIX } from '../models/ApiKey.mjs';
 
 export { SessionController };
 
@@ -14,6 +15,26 @@ class SessionController {
 
   // All subsequent Session Controller middleware functions assume that this has been done
   async attachSessionData(req, res, next) {
+    const apiKeyData = await this._fetchApiKeyStatus(req);
+    if (apiKeyData) {
+      req.apiKeyData = apiKeyData;
+      if (this.authService.isApiKeyStatusValid(apiKeyData.status)) {
+        req.sessionData = {
+          status: AuthService.SESSION_VALID,
+          user: apiKeyData.user,
+          session: null
+        };
+        await this.authService.touchApiKey(apiKeyData.apiKey);
+      } else {
+        req.sessionData = {
+          status: AuthService.SESSION_INVALID_TOKEN,
+          user: null,
+          session: null
+        };
+      }
+      return next();
+    }
+
     let sessionData = await this._fetchStatus(req);
     if (!sessionData) {
       return res.status(500).send(`Server error retrieving session status.`);
@@ -26,6 +47,31 @@ class SessionController {
     let token = req.cookies[this.config.session_cookie.name];
     let retval = await this.authService.getSessionData(token);
     return retval;
+  }
+
+  async _fetchApiKeyStatus(req) {
+    const rawKey = this._extractApiKey(req);
+    if (rawKey === null) return null;
+    return this.authService.getApiKeyData(rawKey);
+  }
+
+  _extractApiKey(req) {
+    return this._extractBearerApiKey(req) ?? this._extractApiKeyHeader(req);
+  }
+
+  _extractBearerApiKey(req) {
+    const authorization = req.headersDistinct['authorization'];
+    if (authorization?.length !== 1) return null;
+    const match = authorization[0].match(/^Bearer\s+(\S+)$/i);
+    if (!match || !match[1].startsWith(API_KEY_PREFIX)) return null;
+    return match[1];
+  }
+
+  _extractApiKeyHeader(req) {
+    const header = req.headersDistinct['x-api-key'];
+    if (header?.length !== 1) return null;
+    if (!header[0].startsWith(API_KEY_PREFIX)) return null;
+    return header[0];
   }
 
   async getStatus(req, res, next) {
@@ -45,6 +91,13 @@ class SessionController {
    * refresh it fails.
    */
   async authenticatePrivilegedRequest(req, res, next) {
+    if (req.apiKeyData) {
+      if (!this.authService.isApiKeyStatusValid(req.apiKeyData.status)) {
+        return res.status(401).send('Invalid API key. Cannot service request.');
+      }
+      return next();
+    }
+
     let oldSession = req.sessionData;
     if (!oldSession) {
       return res.status(500).send('Server error retrieving session status');
@@ -62,16 +115,22 @@ class SessionController {
   }
 
   async authenticateUnprivilegedRequest(req, res, next) {
+    if (req.apiKeyData) return next();
     let oldSession = req.sessionData;
     if (oldSession && this.authService.isSessionStatusValid(oldSession.status)) {
       let [success, errstr] = await this._refreshSession(req, res, oldSession);
-      if (!success) {
-        return res.status(500).send(errstr);
-      }
+      if (!success) return res.status(500).send(errstr);
     }
     next();
   }
 
+  /* Gate for routes that must be driven by a human who is actually logged in. */
+  requireSessionAuth(req, res, next) {
+    if (req.apiKeyData) {
+      return res.status(403).send('API keys cannot be used for this request. Log in to continue.');
+    }
+    next();
+  }
 
   /* This function smells awful: it side-effects req, the DB, and cookies.
    * The possible saving grace is that this exact sequence is needed in two cases
@@ -140,6 +199,10 @@ class SessionController {
 
   async updateStatus(req, res, next) {
     let curSession = req.sessionData;
+    /* Key-authenticated requests carry no session row to refresh or expire. */
+    if (req.apiKeyData) {
+      return res.status(403).send('API keys cannot be used for this request. Log in to continue.');
+    }
     if (!this.authService.isSessionStatusValid(curSession.status)) {
       return res.status(401).send('Invalid session status. Cannot service request');
     }

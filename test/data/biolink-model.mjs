@@ -465,7 +465,8 @@ function _test_infores_to_provenance() {
       "args": ["infores:rnacentral"],
       "expected": {
         "name": "RNAcentral",
-        "wiki": "https://rnacentral.org",
+        "wiki": null,
+        "url": "fairsharing:FAIRsharing.KcCjL7",
         "knowledge_level": "trusted"
       }
     },
@@ -536,7 +537,7 @@ function _test_biolink_config() {
   return {
     "version": "4.4.3",
     "support_deprecated_predicates": false,
-    "infores_catalog": "infores-catalog-v1.1.4.json",
+    "infores_catalog": "infores-catalog-v1.1.8.json",
     "prefix_catalog": {
       "path": "prefix-catalog.json",
       "exclude": ["VANDF"]
