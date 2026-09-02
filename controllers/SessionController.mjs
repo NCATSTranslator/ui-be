@@ -41,8 +41,10 @@ class SessionController {
    * The former will return an auth error if the existing session is invalid.
    * The latter will do nothing unless there an existing and valid session.
    *
-   * Both will return an error if there is a valid session but the attempt to
-   * refresh it fails.
+   * Both will return an error if the attempt to refresh a valid session fails
+   * outright, A session that goes invalid mid-refresh is an auth error for the
+   * former, but the latter carries on with the refreshed session data so
+   * that page routes still serve the app shell and let the FE handle being logged out.
    */
   async authenticatePrivilegedRequest(req, res, next) {
     let oldSession = req.sessionData;
@@ -54,9 +56,9 @@ class SessionController {
       return res.status(401).send('Invalid session status. Cannot service request.');
     }
 
-    let [success, errstr] = await this._refreshSession(req, res, oldSession);
+    let [success, errstr, errcode] = await this._refreshSession(req, res, oldSession);
     if (!success) {
-      return res.status(500).send(errstr);
+      return res.status(errcode).send(errstr);
     }
     next();
   }
@@ -64,9 +66,9 @@ class SessionController {
   async authenticateUnprivilegedRequest(req, res, next) {
     let oldSession = req.sessionData;
     if (oldSession && this.authService.isSessionStatusValid(oldSession.status)) {
-      let [success, errstr] = await this._refreshSession(req, res, oldSession);
-      if (!success) {
-        return res.status(500).send(errstr);
+      let [success, errstr, errcode] = await this._refreshSession(req, res, oldSession);
+      if (!success && errcode !== 401) {
+        return res.status(errcode).send(errstr);
       }
     }
     next();
@@ -77,17 +79,21 @@ class SessionController {
    * The possible saving grace is that this exact sequence is needed in two cases
    * and at least this centralizes it. */
   async _refreshSession(req, res, sessionData) {
+    let presentedToken = sessionData.session ? sessionData.session.token : null;
     let newSession = await this._refreshSessionInDB(sessionData);
     if (!newSession) {
-      return [false, 'Server error refreshing session'];
+      return [false, 'Server error refreshing session', 500];
     }
     newSession = await this.authService.getSessionData(newSession.token);
-    if (!newSession) {
-      return [false, 'Server error fetching refreshed session'];
+    if (!newSession.session) {
+      return [false, 'Server error fetching refreshed session', 500];
+    }
+    req.sessionData = newSession;
+    if (!this.authService.isSessionStatusValid(newSession.status)) {
+      return [false, 'Invalid session status. Cannot service request.', 401];
     }
 
-    // If the original status was 'token expired', we need to set the new cookie
-    if (sessionData.status === AuthService.SESSION_TOKEN_EXPIRED) {
+    if (newSession.session.token !== presentedToken) {
       let cookiePath = '/'; // TODO get from config
       /* This age should more correctly be maxagesec - <time already elapsed since start of session>,
        * but it doesn't really matter as we always check the session length in the BE. */
@@ -95,9 +101,7 @@ class SessionController {
       wutil.set_session_cookie(res, this.config.session_cookie, newSession.session.token,
         cookiePath, cookieMaxAgeSec);
     }
-    // Finally, attach the new sessionData to req
-    req.sessionData = newSession;
-    return [true, ''];
+    return [true, '', 200];
   }
 
   async _refreshSessionInDB(existingSession) {
@@ -154,12 +158,11 @@ class SessionController {
     let newSession = null;
     let cookiePath = '/';
     let cookieMaxAgeSec = this.authService.sessionAbsoluteTTLSec;
+    let presentedToken = curSession.session.token;
     switch (action) {
       case 'update':
         if (curSession.status === AuthService.SESSION_TOKEN_EXPIRED) {
           newSession = await this.authService.refreshSessionToken(curSession.session);
-          wutil.set_session_cookie(res, this.config.session_cookie, newSession.token,
-            cookiePath, cookieMaxAgeSec);
         } else if (curSession.status === AuthService.SESSION_VALID) {
           newSession = await this.authService.updateSessionTime(curSession.session);
         }
@@ -171,11 +174,15 @@ class SessionController {
     if (!newSession) {
       return res.status(500).send('Server error while updating status');
     }
-    newSession = await this.authService.getSessionData(newSession.token)
-    if (!newSession) {
+    let updatedSessionData = await this.authService.getSessionData(newSession.token)
+    if (!updatedSessionData.session) {
       return res.status(500).send('Server error while retrieving updated session');
     }
-    return res.status(200).json(this._sanitizeSessionData(newSession));
+    if (action === 'update' && updatedSessionData.session.token !== presentedToken) {
+      wutil.set_session_cookie(res, this.config.session_cookie, updatedSessionData.session.token,
+        cookiePath, cookieMaxAgeSec);
+    }
+    return res.status(200).json(this._sanitizeSessionData(updatedSessionData));
   }
 
   _validateStatusUpdatePayload(body) {

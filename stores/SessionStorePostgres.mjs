@@ -29,6 +29,20 @@ class SessionStorePostgres extends iSessionStore {
     return retval;
   }
 
+  async retrieveSessionById(id) {
+    let retval = null;
+    const sql = `
+      SELECT *
+      FROM sessions
+      WHERE id = $1
+    `;
+    let res = await pgExec(this.pool, sql, [id]);
+    if (res.rows.length > 0) {
+      retval = new Session(res.rows[0]);
+    }
+    return retval;
+  }
+
   async createNewSession(session) {
     let retval = null;
     const sql = `
@@ -49,7 +63,7 @@ class SessionStorePostgres extends iSessionStore {
     return retval;
   }
 
-  async updateSession(session) {
+  async updateSession(session, expectedToken = session.token) {
     let retval = null;
     const sql = `
       UPDATE sessions
@@ -63,13 +77,13 @@ class SessionStorePostgres extends iSessionStore {
         user_id = $7,
         data = $8,
         auth_provider = $9
-      WHERE id = $10
+      WHERE id = $10 AND token = $11
       RETURNING *
     `;
     let res = await pgExec(this.pool, sql,
       [session.token, session.time_token_created, session.time_session_created,
       session.time_session_updated, session.linked_from, session.force_kill,
-      session.user_id, session.data, session.auth_provider, session.id]);
+      session.user_id, session.data, session.auth_provider, session.id, expectedToken]);
     if (res.rows.length > 0) {
       retval = new Session(res.rows[0]);
     }

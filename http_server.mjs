@@ -7,6 +7,8 @@ import { default as express } from 'express';
 import { default as pino } from 'pino';
 import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
+import { wrap_router_async } from './lib/express_async.mjs';
+import * as wutil from './lib/webutils.mjs';
 
 import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
@@ -36,7 +38,7 @@ export function start_server(config, services) {
     config.feature_config, config.secrets.hmac.key);
   const query_servicex_fe_adapter = new QueryServicexFEAdapter();
   const __root = path.dirname(url.fileURLToPath(import.meta.url));
-  const app = express();
+  const app = wrap_router_async(express());
   const login_controller = new LoginController(config, auth_service);
   const query_api_controller = new QueryAPIController(config,
     translator_service,
@@ -163,7 +165,7 @@ export function start_server(config, services) {
   app.delete(`${API_PATH_V1}/users/me/saves/:save_id`, user_api_controller.delete_user_save_by_id.bind(user_api_controller));
 
   // User canvas
-  const canvas_router = express.Router();
+  const canvas_router = wrap_router_async(express.Router());
   canvas_router.param('save_id', user_api_controller.parse_canvas_id.bind(user_api_controller));
   canvas_router.param('data_id', user_api_controller.parse_canvas_data_id.bind(user_api_controller));
   canvas_router.param('annotation_id', user_api_controller.parse_canvas_annotation_id.bind(user_api_controller));
@@ -215,6 +217,14 @@ export function start_server(config, services) {
   app.all('*', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.join(build_dir, 'index.html'));
+  });
+
+  app.use((err, req, res, _next) => {
+    wutil.log_internal_server_error(req, err);
+    if (res.headersSent) {
+      return;
+    }
+    res.status(500).send('Internal server error');
   });
 
   app.listen(8386);

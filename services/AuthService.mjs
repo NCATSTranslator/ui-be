@@ -230,8 +230,9 @@ class AuthService {
 
   async updateSessionTime(sessionData) {
     try {
+      const expectedToken = sessionData.token;
       sessionData.updateSessionTime();
-      return this.sessionStore.updateSession(sessionData);
+      return await this._commitSessionUpdate(sessionData, expectedToken);
     } catch (err) {
       logger.error(err);
       return false;
@@ -240,13 +241,22 @@ class AuthService {
 
   async refreshSessionToken(sessionData) {
     try {
+      const expectedToken = sessionData.token;
       sessionData.refreshSessionToken();
-      sessionData.updateSessionTime()
-      return this.sessionStore.updateSession(sessionData);
+      sessionData.updateSessionTime();
+      return await this._commitSessionUpdate(sessionData, expectedToken);
     } catch (err) {
       logger.error(err);
       return false;
     }
+  }
+
+  async _commitSessionUpdate(sessionData, expectedToken) {
+    const updated = await this.sessionStore.updateSession(sessionData, expectedToken);
+    if (updated) {
+      return updated;
+    }
+    return this.sessionStore.retrieveSessionById(sessionData.id);
   }
 
   isTokenExpired(sessionData) {
