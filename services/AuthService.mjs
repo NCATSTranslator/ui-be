@@ -1,10 +1,11 @@
 'use strict';
 
 import { logger } from '../lib/logger.mjs';
+import * as cmn from '../lib/common.mjs';
 import { Session } from '../models/Session.mjs';
 import { User } from '../models/User.mjs';
 import * as sso from '../lib/SocialSignOn.mjs';
-import { hashApiKey, isApiKeySyntacticallyValid } from '../models/ApiKey.mjs';
+import { hash_api_key, is_api_key_syntactically_valid } from '../models/ApiKey.mjs';
 
 export {
   AuthService,
@@ -32,6 +33,7 @@ export {
   APIKEY_INVALID_KEY,
   APIKEY_KEY_NOT_FOUND,
   APIKEY_KEY_REVOKED,
+  APIKEY_KEY_EXPIRED,
   APIKEY_NO_USER,
   APIKEY_INVALID_USER,
   APIKEY_VALID
@@ -60,13 +62,14 @@ const APIKEY_NO_KEY = 0;
 const APIKEY_INVALID_KEY = 1;
 const APIKEY_KEY_NOT_FOUND = 2;
 const APIKEY_KEY_REVOKED = 3;
-const APIKEY_NO_USER = 4;
-const APIKEY_INVALID_USER = 5;
-const APIKEY_VALID = 6;
+const APIKEY_KEY_EXPIRED = 4;
+const APIKEY_NO_USER = 5;
+const APIKEY_INVALID_USER = 6;
+const APIKEY_VALID = 7;
 
 
 class AuthService {
-  constructor(sessionParams, sessionStore, userStore, apiKeyStore=null) {
+  constructor(sessionParams, sessionStore, userStore, apiKeyStore) {
     this.tokenTTLSec = sessionParams.tokenTTLSec;
     this.sessionAbsoluteTTLSec = sessionParams.sessionAbsoluteTTLSec;
     this.sessionMaxIdleTimeSec = sessionParams.sessionMaxIdleTimeSec;
@@ -151,9 +154,7 @@ class AuthService {
     return status === APIKEY_VALID;
   }
 
-  /* Resolves a raw API key presented by a client to the user that owns it. Mirrors
-   * getSessionData(): it reports why a key was rejected rather than throwing, and never
-   * returns a user for a revoked key or a deleted account. */
+  /* Resolves a raw API key presented by a client to the user that owns it. */
   async getApiKeyData(rawKey) {
     let retval = {
       status: null,
@@ -161,29 +162,34 @@ class AuthService {
       apiKey: null
     };
 
-    if (!rawKey) {
+    if (cmn.is_missing(rawKey)) {
       retval.status = APIKEY_NO_KEY;
       return retval;
     }
 
-    if (!this.apiKeyStore || !isApiKeySyntacticallyValid(rawKey)) {
+    if (!is_api_key_syntactically_valid(rawKey)) {
       retval.status = APIKEY_INVALID_KEY;
       return retval;
     }
 
     retval.apiKey = await this.retrieveApiKeyByRawKey(rawKey);
-    if (!retval.apiKey) {
+    if (null === retval.apiKey) {
       retval.status = APIKEY_KEY_NOT_FOUND;
       return retval;
     }
 
-    if (retval.apiKey.isRevoked()) {
+    if (retval.apiKey.is_revoked()) {
       retval.status = APIKEY_KEY_REVOKED;
       return retval;
     }
 
+    if (retval.apiKey.is_expired()) {
+      retval.status = APIKEY_KEY_EXPIRED;
+      return retval;
+    }
+
     retval.user = await this.getUserById(retval.apiKey.user_id);
-    if (!retval.user) {
+    if (null === retval.user) {
       retval.status = APIKEY_NO_USER;
       return retval;
     }
@@ -200,7 +206,7 @@ class AuthService {
   async retrieveApiKeyByRawKey(rawKey) {
     let res = null;
     try {
-      res = await this.apiKeyStore.retrieveApiKeyByHash(hashApiKey(rawKey));
+      res = await this.apiKeyStore.retrieve_api_key_by_hash(hash_api_key(rawKey));
       return res;
     } catch (err) {
       logger.error(err);
@@ -208,11 +214,9 @@ class AuthService {
     }
   }
 
-  /* Best-effort last-used bookkeeping: this runs on every key-authenticated request, and a
-   * failure to record the timestamp must never fail the request itself. */
   async touchApiKey(apiKey) {
     try {
-      return await this.apiKeyStore.updateLastUsedById(apiKey.id);
+      return await this.apiKeyStore.update_last_used_by_id(apiKey.id);
     } catch (err) {
       logger.error(err);
       return null;

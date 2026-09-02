@@ -36,6 +36,12 @@
         "format": "date-time",
         "nullable": true,
         "description": "When the key was revoked, or null if the key is still active"
+      },
+      "time_expires": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When the key stops authenticating, or null if the key never expires. Always null at present; expirations cannot yet be set."
       }
     },
     "required": [
@@ -45,7 +51,7 @@
       "key_display",
       "time_created"
     ],
-    "description": "API key metadata. Never includes the key itself. Demo limitation: keys are currently held in server memory and do not survive a server restart."
+    "description": "API key metadata. Never includes the key itself."
   },
   "CreateApiKeyRequest": {
     "type": "object",

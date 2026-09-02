@@ -6,10 +6,10 @@ import { v4 as uuidv4 } from 'uuid';
 export {
   ApiKey,
   API_KEY_PREFIX,
-  generateApiKey,
-  hashApiKey,
-  displayApiKey,
-  isApiKeySyntacticallyValid
+  generate_api_key,
+  hash_api_key,
+  display_api_key,
+  is_api_key_syntactically_valid
 };
 
 const API_KEY_PREFIX = 'tkey_';
@@ -17,20 +17,20 @@ const API_KEY_BYTES = 32;
 const API_KEY_BODY_LEN = 43;
 const API_KEY_RX = new RegExp(`^${API_KEY_PREFIX}[A-Za-z0-9_-]{${API_KEY_BODY_LEN}}$`);
 
-function generateApiKey() {
+function generate_api_key() {
   return `${API_KEY_PREFIX}${randomBytes(API_KEY_BYTES).toString('base64url')}`;
 }
 
-function hashApiKey(key) {
+function hash_api_key(key) {
   return createHash('sha256').update(key).digest('hex');
 }
 
-function displayApiKey(key) {
+function display_api_key(key) {
   const body = key.slice(API_KEY_PREFIX.length);
   return `${API_KEY_PREFIX}${body.slice(0, 4)}...${body.slice(-4)}`;
 }
 
-function isApiKeySyntacticallyValid(key) {
+function is_api_key_syntactically_valid(key) {
   return typeof key === 'string' && API_KEY_RX.test(key);
 }
 
@@ -43,7 +43,8 @@ class ApiKey {
     key_display,
     time_created = new Date(),
     time_last_used = null,
-    time_revoked = null
+    time_revoked = null,
+    time_expires = null
   } = {}) {
 
     if (!user_id) {
@@ -64,19 +65,25 @@ class ApiKey {
     this.time_created = time_created;
     this.time_last_used = time_last_used;
     this.time_revoked = time_revoked;
+    this.time_expires = time_expires;
   }
 
-  static fromRawKey(user_id, name, rawKey) {
+  static from_raw_key(user_id, name, raw_key, time_expires = null) {
     return new ApiKey({
       user_id: user_id,
       name: name,
-      key_hash: hashApiKey(rawKey),
-      key_display: displayApiKey(rawKey)
+      key_hash: hash_api_key(raw_key),
+      key_display: display_api_key(raw_key),
+      time_expires: time_expires
     });
   }
 
-  isRevoked() {
+  is_revoked() {
     return this.time_revoked !== null;
+  }
+
+  is_expired(time = new Date()) {
+    return this.time_expires !== null && this.time_expires <= time;
   }
 
   revoke(time = new Date()) {
@@ -84,7 +91,7 @@ class ApiKey {
     return this;
   }
 
-  /* key_hash is a credential-equivalent secret and is never returned to a client. */
+  /* JS serialization hook */
   toJSON() {
     const { key_hash, ...rest } = this;
     return rest;

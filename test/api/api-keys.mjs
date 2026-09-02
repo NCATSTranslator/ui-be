@@ -15,7 +15,7 @@
  */
 
 import { createHarness, getJson, postJson, deleteJson, BASE_URL, TEST_USER_ID } from '../lib/api-harness.mjs';
-import { API_KEY_PREFIX, generateApiKey } from '../../models/ApiKey.mjs';
+import { API_KEY_PREFIX, generate_api_key } from '../../models/ApiKey.mjs';
 
 const { ok, fail, finish } = createHarness();
 const KEY_PATH = '/api/v1/users/me/api-keys';
@@ -76,7 +76,7 @@ try {
 }
 
 try {
-  const { res } = await getJson('/api/v1/users/me', { Authorization: `Bearer ${generateApiKey()}` });
+  const { res } = await getJson('/api/v1/users/me', { Authorization: `Bearer ${generate_api_key()}` });
   ok(res.status === 401, `an unknown but well-formed key responds 401 (got ${res.status})`);
 } catch (err) {
   fail(`unknown key request failed: ${err.message}`);

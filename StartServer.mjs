@@ -21,7 +21,7 @@ import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgre
 import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
 import { CanvasStorePostgres } from './stores/CanvasStorePostgres.mjs';
 import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
-import { ApiKeyStoreMemory } from './stores/ApiKeyStoreMemory.mjs';
+import { ApiKeyStorePostgres } from './stores/ApiKeyStorePostgres.mjs';
 
 
 // Load the config asap as basically everything depends on it
@@ -56,13 +56,6 @@ const TRANSLATOR_SERVICE = await (async function (config) {
   return new TranslatorService(query_client);
 })(SERVER_CONFIG);
 
-/* API keys are demo-only for now and live in memory rather than in a table, so there is no
- * api_keys migration to run. Unlike the Postgres stores below -- which are constructed
- * per-service but all reach the same database -- this store IS the table, so the auth service
- * and the user service must share this one instance or keys minted through one would be
- * invisible to the other. Keys do not survive a restart. */
-const API_KEY_STORE = new ApiKeyStoreMemory();
-
 // Bootstrap the auth service
 const AUTH_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
@@ -78,7 +71,7 @@ const AUTH_SERVICE = (function (config) {
   },
   new SessionStorePostgres(dbPool),
   new UserStorePostgres(dbPool),
-  API_KEY_STORE);
+  new ApiKeyStorePostgres(dbPool));
 })(SERVER_CONFIG);
 
 /* Session auth checking is controlled from here so the HTTP layer and SessionController stay
@@ -97,14 +90,6 @@ if (SERVER_CONFIG.auth_check === false) {
   await bypassSessionAuth(AUTH_SERVICE);
 }
 
-/* Seed the fixed demo API key. It rides the same rail as the auth bypass above: the key is
- * hardcoded and therefore public, so it is only ever registered under the mock configuration
- * and can never grant access in a real deployment. */
-if (IS_MOCK_CONFIG) {
-  const { seedDemoApiKey } = await import('./mock/api-key.mjs');
-  await seedDemoApiKey(API_KEY_STORE, AUTH_SERVICE.userStore);
-}
-
 // Bootstrap the user service
 const USER_SERVICE = (function (config) {
   const dbPool = new pg.Pool({
@@ -117,17 +102,10 @@ const USER_SERVICE = (function (config) {
     new UserPreferenceStorePostgres(dbPool),
     new UserSavedDataStorePostgres(dbPool),
     new CanvasStorePostgres(dbPool),
-    config.secrets.hmac.key,
-    API_KEY_STORE
+    new ApiKeyStorePostgres(dbPool),
+    config.secrets.hmac.key
   );
 })(SERVER_CONFIG);
-
-/* Seed the demo user's query list. Same mock-only rail as the demo API key above. Unlike the
- * key, this writes to Postgres and persists, so the seeder is idempotent. */
-if (IS_MOCK_CONFIG) {
-  const { seedDemoUserQuery } = await import('./mock/query.mjs');
-  await seedDemoUserQuery(USER_SERVICE);
-}
 
 const QUERY_SERVICE = (function (config) {
   const dbPool = new pg.Pool({

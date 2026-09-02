@@ -2,7 +2,7 @@
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
-import { ApiKey, generateApiKey } from '../models/ApiKey.mjs';
+import { ApiKey, generate_api_key } from '../models/ApiKey.mjs';
 import { UserCanvas, CanvasGraph, make_user_canvas_from_req, make_canvas_update_from_req, make_canvas_element_update_from_req, make_graph_merge_from_req, make_graph_selection_from_req, make_graph_geometry_from_req, make_annotation_from_req,
   make_annotation_content_update_from_req, Graph } from "#model/Canvas.mjs";
 
@@ -12,8 +12,8 @@ class UserService {
       userPreferenceStore,
       userSavedDataStore,
       canvasStore,
-      entitySigningSecret = null,
-      apiKeyStore = null) {
+      apiKeyStore,
+      entitySigningSecret = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
     this.savedDataStore = userSavedDataStore;
@@ -28,15 +28,16 @@ class UserService {
 
   // API keys
   async getUserApiKeys(uid, includeRevoked=false) {
-    return this.apiKeyStore.retrieveApiKeysByUserId(uid, includeRevoked);
+    return this.apiKeyStore.retrieve_api_keys_by_user_id(uid, includeRevoked);
   }
 
   /* The only point at which the raw key exists: we store its hash and hand the plaintext
    * back to the caller, which must return it to the user exactly once. It cannot be
    * recovered afterwards. */
-  async createUserApiKey(uid, name) {
-    const rawKey = generateApiKey();
-    const apiKey = await this.apiKeyStore.createApiKey(ApiKey.fromRawKey(uid, name, rawKey));
+  async createUserApiKey(uid, name, timeExpires = null) {
+    const rawKey = generate_api_key();
+    const apiKey = await this.apiKeyStore.create_api_key(
+      ApiKey.from_raw_key(uid, name, rawKey, timeExpires));
     if (!apiKey) {
       return null;
     }
@@ -44,7 +45,7 @@ class UserService {
   }
 
   async revokeUserApiKey(uid, keyId) {
-    return this.apiKeyStore.revokeApiKeyById(keyId, uid);
+    return this.apiKeyStore.revoke_api_key_by_id(keyId, uid);
   }
 
   // Preferences
