@@ -15,13 +15,6 @@ class SessionController {
 
   // All subsequent Session Controller middleware functions assume that this has been done
   async attachSessionData(req, res, next) {
-    /* An API key is an explicit, deliberately-presented credential, so it decides the outcome
-     * of the request: if one is presented we do not fall back to the cookie, and a bad key
-     * fails rather than silently downgrading to whatever session the browser happens to hold.
-     * Key-authenticated requests get a sessionData shaped like a session (so every downstream
-     * handler keeps reading req.sessionData.user) but with no session row behind it.
-     * req.apiKeyData marks them, so the authenticate* middleware below can check the key
-     * instead of running the session-refresh machinery. */
     const apiKeyData = await this._fetchApiKeyStatus(req);
     if (apiKeyData) {
       req.apiKeyData = apiKeyData;
@@ -58,28 +51,27 @@ class SessionController {
 
   async _fetchApiKeyStatus(req) {
     const rawKey = this._extractApiKey(req);
-    if (!rawKey) {
-      return null;
-    }
+    if (rawKey === null) return null;
     return this.authService.getApiKeyData(rawKey);
   }
 
-  /* Only a credential carrying our key prefix counts as an API key attempt. Anything else in
-   * the Authorization header (a proxy's Basic credentials, say) is ignored so that it cannot
-   * knock a normal cookie-authenticated browser request off the session path. */
   _extractApiKey(req) {
-    const authorization = req.get('authorization');
-    if (authorization) {
-      const match = authorization.match(/^Bearer\s+(\S+)$/i);
-      if (match && match[1].startsWith(API_KEY_PREFIX)) {
-        return match[1];
-      }
-    }
-    const header = req.get('x-api-key');
-    if (header && header.startsWith(API_KEY_PREFIX)) {
-      return header;
-    }
-    return null;
+    return this._extractBearerApiKey(req) ?? this._extractApiKeyHeader(req);
+  }
+
+  _extractBearerApiKey(req) {
+    const authorization = req.headersDistinct['authorization'];
+    if (authorization?.length !== 1) return null;
+    const match = authorization[0].match(/^Bearer\s+(\S+)$/i);
+    if (!match || !match[1].startsWith(API_KEY_PREFIX)) return null;
+    return match[1];
+  }
+
+  _extractApiKeyHeader(req) {
+    const header = req.headersDistinct['x-api-key'];
+    if (header?.length !== 1) return null;
+    if (!header[0].startsWith(API_KEY_PREFIX)) return null;
+    return header[0];
   }
 
   async getStatus(req, res, next) {
@@ -99,16 +91,16 @@ class SessionController {
    * refresh it fails.
    */
   async authenticatePrivilegedRequest(req, res, next) {
-    let oldSession = req.sessionData;
-    if (!oldSession) {
-      return res.status(500).send('Server error retrieving session status');
-    }
-
     if (req.apiKeyData) {
       if (!this.authService.isApiKeyStatusValid(req.apiKeyData.status)) {
         return res.status(401).send('Invalid API key. Cannot service request.');
       }
       return next();
+    }
+
+    let oldSession = req.sessionData;
+    if (!oldSession) {
+      return res.status(500).send('Server error retrieving session status');
     }
 
     if (!this.authService.isSessionStatusValid(oldSession.status)) {
@@ -123,23 +115,16 @@ class SessionController {
   }
 
   async authenticateUnprivilegedRequest(req, res, next) {
-    if (req.apiKeyData) {
-      return next();
-    }
+    if (req.apiKeyData) return next();
     let oldSession = req.sessionData;
     if (oldSession && this.authService.isSessionStatusValid(oldSession.status)) {
       let [success, errstr] = await this._refreshSession(req, res, oldSession);
-      if (!success) {
-        return res.status(500).send(errstr);
-      }
+      if (!success) return res.status(500).send(errstr);
     }
     next();
   }
 
-
-  /* Gate for routes that must be driven by a human who is actually logged in. API key
-   * management is the case that matters: a leaked key must not be able to mint further keys
-   * or revoke the ones the owner is using. Must run after authenticatePrivilegedRequest. */
+  /* Gate for routes that must be driven by a human who is actually logged in. */
   requireSessionAuth(req, res, next) {
     if (req.apiKeyData) {
       return res.status(403).send('API keys cannot be used for this request. Log in to continue.');

@@ -89,6 +89,20 @@ try {
   fail(`malformed key request failed: ${err.message}`);
 }
 
+try {
+  const { res } = await getJson('/api/v1/users/me', { Authorization: `Bearer ${rawKey}x` });
+  ok(res.status === 401, `a valid key with one extra character responds 401 (got ${res.status})`);
+} catch (err) {
+  fail(`overlong key request failed: ${err.message}`);
+}
+
+try {
+  const { res } = await getJson('/api/v1/users/me', { Authorization: `Bearer ${generate_api_key()}${'x'.repeat(4096)}` });
+  ok(res.status === 401, `a grossly overlong key responds 401 (got ${res.status})`);
+} catch (err) {
+  fail(`grossly overlong key request failed: ${err.message}`);
+}
+
 // Keys must not be usable to manage keys.
 try {
   const { res } = await getJson(KEY_PATH, { Authorization: `Bearer ${rawKey}` });

@@ -31,16 +31,14 @@ class UserService {
     return this.apiKeyStore.retrieve_api_keys_by_user_id(uid, includeRevoked);
   }
 
-  /* The only point at which the raw key exists: we store its hash and hand the plaintext
-   * back to the caller, which must return it to the user exactly once. It cannot be
-   * recovered afterwards. */
+  /* We store the raw key's hash and hand the plaintext back to the caller.
+   * It cannot be recovered afterwards.
+   */
   async createUserApiKey(uid, name, timeExpires = null) {
     const rawKey = generate_api_key();
     const apiKey = await this.apiKeyStore.create_api_key(
       ApiKey.from_raw_key(uid, name, rawKey, timeExpires));
-    if (!apiKey) {
-      return null;
-    }
+    if (apiKey === null) return null;
     return { apiKey: apiKey, key: rawKey };
   }
 

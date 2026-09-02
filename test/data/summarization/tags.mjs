@@ -173,13 +173,13 @@ function _test_make_predicate_tag() {
 
 function _test_make_tdl_tag() {
   return test.make_function_test({
-    lowercases_id_preserves_name: {
+    lowercases_id_and_labels_name: {
       args: ['Tclin'],
-      expected: new taglib.Tag({id: 'n/tdl/tclin', name: 'Tclin'})
+      expected: new taglib.Tag({id: 'n/tdl/tclin', name: 'Tclin (approved drug)'})
     },
     already_lowercase: {
       args: ['tchem'],
-      expected: new taglib.Tag({id: 'n/tdl/tchem', name: 'tchem'})
+      expected: new taglib.Tag({id: 'n/tdl/tchem', name: 'Tchem (reported tool compound)'})
     }
   });
 }
@@ -253,7 +253,7 @@ function _test_promote_start_node_tags_to_path() {
       ],
       post: _raw_tags,
       expected: {
-        'r/tdl/tclin': _raw('r/tdl/tclin', 'Tclin'),
+        'r/tdl/tclin': _raw('r/tdl/tclin', 'Tclin (approved drug)'),
         'r/otc/t': _raw('r/otc/t', 'Over the counter')
       }
     },
@@ -271,7 +271,7 @@ function _test_promote_internal_node_tags_to_path() {
       args: [_make_node({tags: [tags.make_tdl_tag('Tclin')]}), _make_path()],
       post: _raw_tags,
       expected: {
-        'p/tdl/tclin': _raw('p/tdl/tclin', 'Tclin')
+        'p/tdl/tclin': _raw('p/tdl/tclin', 'Tclin (approved drug)')
       }
     },
     internal_families_are_withheld: {
