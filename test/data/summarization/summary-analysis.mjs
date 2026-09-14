@@ -418,8 +418,6 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
   }
 }
 
-
-
 function _simple_summary_analysis() {
   return test.make_lazy({
     call: analysis_to_summary_analysis,
