@@ -3,6 +3,13 @@ export { suite }
 import * as test from "#test/lib/common.mjs";
 import * as bl from "#lib/biolink-model.mjs";
 import {
+  biolink_config,
+  simple_kgraph,
+  with_support_kgraph,
+  with_nested_support_kgraph,
+  dead_support_kgraph
+} from "#test/data/summarization/kgraphs.mjs";
+import {
   analysis_to_summary_analysis,
   gen_analysis_paths,
   MissingSupportPathsError
@@ -30,7 +37,7 @@ function _test_analysis_to_summary_analysis() {
             ]
           }
         },
-        _simple_kgraph(),
+        simple_kgraph(),
         {}
       ],
       "expected": {
@@ -54,7 +61,7 @@ function _test_analysis_to_summary_analysis() {
           }
         }
       },
-      "config_loader": () => bl.load_biolink(_test_biolink_config()),
+      "config_loader": () => bl.load_biolink(biolink_config()),
     },
     "with-support": {
       "args": [
@@ -65,7 +72,7 @@ function _test_analysis_to_summary_analysis() {
             ]
           }
         },
-        _with_support_kgraph(),
+        with_support_kgraph(),
         {
           "ax1": {
             "edges": [
@@ -108,7 +115,7 @@ function _test_analysis_to_summary_analysis() {
           }
         }
       },
-      "config_loader": () => bl.load_biolink(_test_biolink_config()),
+      "config_loader": () => bl.load_biolink(biolink_config()),
     },
     "with-nested-support": {
       "args": [
@@ -120,7 +127,7 @@ function _test_analysis_to_summary_analysis() {
             ]
           }
         },
-        _with_nested_support_kgraph(),
+        with_nested_support_kgraph(),
         {
           "ax1": {
             "edges": [
@@ -222,7 +229,7 @@ function _test_analysis_to_summary_analysis() {
           }
         }
       },
-      "config_loader": () => bl.load_biolink(_test_biolink_config()),
+      "config_loader": () => bl.load_biolink(biolink_config()),
     }
   });
 }
@@ -232,7 +239,7 @@ function _test_gen_analysis_paths() {
     "simple": {
       "args": [
         _simple_summary_analysis(),
-        _simple_kgraph(),
+        simple_kgraph(),
         "nb1",
         ["nb2"],
         4
@@ -244,7 +251,7 @@ function _test_gen_analysis_paths() {
     "with-support": {
       "args": [
         _with_support_summary_analysis(),
-        _with_support_kgraph(),
+        with_support_kgraph(),
         "nb1",
         ["nb2"],
         4
@@ -257,7 +264,7 @@ function _test_gen_analysis_paths() {
     "with-nested-support": {
       "args": [
         _with_nested_support_summary_analysis(),
-        _with_nested_support_kgraph(),
+        with_nested_support_kgraph(),
         "target",
         ["answer-1", "answer-2"],
         4
@@ -281,16 +288,17 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
     simple: __simple_test_case(),
     with_support: __with_support_test_case(),
     support_graph_with_no_paths_fails_the_analysis: __dead_support_test_case(),
-    with_nested_support: await __with_nested_support_test_case()
+    with_nested_support: await __with_nested_support_test_case(),
+    with_nested_support_sharing_an_eid_cache: await __with_nested_support_test_case(new Map())
   });
 
   function __simple_test_case() {
-    const _eid_1 = id.gen_eid("eb1", _simple_kgraph(), false, true);
+    const _eid_1 = id.gen_eid("eb1", simple_kgraph(), false, true);
     return {
       args: [
         _simple_summary_analysis(),
         _simple_analysis_paths(),
-        _simple_kgraph()
+        simple_kgraph()
       ],
       expected: [
         [
@@ -304,15 +312,15 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
   }
 
   function __with_support_test_case() {
-    const _eid_1 = id.gen_eid("eb1", _with_support_kgraph(), false, true);
-    const _eid_2 = id.gen_eid("eb2", _with_support_kgraph(), false, false);
-    const _eid_3 = id.gen_eid("eb3", _with_support_kgraph(), false, false);
+    const _eid_1 = id.gen_eid("eb1", with_support_kgraph(), false, true);
+    const _eid_2 = id.gen_eid("eb2", with_support_kgraph(), false, false);
+    const _eid_3 = id.gen_eid("eb3", with_support_kgraph(), false, false);
     const _support_path_1 = new SummaryPath(["nb1", _eid_2, "nb2.1", _eid_3, "nb2"]);
     return {
       args: [
         _with_support_summary_analysis(),
         _with_support_analysis_paths(),
-        _with_support_kgraph()
+        with_support_kgraph()
       ],
       expected: [
         [
@@ -333,37 +341,37 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
       args: [
         _dead_support_summary_analysis(),
         _dead_support_analysis_paths(),
-        _dead_support_kgraph()
+        dead_support_kgraph()
       ],
       expected: MissingSupportPathsError
     }
   }
 
-  async function __with_nested_support_test_case() {
-    await bl.load_biolink(_test_biolink_config());
+  async function __with_nested_support_test_case(eid_cache = null) {
+    await bl.load_biolink(biolink_config());
     const _eid = [
-      id.gen_eid("eb1", _with_nested_support_kgraph(), false, true),
-      id.gen_eid("eb2", _with_nested_support_kgraph(), false, true),
-      id.gen_eid("ax1-eb1", _with_nested_support_kgraph(), false, false),
-      id.gen_eid("ax1-eb2", _with_nested_support_kgraph(), false, false),
-      id.gen_eid("ax2-eb1", _with_nested_support_kgraph(), false, false),
-      id.gen_eid("ax3-eb1", _with_nested_support_kgraph(), false, false),
-      id.gen_eid("ax3-eb2", _with_nested_support_kgraph(), false, false),
-      id.gen_eid("ax3-eb3", _with_nested_support_kgraph(), false, false),
-      id.gen_eid("ax4-eb1", _with_nested_support_kgraph(), false, false),
-      id.gen_eid("ax4-eb2", _with_nested_support_kgraph(), false, false)
+      id.gen_eid("eb1", with_nested_support_kgraph(), false, true),
+      id.gen_eid("eb2", with_nested_support_kgraph(), false, true),
+      id.gen_eid("ax1-eb1", with_nested_support_kgraph(), false, false),
+      id.gen_eid("ax1-eb2", with_nested_support_kgraph(), false, false),
+      id.gen_eid("ax2-eb1", with_nested_support_kgraph(), false, false),
+      id.gen_eid("ax3-eb1", with_nested_support_kgraph(), false, false),
+      id.gen_eid("ax3-eb2", with_nested_support_kgraph(), false, false),
+      id.gen_eid("ax3-eb3", with_nested_support_kgraph(), false, false),
+      id.gen_eid("ax4-eb1", with_nested_support_kgraph(), false, false),
+      id.gen_eid("ax4-eb2", with_nested_support_kgraph(), false, false)
     ]
     const _inverted_eid = [
-      id.gen_eid("eb1", _with_nested_support_kgraph(), true, true),
-      id.gen_eid("eb2", _with_nested_support_kgraph(), true, true),
-      id.gen_eid("ax1-eb1", _with_nested_support_kgraph(), true, false),
-      id.gen_eid("ax1-eb2", _with_nested_support_kgraph(), true, false),
-      id.gen_eid("ax2-eb1", _with_nested_support_kgraph(), true, false),
-      id.gen_eid("ax3-eb1", _with_nested_support_kgraph(), true, false),
-      id.gen_eid("ax3-eb2", _with_nested_support_kgraph(), true, false),
-      id.gen_eid("ax3-eb3", _with_nested_support_kgraph(), true, false),
-      id.gen_eid("ax4-eb1", _with_nested_support_kgraph(), true, false),
-      id.gen_eid("ax4-eb2", _with_nested_support_kgraph(), true, false)
+      id.gen_eid("eb1", with_nested_support_kgraph(), true, true),
+      id.gen_eid("eb2", with_nested_support_kgraph(), true, true),
+      id.gen_eid("ax1-eb1", with_nested_support_kgraph(), true, false),
+      id.gen_eid("ax1-eb2", with_nested_support_kgraph(), true, false),
+      id.gen_eid("ax2-eb1", with_nested_support_kgraph(), true, false),
+      id.gen_eid("ax3-eb1", with_nested_support_kgraph(), true, false),
+      id.gen_eid("ax3-eb2", with_nested_support_kgraph(), true, false),
+      id.gen_eid("ax3-eb3", with_nested_support_kgraph(), true, false),
+      id.gen_eid("ax4-eb1", with_nested_support_kgraph(), true, false),
+      id.gen_eid("ax4-eb2", with_nested_support_kgraph(), true, false)
     ];
     const _support_path = [
       new SummaryPath(["target", _inverted_eid[3], "nb1", _inverted_eid[2], "answer-1"]),
@@ -372,11 +380,13 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
     ];
     const _nested_support = new SummaryPath(["nb3", _inverted_eid[9], "nb2.1", _inverted_eid[8], "nb2"]);
     return {
-      config_loader: () => bl.load_biolink(_test_biolink_config()),
+      config_loader: () => bl.load_biolink(biolink_config()),
       args: [
         _with_nested_support_summary_analysis(),
         _with_nested_support_analysis_paths(),
-        _with_nested_support_kgraph()
+        with_nested_support_kgraph(),
+        false,
+        eid_cache
       ],
       expected: [
         [
@@ -408,33 +418,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
   }
 }
 
-function _test_biolink_config() {
-  return {
-    "version": "4.4.3",
-    "support_deprecated_predicates": false,
-    "infores_catalog": "infores-catalog-v1.1.4.json",
-    "prefix_catalog": {
-      "path": "prefix-catalog.json",
-      "exclude": ["VANDF"]
-    }
-  }
-}
 
-function _simple_kgraph() {
-  return {
-    "nodes": {
-      "nb1": { "name": "node 1" },
-      "nb2": { "name": "node 2" }
-    },
-    "edges": {
-      "eb1": {
-        "subject": "nb1",
-        "predicate": "biolink:treats",
-        "object": "nb2"
-      }
-    }
-  };
-}
 
 function _simple_summary_analysis() {
   return test.make_lazy({
@@ -447,7 +431,7 @@ function _simple_summary_analysis() {
           ]
         }
       },
-      _simple_kgraph(),
+      simple_kgraph(),
       {}
     ]
   });
@@ -458,7 +442,7 @@ function _simple_analysis_paths() {
     call: gen_analysis_paths,
     args: [
       _simple_summary_analysis(),
-      _simple_kgraph(),
+      simple_kgraph(),
       "nb1",
       ["nb2"],
       4
@@ -466,38 +450,6 @@ function _simple_analysis_paths() {
   });
 }
 
-function _with_support_kgraph() {
-  return {
-    "nodes": {
-      "nb1": { "name": "node 1" },
-      "nb2": { "name": "node 2" },
-      "nb2.1": { "name": "node 2.1" }
-    },
-    "edges": {
-      "eb1": {
-        "subject": "nb1",
-        "predicate": "biolink:treats",
-        "object": "nb2",
-        "attributes": [
-          {
-            "attribute_type_id": "biolink:support_graphs",
-            "value": [ "ax1" ]
-          }
-        ]
-      },
-      "eb2": {
-        "subject": "nb1",
-        "predicate": "biolink:treats",
-        "object": "nb2.1"
-      },
-      "eb3": {
-        "subject": "nb2.1",
-        "predicate": "biolink:subclass_of",
-        "object": "nb2"
-      }
-    }
-  };
-}
 
 function _with_support_summary_analysis() {
   return test.make_lazy({
@@ -510,7 +462,7 @@ function _with_support_summary_analysis() {
           ]
         }
       },
-      _with_support_kgraph(),
+      with_support_kgraph(),
       {
         "ax1": {
           "edges": [
@@ -528,7 +480,7 @@ function _with_support_analysis_paths() {
     call: gen_analysis_paths,
     args: [
       _with_support_summary_analysis(),
-      _with_support_kgraph(),
+      with_support_kgraph(),
       "nb1",
       ["nb2"],
       4
@@ -536,89 +488,6 @@ function _with_support_analysis_paths() {
   });
 }
 
-function _with_nested_support_kgraph() {
-  return {
-    "nodes": {
-      "answer-1": { "name": "answer 1" },
-      "answer-2": { "name": "answer 2" },
-      "nb1": { "name": "node 1" },
-      "nb2": { "name": "node 2" },
-      "nb2.1": { "name": "node 2.1" },
-      "nb3": { "name": "node 5" },
-      "target": { "name": "target" }
-    },
-    "edges": {
-      "eb1": {
-        "subject": "answer-1",
-        "predicate": "biolink:treats",
-        "object": "target",
-        "attributes": [
-          {
-            "attribute_type_id": "biolink:support_graphs",
-            "value": [ "ax1", "ax2" ]
-          }
-        ]
-      },
-      "eb2": {
-        "subject": "answer-2",
-        "predicate": "biolink:treats",
-        "object": "target",
-        "attributes": [
-          {
-            "attribute_type_id": "biolink:support_graphs",
-            "value": [ "ax3" ]
-          }
-        ]
-      },
-      "ax1-eb1": {
-        "subject": "answer-1",
-        "predicate": "biolink:related_to",
-        "object": "nb1"
-      },
-      "ax1-eb2": {
-        "subject": "nb1",
-        "predicate": "biolink:related_to",
-        "object": "target"
-      },
-      "ax2-eb1": {
-        "subject": "nb1",
-        "predicate": "biolink:treats",
-        "object": "target"
-      },
-      "ax3-eb1": {
-        "subject": "answer-2",
-        "predicate": "biolink:related_to",
-        "object": "nb2"
-      },
-      "ax3-eb2": {
-        "subject": "nb2",
-        "predicate": "biolink:subclass_of",
-        "object": "nb3",
-        "attributes": [
-          {
-            "attribute_type_id": "biolink:support_graphs",
-            "value": [ "ax4" ]
-          }
-        ]
-      },
-      "ax3-eb3": {
-        "subject": "nb3",
-        "predicate": "biolink:treats",
-        "object": "target"
-      },
-      "ax4-eb1": {
-        "subject": "nb2",
-        "predicate": "biolink:subclass_of",
-        "object": "nb2.1"
-      },
-      "ax4-eb2": {
-        "subject": "nb2.1",
-        "predicate": "biolink:subclass_of",
-        "object": "nb3"
-      }
-    }
-  };
-}
 
 function _with_nested_support_summary_analysis() {
   return test.make_lazy({
@@ -632,7 +501,7 @@ function _with_nested_support_summary_analysis() {
           ]
         }
       },
-      _with_nested_support_kgraph(),
+      with_nested_support_kgraph(),
       {
         "ax1": {
           "edges": [
@@ -669,7 +538,7 @@ function _with_nested_support_analysis_paths() {
     call: gen_analysis_paths,
     args: [
       _with_nested_support_summary_analysis(),
-      _with_nested_support_kgraph(),
+      with_nested_support_kgraph(),
       "target",
       ["answer-1", "answer-2"],
       4
@@ -690,33 +559,6 @@ function _make_summary_edge(eid, edge_binding, is_root, inverted_id = null) {
 
 // eb1 (nb1 -> nb2) declares support graph ax1, but ax1 holds only eb2 (nb1 -> nb2.1) and so can
 // never reach nb2. gen_analysis_paths visits ax1 and records zero complete paths for it.
-function _dead_support_kgraph() {
-  return {
-    "nodes": {
-      "nb1": { "name": "node 1" },
-      "nb2": { "name": "node 2" },
-      "nb2.1": { "name": "node 2.1" }
-    },
-    "edges": {
-      "eb1": {
-        "subject": "nb1",
-        "predicate": "biolink:treats",
-        "object": "nb2",
-        "attributes": [
-          {
-            "attribute_type_id": "biolink:support_graphs",
-            "value": [ "ax1" ]
-          }
-        ]
-      },
-      "eb2": {
-        "subject": "nb1",
-        "predicate": "biolink:treats",
-        "object": "nb2.1"
-      }
-    }
-  };
-}
 
 function _dead_support_summary_analysis() {
   return test.make_lazy({
@@ -729,7 +571,7 @@ function _dead_support_summary_analysis() {
           ]
         }
       },
-      _dead_support_kgraph(),
+      dead_support_kgraph(),
       {
         "ax1": {
           "edges": [
@@ -746,7 +588,7 @@ function _dead_support_analysis_paths() {
     call: gen_analysis_paths,
     args: [
       _dead_support_summary_analysis(),
-      _dead_support_kgraph(),
+      dead_support_kgraph(),
       "nb1",
       ["nb2"],
       4
