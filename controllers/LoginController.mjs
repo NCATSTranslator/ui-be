@@ -91,15 +91,17 @@ class LoginController {
     // first, expire the cookie
     wutil.set_session_cookie(res, this.config.session_cookie, '', cookiePath, 0);
     // Second, kill the session internally
-    let session = await this.authService.retrieveSessionByToken(cookieToken);
+    let session = await this.authService.retrieveSessionByCurrentOrPriorToken(cookieToken);
     if (!session) {
       req.log.error(`%% %% %% no session found for ${cookieToken} when logging out`);
+    } else {
+      const killed = await this.authService.expireSessionById(session.id);
+      if (!killed) {
+        req.log.error(`%% %% %% error expiring session ${session.id} when logging out`);
+      } else {
+        req.log.info(`Logout successful, redirecting to /`);
+      }
     }
-    session = await this.authService.expireSessionByToken(cookieToken);
-    if (!session) {
-      req.log.error(`%% %% %% error expiring session for ${cookieToken} when logging out`);
-    }
-    req.log.info(`Logout successful, redirecting to /`);
     return res.redirect(302, `/`);
   }
 }

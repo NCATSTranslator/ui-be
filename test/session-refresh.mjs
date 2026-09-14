@@ -3,6 +3,7 @@ export { test_session_refresh }
 import * as ast from 'node:assert';
 import * as auth from '../services/AuthService.mjs';
 import { SessionController } from '../controllers/SessionController.mjs';
+import { LoginController } from '../controllers/LoginController.mjs';
 import { Session } from '#model/Session.mjs';
 
 const SESSION_PARAMS = {
@@ -13,7 +14,7 @@ const SESSION_PARAMS = {
 };
 
 const COOKIE_CONFIG = {
-  session_cookie: { name: 'sid', http_only: true, secure: true, same_site: 'lax' }
+  session_cookie: { name: 'sid', path: '/', http_only: true, secure: true, same_site: 'lax' }
 };
 
 class FakeSessionStore {
@@ -42,6 +43,23 @@ class FakeSessionStore {
     }
     this.committed_updates++;
     this.row = {...session};
+    return new Session({...this.row});
+  }
+
+  async retrieveSessionByCurrentOrPriorToken(token) {
+    await yield_to_event_loop();
+    if (this.row.token !== token && this.row.linked_from !== token) {
+      return null;
+    }
+    return new Session({...this.row});
+  }
+
+  async expireSessionById(id) {
+    await yield_to_event_loop();
+    if (this.row.id !== id) {
+      return null;
+    }
+    this.row.force_kill = true;
     return new Session({...this.row});
   }
 
@@ -85,8 +103,14 @@ function make_fixture(token_age_sec) {
 function make_res() {
   return {
     issued_cookies: [],
-    cookie(name, value) { this.issued_cookies.push(value); }
+    redirects: [],
+    cookie(name, value) { this.issued_cookies.push(value); },
+    redirect(code, location) { this.redirects.push([code, location]); }
   };
+}
+
+function make_logout_req(token) {
+  return { cookies: { sid: token }, log: { error() {}, info() {} } };
 }
 
 async function make_req(auth_service, token) {
@@ -204,6 +228,35 @@ async function test_update_session_requires_expected_token() {
     'updateSession must refuse a blind write');
 }
 
+async function test_logout_kills_a_concurrently_rotated_session() {
+  const { store, auth_service, controller } = make_fixture(3600);
+  const login_controller = new LoginController(COOKIE_CONFIG, auth_service);
+  const cookie_token = store.row.token;
+
+  const inflight = await make_req(auth_service, cookie_token);
+  ast.strictEqual(inflight.sessionData.status, auth.SESSION_TOKEN_EXPIRED,
+    'the in-flight request must start from an expired token');
+
+  const logout_req = make_logout_req(cookie_token);
+
+  const [refreshed] = await controller._refreshSession(inflight, make_res(), inflight.sessionData);
+  ast.strictEqual(refreshed, true, 'the in-flight refresh should succeed');
+  ast.notStrictEqual(store.row.token, cookie_token,
+    'the in-flight request must have rotated the token out from under the logout');
+
+  const logout_res = make_res();
+  await login_controller.logout(logout_req, logout_res);
+
+  ast.deepStrictEqual(logout_res.redirects, [[302, '/']],
+    'logout reports success to the browser');
+  ast.strictEqual(store.row.force_kill, true,
+    'logout must kill the session even when an in-flight request rotated the token');
+
+  const after = await auth_service.getSessionData(store.row.token);
+  ast.strictEqual(after.status, auth.SESSION_FORCE_KILLED,
+    'the rotated session must not outlive the logout that reported success');
+}
+
 async function test_session_refresh() {
   console.log('START MODULE TEST controllers/SessionController.mjs');
   await test_concurrent_refresh_converges_on_one_token();
@@ -213,5 +266,6 @@ async function test_session_refresh() {
   await test_force_killed_session_is_unauthorized();
   await test_logout_survives_inflight_refresh();
   await test_update_session_requires_expected_token();
+  await test_logout_kills_a_concurrently_rotated_session();
   console.log('END MODULE TEST controllers/SessionController.mjs');
 }

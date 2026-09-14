@@ -303,6 +303,19 @@ class AuthService {
     return this.sessionStore.expireSessionByToken(token);
   }
 
+  async expireSessionById(id) {
+    return this.sessionStore.expireSessionById(id);
+  }
+
+  async retrieveSessionByCurrentOrPriorToken(token) {
+    try {
+      return await this.sessionStore.retrieveSessionByCurrentOrPriorToken(token);
+    } catch (err) {
+      logger.error(err);
+      return null;
+    }
+  }
+
   async validateAuthSessionToken(token) {
     let tokenRefreshed = false;
     if (!token || !this.isTokenSyntacticallyValid(token)) {

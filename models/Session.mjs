@@ -35,6 +35,7 @@ class Session {
   }
 
   refreshSessionToken(token = uuidv4()) {
+    this.linked_from = this.token;
     this.token = token;
     this.time_token_created = new Date();
     return this;

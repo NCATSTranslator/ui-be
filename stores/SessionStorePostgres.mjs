@@ -43,6 +43,22 @@ class SessionStorePostgres extends iSessionStore {
     return retval;
   }
 
+  async retrieveSessionByCurrentOrPriorToken(token) {
+    let retval = null;
+    const sql = `
+      SELECT *
+      FROM sessions
+      WHERE token = $1 OR linked_from = $1
+      ORDER BY (token = $1) DESC
+      LIMIT 1
+    `;
+    let res = await pgExec(this.pool, sql, [token]);
+    if (res.rows.length > 0) {
+      retval = new Session(res.rows[0]);
+    }
+    return retval;
+  }
+
   async createNewSession(session) {
     let retval = null;
     const sql = `
@@ -87,6 +103,16 @@ class SessionStorePostgres extends iSessionStore {
       [session.token, session.time_token_created, session.time_session_created,
       session.time_session_updated, session.linked_from, session.force_kill,
       session.user_id, session.data, session.auth_provider, session.id, expectedToken]);
+    if (res.rows.length > 0) {
+      retval = new Session(res.rows[0]);
+    }
+    return retval;
+  }
+
+  async expireSessionById(id) {
+    let retval = null;
+    let sql = `UPDATE sessions SET force_kill = true WHERE id = $1 RETURNING *`;
+    let res = await pgExec(this.pool, sql, [id]);
     if (res.rows.length > 0) {
       retval = new Session(res.rows[0]);
     }

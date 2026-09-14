@@ -17,6 +17,14 @@ class iSessionStore {
     throw new Error("Not implemented");
   }
 
+  async retrieveSessionByCurrentOrPriorToken(token) {
+    throw new Error("Not implemented");
+  }
+
+  async expireSessionById(id) {
+    throw new Error("Not implemented");
+  }
+
   async updateSession(sessionData, expectedToken) {
     throw new Error("Not implemented");
   }
