@@ -93,7 +93,7 @@ class QueryAPIController {
   }
 
   async touch_user_query(req, res, _next) {
-    const sid = parseInt(req.body.sid, 10);
+    const sid = parseInt(req.body?.sid, 10);
     const user_id = wutil.request_to_user_id(req);
     const is_deleted = false;
     try {
@@ -115,7 +115,7 @@ class QueryAPIController {
   async copy_user_query(req, res, _next) {
     // user_id is valid because of session authentication middleware
     const user_id = wutil.request_to_user_id(req);
-    const pk = req.body.pk;
+    const pk = req.body?.pk;
     if (!isUuid(pk)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `PK is not a UUID: ${pk}`);
     }
@@ -322,7 +322,7 @@ class QueryAPIController {
   }
 
   _is_valid_query_result_request(req) {
-    return req.params.hasOwnProperty('qid') && req.params.qid;
+    return Object.hasOwn(req.params, 'qid') && req.params.qid;
   }
 
   _is_valid_query_update_request(req) {

@@ -23,6 +23,25 @@ import { BiolinkAPIController } from './controllers/BiolinkAPIController.mjs';
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
 import { QueryServicexFEAdapter } from './adapters/QueryServicexFEAdapter.mjs';
 
+export function _legacy_prefix_redirect(req, res, _next) {
+  const stripped = req.originalUrl.replace(/^\/(main|demo)/, '');
+  const target = stripped.startsWith('/') ? stripped : `/${stripped}`;
+  logger.info(`redirection: ${req.originalUrl} -> ${target}`);
+  return res.redirect(308, target);
+}
+
+export function _handle_uncaught_error(err, req, res, next) {
+  wutil.log_internal_server_error(req, err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  const status = err.status || err.statusCode;
+  if (status >= 400 && status < 500) {
+    return wutil.send_error(res, status, err.expose ? err.message : 'Malformed Request');
+  }
+  return res.status(500).send('Internal server error');
+}
+
 export function start_server(config, services) {
 
   const filters = {whitelistRx: /^ara-/}; // TODO: move to config file
@@ -207,13 +226,7 @@ export function start_server(config, services) {
     handleDemoQueryRequest(SITE_PATH_PREFIX));
 
   // Redirect old /main and /demo URLs
-  app.all(['/main{/*splat}', '/demo{/*splat}'], (req, res, next) => {
-    if (['/main', '/demo'].includes(req.originalUrl)) {
-      res.redirect(308, '/');
-    }
-    logger.info(`redirection: ${req.originalUrl} -> ${req.originalUrl.replace(/^\/(main|demo)/, '')}`);
-    res.redirect(308, req.originalUrl.replace(/^\/(main|demo)/, ''));
-  });
+  app.all(['/main{/*splat}', '/demo{/*splat}'], _legacy_prefix_redirect);
 
   // Any route not explicitly handled above should simply return the page skeleton and allow the FE to handle it
   app.all('/{*splat}', (req, res, next) => {
@@ -221,13 +234,7 @@ export function start_server(config, services) {
     res.sendFile(path.join(build_dir, 'index.html'));
   });
 
-  app.use((err, req, res, _next) => {
-    wutil.log_internal_server_error(req, err);
-    if (res.headersSent) {
-      return _next(err);
-    }
-    res.status(500).send('Internal server error');
-  });
+  app.use(_handle_uncaught_error);
 
   app.listen(8386);
   logger.info("Der Anfang ist das Ende und das Ende ist der Anfang");

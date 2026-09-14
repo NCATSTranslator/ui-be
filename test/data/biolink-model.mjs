@@ -1,4 +1,4 @@
-export { suite }
+export { suite, _test_biolink_config }
 
 import * as test from "#test/lib/common.mjs";
 import { load_biolink } from "#lib/biolink-model.mjs";

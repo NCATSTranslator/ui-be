@@ -3,7 +3,7 @@
 export { BiolinkAPIController };
 
 import * as wutil from "#lib/webutils.mjs";
-import { HEADERS, HTTP_CODE } from "#lib/common.mjs";
+import { HEADERS, HTTP_CODE, is_array } from "#lib/common.mjs";
 import { get_node_type_description, infores_to_provenance } from "#lib/biolink-model.mjs";
 
 class BiolinkAPIController {
@@ -14,6 +14,10 @@ class BiolinkAPIController {
       return wutil.send_error(res, HTTP_CODE.BAD_REQUEST, "Size of request is too large");
     }
     const node_types = req.body;
+    if (!is_array(node_types)) {
+      return wutil.send_error(res, HTTP_CODE.BAD_REQUEST,
+        `Expected body to be JSON array. Got: ${JSON.stringify(node_types)}`);
+    }
     const mapping = {};
     for (const type of node_types) {
       mapping[type] = get_node_type_description(type);

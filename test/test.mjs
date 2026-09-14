@@ -14,6 +14,9 @@ import {test_biothings_annotation} from "#test/biothings-annotation.mjs";
 import {test_evidence} from "#test/evidence.mjs";
 import {test_canvas} from "#test/canvas.mjs";
 import {test_session_refresh} from "#test/session-refresh.mjs";
+import {test_express_request_shapes} from "#test/express-request-shapes.mjs";
+import {test_legacy_path_redirects} from "#test/legacy-path-redirects.mjs";
+import {test_error_handler} from "#test/error-handler.mjs";
 
 logger.level = "silent";
 await test_trapi_core();
@@ -31,3 +34,6 @@ await test_biothings_annotation();
 await test_evidence();
 await test_canvas();
 await test_session_refresh();
+await test_express_request_shapes();
+await test_legacy_path_redirects();
+await test_error_handler();
