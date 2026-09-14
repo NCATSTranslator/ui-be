@@ -474,6 +474,11 @@ function _test_infores_to_provenance() {
       config_loader: () => load_biolink(_test_biolink_config()),
       "args": ["infores:not-a-real-infores"],
       "expected": null
+    },
+    "inherited_key_returns_null": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["constructor"],
+      "expected": null
     }
   });
 }
@@ -488,6 +493,11 @@ function _test_is_valid_infores() {
     "unknown_infores_is_invalid": {
       config_loader: () => load_biolink(_test_biolink_config()),
       "args": ["infores:not-a-real-infores"],
+      "expected": false
+    },
+    "inherited_key_is_invalid": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["constructor"],
       "expected": false
     }
   });

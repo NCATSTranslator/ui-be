@@ -4,7 +4,7 @@ export { BiolinkAPIController };
 
 import * as wutil from "#lib/webutils.mjs";
 import { HEADERS, HTTP_CODE } from "#lib/common.mjs";
-import { get_node_type_description } from "#lib/biolink-model.mjs";
+import { get_node_type_description, infores_to_provenance } from "#lib/biolink-model.mjs";
 
 class BiolinkAPIController {
   get_node_descriptions(req, res, next) {
@@ -19,5 +19,14 @@ class BiolinkAPIController {
       mapping[type] = get_node_type_description(type);
     }
     return res.status(HTTP_CODE.SUCCESS).json(mapping);
+  }
+
+  get_infores_catalog_entry(req, res, next) {
+    const infores = req.params.infores_id;
+    const catalog_entry = infores_to_provenance(infores);
+    if (catalog_entry === null) {
+      return wutil.send_error(res, HTTP_CODE.NOT_FOUND, `No infores catalog entry found for ${infores}`);
+    }
+    return res.status(HTTP_CODE.SUCCESS).json(catalog_entry);
   }
 }
