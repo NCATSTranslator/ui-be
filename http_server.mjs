@@ -107,6 +107,9 @@ export function start_server(config, services) {
   app.post(`${API_PATH_V1}/biolink/node/description`,
     session_controller.authenticateUnprivilegedRequest.bind(session_controller),
     biolink_api_controller.get_node_descriptions.bind(biolink_api_controller));
+  app.get(`${API_PATH_V1}/biolink/infores/:infores_id`,
+    session_controller.authenticateUnprivilegedRequest.bind(session_controller),
+    biolink_api_controller.get_infores_catalog_entry.bind(biolink_api_controller));
 
   // Submit query route: privileged session
   app.post(`${API_PATH_V1}/query`,
