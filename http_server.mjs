@@ -185,7 +185,7 @@ export function start_server(config, services) {
   canvas_router.put('/:save_id/annotation/:annotation_id', user_api_controller.update_user_canvas_annotation_content.bind(user_api_controller));
   app.use(`${API_PATH_V1}/users/me/canvas`, canvas_router);
 
-  app.all(['/api', '/api/*'], (req, res) => {
+  app.all('/api{/*splat}', (req, res) => {
     return res.status(403).send('API action Forbidden');
   });
 
@@ -203,7 +203,7 @@ export function start_server(config, services) {
     handleDemoQueryRequest(SITE_PATH_PREFIX));
 
   // Redirect old /main and /demo URLs
-  app.all(['/main', '/main/*', '/demo', '/demo/*'], (req, res, next) => {
+  app.all(['/main{/*splat}', '/demo{/*splat}'], (req, res, next) => {
     if (['/main', '/demo'].includes(req.originalUrl)) {
       res.redirect(308, '/');
     }
@@ -212,7 +212,7 @@ export function start_server(config, services) {
   });
 
   // Any route not explicitly handled above should simply return the page skeleton and allow the FE to handle it
-  app.all('*', (req, res, next) => {
+  app.all('/{*splat}', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.join(build_dir, 'index.html'));
   });
