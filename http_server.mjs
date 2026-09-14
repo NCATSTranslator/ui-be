@@ -7,6 +7,7 @@ import { default as express } from 'express';
 import { default as pino } from 'pino';
 import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
+import * as wutil from './lib/webutils.mjs';
 
 import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
@@ -215,6 +216,14 @@ export function start_server(config, services) {
   app.all('/{*splat}', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.join(build_dir, 'index.html'));
+  });
+
+  app.use((err, req, res, _next) => {
+    wutil.log_internal_server_error(req, err);
+    if (res.headersSent) {
+      return _next(err);
+    }
+    res.status(500).send('Internal server error');
   });
 
   app.listen(8386);
