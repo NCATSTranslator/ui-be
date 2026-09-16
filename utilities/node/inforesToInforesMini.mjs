@@ -18,7 +18,7 @@ inforesEntries.forEach((inforesEntry) => {
         if (wiki === null && isWiki) {
           wiki = xref;
         } else if (url === null && !isWiki) {
-          url = xref;
+          url = _expandCurie(xref);
         }
       }
     }
@@ -31,6 +31,13 @@ inforesEntries.forEach((inforesEntry) => {
     };
   }
 });
+
+// The registry lists some xrefs as CURIEs rather than URLs. FAIRsharing is the only prefix it uses.
+function _expandCurie(xref) {
+  const match = xref.match(/^fairsharing:(.+)$/i);
+  if (match) return `https://fairsharing.org/${match[1]}`;
+  return xref;
+}
 
 function _cleanupKnowledgeLevel(rawKL) {
   if (rawKL === 'knowledge_assertion') {
