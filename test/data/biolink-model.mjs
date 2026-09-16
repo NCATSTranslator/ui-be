@@ -466,7 +466,7 @@ function _test_infores_to_provenance() {
       "expected": {
         "name": "RNAcentral",
         "wiki": null,
-        "url": "fairsharing:FAIRsharing.KcCjL7",
+        "url": "https://fairsharing.org/FAIRsharing.KcCjL7",
         "knowledge_level": "trusted"
       }
     },
