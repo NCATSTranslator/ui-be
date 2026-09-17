@@ -71,7 +71,7 @@ export function start_server(config, services) {
   const biolink_api_controller = new BiolinkAPIController();
   const API_PATH_V1 = '/api/v1';
   const SITE_PATH_PREFIX = '';
-  app.use(pinoHttp({logger: logger}));
+  app.use(pinoHttp({logger: logger, redact: config.logging.redact}));
   app.use(express.json({
     limit: config.json_payload_limit,
     verify: (req, _res, buf, _encoding) => {req.rawBody = buf;}
