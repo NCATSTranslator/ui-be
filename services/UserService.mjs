@@ -52,15 +52,13 @@ class UserService {
    * It cannot be recovered afterwards.
    */
   async createUserApiKey(uid, name, timeExpires = api_key_expiry()) {
-    const active = await this.apiKeyStore.count_active_api_keys_by_user_id(uid);
-    if (active >= API_KEYS_MAX_ACTIVE_PER_USER) {
+    const rawKey = generate_api_key();
+    const apiKey = await this.apiKeyStore.create_api_key(
+      ApiKey.from_raw_key(uid, name, rawKey, timeExpires), API_KEYS_MAX_ACTIVE_PER_USER);
+    if (apiKey === null) {
       throw new ApiKeyLimitError(
         `Active API key limit of ${API_KEYS_MAX_ACTIVE_PER_USER} reached. Revoke a key to create another.`);
     }
-    const rawKey = generate_api_key();
-    const apiKey = await this.apiKeyStore.create_api_key(
-      ApiKey.from_raw_key(uid, name, rawKey, timeExpires));
-    if (apiKey === null) return null;
     return { apiKey: apiKey, key: rawKey };
   }
 
