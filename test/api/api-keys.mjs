@@ -188,6 +188,11 @@ try {
   ok(Array.isArray(json) && !json.some((k) => k.id === created.id), 'revoked key is omitted from the default listing');
   const { json: all } = await getJson(`${KEY_PATH}?include_revoked=true`);
   ok(Array.isArray(all) && all.some((k) => k.id === created.id), 'revoked key appears with include_revoked=true');
+  const { res: expiredRes, json: withExpired } = await getJson(`${KEY_PATH}?include_expired=true`);
+  ok(expiredRes.status === 200 && Array.isArray(withExpired), `GET with include_expired=true responds 200 (got ${expiredRes.status})`);
+  const { res: bothRes, json: withBoth } = await getJson(`${KEY_PATH}?include_revoked=true&include_expired=true`);
+  ok(bothRes.status === 200 && Array.isArray(withBoth) && withBoth.some((k) => k.id === created.id),
+    `GET with both flags responds 200 and lists the revoked key (got ${bothRes.status})`);
 } catch (err) {
   fail(`post-revoke list request failed: ${err.message}`);
 }

@@ -38,15 +38,20 @@ class ApiKeyStorePostgres {
   }
 
   async retrieve_api_keys_by_user_id(user_id, include_revoked=false, include_expired=false, now=new Date()) {
+    const params = [user_id];
     const with_revoked = include_revoked ? '' : ' AND time_revoked IS NULL ';
-    const with_expired = include_expired ? '' : ' AND time_expires > $2 ';
+    let with_expired = '';
+    if (!include_expired) {
+      params.push(now);
+      with_expired = ` AND time_expires > $${params.length} `;
+    }
     const sql = `
       SELECT *
       FROM api_keys
       WHERE user_id = $1 ${with_revoked} ${with_expired}
       ORDER BY time_created DESC
     `;
-    const res = await pgExec(this.pool, sql, [user_id, now]);
+    const res = await pgExec(this.pool, sql, params);
     return res.rows.map((row) => new ApiKey(row));
   }
 
