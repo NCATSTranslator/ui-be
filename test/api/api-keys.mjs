@@ -19,6 +19,7 @@ import { API_KEY_PREFIX, generate_api_key } from '../../models/ApiKey.mjs';
 
 const { ok, fail, finish } = createHarness();
 const KEY_PATH = '/api/v1/users/me/api-keys';
+const UNPRIVILEGED_PATH = '/api/v1/biolink/infores/infores:semmeddb';
 const KEY_NAME = `api-keys test ${Date.now()}`;
 
 console.log(`# API keys  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
@@ -105,6 +106,20 @@ try {
 }
 
 try {
+  const { res } = await getJson(UNPRIVILEGED_PATH, { Authorization: `Bearer ${rawKey}` });
+  ok(res.status === 200, `GET ${UNPRIVILEGED_PATH} with a valid key responds 200 (got ${res.status})`);
+} catch (err) {
+  fail(`unprivileged route with valid key failed: ${err.message}`);
+}
+
+try {
+  const { res } = await getJson(UNPRIVILEGED_PATH, { Authorization: `Bearer ${generate_api_key()}` });
+  ok(res.status === 401, `GET ${UNPRIVILEGED_PATH} with an unknown key responds 401 (got ${res.status})`);
+} catch (err) {
+  fail(`unprivileged route with unknown key failed: ${err.message}`);
+}
+
+try {
   const { res } = await getJson('/api/v1/users/me', { Authorization: `Bearer ${generate_api_key()}` });
   ok(res.status === 401, `an unknown but well-formed key responds 401 (got ${res.status})`);
 } catch (err) {
@@ -181,6 +196,13 @@ try {
   ok(res.status === 401, `a revoked key responds 401 (got ${res.status})`);
 } catch (err) {
   fail(`revoked key request failed: ${err.message}`);
+}
+
+try {
+  const { res } = await getJson(UNPRIVILEGED_PATH, { Authorization: `Bearer ${rawKey}` });
+  ok(res.status === 401, `GET ${UNPRIVILEGED_PATH} with a revoked key responds 401 (got ${res.status})`);
+} catch (err) {
+  fail(`unprivileged route with revoked key failed: ${err.message}`);
 }
 
 try {

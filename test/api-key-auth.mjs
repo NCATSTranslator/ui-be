@@ -68,11 +68,42 @@ function test_extract_api_key_precedence() {
   ast.strictEqual(controller._extractApiKey(make_req()), null, 'no credential yields null');
 }
 
+function make_res() {
+  return {
+    status_code: null,
+    body: null,
+    status(code) { this.status_code = code; return this; },
+    send(body) { this.body = body; return this; }
+  };
+}
+
+async function run_gate(gate, api_key_status) {
+  const controller = new SessionController({}, { isApiKeyStatusValid: (s) => s === 'valid' });
+  const req = { apiKeyData: { status: api_key_status, user: null, apiKey: null }, sessionData: null };
+  const res = make_res();
+  let next_called = false;
+  await controller[gate](req, res, () => { next_called = true; });
+  return { res, next_called };
+}
+
+async function test_gates_reject_invalid_keys() {
+  for (const gate of ['authenticatePrivilegedRequest', 'authenticateUnprivilegedRequest']) {
+    const valid = await run_gate(gate, 'valid');
+    ast.strictEqual(valid.next_called, true, `${gate} passes a valid key through`);
+    ast.strictEqual(valid.res.status_code, null, `${gate} sends nothing for a valid key`);
+
+    const invalid = await run_gate(gate, 'revoked');
+    ast.strictEqual(invalid.next_called, false, `${gate} does not pass an invalid key through`);
+    ast.strictEqual(invalid.res.status_code, 401, `${gate} answers 401 for an invalid key`);
+  }
+}
+
 async function test_api_key_auth() {
   console.log('START MODULE TEST API key header extraction');
   test_request_to_header();
   test_extract_bearer_api_key();
   test_extract_api_key_header();
   test_extract_api_key_precedence();
+  await test_gates_reject_invalid_keys();
   console.log('END MODULE TEST API key header extraction');
 }

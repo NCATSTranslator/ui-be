@@ -97,12 +97,7 @@ class SessionController {
    * that page routes still serve the app shell and let the FE handle being logged out.
    */
   async authenticatePrivilegedRequest(req, res, next) {
-    if (req.apiKeyData) {
-      if (!this.authService.isApiKeyStatusValid(req.apiKeyData.status)) {
-        return res.status(401).send('Invalid API key. Cannot service request.');
-      }
-      return next();
-    }
+    if (req.apiKeyData) return this._authenticateApiKey(req, res, next);
 
     let oldSession = req.sessionData;
     if (!oldSession) {
@@ -121,7 +116,7 @@ class SessionController {
   }
 
   async authenticateUnprivilegedRequest(req, res, next) {
-    if (req.apiKeyData) return next();
+    if (req.apiKeyData) return this._authenticateApiKey(req, res, next);
     let oldSession = req.sessionData;
     if (oldSession && this.authService.isSessionStatusValid(oldSession.status)) {
       let [success, errstr, errcode] = await this._refreshSession(req, res, oldSession);
@@ -130,6 +125,13 @@ class SessionController {
       }
     }
     next();
+  }
+
+  _authenticateApiKey(req, res, next) {
+    if (!this.authService.isApiKeyStatusValid(req.apiKeyData.status)) {
+      return res.status(401).send('Invalid API key. Cannot service request.');
+    }
+    return next();
   }
 
   /* Gate for routes that must be driven by a human who is actually logged in. */
