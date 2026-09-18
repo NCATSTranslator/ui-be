@@ -3,6 +3,7 @@
 import * as AuthService from '../services/AuthService.mjs';
 import * as wutil from '../lib/webutils.mjs';
 import * as cmn from '../lib/common.mjs';
+import { API_KEY_PREFIX } from '../models/ApiKey.mjs';
 
 export { SessionController };
 
@@ -14,6 +15,29 @@ class SessionController {
 
   // All subsequent Session Controller middleware functions assume that this has been done
   async attachSessionData(req, res, next) {
+    const apiKeyData = await this._fetchApiKeyStatus(req);
+    if (apiKeyData) {
+      if (apiKeyData.status === AuthService.APIKEY_STORE_ERROR) {
+        return res.status(500).send(`Server error retrieving API key status.`);
+      }
+      req.apiKeyData = apiKeyData;
+      if (this.authService.isApiKeyStatusValid(apiKeyData.status)) {
+        req.sessionData = {
+          status: AuthService.SESSION_VALID,
+          user: apiKeyData.user,
+          session: null
+        };
+        this.authService.touchApiKey(apiKeyData.apiKey);
+      } else {
+        req.sessionData = {
+          status: AuthService.SESSION_INVALID_TOKEN,
+          user: null,
+          session: null
+        };
+      }
+      return next();
+    }
+
     let sessionData = await this._fetchStatus(req);
     if (!sessionData) {
       return res.status(500).send(`Server error retrieving session status.`);
@@ -26,6 +50,32 @@ class SessionController {
     let token = req.cookies[this.config.session_cookie.name];
     let retval = await this.authService.getSessionData(token);
     return retval;
+  }
+
+  async _fetchApiKeyStatus(req) {
+    const rawKey = this._extractApiKey(req);
+    if (cmn.is_missing(rawKey)) return null;
+    return this.authService.getApiKeyData(rawKey);
+  }
+
+  _extractApiKey(req) {
+    return this._extractBearerApiKey(req) ?? this._extractApiKeyHeader(req);
+  }
+
+  _extractBearerApiKey(req) {
+    const authorization = wutil.request_to_header(req, 'authorization');
+    if (authorization === null) return null;
+    const parts = authorization.split(' ').filter((part) => part !== '');
+    if (parts.length !== 2) return null;
+    const [scheme, token] = parts;
+    if (scheme.toLowerCase() !== 'bearer' || !token.startsWith(API_KEY_PREFIX)) return null;
+    return token;
+  }
+
+  _extractApiKeyHeader(req) {
+    const header = wutil.request_to_header(req, 'x-api-key');
+    if (header === null || !header.startsWith(API_KEY_PREFIX)) return null;
+    return header;
   }
 
   async getStatus(req, res, next) {
@@ -41,10 +91,14 @@ class SessionController {
    * The former will return an auth error if the existing session is invalid.
    * The latter will do nothing unless there an existing and valid session.
    *
-   * Both will return an error if there is a valid session but the attempt to
-   * refresh it fails.
+   * Both will return an error if the attempt to refresh a valid session fails
+   * outright. A session that goes invalid mid-refresh is an auth error for the
+   * former, but the latter carries on with the refreshed session data so
+   * that page routes still serve the app shell and let the FE handle being logged out.
    */
   async authenticatePrivilegedRequest(req, res, next) {
+    if (req.apiKeyData) return this._authenticateApiKey(req, res, next);
+
     let oldSession = req.sessionData;
     if (!oldSession) {
       return res.status(500).send('Server error retrieving session status');
@@ -54,40 +108,59 @@ class SessionController {
       return res.status(401).send('Invalid session status. Cannot service request.');
     }
 
-    let [success, errstr] = await this._refreshSession(req, res, oldSession);
+    let [success, errstr, errcode] = await this._refreshSession(req, res, oldSession);
     if (!success) {
-      return res.status(500).send(errstr);
+      return res.status(errcode).send(errstr);
     }
     next();
   }
 
   async authenticateUnprivilegedRequest(req, res, next) {
+    if (req.apiKeyData) return this._authenticateApiKey(req, res, next);
     let oldSession = req.sessionData;
     if (oldSession && this.authService.isSessionStatusValid(oldSession.status)) {
-      let [success, errstr] = await this._refreshSession(req, res, oldSession);
-      if (!success) {
-        return res.status(500).send(errstr);
+      let [success, errstr, errcode] = await this._refreshSession(req, res, oldSession);
+      if (!success && errcode !== 401) {
+        return res.status(errcode).send(errstr);
       }
     }
     next();
   }
 
+  _authenticateApiKey(req, res, next) {
+    if (!this.authService.isApiKeyStatusValid(req.apiKeyData.status)) {
+      return res.status(401).send('Invalid API key. Cannot service request.');
+    }
+    return next();
+  }
+
+  /* Gate for routes that must be driven by a human who is actually logged in. */
+  requireSessionAuth(req, res, next) {
+    if (req.apiKeyData) {
+      return res.status(403).send('API keys cannot be used for this request. Log in to continue.');
+    }
+    next();
+  }
 
   /* This function smells awful: it side-effects req, the DB, and cookies.
    * The possible saving grace is that this exact sequence is needed in two cases
    * and at least this centralizes it. */
   async _refreshSession(req, res, sessionData) {
+    let presentedToken = sessionData.session ? sessionData.session.token : null;
     let newSession = await this._refreshSessionInDB(sessionData);
     if (!newSession) {
-      return [false, 'Server error refreshing session'];
+      return [false, 'Server error refreshing session', 500];
     }
     newSession = await this.authService.getSessionData(newSession.token);
-    if (!newSession) {
-      return [false, 'Server error fetching refreshed session'];
+    if (!newSession.session) {
+      return [false, 'Server error fetching refreshed session', 500];
+    }
+    req.sessionData = newSession;
+    if (!this.authService.isSessionStatusValid(newSession.status)) {
+      return [false, 'Invalid session status. Cannot service request.', 401];
     }
 
-    // If the original status was 'token expired', we need to set the new cookie
-    if (sessionData.status === AuthService.SESSION_TOKEN_EXPIRED) {
+    if (newSession.session.token !== presentedToken) {
       let cookiePath = '/'; // TODO get from config
       /* This age should more correctly be maxagesec - <time already elapsed since start of session>,
        * but it doesn't really matter as we always check the session length in the BE. */
@@ -95,9 +168,7 @@ class SessionController {
       wutil.set_session_cookie(res, this.config.session_cookie, newSession.session.token,
         cookiePath, cookieMaxAgeSec);
     }
-    // Finally, attach the new sessionData to req
-    req.sessionData = newSession;
-    return [true, ''];
+    return [true, '', 200];
   }
 
   async _refreshSessionInDB(existingSession) {
@@ -154,12 +225,11 @@ class SessionController {
     let newSession = null;
     let cookiePath = '/';
     let cookieMaxAgeSec = this.authService.sessionAbsoluteTTLSec;
+    let presentedToken = curSession.session.token;
     switch (action) {
       case 'update':
         if (curSession.status === AuthService.SESSION_TOKEN_EXPIRED) {
           newSession = await this.authService.refreshSessionToken(curSession.session);
-          wutil.set_session_cookie(res, this.config.session_cookie, newSession.token,
-            cookiePath, cookieMaxAgeSec);
         } else if (curSession.status === AuthService.SESSION_VALID) {
           newSession = await this.authService.updateSessionTime(curSession.session);
         }
@@ -171,11 +241,15 @@ class SessionController {
     if (!newSession) {
       return res.status(500).send('Server error while updating status');
     }
-    newSession = await this.authService.getSessionData(newSession.token)
-    if (!newSession) {
+    let updatedSessionData = await this.authService.getSessionData(newSession.token)
+    if (!updatedSessionData.session) {
       return res.status(500).send('Server error while retrieving updated session');
     }
-    return res.status(200).json(this._sanitizeSessionData(newSession));
+    if (action === 'update' && updatedSessionData.session.token !== presentedToken) {
+      wutil.set_session_cookie(res, this.config.session_cookie, updatedSessionData.session.token,
+        cookiePath, cookieMaxAgeSec);
+    }
+    return res.status(200).json(this._sanitizeSessionData(updatedSessionData));
   }
 
   _validateStatusUpdatePayload(body) {

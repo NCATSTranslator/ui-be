@@ -1,19 +1,69 @@
 'use strict';
 export { UserService };
 import { UserPreference } from '../models/UserPreference.mjs';
-import { UserWorkspace } from '../models/UserWorkspace.mjs';
-import { UserSavedData, UserQueryData, UserTagData, SAVE_TYPE } from '../models/UserSavedData.mjs';
+import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
+import {
+  ApiKey,
+  ApiKeyLimitError,
+  API_KEYS_MAX_ACTIVE_PER_USER,
+  api_key_expiry, 
+  generate_api_key
+} from '../models/ApiKey.mjs';
+import {
+  UserCanvas,
+  CanvasGraph,
+  make_user_canvas_from_req,
+  make_canvas_update_from_req,
+  make_canvas_element_update_from_req,
+  make_graph_merge_from_req,
+  make_graph_selection_from_req,
+  make_graph_geometry_from_req,
+  make_annotation_from_req,
+  make_annotation_content_update_from_req,
+  Graph
+} from "#model/Canvas.mjs";
 
 class UserService {
-  constructor(userStore, userPreferenceStore, userSavedDataStore, userWorkspaceStore) {
+  constructor(
+      userStore,
+      userPreferenceStore,
+      userSavedDataStore,
+      canvasStore,
+      apiKeyStore,
+      entitySigningSecret = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
     this.savedDataStore = userSavedDataStore;
-    this.userWorkspaceStore = userWorkspaceStore;
+    this.canvasStore = canvasStore;
+    this.entitySigningSecret = entitySigningSecret;
+    this.apiKeyStore = apiKeyStore;
   }
 
   async getUserById(uid) {
     return this.userStore.retrieveUserById(uid);
+  }
+
+  // API keys
+  async getUserApiKeys(uid, includeRevoked=false, includeExpired=false) {
+    return this.apiKeyStore.retrieve_api_keys_by_user_id(uid, includeRevoked, includeExpired);
+  }
+
+  /* We store the raw key's hash and hand the plaintext back to the caller.
+   * It cannot be recovered afterwards.
+   */
+  async createUserApiKey(uid, name, timeExpires = api_key_expiry()) {
+    const rawKey = generate_api_key();
+    const apiKey = await this.apiKeyStore.create_api_key(
+      ApiKey.from_raw_key(uid, name, rawKey, timeExpires), API_KEYS_MAX_ACTIVE_PER_USER);
+    if (apiKey === null) {
+      throw new ApiKeyLimitError(
+        `Active API key limit of ${API_KEYS_MAX_ACTIVE_PER_USER} reached. Revoke a key to create another.`);
+    }
+    return { apiKey: apiKey, key: rawKey };
+  }
+
+  async revokeUserApiKey(uid, keyId) {
+    return this.apiKeyStore.revoke_api_key_by_id(keyId, uid);
   }
 
   // Preferences
@@ -79,34 +129,100 @@ class UserService {
     return this.savedDataStore.restoreUserSavedDataBatch(uid, sids);
   }
 
-  // Workspaces
-  async getUserWorkspaces(uid, includeData=false, includeDeleted=false) {
-    return this.userWorkspaceStore.retrieveWorkspacesByUserId(uid, includeData, includeDeleted);
+  async get_user_canvases(user_id, include_deleted=false) {
+    const rows = await this.canvasStore.get_canvases_by_user(user_id, include_deleted);
+    const canvases = rows.map(row => new UserCanvas(row));
+    return canvases;
   }
 
-  async getUserWorkspaceById(ws_id, includeDeleted=false) {
-    return this.userWorkspaceStore.retrieveWorkspaceById(ws_id, includeDeleted);
+  async get_canvas_graph(user_id, canvas_id, include_deleted=false) {
+    const graph = await this.canvasStore.get_canvas_graph_by_user(user_id, canvas_id, include_deleted);
+    if (graph === null) return null;
+    return new CanvasGraph(graph);
   }
 
-  async createUserWorkspace(workspace) {
-    return this.userWorkspaceStore.createUserWorkspace(workspace);
+  async merge_canvas_graph(user_id, canvas_id, graph_req) {
+    const { graph, tag_descriptions } = make_graph_merge_from_req(graph_req, this.entitySigningSecret);
+    const merged = await this.canvasStore.merge_canvas_graph(user_id, canvas_id, graph, tag_descriptions);
+    if (merged === null) return null;
+    return new CanvasGraph(merged);
   }
 
-  async updateUserWorkspace(workspace) {
-    return this.userWorkspaceStore.updateUserWorkspace(workspace);
+  async update_canvas_node(user_id, canvas_id, data_id, node_req) {
+    const fields = make_canvas_element_update_from_req(node_req);
+    return this.canvasStore.update_canvas_node_by_user(user_id, canvas_id, data_id, fields);
   }
 
-  async deleteUserWorkspace(ws_id) {
-    return this.userWorkspaceStore.deleteUserWorkspace(ws_id);
+  async update_canvas_edge(user_id, canvas_id, data_id, edge_req) {
+    const fields = make_canvas_element_update_from_req(edge_req);
+    return this.canvasStore.update_canvas_edge_by_user(user_id, canvas_id, data_id, fields);
   }
 
-  async updateUserWorkspaceVisibility(ws_id, is_public) {
-    return this.userWorkspaceStore.updateUserWorkspaceVisibility(ws_id, is_public);
+  async set_canvas_graph_geometry(user_id, canvas_id, geometry_req) {
+    const { node_moves, annotation_geometries } = make_graph_geometry_from_req(geometry_req);
+    return this.canvasStore.set_canvas_graph_geometry_by_user(user_id, canvas_id, node_moves, annotation_geometries);
   }
 
-  async updateUserWorkspaceLastUpdated(ws_id, last_updated=new Date()) {
-    return this.userWorkspaceStore.updateUserWorkspaceLastUpdated(ws_id, last_updated);
+  async trash_canvas_graph(user_id, canvas_id, graph_req) {
+    const { node_ids, edge_ids, annotation_ids } = make_graph_selection_from_req(graph_req);
+    const graph = await this.canvasStore.trash_canvas_graph_by_user(
+      user_id, canvas_id, node_ids, edge_ids, annotation_ids);
+    if (graph === null) return null;
+    return new CanvasGraph(graph);
   }
+
+  async restore_canvas_graph(user_id, canvas_id, graph_req) {
+    const { node_ids, edge_ids, annotation_ids } = make_graph_selection_from_req(graph_req);
+    const graph = await this.canvasStore.restore_canvas_graph_by_user(
+      user_id, canvas_id, node_ids, edge_ids, annotation_ids);
+    if (graph === null) return null;
+    return new CanvasGraph(graph);
+  }
+
+  async create_canvas_annotation(user_id, canvas_id, annotation_req) {
+    const annotation = make_annotation_from_req(canvas_id, annotation_req);
+    return this.canvasStore.create_canvas_annotation(user_id, canvas_id, annotation);
+  }
+
+  async update_canvas_annotation_content(user_id, canvas_id, annotation_id, annotation_req) {
+    const { content } = make_annotation_content_update_from_req(annotation_req);
+    return this.canvasStore.update_canvas_annotation_content_by_user(user_id, canvas_id, annotation_id, content);
+  }
+
+  async get_node_data(user_id, canvas_id, data_id) {
+    return this.canvasStore.get_node_data(user_id, canvas_id, data_id);
+  }
+
+  async get_edge_data(user_id, canvas_id, data_id) {
+    return this.canvasStore.get_edge_data(user_id, canvas_id, data_id);
+  }
+
+  async update_canvas(user_id, canvas_id, canvas_req) {
+    const fields = make_canvas_update_from_req(canvas_req);
+    const row = await this.canvasStore.update_canvas_by_user(user_id, canvas_id, fields);
+    if (row === null) return null;
+    const canvas = new UserCanvas({ user_id: user_id });
+    canvas.populate_from_raw(row);
+    return canvas;
+  }
+
+  async trash_canvases(user_id, canvas_ids) {
+    return this.canvasStore.trash_canvases_by_user(user_id, canvas_ids);
+  }
+
+  async restore_canvases(user_id, canvas_ids) {
+    return this.canvasStore.restore_canvases_by_user(user_id, canvas_ids);
+  }
+
+  async create_user_canvas(user_id, canvas_req) {
+    const user_canvas = make_user_canvas_from_req(user_id, canvas_req);
+    const graph = Graph.from_req(canvas_req, this.entitySigningSecret);
+    graph.assert_edges_reference_nodes();
+    const canvas = await this.canvasStore.create_user_canvas(user_canvas, graph);
+    user_canvas.populate_from_raw(canvas);
+    return user_canvas;
+  }
+
   // Utils
   preferenceArrayToObject(arr)  {
     var retval = {

@@ -2,6 +2,7 @@
   "document_root": "/app",
   "port": 8386,
   "response_timeout": 300,
+  "auth_check": true,
   "json_payload_limit": "10mb",
   "trapi": {
     "query_subject_key": "sn",
@@ -41,7 +42,7 @@
   "biolink": {
     "version": "4.4.3",
     "support_deprecated_predicates": false,
-    "infores_catalog": "infores-catalog-v1.1.4.json",
+    "infores_catalog": "infores-catalog-v1.1.8.json",
     "prefix_catalog": {
       "path": "prefix-catalog.json",
       "exclude": [
@@ -62,8 +63,8 @@
     }
   },
   "feature_config": {
-    "pull_source_records": false,
-    "max_hops": 4
+    "max_hops": 4,
+    "replace_indirect_edges": true
   },
   "google_analytics_id": "G-T9HTSPVNW9",
   "google_tag_manager_id": "GTM-5SGQTGPF",
@@ -72,6 +73,7 @@
   "log_format": "common",
   "_load_auth": "configurations/auth/auth.test.json",
   "_load_sessions": "configurations/sessions.json",
+  "_load_logging": "configurations/logging.json",
   "_load_storage": "configurations/storage.json",
   "_load_secrets": "configurations/secrets/secrets.json",
   "mainsite_path": "/main",

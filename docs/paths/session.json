@@ -1,0 +1,145 @@
+{
+  "/api/v1/session/status": {
+    "get": {
+      "summary": "Get session status",
+      "description": "Returns current user session status",
+      "responses": {
+        "200": {
+          "description": "Session status",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/session.json#/SessionStatus",
+                "_GDP": "Check Session Status"
+              }
+            }
+          }
+        },
+        "500": {
+          "description": "Server error retrieving session status"
+        }
+      }
+    },
+    "post": {
+      "summary": "Update session status",
+      "description": "Update or expire the current session",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/session.json#/SessionUpdateRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Updated session status",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/session.json#/SessionStatus"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid request payload"
+        },
+        "401": {
+          "description": "Invalid session status"
+        },
+        "500": {
+          "description": "Server error updating session"
+        }
+      }
+    }
+  },
+  "/oauth2/redir/{provider}": {
+    "get": {
+      "summary": "OAuth2 redirect handler",
+      "description": "Handles OAuth2 authentication redirects from social providers",
+      "parameters": [
+        {
+          "name": "provider",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "OAuth provider name"
+        },
+        {
+          "name": "code",
+          "in": "query",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Authorization code from OAuth provider"
+        },
+        {
+          "name": "state",
+          "in": "query",
+          "schema": {
+            "type": "string"
+          },
+          "description": "State parameter for CSRF protection"
+        }
+      ],
+      "responses": {
+        "302": {
+          "description": "Redirect to application after successful authentication"
+        },
+        "400": {
+          "description": "Bad request - invalid login parameters"
+        },
+        "403": {
+          "description": "Authentication failed or login request expired"
+        }
+      }
+    }
+  },
+  "/login": {
+    "get": {
+      "summary": "Initiate login flow",
+      "description": "Redirects to OAuth provider for authentication",
+      "parameters": [
+        {
+          "name": "path",
+          "in": "query",
+          "schema": {
+            "type": "string",
+            "default": "/"
+          },
+          "description": "Redirect path after successful login"
+        }
+      ],
+      "responses": {
+        "302": {
+          "description": "Redirect to OAuth provider or application if already authenticated"
+        },
+        "500": {
+          "description": "Error creating login state session"
+        }
+      }
+    }
+  },
+  "/logout": {
+    "get": {
+      "summary": "Logout user",
+      "description": "Expires session and redirects to home page",
+      "responses": {
+        "302": {
+          "description": "Redirect to home page after logout"
+        }
+      }
+    }
+  }
+}

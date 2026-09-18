@@ -8,7 +8,7 @@ import { loadChebi } from './lib/chebi.mjs';
 import { load_trapi } from './lib/trapi/core.mjs';
 import { TranslatorService } from './services/TranslatorService.mjs';
 import { ARSClient } from './lib/ARSClient.mjs';
-import * as httpserver from './HTTPServer.mjs';
+import * as httpserver from './http_server.mjs';
 import { AuthService } from './services/AuthService.mjs';
 import { UserService } from './services/UserService.mjs';
 import { QueryService } from './services/QueryService.mjs';
@@ -19,8 +19,9 @@ import { UserStorePostgres } from './stores/UserStorePostgres.mjs';
 import { pg } from './lib/postgres_preamble.mjs';
 import { UserPreferenceStorePostgres } from './stores/UserPreferenceStorePostgres.mjs';
 import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.mjs';
-import { UserWorkspaceStorePostgres } from './stores/UserWorkspaceStorePostgres.mjs';
+import { CanvasStorePostgres } from './stores/CanvasStorePostgres.mjs';
 import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
+import { ApiKeyStorePostgres } from './stores/ApiKeyStorePostgres.mjs';
 
 
 // Load the config asap as basically everything depends on it
@@ -66,11 +67,29 @@ const AUTH_SERVICE = (function (config) {
     tokenTTLSec: config.sessions.token_ttl_sec,
     sessionAbsoluteTTLSec: config.sessions.session_absolute_ttl_sec,
     sessionMaxIdleTimeSec: config.sessions.session_max_idle_time_sec,
-    loginRequestTTLSec: config.sessions.login_request_ttl_sec
+    loginRequestTTLSec: config.sessions.login_request_ttl_sec,
+    apiKeyTouchIntervalSec: config.sessions.api_key_touch_interval_sec
   },
   new SessionStorePostgres(dbPool),
-  new UserStorePostgres(dbPool));
+  new UserStorePostgres(dbPool),
+  new ApiKeyStorePostgres(dbPool));
 })(SERVER_CONFIG);
+
+/* Session auth checking is controlled from here so the HTTP layer and SessionController stay
+ * untouched. Setting "auth_check": false enables a bypass that ensures a fixed test user exists in
+ * the DB and makes every request resolve to it; any other value (or its absence) leaves normal auth
+ * in place. As a safety rail, disabling auth is only permitted under the mock configuration
+ * (ars_endpoint.host === "mock"): anywhere else we refuse to start so a real deployment can never
+ * accidentally run with session auth turned off. */
+const IS_MOCK_CONFIG = SERVER_CONFIG.ars_endpoint.host === 'mock';
+if (SERVER_CONFIG.auth_check === false) {
+  if (!IS_MOCK_CONFIG) {
+    throw new Error('Refusing to start: "auth_check" is false but this is not the mock '
+      + 'configuration (ars_endpoint.host !== "mock"). Session auth may only be disabled under mock.');
+  }
+  const { bypassSessionAuth } = await import('./mock/auth.mjs');
+  await bypassSessionAuth(AUTH_SERVICE);
+}
 
 // Bootstrap the user service
 const USER_SERVICE = (function (config) {
@@ -83,7 +102,9 @@ const USER_SERVICE = (function (config) {
     new UserStorePostgres(dbPool),
     new UserPreferenceStorePostgres(dbPool),
     new UserSavedDataStorePostgres(dbPool),
-    new UserWorkspaceStorePostgres(dbPool)
+    new CanvasStorePostgres(dbPool),
+    new ApiKeyStorePostgres(dbPool),
+    config.secrets.hmac.key
   );
 })(SERVER_CONFIG);
 
@@ -98,7 +119,7 @@ const QUERY_SERVICE = (function (config) {
 })(SERVER_CONFIG);
 logger.info(SERVER_CONFIG, "Server configuration");
 
-httpserver.startServer(SERVER_CONFIG, {
+httpserver.start_server(SERVER_CONFIG, {
   translatorService: TRANSLATOR_SERVICE,
   authService: AUTH_SERVICE,
   userService: USER_SERVICE,

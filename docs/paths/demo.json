@@ -1,0 +1,101 @@
+{
+  "/demo/disease/{disease_id}": {
+    "get": {
+      "summary": "Demo disease query",
+      "description": "Execute a demo query for a specific disease",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "disease_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Disease ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Demo query executed"
+        },
+        "400": {
+          "description": "Invalid demo query"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/demo/gene/{gene_id}": {
+    "get": {
+      "summary": "Demo gene query",
+      "description": "Execute a demo query for a specific gene",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "gene_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Gene ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Demo query executed"
+        },
+        "400": {
+          "description": "Invalid demo query"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  },
+  "/demo/chemical/{chemical_id}": {
+    "get": {
+      "summary": "Demo chemical query",
+      "description": "Execute a demo query for a specific chemical",
+      "security": [
+        {
+          "cookieAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "chemical_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "Chemical ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Demo query executed"
+        },
+        "400": {
+          "description": "Invalid demo query"
+        },
+        "500": {
+          "description": "Internal server error"
+        }
+      }
+    }
+  }
+}

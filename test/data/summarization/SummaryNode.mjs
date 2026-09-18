@@ -12,15 +12,17 @@ function _test_SummaryNode() {
   return test.make_class_test({
     default_class_constructor: {
       class_constructor: {
-        args: [],
+        args: ["A"],
         expected: {
+          id: "A",
           aras: [],
           descriptions: [],
           names: [],
           types: [],
           synonyms: [],
           curies: [],
-          provenance: []
+          provenance: [],
+          source_time: null
         }
       }
     },
@@ -28,27 +30,31 @@ function _test_SummaryNode() {
       class_constructor: {
         args: [null],
         expected: {
+          id: null,
           aras: [],
           descriptions: [],
           names: [],
           types: [],
           synonyms: [],
           curies: [],
-          provenance: []
+          provenance: [],
+          source_time: null
         }
       }
     },
     with_agents: {
       class_constructor: {
-        args: [["ara1", "ara2"]],
+        args: ["A", ["ara1", "ara2"]],
         expected: {
+          id: "A",
           aras: ["ara1", "ara2"],
           descriptions: [],
           names: [],
           types: [],
           synonyms: [],
           curies: [],
-          provenance: []
+          provenance: [],
+          source_time: null
         }
       }
     },

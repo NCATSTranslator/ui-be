@@ -1,0 +1,21 @@
+{
+  "/health": {
+    "get": {
+      "summary": "Health check endpoint",
+      "description": "Returns server status",
+      "responses": {
+        "200": {
+          "description": "Server is healthy",
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string",
+                "example": "OK"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

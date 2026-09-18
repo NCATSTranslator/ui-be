@@ -1,0 +1,519 @@
+{
+  "CanvasLayout": {
+    "type": "string",
+    "enum": ["vertical", "horizontal", "concentric", "custom"],
+    "description": "The layout for a User Canvas"
+  },
+  "UserCanvas": {
+    "type": "object",
+    "allOf": [
+      {
+        "$ref": "./user-data.json#/UserSavedData"
+      }
+    ],
+    "properties": {
+      "data": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "$ref": "./canvas.json#/CanvasLayout"
+          }
+        },
+        "required": ["layout"]
+      }
+    },
+    "required": ["data"]
+  },
+  "CreateCanvasRequest": {
+    "type": "object",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "The label for the created Canvas"
+      },
+      "layout": {
+        "$ref": "./canvas.json#/CanvasLayout"
+      },
+      "graph": {
+        "$ref": "./canvas.json#/Graph"
+      }
+    },
+    "required": ["label", "layout"]
+  },
+  "UpdateCanvasRequest": {
+    "type": "object",
+    "description": "A partial update of a Canvas's properties; only the fields present are changed",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "A new label for the Canvas"
+      },
+      "layout": {
+        "$ref": "./canvas.json#/CanvasLayout"
+      }
+    },
+    "minProperties": 1
+  },
+  "CanvasGraph": {
+    "type": "object",
+    "properties": {
+      "nodes": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasNode"
+        }
+      },
+      "edges": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasEdge"
+        }
+      },
+      "annotations": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasAnnotation"
+        }
+      },
+      "tags": {
+        "type": "object",
+        "nullable": true,
+        "additionalProperties": {
+          "$ref": "./summary.json#/TagObject"
+        },
+        "description": "Map of tag id to its full description for every tag referenced by the Canvas nodes and edges"
+      }
+    },
+    "required": ["nodes", "edges", "tags"]
+  },
+  "CanvasNode": {
+    "type": "object",
+    "properties": {
+      "canvas_id": {
+        "type": "integer",
+        "description": "The ID of the Canvas that contains this Canvas Node"
+      },
+      "data_id": {
+        "type": "integer",
+        "description": "The Data Node ID associated with this Canvas Node"
+      },
+      "ref": {
+        "type": "string",
+        "description": "The id of the underlying data entity (e.g. the node CURIE)"
+      },
+      "label": {
+        "type": "string",
+        "description": "The user friendly label for this Canvas Node"
+      },
+      "type": {
+        "type": "string",
+        "description": "The Biolink Type for this Canvas Node"
+      },
+      "x": {
+        "type": "number",
+        "format": "double",
+        "description": "The x-coordinate on the Canvas that contains this Canvas Node"
+      },
+      "y": {
+        "type": "number",
+        "format": "double",
+        "description": "The y-coordinate on the Canvas that contains this Canvas Node"
+      },
+      "hidden": {
+        "type": "boolean",
+        "description": "A flag for if this Canvas Node is hidden"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        },
+        "description": "Map of tag labels to null (tags are defined in the Canvas tags property)"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this Canvas Node was created"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this Canvas Node was edited"
+      },
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this Canvas Node was soft deleted, or null if active"
+      }
+    }
+  },
+  "CanvasEdge": {
+    "type": "object",
+    "properties": {
+      "canvas_id": {
+        "type": "integer",
+        "description": "The ID of the Canvas that contains this Canvas Edge"
+      },
+      "data_id": {
+        "type": "integer",
+        "description": "The Data Edge ID associated with this Canvas Edge"
+      },
+      "subject_id": {
+        "type": "integer",
+        "description": "The Canvas Node ID for the subject of this Canvas Edge"
+      },
+      "object_id": {
+        "type": "integer",
+        "description": "The Canvas Node ID for the object of this Canvas Edge"
+      },
+      "ref": {
+        "type": "string",
+        "description": "The id of the underlying data entity (e.g. the edge id)"
+      },
+      "label": {
+        "type": "string",
+        "description": "The user friendly label for this Canvas Edge"
+      },
+      "hidden": {
+        "type": "boolean",
+        "description": "A flag for if this Canvas Edge is hidden"
+      },
+      "tags": {
+        "type": "object",
+        "additionalProperties": {
+          "nullable": true
+        },
+        "description": "Map of tag labels to null (tags are defined in the Canvas tags property)"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this Canvas Edge was created"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this Canvas Edge was edited"
+      },
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this Canvas Edge was soft deleted, or null if active"
+      }
+    }
+  },
+  "CanvasAnnotation": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this Canvas Annotation"
+      },
+      "canvas_id": {
+        "type": "integer",
+        "description": "The ID of the Canvas that contains this Canvas Annotation"
+      },
+      "content": {
+        "type": "string",
+        "description": "The text contained in this Canvas Annotation"
+      },
+      "x": {
+        "type": "number",
+        "format": "double",
+        "description": "The x-coordinate on the Canvas that contains this Canvas Annotation"
+      },
+      "y": {
+        "type": "number",
+        "format": "double",
+        "description": "The y-coordinate on the Canvas that contains this Canvas Annotation"
+      },
+      "width": {
+        "type": "number",
+        "format": "double",
+        "description": "The width of this Canvas Annotation"
+      },
+      "height": {
+        "type": "number",
+        "format": "double",
+        "description": "The height of this Canvas Annotation"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this Canvas Annotation was created"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this Canvas Annotation was edited"
+      },
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this Canvas Annotation was soft deleted, or null if active"
+      }
+    },
+    "required": ["id", "canvas_id", "content", "x", "y", "width", "height"]
+  },
+  "GraphNode": {
+    "type": "object",
+    "description": "A node submitted as part of a canvas Graph",
+    "allOf": [
+      {
+        "$ref": "./summary.json#/SummaryNode"
+      }
+    ],
+    "properties": {
+      "x": {
+        "type": "number",
+        "format": "double",
+        "description": "The x-coordinate for this node on the canvas"
+      },
+      "y": {
+        "type": "number",
+        "format": "double",
+        "description": "The y-coordinate for this node on the canvas"
+      },
+      "hidden": {
+        "type": "boolean",
+        "default": false,
+        "description": "Whether this node is hidden on the canvas"
+      },
+      "label": {
+        "type": "string",
+        "description": "Optional display label override"
+      }
+    },
+    "required": ["x", "y"]
+  },
+  "GraphEdge": {
+    "type": "object",
+    "description": "An edge submitted as part of a canvas Graph",
+    "allOf": [
+      {
+        "$ref": "./summary.json#/SummaryEdge"
+      }
+    ],
+    "properties": {
+      "hidden": {
+        "type": "boolean",
+        "default": false,
+        "description": "Whether this edge is hidden on the canvas"
+      },
+      "label": {
+        "type": "string",
+        "description": "Optional display label override"
+      }
+    }
+  },
+  "Graph": {
+    "type": "object",
+    "properties": {
+      "nodes": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./canvas.json#/GraphNode"
+        }
+      },
+      "edges": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./canvas.json#/GraphEdge"
+        }
+      },
+      "tag_descriptions": {
+        "type": "object",
+        "additionalProperties": {
+          "$ref": "./summary.json#/TagObject"
+        }
+      },
+      "source": {
+        "type": "object",
+        "properties": {
+          "query_ref": {
+            "type": "string"
+          },
+          "result_ref": {
+            "type": "string"
+          }
+        },
+        "required": ["query_ref", "result_ref"]
+      }
+    },
+    "required": ["nodes", "edges", "source"]
+  },
+  "UpdateCanvasElementRequest": {
+    "type": "object",
+    "description": "A partial update of a Canvas Node or Edge's display properties; only the fields present are changed. Node position is updated through the dedicated move endpoint, not here.",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "A new display label for the Canvas Node or Edge"
+      },
+      "hidden": {
+        "type": "boolean",
+        "description": "Whether the Canvas Node or Edge is hidden on the canvas"
+      }
+    },
+    "minProperties": 1
+  },
+  "GraphSelection": {
+    "type": "object",
+    "description": "A selection of Canvas Node and Edge data ids and Canvas Annotation ids to soft delete or restore. At least one id across the three collections is required. Soft deleting a node also soft deletes every edge attached to it; restoring an edge requires both of its endpoint nodes to be active. Annotations are independent: they neither cascade nor depend on anything else.",
+    "properties": {
+      "nodes": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "description": "The data ids of the Canvas Nodes to soft delete or restore"
+      },
+      "edges": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "description": "The data ids of the Canvas Edges to soft delete or restore"
+      },
+      "annotations": {
+        "type": "array",
+        "items": {
+          "type": "integer"
+        },
+        "description": "The ids of the Canvas Annotations to soft delete or restore"
+      }
+    }
+  },
+  "CreateAnnotationRequest": {
+    "type": "object",
+    "description": "A new Canvas Annotation. Content and the full rectangle are all required; null is not accepted for any field.",
+    "properties": {
+      "content": {
+        "type": "string",
+        "description": "The text for the annotation"
+      },
+      "x": {
+        "type": "number",
+        "format": "double",
+        "description": "The x-coordinate for the annotation on the canvas"
+      },
+      "y": {
+        "type": "number",
+        "format": "double",
+        "description": "The y-coordinate for the annotation on the canvas"
+      },
+      "width": {
+        "type": "number",
+        "format": "double",
+        "minimum": 0,
+        "description": "The width of the annotation"
+      },
+      "height": {
+        "type": "number",
+        "format": "double",
+        "minimum": 0,
+        "description": "The height of the annotation"
+      }
+    },
+    "required": ["content", "x", "y", "width", "height"]
+  },
+  "UpdateAnnotationContentRequest": {
+    "type": "object",
+    "description": "A new body of text for a Canvas Annotation. Position and size are updated through the graph geometry endpoint, not here.",
+    "properties": {
+      "content": {
+        "type": "string",
+        "description": "The new text for the annotation"
+      }
+    },
+    "required": ["content"]
+  },
+  "GraphGeometry": {
+    "type": "object",
+    "description": "New positions for Canvas Nodes and new rectangles for Canvas Annotations. Both collections are optional but at least one must be non-empty.",
+    "properties": {
+      "nodes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "data_id": {
+              "type": "integer",
+              "description": "The data id of the Canvas Node to move"
+            },
+            "x": {
+              "type": "number",
+              "format": "double",
+              "description": "The new x-coordinate for the node on the canvas"
+            },
+            "y": {
+              "type": "number",
+              "format": "double",
+              "description": "The new y-coordinate for the node on the canvas"
+            }
+          },
+          "required": ["data_id", "x", "y"]
+        },
+        "description": "The Canvas Nodes to move with their new positions"
+      },
+      "annotations": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "integer",
+              "description": "The id of the Canvas Annotation to place"
+            },
+            "x": {
+              "type": "number",
+              "format": "double",
+              "description": "The new x-coordinate for the annotation on the canvas"
+            },
+            "y": {
+              "type": "number",
+              "format": "double",
+              "description": "The new y-coordinate for the annotation on the canvas"
+            },
+            "width": {
+              "type": "number",
+              "format": "double",
+              "minimum": 0,
+              "description": "The new width of the annotation. Omit to leave the stored width unchanged; must be sent together with height and must not be null."
+            },
+            "height": {
+              "type": "number",
+              "format": "double",
+              "minimum": 0,
+              "description": "The new height of the annotation. Omit to leave the stored height unchanged; must be sent together with width and must not be null."
+            }
+          },
+          "required": ["id", "x", "y"]
+        },
+        "description": "The Canvas Annotations to place. Position (x, y) is required on every entry. Size (width, height) is optional and must be supplied as a pair. Send both to resize, or omit both to leave the stored size untouched. null is never accepted for any of the four fields; omitting a field is the only way to leave it unchanged."
+      }
+    }
+  },
+  "CanvasGeometry": {
+    "type": "object",
+    "description": "The Canvas Nodes and Canvas Annotations that were updated by a geometry request",
+    "properties": {
+      "nodes": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasNode"
+        }
+      },
+      "annotations": {
+        "type": "array",
+        "items": {
+          "$ref": "./canvas.json#/CanvasAnnotation"
+        }
+      }
+    },
+    "required": ["nodes", "annotations"]
+  }
+}

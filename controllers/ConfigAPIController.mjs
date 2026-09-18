@@ -19,6 +19,7 @@ class ConfigAPIController {
       include_projects: this.config.frontend.include_projects,
       include_hashed_parameters: this.config.frontend.include_hashed_parameters,
       include_lookup: this.config.frontend.include_lookup,
+      include_canvas: this.config.frontend.include_canvas,
       show_novelty_boost: this.config.frontend.show_novelty_boost
     });
   }
