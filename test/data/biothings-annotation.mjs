@@ -95,15 +95,15 @@ function _test_make_source() {
   return test.make_function_test({
     "identifies_the_source_and_links_to_the_entity": {
       args: [SOURCES.CHEBI, "CHEBI:001"],
-      expected: { id: "chebi", url: "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:001" }
+      expected: { id: "chebi", name: "ChEBI", url: "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:001" }
     },
     "falls_back_to_the_source_url_without_an_id": {
       args: [SOURCES.CHEBI],
-      expected: { id: "chebi", url: "https://www.ebi.ac.uk/chebi/" }
+      expected: { id: "chebi", name: "ChEBI", url: "https://www.ebi.ac.uk/chebi/" }
     },
     "falls_back_to_the_source_url_when_it_has_no_entity_link": {
       args: [SOURCES.PHARMGKB, "PA448497"],
-      expected: { id: "pharmgkb", url: "https://www.pharmgkb.org/" }
+      expected: { id: "pharmgkb", name: "PharmGKB", url: "https://www.pharmgkb.org/" }
     }
   });
 }
