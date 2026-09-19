@@ -9,7 +9,8 @@ const SESSION_PARAMS = {
   tokenTTLSec: 1800,
   sessionAbsoluteTTLSec: 15780000,
   sessionMaxIdleTimeSec: 15780000,
-  loginRequestTTLSec: 3600
+  loginRequestTTLSec: 3600,
+  apiKeyTouchIntervalSec: 300
 };
 
 const COOKIE_CONFIG = {

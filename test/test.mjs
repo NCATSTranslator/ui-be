@@ -17,6 +17,9 @@ import {test_session_refresh} from "#test/session-refresh.mjs";
 import {test_express_request_shapes} from "#test/express-request-shapes.mjs";
 import {test_legacy_path_redirects} from "#test/legacy-path-redirects.mjs";
 import {test_error_handler} from "#test/error-handler.mjs";
+import {test_api_key} from "#test/ApiKey.mjs";
+import {test_api_key_auth} from "#test/api-key-auth.mjs";
+import {test_common} from "#test/common.mjs";
 
 logger.level = "silent";
 await test_trapi_core();
@@ -37,3 +40,6 @@ await test_session_refresh();
 await test_express_request_shapes();
 await test_legacy_path_redirects();
 await test_error_handler();
+await test_api_key();
+await test_api_key_auth();
+await test_common();
