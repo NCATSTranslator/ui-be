@@ -2,6 +2,7 @@ export { suite }
 
 import * as test from "#test/lib/common.mjs";
 import * as cmn from "#lib/common.mjs";
+import { load_biolink } from "#lib/biolink-model.mjs";
 import { make_section, make_source, SOURCES } from "#lib/biothings-annotation.mjs";
 
 const ANNOTATION_ID = "biothings_annotations";
@@ -12,6 +13,7 @@ const suite = {
     is_disease: _test_is_disease(),
     is_gene: _test_is_gene(),
     inject_curies: _test_inject_curies(),
+    make_curie_entry: _test_make_curie_entry(),
     make_section: _test_make_section(),
     make_source: _test_make_source(),
     make_rule_collect_chemical_annotations: _test_make_rule_collect_chemical_annotations(),
@@ -79,9 +81,25 @@ function _test_is_gene() {
   });
 }
 
+function _test_make_curie_entry() {
+  return test.make_function_test({
+    "resolves_a_known_prefix_to_a_url": {
+      config_loader: _load_biolink,
+      args: ["MESH:D001"],
+      expected: { curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }
+    },
+    "unknown_prefix_yields_null_url": {
+      config_loader: _load_biolink,
+      args: ["CHEMBL:001"],
+      expected: { curie: "CHEMBL:001", url: null }
+    }
+  });
+}
+
 function _test_inject_curies() {
   return test.make_function_test({
     "injects_curies_into_each_populated_annotation_type": {
+      config_loader: _load_biolink,
       args: [{
         curies: ["CHEBI:001", "CHEMBL:001", "CHEBI:001"],
         annotations: {
@@ -92,22 +110,23 @@ function _test_inject_curies() {
       expected: {
         curies: ["CHEBI:001", "CHEMBL:001", "CHEBI:001"],
         annotations: {
-          chemical: { curies: make_section(["CHEBI:001", "CHEMBL:001"]), approval: make_section(3, []) },
+          chemical: { curies: make_section([{ curie: "CHEBI:001", url: "http://purl.obolibrary.org/obo/CHEBI_001" }, { curie: "CHEMBL:001", url: null }]), approval: make_section(3, []) },
           gene: { curies: null, name: null }
         }
       }
     },
     "preserves_existing_section_sources": {
+      config_loader: _load_biolink,
       args: [{
         curies: ["MONDO:001", "MESH:D001"],
         annotations: {
-          disease: { curies: make_section(["MESH:D001"], [make_source(SOURCES.MONDO, "MONDO:001")]) }
+          disease: { curies: make_section([{ curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }], [make_source(SOURCES.MONDO, "MONDO:001")]) }
         }
       }],
       expected: {
         curies: ["MONDO:001", "MESH:D001"],
         annotations: {
-          disease: { curies: make_section(["MONDO:001", "MESH:D001"], [make_source(SOURCES.MONDO, "MONDO:001")]) }
+          disease: { curies: make_section([{ curie: "MONDO:001", url: "http://purl.obolibrary.org/obo/MONDO_001" }, { curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }], [make_source(SOURCES.MONDO, "MONDO:001")]) }
         }
       }
     },
@@ -310,12 +329,13 @@ function _test_make_rule_collect_gene_annotations() {
 function _test_make_rule_collect_disease_annotations() {
   return test.make_function_test({
     "description_strips_brackets_and_quotes": {
+      config_loader: _load_biolink,
       args: [],
       expected: {
         annotations: {
           disease: {
             descriptions: make_section(["Disease text "], [make_source(SOURCES.DISEASE_ONTOLOGY, "DOID:001")]),
-            curies: make_section(["MESH:D001", "MESH:D002"], [make_source(SOURCES.MONDO, "MONDO:001"), make_source(SOURCES.DISEASE_ONTOLOGY, "DOID:001")]),
+            curies: make_section([{ curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }, { curie: "MESH:D002", url: "http://id.nlm.nih.gov/mesh/D002" }], [make_source(SOURCES.MONDO, "MONDO:001"), make_source(SOURCES.DISEASE_ONTOLOGY, "DOID:001")]),
             synonyms: null,
             clinical_trials: null
           }
@@ -436,12 +456,13 @@ function _test_make_rule_collect_disease_annotations() {
       post: test.apply_rule
     },
     "synonyms_exclude_identifiers": {
+      config_loader: _load_biolink,
       args: [],
       expected: {
         annotations: {
           disease: {
             descriptions: null,
-            curies: make_section(["MESH:D001"], [make_source(SOURCES.MONDO, "MONDO:001")]),
+            curies: make_section([{ curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }], [make_source(SOURCES.MONDO, "MONDO:001")]),
             synonyms: make_section(["diabetes"], []),
             clinical_trials: null
           }
@@ -468,6 +489,15 @@ function _test_make_rule_collect_other_annotations() {
       args: [],
       expected: Error
     }
+  });
+}
+
+function _load_biolink() {
+  return load_biolink({
+    version: "4.4.3",
+    support_deprecated_predicates: false,
+    infores_catalog: "infores-catalog-v1.1.8.json",
+    prefix_catalog: { path: "prefix-catalog.json", exclude: ["VANDF"] }
   });
 }
 

@@ -21,9 +21,19 @@
         "type": "array",
         "nullable": true,
         "items": {
-          "type": "string",
-          "description": "CURIE identifier",
-          "example": "CHEBI:15365"
+          "type": "object",
+          "properties": {
+            "curie": {
+              "type": "string",
+              "example": "CHEBI:15365"
+            },
+            "url": {
+              "type": "string",
+              "nullable": true,
+              "description": "Resolved from the prefix catalog; null when the prefix is unknown",
+              "example": "http://purl.obolibrary.org/obo/CHEBI_15365"
+            }
+          }
         },
         "description": "All CURIE identifiers for this node, injected during summarization"
       },
@@ -115,9 +125,19 @@
         "type": "array",
         "nullable": true,
         "items": {
-          "type": "string",
-          "description": "CURIE identifier",
-          "example": "NCBIGene:207"
+          "type": "object",
+          "properties": {
+            "curie": {
+              "type": "string",
+              "example": "NCBIGene:207"
+            },
+            "url": {
+              "type": "string",
+              "nullable": true,
+              "description": "Resolved from the prefix catalog; null when the prefix is unknown",
+              "example": "http://identifiers.org/ncbigene/207"
+            }
+          }
         },
         "description": "All CURIE identifiers for this node, injected during summarization"
       },
@@ -164,9 +184,19 @@
         "type": "array",
         "nullable": true,
         "items": {
-          "type": "string",
-          "description": "CURIE identifier",
-          "example": "MESH:D006223"
+          "type": "object",
+          "properties": {
+            "curie": {
+              "type": "string",
+              "example": "MESH:D006223"
+            },
+            "url": {
+              "type": "string",
+              "nullable": true,
+              "description": "Resolved from the prefix catalog; null when the prefix is unknown",
+              "example": "http://id.nlm.nih.gov/mesh/D006223"
+            }
+          }
         },
         "description": "All CURIE identifiers for this node, including MESH xrefs, injected during summarization"
       }
