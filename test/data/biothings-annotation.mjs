@@ -11,6 +11,7 @@ const suite = {
     is_chemical: _test_is_chemical(),
     is_disease: _test_is_disease(),
     is_gene: _test_is_gene(),
+    inject_curies: _test_inject_curies(),
     make_section: _test_make_section(),
     make_source: _test_make_source(),
     make_rule_collect_chemical_annotations: _test_make_rule_collect_chemical_annotations(),
@@ -78,6 +79,49 @@ function _test_is_gene() {
   });
 }
 
+function _test_inject_curies() {
+  return test.make_function_test({
+    "injects_curies_into_each_populated_annotation_type": {
+      args: [{
+        curies: ["CHEBI:001", "CHEMBL:001", "CHEBI:001"],
+        annotations: {
+          chemical: { curies: null, approval: make_section(3, []) },
+          gene: { curies: null, name: null }
+        }
+      }],
+      expected: {
+        curies: ["CHEBI:001", "CHEMBL:001", "CHEBI:001"],
+        annotations: {
+          chemical: { curies: make_section(["CHEBI:001", "CHEMBL:001"]), approval: make_section(3, []) },
+          gene: { curies: null, name: null }
+        }
+      }
+    },
+    "preserves_existing_section_sources": {
+      args: [{
+        curies: ["MONDO:001", "MESH:D001"],
+        annotations: {
+          disease: { curies: make_section(["MESH:D001"], [make_source(SOURCES.MONDO, "MONDO:001")]) }
+        }
+      }],
+      expected: {
+        curies: ["MONDO:001", "MESH:D001"],
+        annotations: {
+          disease: { curies: make_section(["MONDO:001", "MESH:D001"], [make_source(SOURCES.MONDO, "MONDO:001")]) }
+        }
+      }
+    },
+    "leaves_node_untouched_without_curies": {
+      args: [{ curies: [], annotations: { gene: { curies: null, name: make_section("BRCA1") } } }],
+      expected: { curies: [], annotations: { gene: { curies: null, name: make_section("BRCA1") } } }
+    },
+    "leaves_node_untouched_without_annotations": {
+      args: [{ curies: ["NCBIGene:1"] }],
+      expected: { curies: ["NCBIGene:1"] }
+    }
+  });
+}
+
 function _test_make_section() {
   return test.make_function_test({
     "wraps_value_and_sources_as_metadata": {
@@ -115,6 +159,7 @@ function _test_make_rule_collect_chemical_annotations() {
       expected: {
         annotations: {
           chemical: {
+            curies: null,
             approval: make_section(3, [make_source(SOURCES.CHEMBL, "CHEMBL001")]),
             descriptions: make_section(["NCIT description", "CHEBI definition"], [make_source(SOURCES.NCIT, "C001"), make_source(SOURCES.CHEBI, "CHEBI:001")]),
             indications: make_section([{
@@ -165,12 +210,13 @@ function _test_make_rule_collect_chemical_annotations() {
       expected: {
         annotations: {
           chemical: {
+            curies: null,
             approval: null,
             descriptions: null,
             indications: null,
             synonyms: null,
             roles: null,
-            otc_status: make_section({ code: 1, label: "Prescription" }, [make_source(SOURCES.CHEMBL)]),
+            otc_status: make_section({ code: 1, label: "Prescription Only" }, [make_source(SOURCES.CHEMBL)]),
             clinical_trials: null
           }
         }
@@ -188,6 +234,7 @@ function _test_make_rule_collect_chemical_annotations() {
       expected: {
         annotations: {
           chemical: {
+            curies: null,
             approval: null,
             descriptions: null,
             indications: null,
@@ -214,6 +261,7 @@ function _test_make_rule_collect_gene_annotations() {
       expected: {
         annotations: {
           gene: {
+            curies: null,
             descriptions: make_section(["A gene summary"], [make_source(SOURCES.NCBI_GENE, 1050)]),
             name: make_section("BRCA1"),
             species: make_section("Mouse", [make_source(SOURCES.NCBI_TAXONOMY, 10090)]),
@@ -238,6 +286,7 @@ function _test_make_rule_collect_gene_annotations() {
       expected: {
         annotations: {
           gene: {
+            curies: null,
             descriptions: null,
             name: make_section("GENE1"),
             species: null,

@@ -17,6 +17,16 @@
   "ChemicalAnnotation": {
     "type": "object",
     "properties": {
+      "curies": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "string",
+          "description": "CURIE identifier",
+          "example": "CHEBI:15365"
+        },
+        "description": "All CURIE identifiers for this node, injected during summarization"
+      },
       "approval": {
         "type": "integer",
         "nullable": true,
@@ -101,6 +111,16 @@
   "GeneAnnotation": {
     "type": "object",
     "properties": {
+      "curies": {
+        "type": "array",
+        "nullable": true,
+        "items": {
+          "type": "string",
+          "description": "CURIE identifier",
+          "example": "NCBIGene:207"
+        },
+        "description": "All CURIE identifiers for this node, injected during summarization"
+      },
       "descriptions": {
         "type": "array",
         "nullable": true,
@@ -145,9 +165,10 @@
         "nullable": true,
         "items": {
           "type": "string",
-          "description": "MESH identifier",
+          "description": "CURIE identifier",
           "example": "MESH:D006223"
-        }
+        },
+        "description": "All CURIE identifiers for this node, including MESH xrefs, injected during summarization"
       }
     }
   }
