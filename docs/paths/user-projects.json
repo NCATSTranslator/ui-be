@@ -6,6 +6,9 @@
       "security": [
         {
           "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
         }
       ],
       "parameters": [
@@ -47,6 +50,9 @@
       "security": [
         {
           "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
         }
       ],
       "requestBody": {
@@ -87,6 +93,9 @@
       "security": [
         {
           "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
         }
       ],
       "requestBody": {
@@ -133,6 +142,9 @@
       "security": [
         {
           "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
         }
       ],
       "requestBody": {
@@ -171,6 +183,9 @@
       "security": [
         {
           "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
         }
       ],
       "requestBody": {
@@ -209,6 +224,9 @@
       "security": [
         {
           "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
         }
       ],
       "requestBody": {

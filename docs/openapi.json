@@ -48,6 +48,12 @@
     "/api/v1/users/me/preferences": {
       "$ref": "paths/users.json#/~1api~1v1~1users~1me~1preferences"
     },
+    "/api/v1/users/me/api-keys": {
+      "$ref": "paths/user-api-keys.json#/~1api~1v1~1users~1me~1api-keys"
+    },
+    "/api/v1/users/me/api-keys/{key_id}": {
+      "$ref": "paths/user-api-keys.json#/~1api~1v1~1users~1me~1api-keys~1{key_id}"
+    },
     "/api/v1/users/me/queries": {
       "$ref": "paths/user-queries.json#/~1api~1v1~1users~1me~1queries"
     },
@@ -64,6 +70,9 @@
         "security": [
           {
             "cookieAuth": []
+          },
+          {
+            "apiKeyAuth": []
           }
         ],
         "requestBody": {
@@ -190,6 +199,11 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "session"
+      },
+      "apiKeyAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "A user API key, sent as \"Authorization: Bearer <key>\" or in the X-API-Key header. Keys are created from a logged-in session at /api/v1/users/me/api-keys and act as the user that owns them. Managing API keys and updating session status always require a session and reject keys. When a key is presented it is the sole credential for the request: any session cookie is ignored, and an invalid, revoked, or expired key is rejected even if the cookie is valid."
       }
     },
     "schemas": {
@@ -210,6 +224,15 @@
       },
       "UserPreferences": {
         "$ref": "schemas/user.json#/UserPreferences"
+      },
+      "ApiKey": {
+        "$ref": "schemas/api-key.json#/ApiKey"
+      },
+      "CreateApiKeyRequest": {
+        "$ref": "schemas/api-key.json#/CreateApiKeyRequest"
+      },
+      "CreateApiKeyResponse": {
+        "$ref": "schemas/api-key.json#/CreateApiKeyResponse"
       },
       "UserPreferenceValue": {
         "$ref": "schemas/user.json#/UserPreferenceValue"
