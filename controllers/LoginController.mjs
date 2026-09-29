@@ -17,7 +17,8 @@ class LoginController {
   async loginWithUna(req, res, next) {
     const redirPath = req.query.path || '/';
 
-    if (req.sessionData && this.authService.isSessionStatusValid(req.sessionData.status)) {
+    if (!req.apiKeyData && req.sessionData
+        && this.authService.isSessionStatusValid(req.sessionData.status)) {
       // If the user has a valid login session, bypass the login flow
       return res.redirect(302, redirPath);
     }

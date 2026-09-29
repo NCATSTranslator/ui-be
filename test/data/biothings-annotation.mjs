@@ -2,35 +2,27 @@ export { suite }
 
 import * as test from "#test/lib/common.mjs";
 import * as cmn from "#lib/common.mjs";
-import { make_section } from "#lib/biothings-annotation.mjs";
+import { load_biolink } from "#lib/biolink-model.mjs";
+import { make_section, make_source, SOURCES } from "#lib/biothings-annotation.mjs";
 
 const ANNOTATION_ID = "biothings_annotations";
-
-const SRC = {
-  CHEBI: (id) => ({ name: "Chemical Entity of Biological Interest", url: `https://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}` }),
-  CHEMBL: (id) => ({ name: "ChEMBL", url: `https://www.ebi.ac.uk/chembl/compound_report_card/${id}/` }),
-  CLINICAL_TRIALS: { name: "ClinicalTrials.gov", url: "https://clinicaltrials.gov/" },
-  DISEASE_ONTOLOGY: (id) => ({ name: "Disease Ontology", url: `https://disease-ontology.org/?id=${id}` }),
-  DRUG_APPROVALS: { name: "Drug Approvals Knowledge Provider", url: "https://github.com/NCATSTranslator/Translator-All/wiki/Multiomics-Drug-Approvals-KP" },
-  MONDO: (id) => ({ name: "MONDO Disease Ontology", url: `https://monarchinitiative.org/${id}` }),
-  NCBI_GENE: (id) => ({ name: "National Center for Biotechnology Information Gene", url: `https://www.ncbi.nlm.nih.gov/gene/${id}` }),
-  NCBI_TAXONOMY: (id) => ({ name: "NCBI Taxonomy", url: `https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=${id}` }),
-  NCIT: (id) => ({ name: "National Cancer Institute Thesaurus", url: `https://ncithesaurus.nci.nih.gov/ncitbrowser/ConceptReport.jsp?dictionary=NCI_Thesaurus&code=${id}` }),
-  NDC: { name: "National Drug Code Directory", url: "https://www.fda.gov/drugs/drug-approvals-and-databases/national-drug-code-directory" },
-  PHARMGKB: { name: "Pharmacogenomics Knowledgebase", url: "https://www.pharmgkb.org/" },
-  PHAROS: (id) => ({ name: "Pharos", url: `https://pharos.nih.gov/targets/${id}` })
-};
 
 const suite = {
   tests: {
     is_chemical: _test_is_chemical(),
     is_disease: _test_is_disease(),
     is_gene: _test_is_gene(),
+    inject_curies: _test_inject_curies(),
+    make_curie_entry: _test_make_curie_entry(),
     make_section: _test_make_section(),
+    make_source: _test_make_source(),
     make_rule_collect_chemical_annotations: _test_make_rule_collect_chemical_annotations(),
     make_rule_collect_gene_annotations: _test_make_rule_collect_gene_annotations(),
     make_rule_collect_disease_annotations: _test_make_rule_collect_disease_annotations(),
     make_rule_collect_other_annotations: _test_make_rule_collect_other_annotations()
+  },
+  skip: {
+    SOURCES: true
   }
 };
 
@@ -89,15 +81,92 @@ function _test_is_gene() {
   });
 }
 
+function _test_make_curie_entry() {
+  return test.make_function_test({
+    "resolves_a_known_prefix_to_a_url": {
+      config_loader: _load_biolink,
+      args: ["MESH:D001"],
+      expected: { curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }
+    },
+    "unknown_prefix_yields_null_url": {
+      config_loader: _load_biolink,
+      args: ["CHEMBL:001"],
+      expected: { curie: "CHEMBL:001", url: null }
+    }
+  });
+}
+
+function _test_inject_curies() {
+  return test.make_function_test({
+    "injects_curies_into_each_populated_annotation_type": {
+      config_loader: _load_biolink,
+      args: [{
+        curies: ["CHEBI:001", "CHEMBL:001", "CHEBI:001"],
+        annotations: {
+          chemical: { curies: null, approval: make_section(3, []) },
+          gene: { curies: null, name: null }
+        }
+      }],
+      expected: {
+        curies: ["CHEBI:001", "CHEMBL:001", "CHEBI:001"],
+        annotations: {
+          chemical: { curies: make_section([{ curie: "CHEBI:001", url: "http://purl.obolibrary.org/obo/CHEBI_001" }, { curie: "CHEMBL:001", url: null }]), approval: make_section(3, []) },
+          gene: { curies: null, name: null }
+        }
+      }
+    },
+    "preserves_existing_section_sources": {
+      config_loader: _load_biolink,
+      args: [{
+        curies: ["MONDO:001", "MESH:D001"],
+        annotations: {
+          disease: { curies: make_section([{ curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }], [make_source(SOURCES.MONDO, "MONDO:001")]) }
+        }
+      }],
+      expected: {
+        curies: ["MONDO:001", "MESH:D001"],
+        annotations: {
+          disease: { curies: make_section([{ curie: "MONDO:001", url: "http://purl.obolibrary.org/obo/MONDO_001" }, { curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }], [make_source(SOURCES.MONDO, "MONDO:001")]) }
+        }
+      }
+    },
+    "leaves_node_untouched_without_curies": {
+      args: [{ curies: [], annotations: { gene: { curies: null, name: make_section("BRCA1") } } }],
+      expected: { curies: [], annotations: { gene: { curies: null, name: make_section("BRCA1") } } }
+    },
+    "leaves_node_untouched_without_annotations": {
+      args: [{ curies: ["NCBIGene:1"] }],
+      expected: { curies: ["NCBIGene:1"] }
+    }
+  });
+}
+
 function _test_make_section() {
   return test.make_function_test({
     "wraps_value_and_sources_as_metadata": {
-      args: [3, [{ name: "ChEMBL", url: "https://www.ebi.ac.uk/chembl/" }]],
-      expected: { value: 3, metadata: { sources: [{ name: "ChEMBL", url: "https://www.ebi.ac.uk/chembl/" }] } }
+      args: [3, [{ id: "chembl", url: "https://www.ebi.ac.uk/chembl/" }]],
+      expected: { value: 3, metadata: { sources: [{ id: "chembl", url: "https://www.ebi.ac.uk/chembl/" }] } }
     },
     "supports_no_sources": {
       args: [["a"], []],
       expected: { value: ["a"], metadata: { sources: [] } }
+    }
+  });
+}
+
+function _test_make_source() {
+  return test.make_function_test({
+    "identifies_the_source_and_links_to_the_entity": {
+      args: [SOURCES.CHEBI, "CHEBI:001"],
+      expected: { id: "chebi", name: "ChEBI", url: "https://www.ebi.ac.uk/chebi/searchId.do?chebiId=CHEBI:001" }
+    },
+    "falls_back_to_the_source_url_without_an_id": {
+      args: [SOURCES.CHEBI],
+      expected: { id: "chebi", name: "ChEBI", url: "https://www.ebi.ac.uk/chebi/" }
+    },
+    "falls_back_to_the_source_url_when_it_has_no_entity_link": {
+      args: [SOURCES.PHARMGKB, "PA448497"],
+      expected: { id: "pharmgkb", name: "PharmGKB", url: "https://www.pharmgkb.org/" }
     }
   });
 }
@@ -109,21 +178,22 @@ function _test_make_rule_collect_chemical_annotations() {
       expected: {
         annotations: {
           chemical: {
-            approval: make_section(3, [SRC.CHEMBL("CHEMBL001")]),
-            descriptions: make_section(["NCIT description", "CHEBI definition"], [SRC.NCIT("C001"), SRC.CHEBI("CHEBI:001")]),
+            curies: null,
+            approval: make_section(3, [make_source(SOURCES.CHEMBL, "CHEMBL001")]),
+            descriptions: make_section(["NCIT description", "CHEBI definition"], [make_source(SOURCES.NCIT, "C001"), make_source(SOURCES.CHEBI, "CHEBI:001")]),
             indications: make_section([{
               name: "disease one",
               ids: ["MONDO:001", "UMLS:001"],
               urls: ["https://kp.example/mondo001a", "https://kp.example/umls001", "https://kp.example/mondo001b"]
-            }], [SRC.DRUG_APPROVALS]),
-            synonyms: make_section({ commercial: ["aspirin"], generic: ["acetylsalicylic acid"] }, [SRC.PHARMGKB, SRC.NDC]),
+            }]),
+            synonyms: make_section({ commercial: ["aspirin"], generic: ["acetylsalicylic acid"] }),
             roles: null,
-            otc_status: make_section({ code: 2, label: "Over the Counter" }, [SRC.CHEMBL("CHEMBL001")]),
+            otc_status: make_section({ code: 2, label: "Over the Counter" }, [make_source(SOURCES.CHEMBL, "CHEMBL001")]),
             clinical_trials: make_section([
               { id: "NCT001", disease_ids: ["MONDO:001"] },
               { id: "NCT002", disease_ids: [] },
               { id: "NCT003", disease_ids: [] }
-            ], [SRC.CLINICAL_TRIALS])
+            ])
           }
         }
       },
@@ -159,12 +229,13 @@ function _test_make_rule_collect_chemical_annotations() {
       expected: {
         annotations: {
           chemical: {
+            curies: null,
             approval: null,
             descriptions: null,
             indications: null,
             synonyms: null,
             roles: null,
-            otc_status: make_section({ code: 1, label: "Prescription" }, [{ name: "ChEMBL", url: "https://www.ebi.ac.uk/chembl/" }]),
+            otc_status: make_section({ code: 1, label: "Prescription Only" }, [make_source(SOURCES.CHEMBL)]),
             clinical_trials: null
           }
         }
@@ -182,6 +253,7 @@ function _test_make_rule_collect_chemical_annotations() {
       expected: {
         annotations: {
           chemical: {
+            curies: null,
             approval: null,
             descriptions: null,
             indications: null,
@@ -208,10 +280,11 @@ function _test_make_rule_collect_gene_annotations() {
       expected: {
         annotations: {
           gene: {
-            descriptions: make_section(["A gene summary"], [SRC.NCBI_GENE(1050)]),
-            name: make_section("BRCA1", [SRC.NCBI_GENE(1050)]),
-            species: make_section("Mouse", [SRC.NCBI_TAXONOMY(10090)]),
-            tdl: make_section(["Tclin"], [SRC.PHAROS("P001")])
+            curies: null,
+            descriptions: make_section(["A gene summary"], [make_source(SOURCES.NCBI_GENE, 1050)]),
+            name: make_section("BRCA1"),
+            species: make_section("Mouse", [make_source(SOURCES.NCBI_TAXONOMY, 10090)]),
+            tdl: make_section(["Tclin"], [make_source(SOURCES.PHAROS, "P001")])
           }
         }
       },
@@ -232,8 +305,9 @@ function _test_make_rule_collect_gene_annotations() {
       expected: {
         annotations: {
           gene: {
+            curies: null,
             descriptions: null,
-            name: make_section("GENE1", [SRC.NCBI_GENE(2222)]),
+            name: make_section("GENE1"),
             species: null,
             tdl: null
           }
@@ -255,12 +329,13 @@ function _test_make_rule_collect_gene_annotations() {
 function _test_make_rule_collect_disease_annotations() {
   return test.make_function_test({
     "description_strips_brackets_and_quotes": {
+      config_loader: _load_biolink,
       args: [],
       expected: {
         annotations: {
           disease: {
-            descriptions: make_section(["Disease text "], [SRC.DISEASE_ONTOLOGY("DOID:001")]),
-            curies: make_section(["MESH:D001", "MESH:D002"], [SRC.MONDO("MONDO:001"), SRC.DISEASE_ONTOLOGY("DOID:001")]),
+            descriptions: make_section(["Disease text "], [make_source(SOURCES.DISEASE_ONTOLOGY, "DOID:001")]),
+            curies: make_section([{ curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }, { curie: "MESH:D002", url: "http://id.nlm.nih.gov/mesh/D002" }], [make_source(SOURCES.MONDO, "MONDO:001"), make_source(SOURCES.DISEASE_ONTOLOGY, "DOID:001")]),
             synonyms: null,
             clinical_trials: null
           }
@@ -309,7 +384,7 @@ function _test_make_rule_collect_disease_annotations() {
             curies: null,
             synonyms: make_section(
               ["diabetes", "diabetes mellitus", "DM", "sugar diabetes"],
-              [SRC.MONDO("MONDO:001"), SRC.DISEASE_ONTOLOGY("DOID:001")]
+              []
             ),
             clinical_trials: null
           }
@@ -338,7 +413,7 @@ function _test_make_rule_collect_disease_annotations() {
           disease: {
             descriptions: null,
             curies: null,
-            synonyms: make_section(["DM", "Sugar Diabetes"], [SRC.MONDO("MONDO:001")]),
+            synonyms: make_section(["DM", "Sugar Diabetes"], []),
             clinical_trials: null
           }
         }
@@ -363,7 +438,7 @@ function _test_make_rule_collect_disease_annotations() {
             curies: null,
             synonyms: make_section(
               ["pyloric stenosis", "gastric outlet obstruction", "gastric outflow obstruction"],
-              [SRC.DISEASE_ONTOLOGY("DOID:001")]
+              []
             ),
             clinical_trials: null
           }
@@ -381,13 +456,14 @@ function _test_make_rule_collect_disease_annotations() {
       post: test.apply_rule
     },
     "synonyms_exclude_identifiers": {
+      config_loader: _load_biolink,
       args: [],
       expected: {
         annotations: {
           disease: {
             descriptions: null,
-            curies: make_section(["MESH:D001"], [SRC.MONDO("MONDO:001")]),
-            synonyms: make_section(["diabetes"], [SRC.MONDO("MONDO:001")]),
+            curies: make_section([{ curie: "MESH:D001", url: "http://id.nlm.nih.gov/mesh/D001" }], [make_source(SOURCES.MONDO, "MONDO:001")]),
+            synonyms: make_section(["diabetes"], []),
             clinical_trials: null
           }
         }
@@ -413,6 +489,15 @@ function _test_make_rule_collect_other_annotations() {
       args: [],
       expected: Error
     }
+  });
+}
+
+function _load_biolink() {
+  return load_biolink({
+    version: "4.4.3",
+    support_deprecated_predicates: false,
+    infores_catalog: "infores-catalog-v1.1.8.json",
+    prefix_catalog: { path: "prefix-catalog.json", exclude: ["VANDF"] }
   });
 }
 

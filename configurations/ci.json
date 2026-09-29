@@ -73,6 +73,7 @@
   "log_format": "common",
   "_load_auth": "configurations/auth/auth.ci.json",
   "_load_sessions": "configurations/sessions.json",
+  "_load_logging": "configurations/logging.json",
   "_load_storage": "configurations/storage.json",
   "_load_secrets": "configurations/secrets/secrets.json",
   "mainsite_path": "/main",

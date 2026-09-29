@@ -71,7 +71,7 @@ export function start_server(config, services) {
   const biolink_api_controller = new BiolinkAPIController();
   const API_PATH_V1 = '/api/v1';
   const SITE_PATH_PREFIX = '';
-  app.use(pinoHttp({logger: logger}));
+  app.use(pinoHttp({logger: logger, redact: config.logging.redact}));
   app.use(express.json({
     limit: config.json_payload_limit,
     verify: (req, _res, buf, _encoding) => {req.rawBody = buf;}
@@ -104,7 +104,9 @@ export function start_server(config, services) {
 
   // Session status API
   app.get(`${API_PATH_V1}/session/status`, session_controller.getStatus.bind(session_controller));
-  app.post(`${API_PATH_V1}/session/status`, session_controller.updateStatus.bind(session_controller));
+  app.post(`${API_PATH_V1}/session/status`,
+    session_controller.requireSessionAuth.bind(session_controller),
+    session_controller.updateStatus.bind(session_controller));
 
   // Login/logout
   app.get('/oauth2/redir/:provider', login_controller.authRedir.bind(login_controller));
@@ -148,6 +150,14 @@ export function start_server(config, services) {
   // User routes: privileged
   app.use(`${API_PATH_V1}/users`, session_controller.authenticatePrivilegedRequest.bind(session_controller));
   app.get(`${API_PATH_V1}/users/me`, user_api_controller.get_user.bind(user_api_controller));
+
+  /* API keys: privileged AND session-only. requireSessionAuth keeps a bearer of one key from
+   * minting more or revoking the others; managing keys always requires a logged-in session. */
+  app.use(`${API_PATH_V1}/users/me/api-keys`, session_controller.requireSessionAuth.bind(session_controller));
+  app.get(`${API_PATH_V1}/users/me/api-keys`, user_api_controller.get_user_api_keys.bind(user_api_controller));
+  app.post(`${API_PATH_V1}/users/me/api-keys`, user_api_controller.create_user_api_key.bind(user_api_controller));
+  app.delete(`${API_PATH_V1}/users/me/api-keys/:key_id`, user_api_controller.revoke_user_api_key.bind(user_api_controller));
+
   app.get(`${API_PATH_V1}/users/me/preferences`, user_api_controller.get_user_prefs.bind(user_api_controller));
   app.post(`${API_PATH_V1}/users/me/preferences`, user_api_controller.update_user_prefs.bind(user_api_controller));
 
