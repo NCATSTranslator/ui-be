@@ -1,4 +1,6 @@
 #!/bin/sh
 
 cd "$(dirname $0)/node"
-node ./autoGeneratePrerunQueries.mjs '../../configurations/frontend/prerun-queries.json' '../../configurations/frontend'
+for env in "$@"; do
+  node ./generatePrerunQueries.mjs "$env" && node ./retainPKs.mjs "$env"
+done
