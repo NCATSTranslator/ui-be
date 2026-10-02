@@ -373,12 +373,12 @@ class UserAPIController {
     return next();
   }
 
-  parse_canvas_data_id(req, res, next, value) {
-    const data_id = parseInt(value, 10);
-    if (!Number.isInteger(data_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid data ID: ${value}`);
+  parse_canvas_entity_id(req, res, next, value) {
+    const entity_id = parseInt(value, 10);
+    if (!Number.isInteger(entity_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas entity ID: ${value}`);
     }
-    req.data_id = data_id;
+    req.entity_id = entity_id;
     return next();
   }
 
@@ -492,11 +492,11 @@ class UserAPIController {
   async update_user_canvas_node(req, res) {
     const user_id = wutil.request_to_user_id(req);
     const canvas_id = req.canvas_id;
-    const data_id = req.data_id;
+    const entity_id = req.entity_id;
     try {
-      const node = await this.user_service.update_canvas_node(user_id, canvas_id, data_id, req.body);
+      const node = await this.user_service.update_canvas_node(user_id, canvas_id, entity_id, req.body);
       if (node === null) {
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No node found for id ${data_id} on canvas ${canvas_id}`);
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No node found for id ${entity_id} on canvas ${canvas_id}`);
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(node);
     } catch (err) {
@@ -511,11 +511,11 @@ class UserAPIController {
   async update_user_canvas_edge(req, res) {
     const user_id = wutil.request_to_user_id(req);
     const canvas_id = req.canvas_id;
-    const data_id = req.data_id;
+    const entity_id = req.entity_id;
     try {
-      const edge = await this.user_service.update_canvas_edge(user_id, canvas_id, data_id, req.body);
+      const edge = await this.user_service.update_canvas_edge(user_id, canvas_id, entity_id, req.body);
       if (edge === null) {
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No edge found for id ${data_id} on canvas ${canvas_id}`);
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No edge found for id ${entity_id} on canvas ${canvas_id}`);
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(edge);
     } catch (err) {
@@ -623,12 +623,12 @@ class UserAPIController {
   async get_user_canvas_node_data(req, res) {
     const user_id = wutil.request_to_user_id(req);
     const canvas_id = req.canvas_id;
-    const data_id = req.data_id;
+    const entity_id = req.entity_id;
     try {
-      const data = await this.user_service.get_node_data(user_id, canvas_id, data_id);
+      const data = await this.user_service.get_node_data(user_id, canvas_id, entity_id);
       if (data === null) {
-        req.log.warn(`No node found for id ${data_id} on canvas ${canvas_id}`);
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No node found for id ${data_id} on canvas ${canvas_id}`);
+        req.log.warn(`No node found for id ${entity_id} on canvas ${canvas_id}`);
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No node found for id ${entity_id} on canvas ${canvas_id}`);
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(data);
     } catch (err) {
@@ -640,12 +640,12 @@ class UserAPIController {
   async get_user_canvas_edge_data(req, res) {
     const user_id = wutil.request_to_user_id(req);
     const canvas_id = req.canvas_id;
-    const data_id = req.data_id;
+    const entity_id = req.entity_id;
     try {
-      const data = await this.user_service.get_edge_data(user_id, canvas_id, data_id);
+      const data = await this.user_service.get_edge_data(user_id, canvas_id, entity_id);
       if (data === null) {
-        req.log.warn(`No edge found for id ${data_id} on canvas ${canvas_id}`);
-        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No edge found for id ${data_id} on canvas ${canvas_id}`);
+        req.log.warn(`No edge found for id ${entity_id} on canvas ${canvas_id}`);
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No edge found for id ${entity_id} on canvas ${canvas_id}`);
       }
       return res.status(cmn.HTTP_CODE.SUCCESS).json(data);
     } catch (err) {

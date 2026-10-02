@@ -148,14 +148,14 @@ class UserService {
     return new CanvasGraph(merged);
   }
 
-  async update_canvas_node(user_id, canvas_id, data_id, node_req) {
+  async update_canvas_node(user_id, canvas_id, id, node_req) {
     const fields = make_canvas_element_update_from_req(node_req);
-    return this.canvasStore.update_canvas_node_by_user(user_id, canvas_id, data_id, fields);
+    return this.canvasStore.update_canvas_node_by_user(user_id, canvas_id, id, fields);
   }
 
-  async update_canvas_edge(user_id, canvas_id, data_id, edge_req) {
+  async update_canvas_edge(user_id, canvas_id, id, edge_req) {
     const fields = make_canvas_element_update_from_req(edge_req);
-    return this.canvasStore.update_canvas_edge_by_user(user_id, canvas_id, data_id, fields);
+    return this.canvasStore.update_canvas_edge_by_user(user_id, canvas_id, id, fields);
   }
 
   async set_canvas_graph_geometry(user_id, canvas_id, geometry_req) {
@@ -189,12 +189,12 @@ class UserService {
     return this.canvasStore.update_canvas_annotation_content_by_user(user_id, canvas_id, annotation_id, content);
   }
 
-  async get_node_data(user_id, canvas_id, data_id) {
-    return this.canvasStore.get_node_data(user_id, canvas_id, data_id);
+  async get_node_data(user_id, canvas_id, id) {
+    return this.canvasStore.get_node_data(user_id, canvas_id, id);
   }
 
-  async get_edge_data(user_id, canvas_id, data_id) {
-    return this.canvasStore.get_edge_data(user_id, canvas_id, data_id);
+  async get_edge_data(user_id, canvas_id, id) {
+    return this.canvasStore.get_edge_data(user_id, canvas_id, id);
   }
 
   async update_canvas(user_id, canvas_id, canvas_req) {

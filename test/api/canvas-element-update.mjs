@@ -1,4 +1,4 @@
-/* Standalone API test: PUT /api/v1/users/me/canvas/:save_id/node/:data_id and .../edge/:data_id.
+/* Standalone API test: PUT /api/v1/users/me/canvas/:save_id/node/:id and .../edge/:id.
  *
  * These partially update the display-only properties (label, hidden) of a single Canvas Node or
  * Edge. They never touch node position (x/y) - that is handled by the dedicated move endpoint - so a
@@ -19,7 +19,7 @@ import { postCanvas, testNode, signNode, testEdge, signEdge, CANVAS_PATH } from 
 
 const { ok, fail, finish } = createHarness();
 
-console.log(`# PUT ${CANVAS_PATH}/:save_id/{node,edge}/:data_id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# PUT ${CANVAS_PATH}/:save_id/{node,edge}/:id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const s = Date.now();
   const refA = `API_TEST:elt-A-${s}`;
@@ -42,11 +42,11 @@ try {
   ok(id != null, 'created canvas has an id');
 
   const initial = await getJson(`${CANVAS_PATH}/${id}/graph`);
-  const nodeDataId = new Map((initial.json.nodes || []).map((n) => [n.ref, n.data_id]));
-  const edgeDataId = new Map((initial.json.edges || []).map((e) => [e.ref, e.data_id]));
-  const nodeAId = nodeDataId.get(refA);
-  const edgeABId = edgeDataId.get(eAB);
-  ok(nodeAId != null && edgeABId != null, 'read back the node and edge data ids');
+  const nodeIdByRef = new Map((initial.json.nodes || []).map((n) => [n.ref, n.id]));
+  const edgeIdByRef = new Map((initial.json.edges || []).map((e) => [e.ref, e.id]));
+  const nodeAId = nodeIdByRef.get(refA);
+  const edgeABId = edgeIdByRef.get(eAB);
+  ok(nodeAId != null && edgeABId != null, 'read back the node and edge ids');
 
   const nodePath = `${CANVAS_PATH}/${id}/node/${nodeAId}`;
   const edgePath = `${CANVAS_PATH}/${id}/edge/${edgeABId}`;

@@ -171,11 +171,11 @@
     "/api/v1/users/me/canvas/{save_id}/graph/restore": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1graph~1restore"
     },
-    "/api/v1/users/me/canvas/{save_id}/node/{data_id}": {
-      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1node~1{data_id}"
+    "/api/v1/users/me/canvas/{save_id}/node/{id}": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1node~1{id}"
     },
-    "/api/v1/users/me/canvas/{save_id}/edge/{data_id}": {
-      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1edge~1{data_id}"
+    "/api/v1/users/me/canvas/{save_id}/edge/{id}": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1edge~1{id}"
     },
     "/api/v1/users/me/canvas/{save_id}/annotation": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{save_id}~1annotation"

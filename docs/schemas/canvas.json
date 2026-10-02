@@ -89,17 +89,28 @@
   "CanvasNode": {
     "type": "object",
     "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this Canvas Node"
+      },
       "canvas_id": {
         "type": "integer",
         "description": "The ID of the Canvas that contains this Canvas Node"
       },
       "data_id": {
         "type": "integer",
-        "description": "The Data Node ID associated with this Canvas Node"
+        "nullable": true,
+        "description": "The Data Node ID associated with this Canvas Node, or null if it has no Translator data"
+      },
+      "user_data_id": {
+        "type": "integer",
+        "nullable": true,
+        "description": "The User Node ID associated with this Canvas Node, or null if it has no user data"
       },
       "ref": {
         "type": "string",
-        "description": "The id of the underlying data entity (e.g. the node CURIE)"
+        "nullable": true,
+        "description": "The id of the underlying data entity (e.g. the node CURIE), or null if it has no Translator data"
       },
       "label": {
         "type": "string",
@@ -151,13 +162,23 @@
   "CanvasEdge": {
     "type": "object",
     "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this Canvas Edge"
+      },
       "canvas_id": {
         "type": "integer",
         "description": "The ID of the Canvas that contains this Canvas Edge"
       },
       "data_id": {
         "type": "integer",
-        "description": "The Data Edge ID associated with this Canvas Edge"
+        "nullable": true,
+        "description": "The Data Edge ID associated with this Canvas Edge, or null if it has no Translator data"
+      },
+      "user_data_id": {
+        "type": "integer",
+        "nullable": true,
+        "description": "The User Edge ID associated with this Canvas Edge, or null if it has no user data"
       },
       "subject_id": {
         "type": "integer",
@@ -169,7 +190,8 @@
       },
       "ref": {
         "type": "string",
-        "description": "The id of the underlying data entity (e.g. the edge id)"
+        "nullable": true,
+        "description": "The id of the underlying data entity (e.g. the edge id), or null if it has no Translator data"
       },
       "label": {
         "type": "string",
@@ -362,21 +384,21 @@
   },
   "GraphSelection": {
     "type": "object",
-    "description": "A selection of Canvas Node and Edge data ids and Canvas Annotation ids to soft delete or restore. At least one id across the three collections is required. Soft deleting a node also soft deletes every edge attached to it; restoring an edge requires both of its endpoint nodes to be active. Annotations are independent: they neither cascade nor depend on anything else.",
+    "description": "A selection of Canvas Node, Canvas Edge, and Canvas Annotation ids to soft delete or restore. At least one id across the three collections is required. Soft deleting a node also soft deletes every edge attached to it; restoring an edge requires both of its endpoint nodes to be active. Annotations are independent: they neither cascade nor depend on anything else.",
     "properties": {
       "nodes": {
         "type": "array",
         "items": {
           "type": "integer"
         },
-        "description": "The data ids of the Canvas Nodes to soft delete or restore"
+        "description": "The ids of the Canvas Nodes to soft delete or restore"
       },
       "edges": {
         "type": "array",
         "items": {
           "type": "integer"
         },
-        "description": "The data ids of the Canvas Edges to soft delete or restore"
+        "description": "The ids of the Canvas Edges to soft delete or restore"
       },
       "annotations": {
         "type": "array",
@@ -440,9 +462,9 @@
         "items": {
           "type": "object",
           "properties": {
-            "data_id": {
+            "id": {
               "type": "integer",
-              "description": "The data id of the Canvas Node to move"
+              "description": "The id of the Canvas Node to move"
             },
             "x": {
               "type": "number",
@@ -455,7 +477,7 @@
               "description": "The new y-coordinate for the node on the canvas"
             }
           },
-          "required": ["data_id", "x", "y"]
+          "required": ["id", "x", "y"]
         },
         "description": "The Canvas Nodes to move with their new positions"
       },

@@ -5,7 +5,7 @@
  * returned nodes/edges carry placement and denormalized tag ids, never the signed SummaryNode /
  * SummaryEdge payload. This test creates a canvas with a tagged graph, reads it back, and asserts the
  * shape: nodes/edges round-trip with their tag id-sets, the tag descriptions resolve, the edge's
- * endpoints line up with the node data ids, and none of the data-pool fields leak through.
+ * endpoints line up with the node ids, and none of the data-pool fields leak through.
  *
  * Ownership is enforced by the endpoint, so a canvas the user does not own (or that does not exist)
  * reads as 404 and a non-numeric id is rejected as 400.
@@ -80,9 +80,14 @@ try {
   ok(tags && tags[EDGE_TAG_CLINICAL] && tags[EDGE_TAG_CLINICAL].description.name === 'Clinical Evidence',
     'graph tags describe the clinical tag');
 
-  // The edge's endpoints reference the node data ids within the same canvas.
-  ok(edge1 && node1 && edge1.subject_id === node1.data_id, 'edge subject_id matches node 1 data_id');
-  ok(edge1 && node2 && edge1.object_id === node2.data_id, 'edge object_id matches node 2 data_id');
+  ok(node1 && Number.isInteger(node1.id) && Number.isInteger(node1.data_id) && node1.user_data_id === null,
+    'node exposes its id, its data_id, and an empty user_data_id');
+  ok(edge1 && Number.isInteger(edge1.id) && Number.isInteger(edge1.data_id) && edge1.user_data_id === null,
+    'edge exposes its id, its data_id, and an empty user_data_id');
+
+  // The edge's endpoints reference the canvas node ids within the same canvas.
+  ok(edge1 && node1 && edge1.subject_id === node1.id, 'edge subject_id matches node 1 id');
+  ok(edge1 && node2 && edge1.object_id === node2.id, 'edge object_id matches node 2 id');
 
   // No data-pool leakage: the canvas node/edge must not expose the signed SummaryNode/SummaryEdge data.
   ok(node1 && node1.data === undefined && node1.names === undefined && node1.curies === undefined,
@@ -101,7 +106,7 @@ try {
   // --- include_deleted ---
 
   // Soft delete node 1; trashing a node cascades to its incident edge (edge 1 connects node 1 -> 2).
-  const trashNode = await putJson(`${CANVAS_PATH}/${canvas.id}/graph/trash`, { nodes: [node1.data_id] });
+  const trashNode = await putJson(`${CANVAS_PATH}/${canvas.id}/graph/trash`, { nodes: [node1.id] });
   ok(trashNode.res.status === 200, `soft delete node 1 responds 200 (got ${trashNode.res.status})`);
 
   // By default the graph hides the soft-deleted node and its cascaded edge.

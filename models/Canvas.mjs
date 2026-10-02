@@ -118,11 +118,11 @@ function make_graph_geometry_from_req(geometry_req) {
       throw new CanvasRequestError(`Graph geometry nodes must be an array: ${JSON.stringify(raw_nodes)}`);
     }
     return raw_nodes.map((raw) => {
-      if (!cmn.is_object(raw) || !Number.isInteger(raw.data_id)) {
-        throw new CanvasRequestError(`Graph geometry node requires an integer data_id: ${JSON.stringify(raw)}`);
+      if (!cmn.is_object(raw) || !Number.isInteger(raw.id)) {
+        throw new CanvasRequestError(`Graph geometry node requires an integer id: ${JSON.stringify(raw)}`);
       }
       _validate_coord_pair(raw);
-      return { data_id: raw.data_id, x: raw.x, y: raw.y };
+      return { id: raw.id, x: raw.x, y: raw.y };
     });
   }
 
@@ -289,6 +289,7 @@ class CanvasNode {
     id = null,
     canvas_id = null,
     data_id = null,
+    user_data_id = null,
     ref,
     label,
     type,
@@ -302,6 +303,7 @@ class CanvasNode {
     this.id = id;
     this.canvas_id = canvas_id;
     this.data_id = data_id;
+    this.user_data_id = user_data_id;
     this.ref = ref;
     this.label = label;
     this.type = type;
@@ -336,6 +338,7 @@ class CanvasEdge {
     id = null,
     canvas_id = null,
     data_id = null,
+    user_data_id = null,
     subject_id = null,
     object_id = null,
     ref,
@@ -349,6 +352,7 @@ class CanvasEdge {
     this.id = id;
     this.canvas_id = canvas_id;
     this.data_id = data_id;
+    this.user_data_id = user_data_id;
     this.subject_id = subject_id;
     this.object_id = object_id;
     this.ref = ref;

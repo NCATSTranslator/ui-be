@@ -2,7 +2,7 @@
  *
  * Node and edge data is shared across canvases and keyed by ref, so re-submitting the same refs
  * upserts the shared rows (ON CONFLICT) rather than colliding. This drives that lifecycle in order
- * against the same refs and verifies the STORED data by reading it back through GET .../node/:data_id
+ * against the same refs and verifies the STORED data by reading it back through GET .../node/:id
  * after each step:
  *   1. baseline  -- seed the shared node/edge rows
  *   2. dedup     -- reuse the refs with identical data (ON CONFLICT no-op; stored data unchanged)
@@ -55,9 +55,15 @@ try {
     source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   });
 
+  const findCanvasNode = async (canvasId) => {
+    const graph = await getJson(`${CANVAS_PATH}/${canvasId}/graph`);
+    return (graph.json.nodes || []).find((n) => n.ref === nodeRef);
+  };
+
   // Read the primary node's stored data-pool entity through a canvas that carries it.
-  const readNodeNames = async (canvasId, dataId) => {
-    const res = await getJson(`${CANVAS_PATH}/${canvasId}/node/${dataId}`);
+  const readNodeNames = async (canvasId) => {
+    const canvasNode = await findCanvasNode(canvasId);
+    const res = await getJson(`${CANVAS_PATH}/${canvasId}/node/${canvasNode?.id}`);
     return { status: res.res.status, names: (res.json && res.json.names) || [] };
   };
 
@@ -65,31 +71,31 @@ try {
   const base = await postCanvas({ label: `api-test upsert base ${s}`, layout, graph: stepGraph('Upsert Base', SOURCE_TIME) });
   ok(base.res.status === 200, `baseline create responds 200 (got ${base.res.status})`);
   const baseId = base.json && base.json.id;
-  const baseGraph = await getJson(`${CANVAS_PATH}/${baseId}/graph`);
-  const dataId = (baseGraph.json.nodes || []).find((n) => n.ref === nodeRef)?.data_id;
+  const dataId = (await findCanvasNode(baseId))?.data_id;
   ok(Number.isInteger(dataId), 'baseline graph exposes the pooled node data_id');
-  const read0 = await readNodeNames(baseId, dataId);
+  const read0 = await readNodeNames(baseId);
   ok(read0.status === 200 && read0.names.includes('Upsert Base'),
     `baseline stored the node data (got ${JSON.stringify(read0.names)})`);
 
   // 2. Dedup: a second canvas with IDENTICAL data -> ON CONFLICT no-op; stored data unchanged.
   const dedup = await postCanvas({ label: `api-test upsert dedup ${s}`, layout, graph: stepGraph('Upsert Base', SOURCE_TIME) });
   ok(dedup.res.status === 200, `dedup create responds 200 (got ${dedup.res.status})`);
-  ok(dedup.json && dedup.json.id !== baseId, 'dedup is a distinct canvas sharing the same pooled data');
-  const read1 = await readNodeNames(dedup.json.id, dataId);
+  ok(dedup.json && dedup.json.id !== baseId, 'dedup is a distinct canvas');
+  ok((await findCanvasNode(dedup.json.id))?.data_id === dataId, 'dedup shares the same pooled data');
+  const read1 = await readNodeNames(dedup.json.id);
   ok(read1.names.includes('Upsert Base'), 'dedup left the stored data unchanged');
 
   // 3. Update: CHANGED data + strictly NEWER source_time -> overwrite.
   const upd = await postCanvas({ label: `api-test upsert update ${s}`, layout, graph: stepGraph('Upsert Updated', NEWER_SOURCE_TIME) });
   ok(upd.res.status === 200, `update create responds 200 (got ${upd.res.status})`);
-  const read2 = await readNodeNames(upd.json.id, dataId);
+  const read2 = await readNodeNames(upd.json.id);
   ok(read2.names.includes('Upsert Updated'), 'a newer source_time overwrote the stored data');
   ok(!read2.names.includes('Upsert Base'), 'the old data was replaced');
 
   // 4. Stale: CHANGED data + OLDER source_time -> skip; stored data preserved.
   const stale = await postCanvas({ label: `api-test upsert stale ${s}`, layout, graph: stepGraph('Upsert Stale', STALE_SOURCE_TIME) });
   ok(stale.res.status === 200, `stale create responds 200 (got ${stale.res.status})`);
-  const read3 = await readNodeNames(stale.json.id, dataId);
+  const read3 = await readNodeNames(stale.json.id);
   ok(read3.names.includes('Upsert Updated'), 'an older source_time was skipped (data preserved)');
   ok(!read3.names.includes('Upsert Stale'), 'the stale data was not written');
 } catch (err) {

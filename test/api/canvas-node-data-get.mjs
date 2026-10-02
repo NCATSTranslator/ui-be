@@ -1,17 +1,17 @@
-/* Standalone API test: GET /api/v1/users/me/canvas/:save_id/node/:data_id.
+/* Standalone API test: GET /api/v1/users/me/canvas/:save_id/node/:id.
  *
  * The node-data endpoint returns the underlying data-pool entity (the signed SummaryNode) for a
- * Canvas Node, by its data_id. Unlike the graph endpoint - which returns the canvas_node row with a
+ * Canvas Node, by its id. Unlike the graph endpoint - which returns the canvas_node row with a
  * { tag_id: null } id-set - this returns the full entity: its curies, names, annotations, and the
  * full tag objects. The data pool is shared, but the read is scoped to the addressed Canvas: the
- * node must belong to a Canvas the current user owns (and that is not trashed). A data_id that is
+ * node must belong to a Canvas the current user owns (and that is not trashed). An id that is
  * not on this Canvas - or an unknown id - is a 404, and a non-numeric id is a 400.
  *
  * This test mints a unique ref per run so the pool row it reads back is exactly what it submitted -
  * the suite's stable-ref fixtures share pool rows whose newest-source_time version (or a legacy row
  * with no source_time at all) may differ from any single submission.
  *
- * The flow creates a canvas, reads its graph to discover the node's data_id, then fetches the node's
+ * The flow creates a canvas, reads its graph to discover the node's id, then fetches the node's
  * data. Assumes the server is running with "auth_check": false (see mock/auth.mjs). This hits a real
  * Postgres, so run it against the mock-ars server (host=mock allows the auth bypass):
  *
@@ -30,7 +30,7 @@ import {
 
 const { ok, fail, finish } = createHarness();
 
-console.log(`# GET ${CANVAS_PATH}/:save_id/node/:data_id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# GET ${CANVAS_PATH}/:save_id/node/:id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const label = `api-test canvas node-data ${new Date().toISOString()}`;
   const layout = 'horizontal';
@@ -61,9 +61,9 @@ try {
   const graphRes = await getJson(`${CANVAS_PATH}/${canvas.id}/graph`);
   ok(graphRes.res.status === 200, `get graph responds 200 (got ${graphRes.res.status})`);
   const canvasNode = (graphRes.json && graphRes.json.nodes || []).find((n) => n.ref === ref);
-  ok(canvasNode && Number.isInteger(canvasNode.data_id), 'graph node exposes an integer data_id');
+  ok(canvasNode && Number.isInteger(canvasNode.id), 'graph node exposes an integer id');
 
-  const dataRes = await getJson(`${CANVAS_PATH}/${canvas.id}/node/${canvasNode.data_id}`);
+  const dataRes = await getJson(`${CANVAS_PATH}/${canvas.id}/node/${canvasNode.id}`);
   ok(dataRes.res.status === 200, `get node data responds 200 (got ${dataRes.res.status})`);
   const data = dataRes.json;
 
@@ -79,7 +79,7 @@ try {
   ok(data && data.tags && data.tags[NODE_TAG_FDA] && data.tags[NODE_TAG_FDA].description.name === 'FDA Approved',
     'node data carries the full FDA tag object');
 
-  // A data_id that does not exist in the pool is a 404.
+  // An id that does not exist on the canvas is a 404.
   const missing = await getJson(`${CANVAS_PATH}/${canvas.id}/node/999999999`);
   ok(missing.res.status === 404, `unknown node id -> 404 (got ${missing.res.status})`);
 
@@ -90,11 +90,11 @@ try {
   // Scoping: the same pooled node is NOT readable through a different canvas that does not contain it.
   const other = await postCanvas({ label: `${label} (other)`, layout });
   ok(other.res.status === 200 && other.json && other.json.id != null, 'created a second canvas without this node');
-  const crossCanvas = await getJson(`${CANVAS_PATH}/${other.json.id}/node/${canvasNode.data_id}`);
+  const crossCanvas = await getJson(`${CANVAS_PATH}/${other.json.id}/node/${canvasNode.id}`);
   ok(crossCanvas.res.status === 404, `a real node addressed through a canvas it is not on -> 404 (got ${crossCanvas.res.status})`);
 
-  // A real data_id under a nonexistent canvas is a 404 - the save_id is enforced, not decorative.
-  const bogusCanvas = await getJson(`${CANVAS_PATH}/999999999/node/${canvasNode.data_id}`);
+  // A real node id under a nonexistent canvas is a 404 - the save_id is enforced, not decorative.
+  const bogusCanvas = await getJson(`${CANVAS_PATH}/999999999/node/${canvasNode.id}`);
   ok(bogusCanvas.res.status === 404, `a real node under a nonexistent canvas -> 404 (got ${bogusCanvas.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);

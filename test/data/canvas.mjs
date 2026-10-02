@@ -414,13 +414,13 @@ function _test_make_annotation_content_update_from_req() {
 function _test_make_graph_geometry_from_req() {
   return test.make_function_test({
     "single_node": {
-      "args": [{ nodes: [{ data_id: 1, x: 10, y: 20 }] }],
-      "expected": { node_moves: [{ data_id: 1, x: 10, y: 20 }], annotation_geometries: [] }
+      "args": [{ nodes: [{ id: 1, x: 10, y: 20 }] }],
+      "expected": { node_moves: [{ id: 1, x: 10, y: 20 }], annotation_geometries: [] }
     },
     "multiple_nodes": {
-      "args": [{ nodes: [{ data_id: 1, x: 1, y: 2 }, { data_id: 2, x: 3, y: 4 }] }],
+      "args": [{ nodes: [{ id: 1, x: 1, y: 2 }, { id: 2, x: 3, y: 4 }] }],
       "expected": {
-        node_moves: [{ data_id: 1, x: 1, y: 2 }, { data_id: 2, x: 3, y: 4 }],
+        node_moves: [{ id: 1, x: 1, y: 2 }, { id: 2, x: 3, y: 4 }],
         annotation_geometries: []
       }
     },
@@ -453,11 +453,11 @@ function _test_make_graph_geometry_from_req() {
     },
     "nodes_and_annotations_together": {
       "args": [{
-        nodes: [{ data_id: 1, x: 1, y: 2 }],
+        nodes: [{ id: 1, x: 1, y: 2 }],
         annotations: [{ id: 7, x: 3, y: 4, width: 5, height: 6 }]
       }],
       "expected": {
-        node_moves: [{ data_id: 1, x: 1, y: 2 }],
+        node_moves: [{ id: 1, x: 1, y: 2 }],
         annotation_geometries: [{ id: 7, x: 3, y: 4, width: 5, height: 6 }]
       }
     },
@@ -469,16 +469,16 @@ function _test_make_graph_geometry_from_req() {
       }
     },
     "empty_annotations_with_nodes": {
-      "args": [{ nodes: [{ data_id: 1, x: 1, y: 2 }], annotations: [] }],
-      "expected": { node_moves: [{ data_id: 1, x: 1, y: 2 }], annotation_geometries: [] }
+      "args": [{ nodes: [{ id: 1, x: 1, y: 2 }], annotations: [] }],
+      "expected": { node_moves: [{ id: 1, x: 1, y: 2 }], annotation_geometries: [] }
     },
     "fractional_and_negative_coordinates": {
       "args": [{
-        nodes: [{ data_id: 1, x: 1.5, y: -2.5 }],
+        nodes: [{ id: 1, x: 1.5, y: -2.5 }],
         annotations: [{ id: 1, x: -1.5, y: -2.5, width: 3.5, height: 4.5 }]
       }],
       "expected": {
-        node_moves: [{ data_id: 1, x: 1.5, y: -2.5 }],
+        node_moves: [{ id: 1, x: 1.5, y: -2.5 }],
         annotation_geometries: [{ id: 1, x: -1.5, y: -2.5, width: 3.5, height: 4.5 }]
       }
     },
@@ -491,11 +491,11 @@ function _test_make_graph_geometry_from_req() {
     },
     "extra_fields_are_stripped": {
       "args": [{
-        nodes: [{ data_id: 1, x: 1, y: 2, label: "ignore", junk: 9 }],
+        nodes: [{ id: 1, x: 1, y: 2, label: "ignore", junk: 9 }],
         annotations: [{ id: 1, x: 1, y: 2, width: 3, height: 4, content: "no" }]
       }],
       "expected": {
-        node_moves: [{ data_id: 1, x: 1, y: 2 }],
+        node_moves: [{ id: 1, x: 1, y: 2 }],
         annotation_geometries: [{ id: 1, x: 1, y: 2, width: 3, height: 4 }]
       }
     },
@@ -516,31 +516,31 @@ function _test_make_graph_geometry_from_req() {
       "expected": CanvasRequestError
     },
     "non_array_nodes_throws": {
-      "args": [{ nodes: { data_id: 1, x: 1, y: 2 } }],
+      "args": [{ nodes: { id: 1, x: 1, y: 2 } }],
       "expected": CanvasRequestError
     },
     "non_array_annotations_throws": {
       "args": [{ annotations: { id: 1, x: 1, y: 2, width: 3, height: 4 } }],
       "expected": CanvasRequestError
     },
-    "non_integer_data_id_throws": {
-      "args": [{ nodes: [{ data_id: 1.5, x: 1, y: 2 }] }],
+    "non_integer_node_id_throws": {
+      "args": [{ nodes: [{ id: 1.5, x: 1, y: 2 }] }],
       "expected": CanvasRequestError
     },
-    "string_data_id_throws": {
-      "args": [{ nodes: [{ data_id: "1", x: 1, y: 2 }] }],
+    "string_node_id_throws": {
+      "args": [{ nodes: [{ id: "1", x: 1, y: 2 }] }],
       "expected": CanvasRequestError
     },
     "node_missing_coordinates_throws": {
-      "args": [{ nodes: [{ data_id: 1 }] }],
+      "args": [{ nodes: [{ id: 1 }] }],
       "expected": CanvasRequestError
     },
     "node_non_numeric_coordinate_throws": {
-      "args": [{ nodes: [{ data_id: 1, x: "a", y: 2 }] }],
+      "args": [{ nodes: [{ id: 1, x: "a", y: 2 }] }],
       "expected": CanvasRequestError
     },
     "node_infinite_coordinate_throws": {
-      "args": [{ nodes: [{ data_id: 1, x: Infinity, y: 2 }] }],
+      "args": [{ nodes: [{ id: 1, x: Infinity, y: 2 }] }],
       "expected": CanvasRequestError
     },
     "annotation_non_integer_id_throws": {

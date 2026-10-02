@@ -50,15 +50,15 @@ try {
   const id = create.json && create.json.id;
   ok(id != null, 'created canvas has an id');
 
-  // The server assigns data ids (the shared-pool ids); read them back so we can address entities.
+  // The server assigns canvas node and edge ids; read them back so we can address entities.
   const initial = await getJson(`${CANVAS_PATH}/${id}/graph`);
   ok(initial.res.status === 200, `initial graph fetch responds 200 (got ${initial.res.status})`);
-  const nodeDataId = new Map((initial.json.nodes || []).map((n) => [n.ref, n.data_id]));
-  const edgeDataId = new Map((initial.json.edges || []).map((e) => [e.ref, e.data_id]));
+  const nodeIdByRef = new Map((initial.json.nodes || []).map((n) => [n.ref, n.id]));
+  const edgeIdByRef = new Map((initial.json.edges || []).map((e) => [e.ref, e.id]));
   ok(initial.json.nodes.length === 3 && initial.json.edges.length === 2, 'canvas starts with 3 nodes and 2 edges');
 
   // Trash node B: it should cascade to both edges (A->B and B->C), leaving A and C with no edges.
-  const trashB = await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { nodes: [nodeDataId.get(refB)] });
+  const trashB = await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { nodes: [nodeIdByRef.get(refB)] });
   ok(trashB.res.status === 200, `trash node responds 200 (got ${trashB.res.status})`);
   let refs = refsOf(trashB.json.nodes);
   ok(trashB.json.nodes.length === 2 && refs.has(refA) && refs.has(refC) && !refs.has(refB),
@@ -67,36 +67,36 @@ try {
 
   // Restore B and both edges: with B active again the edges satisfy the endpoint guard and come back.
   const restoreAll = await putJson(`${CANVAS_PATH}/${id}/graph/restore`,
-    { nodes: [nodeDataId.get(refB)], edges: [edgeDataId.get(eAB), edgeDataId.get(eBC)] });
+    { nodes: [nodeIdByRef.get(refB)], edges: [edgeIdByRef.get(eAB), edgeIdByRef.get(eBC)] });
   ok(restoreAll.res.status === 200, `restore responds 200 (got ${restoreAll.res.status})`);
   ok(restoreAll.json.nodes.length === 3 && restoreAll.json.edges.length === 2,
     'restoring B and its edges brings the whole graph back');
 
   // Trash a single edge directly (no node cascade): only A->B goes, B->C and all nodes stay.
-  const trashEdge = await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { edges: [edgeDataId.get(eAB)] });
+  const trashEdge = await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { edges: [edgeIdByRef.get(eAB)] });
   ok(trashEdge.res.status === 200, `trash edge responds 200 (got ${trashEdge.res.status})`);
   ok(trashEdge.json.nodes.length === 3, 'trashing an edge leaves every node active');
   ok(trashEdge.json.edges.length === 1 && refsOf(trashEdge.json.edges).has(eBC),
     'trashing an edge removes only that edge');
 
   // Restore the edge: both endpoints are active, so it returns.
-  const restoreEdge = await putJson(`${CANVAS_PATH}/${id}/graph/restore`, { edges: [edgeDataId.get(eAB)] });
+  const restoreEdge = await putJson(`${CANVAS_PATH}/${id}/graph/restore`, { edges: [edgeIdByRef.get(eAB)] });
   ok(restoreEdge.res.status === 200, `restore edge responds 200 (got ${restoreEdge.res.status})`);
   ok(restoreEdge.json.edges.length === 2, 'restoring the edge brings it back');
 
   // Restore guard: trash B (cascading its edges), then try to restore ONLY the edges. B is still
   // deleted, so neither edge may be restored into a dangling state.
-  await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { nodes: [nodeDataId.get(refB)] });
+  await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { nodes: [nodeIdByRef.get(refB)] });
   const restoreDangling = await putJson(`${CANVAS_PATH}/${id}/graph/restore`,
-    { edges: [edgeDataId.get(eAB), edgeDataId.get(eBC)] });
+    { edges: [edgeIdByRef.get(eAB), edgeIdByRef.get(eBC)] });
   ok(restoreDangling.res.status === 200, `guarded restore responds 200 (got ${restoreDangling.res.status})`);
   ok(restoreDangling.json.edges.length === 0,
     'edges are not restored while an endpoint node is still deleted');
 
   // Restoring B first, then the edges, succeeds.
-  await putJson(`${CANVAS_PATH}/${id}/graph/restore`, { nodes: [nodeDataId.get(refB)] });
+  await putJson(`${CANVAS_PATH}/${id}/graph/restore`, { nodes: [nodeIdByRef.get(refB)] });
   const restoreThenEdges = await putJson(`${CANVAS_PATH}/${id}/graph/restore`,
-    { edges: [edgeDataId.get(eAB), edgeDataId.get(eBC)] });
+    { edges: [edgeIdByRef.get(eAB), edgeIdByRef.get(eBC)] });
   ok(restoreThenEdges.json.nodes.length === 3 && restoreThenEdges.json.edges.length === 2,
     'restoring the node first lets the edges follow');
 
@@ -130,9 +130,9 @@ try {
   // but is soft-deleted, so it is distinct from the unknown-canvas 404 above.
   const trashCanvas = await putJson(`${CANVAS_PATH}/trash`, [id]);
   ok(trashCanvas.res.status === 200, `trash canvas responds 200 (got ${trashCanvas.res.status})`);
-  const trashOnTrashed = await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { nodes: [nodeDataId.get(refA)] });
+  const trashOnTrashed = await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { nodes: [nodeIdByRef.get(refA)] });
   ok(trashOnTrashed.res.status === 404, `graph/trash on a trashed canvas -> 404 (got ${trashOnTrashed.res.status})`);
-  const restoreOnTrashed = await putJson(`${CANVAS_PATH}/${id}/graph/restore`, { nodes: [nodeDataId.get(refA)] });
+  const restoreOnTrashed = await putJson(`${CANVAS_PATH}/${id}/graph/restore`, { nodes: [nodeIdByRef.get(refA)] });
   ok(restoreOnTrashed.res.status === 404, `graph/restore on a trashed canvas -> 404 (got ${restoreOnTrashed.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);

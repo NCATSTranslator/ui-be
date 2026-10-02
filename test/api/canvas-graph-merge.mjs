@@ -36,8 +36,8 @@ const sameTagIds = (actual, expected) => {
 };
 
 // Assert the canvas graph the server returns is exactly the expected end state. Nodes/edges are
-// matched by ref (server-assigned data ids are not predictable); edge endpoints are checked by
-// mapping each subject_id/object_id back to the ref of the node that carries that data_id.
+// matched by ref (server-assigned ids are not predictable); edge endpoints are checked by
+// mapping each subject_id/object_id back to the ref of the node with that id.
 function verifyFinalGraph(actual, expected) {
   const nodes = (actual && actual.nodes) || [];
   const edges = (actual && actual.edges) || [];
@@ -48,7 +48,7 @@ function verifyFinalGraph(actual, expected) {
   ok(nodes.length === expectedNodeRefs.length, `final graph has ${expectedNodeRefs.length} nodes (got ${nodes.length})`);
   ok(edges.length === expectedEdgeRefs.length, `final graph has ${expectedEdgeRefs.length} edges (got ${edges.length})`);
 
-  const refByDataId = new Map(nodes.map((n) => [n.data_id, n.ref]));
+  const refById = new Map(nodes.map((n) => [n.id, n.ref]));
   for (const ref of expectedNodeRefs) {
     const want = expected.nodes[ref];
     const got = byRef(nodes, ref);
@@ -67,7 +67,7 @@ function verifyFinalGraph(actual, expected) {
     if (!got) continue;
     ok(got.label === want.label && got.hidden === want.hidden,
       `edge ${ref} matches expected display (got label=${got.label}, hidden=${got.hidden})`);
-    ok(refByDataId.get(got.subject_id) === want.subject && refByDataId.get(got.object_id) === want.object,
+    ok(refById.get(got.subject_id) === want.subject && refById.get(got.object_id) === want.object,
       `edge ${ref} connects ${want.subject} -> ${want.object}`);
     ok(sameTagIds(got.tags, want.tags), `edge ${ref} has the expected tag id-set`);
   }
@@ -160,9 +160,9 @@ try {
   // Edges connect to the right canvas nodes, including endpoints that already existed on the canvas.
   const edgeBC = byRef(g.edges, eBC);
   const edgeCA = byRef(g.edges, eCA);
-  ok(edgeBC && nodeB && nodeC && edgeBC.subject_id === nodeB.data_id && edgeBC.object_id === nodeC.data_id,
+  ok(edgeBC && nodeB && nodeC && edgeBC.subject_id === nodeB.id && edgeBC.object_id === nodeC.id,
     'edge B->C resolves to the existing B and the new C');
-  ok(edgeCA && nodeC && nodeA && edgeCA.subject_id === nodeC.data_id && edgeCA.object_id === nodeA.data_id,
+  ok(edgeCA && nodeC && nodeA && edgeCA.subject_id === nodeC.id && edgeCA.object_id === nodeA.id,
     'edge C->A resolves to the new C and the existing A');
 
   // Merging an existing node with new coordinates must NOT move it (display fields preserved).
@@ -242,10 +242,10 @@ try {
   ok(reviveCreate.res.status === 200, `revive: create responds 200 (got ${reviveCreate.res.status})`);
   const reviveId = reviveCreate.json && reviveCreate.json.id;
   const reviveInitial = await getJson(`${CANVAS_PATH}/${reviveId}/graph`);
-  const rNodeDataId = new Map((reviveInitial.json.nodes || []).map((n) => [n.ref, n.data_id]));
+  const rNodeId = new Map((reviveInitial.json.nodes || []).map((n) => [n.ref, n.id]));
 
   // Trash node A -> cascades to edge A->B; the default graph now shows only B and no edges.
-  await putJson(`${CANVAS_PATH}/${reviveId}/graph/trash`, { nodes: [rNodeDataId.get(rA)] });
+  await putJson(`${CANVAS_PATH}/${reviveId}/graph/trash`, { nodes: [rNodeId.get(rA)] });
   const afterTrash = await getJson(`${CANVAS_PATH}/${reviveId}/graph`);
   ok(afterTrash.json.nodes.length === 1 && afterTrash.json.edges.length === 0,
     `revive: trashing A cascades its edge (got ${afterTrash.json.nodes.length} nodes, ${afterTrash.json.edges.length} edges)`);

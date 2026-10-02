@@ -46,19 +46,19 @@ try {
   ok(id != null, 'created canvas has an id');
 
   const initial = await getJson(`${CANVAS_PATH}/${id}/graph`);
-  const nodeDataId = new Map((initial.json.nodes || []).map((n) => [n.ref, n.data_id]));
-  const nodeAId = nodeDataId.get(refA);
-  const nodeBId = nodeDataId.get(refB);
-  ok(nodeAId != null && nodeBId != null, 'read back the node data ids');
+  const nodeIdByRef = new Map((initial.json.nodes || []).map((n) => [n.ref, n.id]));
+  const nodeAId = nodeIdByRef.get(refA);
+  const nodeBId = nodeIdByRef.get(refB);
+  ok(nodeAId != null && nodeBId != null, 'read back the node ids');
 
   const movePath = `${CANVAS_PATH}/${id}/graph/geometry`;
-  const byId = (rows) => new Map((rows || []).map((n) => [n.data_id, n]));
+  const byId = (rows) => new Map((rows || []).map((n) => [n.id, n]));
 
   // Move both nodes in one request; the response carries the updated positions.
   const moveBoth = await putJson(movePath, {
     nodes: [
-      { data_id: nodeAId, x: 100.5, y: 200.5 },
-      { data_id: nodeBId, x: 300, y: 400 },
+      { id: nodeAId, x: 100.5, y: 200.5 },
+      { id: nodeBId, x: 300, y: 400 },
     ],
   });
   ok(moveBoth.res.status === 200, `move both responds 200 (got ${moveBoth.res.status})`);
@@ -76,19 +76,19 @@ try {
 
   // The new positions persist and are visible on a fresh graph read.
   const after = await getJson(`${CANVAS_PATH}/${id}/graph`);
-  const afterById = new Map((after.json.nodes || []).map((n) => [n.data_id, n]));
+  const afterById = new Map((after.json.nodes || []).map((n) => [n.id, n]));
   ok(afterById.get(nodeAId) && afterById.get(nodeAId).x === 100.5 && afterById.get(nodeAId).y === 200.5,
     'the move persists across a graph read');
 
   // A single-node move works too.
-  const moveOne = await putJson(movePath, { nodes: [{ data_id: nodeBId, x: 1, y: 2 }] });
+  const moveOne = await putJson(movePath, { nodes: [{ id: nodeBId, x: 1, y: 2 }] });
   ok(moveOne.res.status === 200, `single move responds 200 (got ${moveOne.res.status})`);
   ok(Array.isArray(moveOne.json && moveOne.json.nodes) && moveOne.json.nodes.length === 1
     && moveOne.json.nodes[0].x === 1 && moveOne.json.nodes[0].y === 2,
     'single move returns just the moved node at its new position');
 
-  // An unknown data id on an existing canvas is a no-op for that id (no row updated), not an error.
-  const moveUnknown = await putJson(movePath, { nodes: [{ data_id: 999999999, x: 5, y: 6 }] });
+  // An unknown node id on an existing canvas is a no-op for that id (no row updated), not an error.
+  const moveUnknown = await putJson(movePath, { nodes: [{ id: 999999999, x: 5, y: 6 }] });
   ok(moveUnknown.res.status === 200, `move of an unknown node id responds 200 (got ${moveUnknown.res.status})`);
   ok(Array.isArray(moveUnknown.json && moveUnknown.json.nodes) && moveUnknown.json.nodes.length === 0,
     'an unknown node id moves nothing');
@@ -110,35 +110,35 @@ try {
   const noPosition = await putJson(movePath, { annotations: [{ id: 1, width: 3, height: 4 }] });
   ok(noPosition.res.status === 400, `annotation missing x/y -> 400 (got ${noPosition.res.status})`);
 
-  const missingCoords = await putJson(movePath, { nodes: [{ data_id: nodeAId }] });
+  const missingCoords = await putJson(movePath, { nodes: [{ id: nodeAId }] });
   ok(missingCoords.res.status === 400, `missing x/y -> 400 (got ${missingCoords.res.status})`);
 
-  const badCoords = await putJson(movePath, { nodes: [{ data_id: nodeAId, x: 'a', y: 2 }] });
+  const badCoords = await putJson(movePath, { nodes: [{ id: nodeAId, x: 'a', y: 2 }] });
   ok(badCoords.res.status === 400, `non-numeric x -> 400 (got ${badCoords.res.status})`);
 
-  const badDataId = await putJson(movePath, { nodes: [{ data_id: 'x', x: 1, y: 2 }] });
-  ok(badDataId.res.status === 400, `non-integer data_id -> 400 (got ${badDataId.res.status})`);
+  const badNodeId = await putJson(movePath, { nodes: [{ id: 'x', x: 1, y: 2 }] });
+  ok(badNodeId.res.status === 400, `non-integer node id -> 400 (got ${badNodeId.res.status})`);
 
   // Unknown canvas id is a 404; non-numeric ids are 400s.
-  const missingCanvas = await putJson(`${CANVAS_PATH}/999999999/graph/geometry`, { nodes: [{ data_id: nodeAId, x: 1, y: 2 }] });
+  const missingCanvas = await putJson(`${CANVAS_PATH}/999999999/graph/geometry`, { nodes: [{ id: nodeAId, x: 1, y: 2 }] });
   ok(missingCanvas.res.status === 404, `unknown canvas id -> 404 (got ${missingCanvas.res.status})`);
 
-  const badCanvasId = await putJson(`${CANVAS_PATH}/not-a-number/graph/geometry`, { nodes: [{ data_id: nodeAId, x: 1, y: 2 }] });
+  const badCanvasId = await putJson(`${CANVAS_PATH}/not-a-number/graph/geometry`, { nodes: [{ id: nodeAId, x: 1, y: 2 }] });
   ok(badCanvasId.res.status === 400, `non-numeric canvas id -> 400 (got ${badCanvasId.res.status})`);
 
   // A soft-deleted node cannot be moved (the update is gated on time_deleted IS NULL).
   const trash = await putJson(`${CANVAS_PATH}/${id}/graph/trash`, { nodes: [nodeAId] });
   ok(trash.res.status === 200, `trash node responds 200 (got ${trash.res.status})`);
-  const moveTrashed = await putJson(movePath, { nodes: [{ data_id: nodeAId, x: 7, y: 8 }] });
+  const moveTrashed = await putJson(movePath, { nodes: [{ id: nodeAId, x: 7, y: 8 }] });
   ok(moveTrashed.res.status === 200, `moving a soft-deleted node responds 200 (got ${moveTrashed.res.status})`);
   ok(Array.isArray(moveTrashed.json && moveTrashed.json.nodes) && moveTrashed.json.nodes.length === 0,
     'a soft-deleted node is not moved');
 
   // A trashed canvas is gone: moving nodes on it is a 404 (distinct from the unknown-canvas 404 above,
-  // this canvas exists but is soft-deleted), not the silent no-op an unknown data_id gets.
+  // this canvas exists but is soft-deleted), not the silent no-op an unknown node id gets.
   const trashCanvas = await putJson(`${CANVAS_PATH}/trash`, [id]);
   ok(trashCanvas.res.status === 200, `trash canvas responds 200 (got ${trashCanvas.res.status})`);
-  const moveOnTrashed = await putJson(movePath, { nodes: [{ data_id: nodeBId, x: 1, y: 1 }] });
+  const moveOnTrashed = await putJson(movePath, { nodes: [{ id: nodeBId, x: 1, y: 1 }] });
   ok(moveOnTrashed.res.status === 404, `moving nodes on a trashed canvas -> 404 (got ${moveOnTrashed.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
