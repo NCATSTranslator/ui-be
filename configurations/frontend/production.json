@@ -337,12 +337,12 @@
       "id": "PUBCHEM.COMPOUND:2162"
     }
   ],
-  "include_pathfinder": false,
+  "include_pathfinder": true,
   "include_summarization": false,
   "include_query_status_polling": true,
   "include_projects": true,
   "include_hashed_parameters": true,
-  "include_lookup": false,
+  "include_lookup": true,
   "include_canvas": true,
   "show_novelty_boost": false
 }
