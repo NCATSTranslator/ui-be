@@ -63,7 +63,8 @@
     }
   },
   "feature_config": {
-    "max_hops": 4
+    "max_hops": 4,
+    "replace_indirect_edges": true
   },
   "google_analytics_id": "G-MQ5SCJJ6Q3",
   "google_tag_manager_id": "GTM-5SGQTGPF",
