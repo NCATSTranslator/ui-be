@@ -1,4 +1,4 @@
-/* Standalone API test: GET /api/v1/users/me/canvas/:save_id/edge/:id.
+/* Standalone API test: GET /api/v1/users/me/canvas/:canvas_id/edge/:id.
  *
  * The edge-data endpoint returns the underlying data-pool entity (the signed SummaryEdge) for a
  * Canvas Edge, by its id. Unlike the graph endpoint - which returns the canvas_edge row with a
@@ -35,7 +35,7 @@ import {
 
 const { ok, fail, finish } = createHarness();
 
-console.log(`# GET ${CANVAS_PATH}/:save_id/edge/:id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# GET ${CANVAS_PATH}/:canvas_id/edge/:id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const label = `api-test canvas edge-data ${new Date().toISOString()}`;
   const layout = 'horizontal';
@@ -45,18 +45,18 @@ try {
   const objectRef = `API_TEST:edge-data-o-${stamp}`;
   const edgeRef = `API_TEST:edge-data-${stamp}`;
   const graph = {
-    nodes: {
-      [subjectRef]: signNode(subjectRef, testNode(subjectRef, 'Edge Data Subject', 'biolink:Disease', 5, 6)),
-      [objectRef]: signNode(objectRef, testNode(objectRef, 'Edge Data Object', 'biolink:ChemicalEntity', 7, 8)),
-    },
-    edges: {
-      [edgeRef]: signEdge(edgeRef, testEdge(subjectRef, objectRef, 'biolink:treats', {
+    nodes: [
+      signNode(subjectRef, testNode(subjectRef, 'Edge Data Subject', 'biolink:Disease', 5, 6)),
+      signNode(objectRef, testNode(objectRef, 'Edge Data Object', 'biolink:ChemicalEntity', 7, 8)),
+    ],
+    edges: [
+      signEdge(edgeRef, testEdge(subjectRef, objectRef, 'biolink:treats', {
         description: 'edge data test',
         support: ['not-a-real-path-id'],
         type: 'indirect',
         tags: { [EDGE_TAG_CLINICAL]: tagObject(EDGE_TAG_CLINICAL, 'Clinical Evidence') },
       })),
-    },
+    ],
     tag_descriptions: {
       [EDGE_TAG_CLINICAL]: tagObject(EDGE_TAG_CLINICAL, 'Clinical Evidence'),
     },
@@ -106,7 +106,7 @@ try {
   const crossCanvas = await getJson(`${CANVAS_PATH}/${other.json.id}/edge/${canvasEdge.id}`);
   ok(crossCanvas.res.status === 404, `a real edge addressed through a canvas it is not on -> 404 (got ${crossCanvas.res.status})`);
 
-  // A real edge id under a nonexistent canvas is a 404 - the save_id is enforced, not decorative.
+  // A real edge id under a nonexistent canvas is a 404 - the canvas_id is enforced, not decorative.
   const bogusCanvas = await getJson(`${CANVAS_PATH}/999999999/edge/${canvasEdge.id}`);
   ok(bogusCanvas.res.status === 404, `a real edge under a nonexistent canvas -> 404 (got ${bogusCanvas.res.status})`);
 } catch (err) {

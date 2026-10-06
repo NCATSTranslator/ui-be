@@ -1,0 +1,219 @@
+{
+  "UserNode": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this User Node"
+      },
+      "user_id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The ID of the User that owns this User Node"
+      },
+      "label": {
+        "type": "string",
+        "description": "The user friendly label for this User Node"
+      },
+      "type": {
+        "type": "string",
+        "description": "The type of this User Node (defaults to \"Other\")"
+      },
+      "data": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "User defined data for this User Node"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this User Node was created"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this User Node was edited"
+      },
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this User Node was soft deleted, or null if active"
+      }
+    }
+  },
+  "UserEdge": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this User Edge"
+      },
+      "user_id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The ID of the User that owns this User Edge"
+      },
+      "label": {
+        "type": "string",
+        "description": "The user friendly label for this User Edge"
+      },
+      "data": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "User defined data for this User Edge"
+      },
+      "subject_ref": {
+        "type": "string",
+        "nullable": true,
+        "description": "The subject as a Translator ref (e.g. a CURIE), or null when the subject is a User Node"
+      },
+      "subject_user_node_id": {
+        "type": "integer",
+        "nullable": true,
+        "description": "The subject as a User Node ID, or null when the subject is a Translator ref"
+      },
+      "object_ref": {
+        "type": "string",
+        "nullable": true,
+        "description": "The object as a Translator ref (e.g. a CURIE), or null when the object is a User Node"
+      },
+      "object_user_node_id": {
+        "type": "integer",
+        "nullable": true,
+        "description": "The object as a User Node ID, or null when the object is a Translator ref"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this User Edge was created"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this User Edge was edited"
+      },
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this User Edge was soft deleted, or null if active"
+      }
+    },
+    "description": "A user defined edge. Its subject and object are each either a Translator ref or one of the User's User Nodes; endpoints are set when the edge is created and cannot be changed."
+  },
+  "CreateUserNodeRequest": {
+    "type": "object",
+    "description": "A new User Node",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "The label for the User Node"
+      },
+      "type": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The type for the User Node. Defaults to \"Other\""
+      },
+      "data": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "User defined data for the User Node"
+      }
+    },
+    "required": ["label", "data"]
+  },
+  "CreateUserEdgeRequest": {
+    "type": "object",
+    "description": "A new User Edge. Each endpoint is given exactly once, as a Translator ref or as a User Node ID.",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "The label for the User Edge"
+      },
+      "data": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "User defined data for the User Edge"
+      },
+      "subject_ref": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The subject as a Translator ref. Give exactly one of subject_ref and subject_user_node_id"
+      },
+      "subject_user_node_id": {
+        "type": "integer",
+        "description": "The subject as an active User Node owned by the current User. Give exactly one of subject_ref and subject_user_node_id"
+      },
+      "object_ref": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The object as a Translator ref. Give exactly one of object_ref and object_user_node_id"
+      },
+      "object_user_node_id": {
+        "type": "integer",
+        "description": "The object as an active User Node owned by the current User. Give exactly one of object_ref and object_user_node_id"
+      }
+    },
+    "required": ["label", "data"],
+    "allOf": [
+      {
+        "oneOf": [
+          {
+            "required": ["subject_ref"]
+          },
+          {
+            "required": ["subject_user_node_id"]
+          }
+        ]
+      },
+      {
+        "oneOf": [
+          {
+            "required": ["object_ref"]
+          },
+          {
+            "required": ["object_user_node_id"]
+          }
+        ]
+      }
+    ]
+  },
+  "UpdateUserNodeRequest": {
+    "type": "object",
+    "description": "A partial update of a User Node; only the fields present are changed.",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "A new label"
+      },
+      "type": {
+        "type": "string",
+        "minLength": 1,
+        "description": "A new type"
+      },
+      "data": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "New user defined data, replacing the existing data"
+      }
+    },
+    "minProperties": 1
+  },
+  "UpdateUserEdgeRequest": {
+    "type": "object",
+    "description": "A partial update of a User Edge; only the fields present are changed. Endpoints cannot be changed, and sending any endpoint field is a 400.",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "A new label"
+      },
+      "data": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "New user defined data, replacing the existing data"
+      }
+    },
+    "minProperties": 1
+  }
+}

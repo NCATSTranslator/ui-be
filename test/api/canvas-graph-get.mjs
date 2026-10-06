@@ -1,4 +1,4 @@
-/* Standalone API test: GET /api/v1/users/me/canvas/:save_id/graph.
+/* Standalone API test: GET /api/v1/users/me/canvas/:canvas_id/graph.
  *
  * The graph endpoint returns the Canvas's own nodes and edges (the canvas_node / canvas_edge rows)
  * plus the tag descriptions stored on the Canvas - but NOT the underlying data-pool entities. So the
@@ -33,7 +33,7 @@ import {
 
 const { ok, fail, finish } = createHarness();
 
-console.log(`# GET ${CANVAS_PATH}/:save_id/graph  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# GET ${CANVAS_PATH}/:canvas_id/graph  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const label = `api-test canvas graph ${new Date().toISOString()}`;
   const layout = 'horizontal';

@@ -4,6 +4,8 @@
  * (rather than committing bad data or hitting a 500). Covers:
  *   - a node whose signed data was altered after signing (server re-derives a different hash)
  *   - a node with no signature at all
+ *   - a node whose id was changed after signing
+ *   - two nodes carrying the same Translator data
  *   - a node with non-numeric placement coordinates
  *   - an edge whose signed data was altered after signing
  *   - an edge with no signature at all
@@ -25,7 +27,7 @@
 
 import { createHarness, BASE_URL, TEST_USER_ID } from '../lib/api-harness.mjs';
 import {
-  postCanvas, graphWithNodesAndEdges, signEdge, testEdge,
+  postCanvas, graphWithNodesAndEdges, graphEntry, signEdge, testEdge,
   CANVAS_PATH, NODE_REF_1, NODE_REF_2, EDGE_REF_1,
 } from '../lib/api-canvas.mjs';
 
@@ -38,52 +40,62 @@ try {
 
   // A node whose data was altered after signing must be rejected (mutate a signed field).
   const tampered = graphWithNodesAndEdges();
-  tampered.nodes[NODE_REF_1].names = ['Tampered Name'];
+  graphEntry(tampered.nodes, NODE_REF_1).data.names = ['Tampered Name'];
   const tamper = await postCanvas({ label: `${label} (tampered node)`, layout, graph: tampered });
   ok(tamper.res.status === 400, `node with tampered data is rejected with 400 (got ${tamper.res.status})`);
 
   // A node with no signature at all must also be rejected.
   const unsigned = graphWithNodesAndEdges();
-  delete unsigned.nodes[NODE_REF_2].signature;
+  delete graphEntry(unsigned.nodes, NODE_REF_2).data.signature;
   const missing = await postCanvas({ label: `${label} (unsigned node)`, layout, graph: unsigned });
   ok(missing.res.status === 400, `node with no signature is rejected with 400 (got ${missing.res.status})`);
 
   // An edge whose data was altered after signing must be rejected (mutate a signed field).
   const tamperedEdge = graphWithNodesAndEdges();
-  tamperedEdge.edges[EDGE_REF_1].predicate = 'biolink:tampered';
+  graphEntry(tamperedEdge.edges, EDGE_REF_1).data.predicate = 'biolink:tampered';
   const edgeTamper = await postCanvas({ label: `${label} (tampered edge)`, layout, graph: tamperedEdge });
   ok(edgeTamper.res.status === 400, `edge with tampered data is rejected with 400 (got ${edgeTamper.res.status})`);
 
   // An edge with no signature at all must also be rejected (parity with the unsigned-node case).
   const unsignedEdge = graphWithNodesAndEdges();
-  delete unsignedEdge.edges[EDGE_REF_1].signature;
+  delete graphEntry(unsignedEdge.edges, EDGE_REF_1).data.signature;
   const missingEdge = await postCanvas({ label: `${label} (unsigned edge)`, layout, graph: unsignedEdge });
   ok(missingEdge.res.status === 400, `edge with no signature is rejected with 400 (got ${missingEdge.res.status})`);
+
+  const renamed = graphWithNodesAndEdges();
+  graphEntry(renamed.nodes, NODE_REF_2).data.id = 'API_TEST:renamed';
+  const renamedRes = await postCanvas({ label: `${label} (renamed node)`, layout, graph: renamed });
+  ok(renamedRes.res.status === 400, `node with an id changed after signing is rejected with 400 (got ${renamedRes.res.status})`);
+
+  const duplicated = graphWithNodesAndEdges();
+  duplicated.nodes.push({ ...graphEntry(duplicated.nodes, NODE_REF_1), x: 99, y: 99 });
+  const duplicatedRes = await postCanvas({ label: `${label} (duplicate node)`, layout, graph: duplicated });
+  ok(duplicatedRes.res.status === 400, `graph with a duplicate Translator node is rejected with 400 (got ${duplicatedRes.res.status})`);
 
   // A node with non-numeric placement coordinates must be rejected. x/y are checked before the
   // signature and are not part of the signed data, so a validly-signed node still fails this check.
   const badCoords = graphWithNodesAndEdges();
-  badCoords.nodes[NODE_REF_1].x = 'not-a-number';
+  graphEntry(badCoords.nodes, NODE_REF_1).x = 'not-a-number';
   const badCoordsRes = await postCanvas({ label: `${label} (non-numeric x)`, layout, graph: badCoords });
   ok(badCoordsRes.res.status === 400, `node with non-numeric x/y is rejected with 400 (got ${badCoordsRes.res.status})`);
 
   // An edge whose endpoint is not among the submitted nodes must be rejected with a 400.
   const dangling = graphWithNodesAndEdges();
-  dangling.edges[EDGE_REF_1] = signEdge(EDGE_REF_1, testEdge(NODE_REF_1, 'API_TEST:not-in-graph', 'biolink:treats'));
+  dangling.edges = [signEdge(EDGE_REF_1, testEdge(NODE_REF_1, 'API_TEST:not-in-graph', 'biolink:treats'))];
   const danglingRes = await postCanvas({ label: `${label} (dangling edge)`, layout, graph: dangling });
   ok(danglingRes.res.status === 400, `edge referencing a node not in the graph is rejected with 400 (got ${danglingRes.res.status})`);
 
   // support is not a field on the edge model, so a stale client sending it is ignored rather than
   // rejected. This is the inverse of the tampered-predicate case above.
   const mutatedUnsigned = graphWithNodesAndEdges();
-  mutatedUnsigned.edges[EDGE_REF_1].support = ['not-a-real-path-id'];
+  graphEntry(mutatedUnsigned.edges, EDGE_REF_1).data.support = ['not-a-real-path-id'];
   const mutatedRes = await postCanvas({ label: `${label} (support altered)`, layout, graph: mutatedUnsigned });
   ok(mutatedRes.res.status === 200, `edge with altered support is accepted with 200 (got ${mutatedRes.res.status})`);
 
   // Omitting it is likewise fine: it is neither required nor read. A stray `type` is also ignored.
   const omitted = graphWithNodesAndEdges();
-  delete omitted.edges[EDGE_REF_1].support;
-  omitted.edges[EDGE_REF_1].type = 'indirect';
+  delete graphEntry(omitted.edges, EDGE_REF_1).data.support;
+  graphEntry(omitted.edges, EDGE_REF_1).data.type = 'indirect';
   const omittedRes = await postCanvas({ label: `${label} (support omitted)`, layout, graph: omitted });
   ok(omittedRes.res.status === 200, `edge omitting support is accepted with 200 (got ${omittedRes.res.status})`);
 } catch (err) {

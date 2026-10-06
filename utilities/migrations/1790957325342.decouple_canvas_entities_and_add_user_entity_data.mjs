@@ -25,7 +25,11 @@ class Migration_1790957325342 extends BaseMigration {
     'canvas_edge_canvas_id_object_id_fkey',
     'canvas_edge_user_data_id_fkey',
     'canvas_edge_ref_matches_data',
-    'canvas_edge_has_source'
+    'canvas_edge_has_source',
+    'user_edge_subject_check',
+    'user_edge_object_check',
+    'user_edge_subject_user_node_id_fkey',
+    'user_edge_object_user_node_id_fkey'
   ];
 
   constructor(dbPool) {
@@ -33,8 +37,10 @@ class Migration_1790957325342 extends BaseMigration {
       this.sql = [[
         "CREATE TABLE IF NOT EXISTS user_node (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, user_id UUID NOT NULL REFERENCES users(id), label TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'Other', data JSONB NOT NULL CHECK (jsonb_typeof(data) = 'object'), time_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, time_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, time_deleted TIMESTAMPTZ DEFAULT NULL);",
         "CREATE INDEX IF NOT EXISTS user_node_active_idx ON user_node(user_id) WHERE time_deleted IS NULL;",
-        "CREATE TABLE IF NOT EXISTS user_edge (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, user_id UUID NOT NULL REFERENCES users(id), label TEXT NOT NULL, data JSONB NOT NULL CHECK (jsonb_typeof(data) = 'object'), time_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, time_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, time_deleted TIMESTAMPTZ DEFAULT NULL);",
+        "CREATE TABLE IF NOT EXISTS user_edge (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, user_id UUID NOT NULL REFERENCES users(id), label TEXT NOT NULL, data JSONB NOT NULL CHECK (jsonb_typeof(data) = 'object'), subject_ref TEXT DEFAULT NULL, subject_user_node_id BIGINT DEFAULT NULL REFERENCES user_node(id), object_ref TEXT DEFAULT NULL, object_user_node_id BIGINT DEFAULT NULL REFERENCES user_node(id), time_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, time_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, time_deleted TIMESTAMPTZ DEFAULT NULL, CONSTRAINT user_edge_subject_check CHECK ((subject_ref IS NULL) <> (subject_user_node_id IS NULL)), CONSTRAINT user_edge_object_check CHECK ((object_ref IS NULL) <> (object_user_node_id IS NULL)));",
         "CREATE INDEX IF NOT EXISTS user_edge_active_idx ON user_edge(user_id) WHERE time_deleted IS NULL;",
+        "CREATE INDEX IF NOT EXISTS user_edge_subject_user_node_idx ON user_edge(subject_user_node_id) WHERE subject_user_node_id IS NOT NULL;",
+        "CREATE INDEX IF NOT EXISTS user_edge_object_user_node_idx ON user_edge(object_user_node_id) WHERE object_user_node_id IS NOT NULL;",
         "ALTER TABLE canvas_edge DROP CONSTRAINT canvas_edge_canvas_id_subject_id_fkey, DROP CONSTRAINT canvas_edge_canvas_id_object_id_fkey;",
         "ALTER TABLE canvas_node ADD COLUMN id BIGINT GENERATED ALWAYS AS IDENTITY;",
         "ALTER TABLE canvas_node DROP CONSTRAINT canvas_node_pkey;",

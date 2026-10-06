@@ -1,4 +1,4 @@
-/* Standalone API test: PUT /api/v1/users/me/canvas/:save_id/graph/geometry.
+/* Standalone API test: PUT /api/v1/users/me/canvas/:canvas_id/graph/geometry.
  *
  * Updates the x/y positions of Canvas Nodes and the full rectangles of Canvas Annotations in a
  * single atomic operation. This is the dedicated geometry endpoint that the element-update
@@ -23,7 +23,7 @@ import { postCanvas, testNode, signNode, testEdge, signEdge, CANVAS_PATH } from 
 
 const { ok, fail, finish } = createHarness();
 
-console.log(`# PUT ${CANVAS_PATH}/:save_id/graph/geometry  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# PUT ${CANVAS_PATH}/:canvas_id/graph/geometry  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const s = Date.now();
   const refA = `API_TEST:move-A-${s}`;
@@ -32,11 +32,11 @@ try {
 
   // Create a canvas with two nodes (known starting positions) and one edge between them.
   const createGraph = {
-    nodes: {
-      [refA]: signNode(refA, testNode(refA, 'Move A', 'biolink:Disease', 10, 20)),
-      [refB]: signNode(refB, testNode(refB, 'Move B', 'biolink:ChemicalEntity', 30, 40)),
-    },
-    edges: { [eAB]: signEdge(eAB, testEdge(refA, refB, 'biolink:treats')) },
+    nodes: [
+      signNode(refA, testNode(refA, 'Move A', 'biolink:Disease', 10, 20)),
+      signNode(refB, testNode(refB, 'Move B', 'biolink:ChemicalEntity', 30, 40)),
+    ],
+    edges: [signEdge(eAB, testEdge(refA, refB, 'biolink:treats'))],
     tag_descriptions: {},
     source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   };

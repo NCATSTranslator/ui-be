@@ -1,4 +1,4 @@
-/* Standalone API test: POST /api/v1/users/me/canvas/:save_id/graph (merge a graph into a canvas).
+/* Standalone API test: POST /api/v1/users/me/canvas/:canvas_id/graph (merge a graph into a canvas).
  *
  * Merge folds a submitted graph into an existing canvas as a union: new nodes/edges are added, the
  * underlying shared data is refreshed, and (not exercisable via the API yet) soft-deleted entities
@@ -81,7 +81,7 @@ function verifyFinalGraph(actual, expected) {
   }
 }
 
-console.log(`# POST ${CANVAS_PATH}/:save_id/graph  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# POST ${CANVAS_PATH}/:canvas_id/graph  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const s = Date.now();
   const refA = `API_TEST:merge-A-${s}`;
@@ -114,12 +114,12 @@ try {
 
   // Create a canvas with nodes A, B and edge A->B, plus the drug tag description.
   const createGraph = {
-    nodes: {
-      [refA]: signNode(refA, testNode(refA, 'Merge A', 'biolink:Disease', 10, 20,
+    nodes: [
+      signNode(refA, testNode(refA, 'Merge A', 'biolink:Disease', 10, 20,
         { tags: { [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug') } })),
-      [refB]: signNode(refB, testNode(refB, 'Merge B', 'biolink:ChemicalEntity', 30, 40)),
-    },
-    edges: { [eAB]: signEdge(eAB, testEdge(refA, refB, 'biolink:treats')) },
+      signNode(refB, testNode(refB, 'Merge B', 'biolink:ChemicalEntity', 30, 40)),
+    ],
+    edges: [signEdge(eAB, testEdge(refA, refB, 'biolink:treats'))],
     tag_descriptions: { [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug') },
     source,
   };
@@ -130,14 +130,14 @@ try {
 
   // Merge: new node C (FDA tag), edge B->C (B already on canvas), edge C->A (A already on canvas).
   const mergeGraph = {
-    nodes: {
-      [refC]: signNode(refC, testNode(refC, 'Merge C', 'biolink:Gene', 50, 60,
+    nodes: [
+      signNode(refC, testNode(refC, 'Merge C', 'biolink:Gene', 50, 60,
         { tags: { [NODE_TAG_FDA]: tagObject(NODE_TAG_FDA, 'FDA Approved') } })),
-    },
-    edges: {
-      [eBC]: signEdge(eBC, testEdge(refB, refC, 'biolink:treats')),
-      [eCA]: signEdge(eCA, testEdge(refC, refA, 'biolink:treats')),
-    },
+    ],
+    edges: [
+      signEdge(eBC, testEdge(refB, refC, 'biolink:treats')),
+      signEdge(eCA, testEdge(refC, refA, 'biolink:treats')),
+    ],
     tag_descriptions: { [NODE_TAG_FDA]: tagObject(NODE_TAG_FDA, 'FDA Approved') },
     source,
   };
@@ -167,9 +167,9 @@ try {
 
   // Merging an existing node with new coordinates must NOT move it (display fields preserved).
   const moveA = {
-    nodes: { [refA]: signNode(refA, testNode(refA, 'Merge A moved', 'biolink:Disease', 999, 888,
-      { tags: { [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug') } })) },
-    edges: {}, tag_descriptions: {}, source,
+    nodes: [signNode(refA, testNode(refA, 'Merge A moved', 'biolink:Disease', 999, 888,
+      { tags: { [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug') } }))],
+    edges: [], tag_descriptions: {}, source,
   };
   const remerge = await postJson(`${CANVAS_PATH}/${id}/graph`, moveA);
   ok(remerge.res.status === 200, `re-merge of existing node responds 200 (got ${remerge.res.status})`);
@@ -183,8 +183,8 @@ try {
 
   // Merging a single node with no edges adds just that node.
   const singleNode = {
-    nodes: { [refF]: signNode(refF, testNode(refF, 'Merge F', 'biolink:Gene', 70, 80)) },
-    edges: {}, tag_descriptions: {}, source,
+    nodes: [signNode(refF, testNode(refF, 'Merge F', 'biolink:Gene', 70, 80))],
+    edges: [], tag_descriptions: {}, source,
   };
   const single = await postJson(`${CANVAS_PATH}/${id}/graph`, singleNode);
   ok(single.res.status === 200, `single-node merge responds 200 (got ${single.res.status})`);
@@ -195,7 +195,7 @@ try {
 
   // An edge to a node neither submitted nor on the canvas is a 400.
   const dangling = {
-    nodes: {}, edges: { [`${refA}->${refD}`]: signEdge(`${refA}->${refD}`, testEdge(refA, refD, 'biolink:treats')) },
+    nodes: [], edges: [signEdge(`${refA}->${refD}`, testEdge(refA, refD, 'biolink:treats'))],
     tag_descriptions: {}, source,
   };
   const danglingRes = await postJson(`${CANVAS_PATH}/${id}/graph`, dangling);
@@ -203,8 +203,9 @@ try {
 
   // A tampered signature is a 400.
   const refE = `API_TEST:merge-E-${s}`;
-  const tampered = { ...signNode(refE, testNode(refE, 'Merge E', 'biolink:Disease', 1, 2)), signature: 'deadbeef' };
-  const badSig = await postJson(`${CANVAS_PATH}/${id}/graph`, { nodes: { [refE]: tampered }, edges: {}, tag_descriptions: {}, source });
+  const signedE = signNode(refE, testNode(refE, 'Merge E', 'biolink:Disease', 1, 2));
+  const tampered = { ...signedE, data: { ...signedE.data, signature: 'deadbeef' } };
+  const badSig = await postJson(`${CANVAS_PATH}/${id}/graph`, { nodes: [tampered], edges: [], tag_descriptions: {}, source });
   ok(badSig.res.status === 400, `bad signature -> 400 (got ${badSig.res.status})`);
 
   // A missing/empty body is a 400.
@@ -212,11 +213,11 @@ try {
   ok(emptyBody.res.status === 400, `empty merge body -> 400 (got ${emptyBody.res.status})`);
 
   // Merging into a canvas that does not exist is a 404.
-  const missing = await postJson(`${CANVAS_PATH}/999999999/graph`, { nodes: {}, edges: {}, tag_descriptions: {}, source });
+  const missing = await postJson(`${CANVAS_PATH}/999999999/graph`, { nodes: [], edges: [], tag_descriptions: {}, source });
   ok(missing.res.status === 404, `unknown canvas id -> 404 (got ${missing.res.status})`);
 
   // A non-numeric id is a 400.
-  const badId = await postJson(`${CANVAS_PATH}/not-a-number/graph`, { nodes: {}, edges: {}, tag_descriptions: {}, source });
+  const badId = await postJson(`${CANVAS_PATH}/not-a-number/graph`, { nodes: [], edges: [], tag_descriptions: {}, source });
   ok(badId.res.status === 400, `non-numeric canvas id -> 400 (got ${badId.res.status})`);
 
   // The end state matches what we expected up front; the failed requests above left it intact.
@@ -230,12 +231,12 @@ try {
   const rA = `API_TEST:revive-A-${rs}`;
   const rB = `API_TEST:revive-B-${rs}`;
   const rAB = `${rA}->${rB}`;
-  const reviveNodes = { [rA]: signNode(rA, testNode(rA, 'Revive A', 'biolink:Disease', 1, 2)) };
-  const reviveEdge = { [rAB]: signEdge(rAB, testEdge(rA, rB, 'biolink:treats')) };
+  const reviveNodes = [signNode(rA, testNode(rA, 'Revive A', 'biolink:Disease', 1, 2))];
+  const reviveEdge = [signEdge(rAB, testEdge(rA, rB, 'biolink:treats'))];
   const reviveCreate = await postCanvas({
     label: `api-test merge revive ${rs}`, layout: 'horizontal',
     graph: {
-      nodes: { ...reviveNodes, [rB]: signNode(rB, testNode(rB, 'Revive B', 'biolink:ChemicalEntity', 3, 4)) },
+      nodes: [...reviveNodes, signNode(rB, testNode(rB, 'Revive B', 'biolink:ChemicalEntity', 3, 4))],
       edges: reviveEdge, tag_descriptions: {}, source,
     },
   });
@@ -263,7 +264,7 @@ try {
   // unknown-canvas 404 above.
   const trashOriginal = await putJson(`${CANVAS_PATH}/trash`, [id]);
   ok(trashOriginal.res.status === 200, `trash canvas responds 200 (got ${trashOriginal.res.status})`);
-  const mergeTrashed = await postJson(`${CANVAS_PATH}/${id}/graph`, { nodes: {}, edges: {}, tag_descriptions: {}, source });
+  const mergeTrashed = await postJson(`${CANVAS_PATH}/${id}/graph`, { nodes: [], edges: [], tag_descriptions: {}, source });
   ok(mergeTrashed.res.status === 404, `merging into a trashed canvas -> 404 (got ${mergeTrashed.res.status})`);
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);

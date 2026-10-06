@@ -44,13 +44,13 @@ try {
   // the source_time vary - which is exactly what the upsert's overwrite condition keys on. An edge is
   // present so the edge-pool upsert (the identical _batch_create_entity path) also runs each step.
   const stepGraph = (nodeName, sourceTime) => ({
-    nodes: {
-      [nodeRef]: signNode(nodeRef, testNode(nodeRef, nodeName, 'biolink:Disease', 10, 20, { source_time: sourceTime })),
-      [node2Ref]: signNode(node2Ref, testNode(node2Ref, 'Upsert Node Two', 'biolink:ChemicalEntity', 30, 40, { source_time: sourceTime })),
-    },
-    edges: {
-      [edgeRef]: signEdge(edgeRef, testEdge(nodeRef, node2Ref, 'biolink:treats', { source_time: sourceTime })),
-    },
+    nodes: [
+      signNode(nodeRef, testNode(nodeRef, nodeName, 'biolink:Disease', 10, 20, { source_time: sourceTime })),
+      signNode(node2Ref, testNode(node2Ref, 'Upsert Node Two', 'biolink:ChemicalEntity', 30, 40, { source_time: sourceTime })),
+    ],
+    edges: [
+      signEdge(edgeRef, testEdge(nodeRef, node2Ref, 'biolink:treats', { source_time: sourceTime })),
+    ],
     tag_descriptions: {},
     source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   });

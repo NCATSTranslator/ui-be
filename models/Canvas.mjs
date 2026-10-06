@@ -10,8 +10,11 @@ export {
   Graph,
   UserCanvas,
   CanvasGraph,
+  CanvasNode,
+  CanvasEdge,
   CanvasAnnotation,
-  CanvasRequestError
+  CanvasRequestError,
+  CanvasConflictError
 }
 
 import * as cmn from "#lib/common.mjs";
@@ -73,8 +76,15 @@ function make_canvas_element_update_from_req(element_req) {
     }
     update.hidden = element_req.hidden;
   }
+  if (element_req.user_data_id !== undefined) {
+    if (element_req.user_data_id !== null && !Number.isInteger(element_req.user_data_id)) {
+      throw new CanvasRequestError(
+        `Canvas element user_data_id must be an integer or null: ${JSON.stringify(element_req.user_data_id)}`);
+    }
+    update.user_data_id = element_req.user_data_id;
+  }
   if (Object.keys(update).length === 0) {
-    throw new CanvasRequestError("Canvas element update must include at least one of: label, hidden");
+    throw new CanvasRequestError("Canvas element update must include at least one of: label, hidden, user_data_id");
   }
   return update;
 }
@@ -227,29 +237,55 @@ function _entity_data_to_canvas_tags(entity_data) {
 function _make_graph_nodes(canvas_req, secret) {
   const raw_nodes = canvas_req.graph?.nodes;
   if (cmn.is_missing(raw_nodes)) return [];
-  if (!cmn.is_object(raw_nodes)) {
-    throw new CanvasRequestError(`Graph nodes must be a map of node id to node: ${JSON.stringify(raw_nodes)}`);
+  if (!Array.isArray(raw_nodes)) {
+    throw new CanvasRequestError(`Graph nodes must be an array: ${JSON.stringify(raw_nodes)}`);
   }
-  return Object.entries(raw_nodes).map(([id, raw]) => {
-    if (!cmn.is_object(raw)) {
-      throw new CanvasRequestError(`Graph node ${id} is malformed`);
-    }
-    return GraphNode.from_object({ ...raw, id: id }, secret);
-  });
+  return raw_nodes.map((raw) => GraphNode.from_object(raw, secret));
 }
 
 function _make_graph_edges(canvas_req, secret) {
   const raw_edges = canvas_req.graph?.edges;
   if (cmn.is_missing(raw_edges)) return [];
-  if (!cmn.is_object(raw_edges)) {
-    throw new CanvasRequestError(`Graph edges must be a map of edge id to edge: ${JSON.stringify(raw_edges)}`);
+  if (!Array.isArray(raw_edges)) {
+    throw new CanvasRequestError(`Graph edges must be an array: ${JSON.stringify(raw_edges)}`);
   }
-  return Object.entries(raw_edges).map(([id, raw]) => {
-    if (!cmn.is_object(raw)) {
-      throw new CanvasRequestError(`Graph edge ${id} is malformed`);
+  return raw_edges.map((raw) => GraphEdge.from_object(raw, secret));
+}
+
+function _parse_translator_data(entity_class, raw_data, secret) {
+  if (!cmn.is_object(raw_data)) {
+    throw new CanvasRequestError(`Graph entity data must be an object: ${JSON.stringify(raw_data)}`);
+  }
+  let data;
+  try {
+    data = entity_class.from_object(raw_data);
+  } catch (err) {
+    throw new CanvasRequestError(`Graph entity has invalid Translator data: ${err.message}`);
+  }
+  if (!cmn.verify_entity_data(data.to_raw_obj(), raw_data.signature, secret)) {
+    throw new CanvasRequestError(`Graph entity ${data.id} has an invalid or missing signature`);
+  }
+  return data;
+}
+
+function _assert_unique_identities(entities) {
+  const refs = new Set();
+  const user_data_ids = new Set();
+  for (const entity of entities) {
+    if (entity.has_translator_data()) {
+      const ref = entity.ref();
+      if (refs.has(ref)) {
+        throw new CanvasRequestError(`Graph includes Translator data ${ref} more than once`);
+      }
+      refs.add(ref);
     }
-    return GraphEdge.from_object({ ...raw, id: id }, secret);
-  });
+    if (entity.has_user_data()) {
+      if (user_data_ids.has(entity.user_data_id)) {
+        throw new CanvasRequestError(`Graph uses user data ${entity.user_data_id} more than once`);
+      }
+      user_data_ids.add(entity.user_data_id);
+    }
+  }
 }
 
 class UserCanvas {
@@ -298,7 +334,8 @@ class CanvasNode {
     hidden = false,
     tags = {},
     time_created = new Date(),
-    time_updated = new Date()
+    time_updated = new Date(),
+    time_deleted = null
   } = {}) {
     this.id = id;
     this.canvas_id = canvas_id;
@@ -313,7 +350,7 @@ class CanvasNode {
     this.tags = tags;
     this.time_created = time_created;
     this.time_updated = time_updated;
-    this.time_deleted = null;
+    this.time_deleted = time_deleted;
   }
 }
 
@@ -409,13 +446,15 @@ class CanvasAnnotation {
 
 class GraphNode {
   constructor({
-    data,
+    data = null,
+    user_data_id = null,
     x,
     y,
     hidden = false,
     label = null
   } = {}) {
     this.data = data;
+    this.user_data_id = user_data_id;
     this.x = x;
     this.y = y;
     this.hidden = hidden;
@@ -429,26 +468,38 @@ class GraphNode {
     if (!Number.isFinite(raw.x) || !Number.isFinite(raw.y)) {
       throw new CanvasRequestError(`Graph node requires numeric x and y coordinates: ${JSON.stringify(raw)}`);
     }
-    let data;
-    try {
-      data = SummaryNode.from_object(raw);
-    } catch (err) {
-      throw new CanvasRequestError(`Graph node is not a valid node: ${err.message}`);
+    const user_data_id = raw.user_data_id ?? null;
+    if (user_data_id !== null && !Number.isInteger(user_data_id)) {
+      throw new CanvasRequestError(
+        `Graph node user_data_id must be an integer: ${JSON.stringify(user_data_id)}`);
     }
-    if (!cmn.verify_entity_data(data.to_raw_obj(), raw.signature, secret)) {
-      throw new CanvasRequestError(`Graph node ${data.id} has an invalid or missing signature`);
-    }
-    return new GraphNode({
+    const data = cmn.is_missing(raw.data)
+      ? null
+      : _parse_translator_data(SummaryNode, raw.data, secret);
+    const node = new GraphNode({
       data: data,
+      user_data_id: user_data_id,
       x: raw.x,
       y: raw.y,
       hidden: raw.hidden ?? false,
       label: raw.label ?? null
     });
+    if (!node.has_translator_data() && !node.has_user_data()) {
+      throw new CanvasRequestError(`Graph node requires Translator data, user data, or both: ${JSON.stringify(raw)}`);
+    }
+    return node;
+  }
+
+  has_translator_data() {
+    return !cmn.is_missing(this.data);
+  }
+
+  has_user_data() {
+    return !cmn.is_missing(this.user_data_id);
   }
 
   ref() {
-    return this.data.id;
+    return this.has_translator_data() ? this.data.id : null;
   }
 
   to_canvas_node_data() {
@@ -458,28 +509,32 @@ class GraphNode {
     });
   }
 
-  to_canvas_node(canvas_id, data_id) {
+  to_canvas_node(canvas_id, data_id, user_node) {
+    const has_translator_data = this.has_translator_data();
     return new CanvasNode({
       canvas_id: canvas_id,
       data_id: data_id,
+      user_data_id: this.user_data_id,
       ref: this.ref(),
-      label: this.label ?? this.data.name(),
-      type: this.data.get_specific_type(),
+      label: this.label ?? (has_translator_data ? this.data.name() : user_node.label),
+      type: has_translator_data ? this.data.get_specific_type() : user_node.type,
       x: this.x,
       y: this.y,
       hidden: this.hidden,
-      tags: _entity_data_to_canvas_tags(this.data)
+      tags: has_translator_data ? _entity_data_to_canvas_tags(this.data) : {}
     });
   }
 }
 
 class GraphEdge {
   constructor({
-    data,
+    data = null,
+    user_data_id = null,
     hidden = false,
     label = null
   } = {}) {
     this.data = data;
+    this.user_data_id = user_data_id;
     this.hidden = hidden;
     this.label = label;
   }
@@ -488,24 +543,40 @@ class GraphEdge {
     if (!cmn.is_object(raw)) {
       throw new CanvasRequestError(`Graph edge is malformed: ${JSON.stringify(raw)}`);
     }
-    let data;
-    try {
-      data = SummaryEdge.from_object(raw);
-    } catch (err) {
-      throw new CanvasRequestError(`Graph edge is not a valid edge: ${err.message}`);
+    const user_data_id = raw.user_data_id ?? null;
+    if (user_data_id !== null && !Number.isInteger(user_data_id)) {
+      throw new CanvasRequestError(
+        `Graph edge user_data_id must be an integer: ${JSON.stringify(user_data_id)}`);
     }
-    if (!cmn.verify_entity_data(data.to_raw_obj(), raw.signature, secret)) {
-      throw new CanvasRequestError(`Graph edge ${data.id} has an invalid or missing signature`);
-    }
-    return new GraphEdge({
+    const data = cmn.is_missing(raw.data)
+      ? null
+      : _parse_translator_data(SummaryEdge, raw.data, secret);
+    const edge = new GraphEdge({
       data: data,
+      user_data_id: user_data_id,
       hidden: raw.hidden ?? false,
       label: raw.label ?? null
     });
+    if (!edge.has_translator_data() && !edge.has_user_data()) {
+      throw new CanvasRequestError(`Graph edge requires Translator data, user data, or both: ${JSON.stringify(raw)}`);
+    }
+    if (raw.subject !== undefined || raw.object !== undefined) {
+      throw new CanvasRequestError(
+        `Graph edge takes its endpoints from its Translator or user data, so subject and object must be omitted: ${JSON.stringify(raw)}`);
+    }
+    return edge;
+  }
+
+  has_translator_data() {
+    return !cmn.is_missing(this.data);
+  }
+
+  has_user_data() {
+    return !cmn.is_missing(this.user_data_id);
   }
 
   ref() {
-    return this.data.id;
+    return this.has_translator_data() ? this.data.id : null;
   }
 
   subject_ref() {
@@ -523,16 +594,22 @@ class GraphEdge {
     });
   }
 
-  to_canvas_edge(canvas_id, data_id, subject_id, object_id) {
+  has_same_endpoints_as(user_edge) {
+    return user_edge.subject_ref === this.subject_ref() && user_edge.object_ref === this.object_ref();
+  }
+
+  to_canvas_edge(canvas_id, data_id, subject_id, object_id, user_edge) {
+    const has_translator_data = this.has_translator_data();
     return new CanvasEdge({
       canvas_id: canvas_id,
       data_id: data_id,
+      user_data_id: this.user_data_id,
       subject_id: subject_id,
       object_id: object_id,
       ref: this.ref(),
-      label: this.label ?? this.data.predicate,
+      label: this.label ?? (has_translator_data ? this.data.predicate : user_edge.label),
       hidden: this.hidden,
-      tags: _entity_data_to_canvas_tags(this.data)
+      tags: has_translator_data ? _entity_data_to_canvas_tags(this.data) : {}
     });
   }
 }
@@ -546,6 +623,8 @@ class Graph {
   static from_req(canvas_req, secret) {
     const nodes = _make_graph_nodes(canvas_req, secret);
     const edges = _make_graph_edges(canvas_req, secret);
+    _assert_unique_identities(nodes);
+    _assert_unique_identities(edges);
     return new Graph({ nodes: nodes, edges: edges });
   }
 
@@ -555,20 +634,6 @@ class Graph {
 
   edges() {
     return this._edges;
-  }
-
-  assert_edges_reference_nodes(known_node_refs = []) {
-    const node_refs = new Set(this._nodes.map((node) => node.ref()));
-    for (const ref of known_node_refs) {
-      node_refs.add(ref);
-    }
-    for (const edge of this._edges) {
-      if (!node_refs.has(edge.subject_ref()) || !node_refs.has(edge.object_ref())) {
-        throw new CanvasRequestError(
-          `Graph edge ${edge.ref()} references a node not present in the graph `
-          + `(subject=${edge.subject_ref()}, object=${edge.object_ref()})`);
-      }
-    }
   }
 }
 
@@ -585,6 +650,13 @@ class CanvasRequestError extends Error {
   constructor(msg) {
     super(msg);
     this.name = "CanvasRequestError";
+  }
+}
+
+class CanvasConflictError extends Error {
+  constructor(msg) {
+    super(msg);
+    this.name = "CanvasConflictError";
   }
 }
 

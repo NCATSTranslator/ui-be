@@ -1,0 +1,562 @@
+{
+  "/api/v1/users/me/nodes": {
+    "get": {
+      "summary": "Get the User Nodes for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Include trashed entities when true"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The User Nodes",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/user-entity.json#/UserNode"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create a User Node for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-entity.json#/CreateUserNodeRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The created User Node",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-entity.json#/UserNode"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The request is malformed"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/nodes/trash": {
+    "put": {
+      "summary": "Trash a list of User Node IDs for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "User Nodes trashed successfully"
+        },
+        "400": {
+          "description": "The request body is not a valid array of User Node IDs"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/nodes/restore": {
+    "put": {
+      "summary": "Restore a list of User Node IDs for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "User Nodes restored successfully"
+        },
+        "400": {
+          "description": "The request body is not a valid array of User Node IDs"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/nodes/{id}": {
+    "get": {
+      "summary": "Get a User Node owned by the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The User Node ID"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Include trashed entities when true"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The User Node",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-entity.json#/UserNode"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The id is not an integer"
+        },
+        "404": {
+          "description": "No such User Node for the current User (trashed ones are excluded unless include_deleted is true)"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update a User Node owned by the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The User Node ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-entity.json#/UpdateUserNodeRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The updated User Node",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-entity.json#/UserNode"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The update request is malformed"
+        },
+        "404": {
+          "description": "No active User Node with the given id for the current User"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/edges": {
+    "get": {
+      "summary": "Get the User Edges for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Include trashed entities when true"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The User Edges",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/user-entity.json#/UserEdge"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create a User Edge for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-entity.json#/CreateUserEdgeRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The created User Edge",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-entity.json#/UserEdge"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The request is malformed, an endpoint is missing or given twice, or an endpoint User Node is not an active one owned by the current User"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/edges/trash": {
+    "put": {
+      "summary": "Trash a list of User Edge IDs for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "User Edges trashed successfully"
+        },
+        "400": {
+          "description": "The request body is not a valid array of User Edge IDs"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/edges/restore": {
+    "put": {
+      "summary": "Restore a list of User Edge IDs for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "User Edges restored successfully"
+        },
+        "400": {
+          "description": "The request body is not a valid array of User Edge IDs"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/edges/{id}": {
+    "get": {
+      "summary": "Get a User Edge owned by the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The User Edge ID"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Include trashed entities when true"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The User Edge",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-entity.json#/UserEdge"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The id is not an integer"
+        },
+        "404": {
+          "description": "No such User Edge for the current User (trashed ones are excluded unless include_deleted is true)"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update a User Edge owned by the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The User Edge ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/user-entity.json#/UpdateUserEdgeRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The updated User Edge",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/user-entity.json#/UserEdge"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The update request is malformed or tries to change an endpoint"
+        },
+        "404": {
+          "description": "No active User Edge with the given id for the current User"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  }
+}

@@ -87,6 +87,9 @@
         "400": {
           "description": "Initial canvas graph is malformed"
         },
+        "409": {
+          "description": "User data in the graph is already on another entity of the Canvas, an entity's user data slot already holds different user data, or a User Edge does not match its Translator edge's endpoints"
+        },
         "401": {
           "description": "Authentication Required"
         },
@@ -96,7 +99,7 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}": {
+  "/api/v1/users/me/canvas/{canvas_id}": {
     "put": {
       "summary": "Update properties of a canvas for the current user",
       "security": [
@@ -109,13 +112,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         }
       ],
       "requestBody": {
@@ -156,7 +159,7 @@
   },
   "/api/v1/users/me/canvas/trash": {
     "put": {
-      "summary": "Trash a list of Canvas Save IDs for the current User",
+      "summary": "Trash a list of Canvas IDs for the current User",
       "security": [
         {
           "cookieAuth": []
@@ -196,7 +199,7 @@
   },
   "/api/v1/users/me/canvas/restore": {
     "put": {
-      "summary": "Restore a list of Canvas Save IDs for the current User",
+      "summary": "Restore a list of Canvas IDs for the current User",
       "security": [
         {
           "cookieAuth": []
@@ -234,7 +237,7 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}/graph": {
+  "/api/v1/users/me/canvas/{canvas_id}/graph": {
     "get": {
       "summary": "Get the Nodes, Edges, and Tags for a Canvas",
       "security": [
@@ -247,13 +250,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         },
         {
           "name": "include_deleted",
@@ -299,13 +302,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         }
       ],
       "requestBody": {
@@ -332,6 +335,9 @@
         "400": {
           "description": "The submitted graph is malformed"
         },
+        "409": {
+          "description": "User data in the graph is already on another entity of the Canvas, an entity's user data slot already holds different user data, or a User Edge does not match its Translator edge's endpoints"
+        },
         "404": {
           "description": "The Canvas does not exist"
         },
@@ -344,7 +350,7 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}/graph/trash": {
+  "/api/v1/users/me/canvas/{canvas_id}/graph/trash": {
     "put": {
       "summary": "Soft delete Nodes and Edges from a Canvas",
       "description": "Soft deletes the listed Canvas Nodes, Edges and Annotations in a single atomic operation. Soft deleting a node also soft deletes every edge attached to it; annotations are independent and cascade to nothing. Returns the resulting Canvas graph.",
@@ -358,13 +364,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         }
       ],
       "requestBody": {
@@ -403,7 +409,7 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}/graph/restore": {
+  "/api/v1/users/me/canvas/{canvas_id}/graph/restore": {
     "put": {
       "summary": "Restore soft deleted Nodes and Edges in a Canvas",
       "description": "Restores the listed Canvas Nodes, Edges and Annotations in a single atomic operation. An edge is only restored if both of its endpoint nodes are active; annotations restore unconditionally. Returns the resulting Canvas graph.",
@@ -417,13 +423,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         }
       ],
       "requestBody": {
@@ -462,7 +468,7 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}/graph/geometry": {
+  "/api/v1/users/me/canvas/{canvas_id}/graph/geometry": {
     "put": {
       "summary": "Place Nodes and Annotations on a Canvas",
       "description": "Updates the (x, y) positions of the given Canvas Nodes and the full rectangles (x, y, width, height) of the given Canvas Annotations in a single atomic operation. Both collections are optional but at least one must be non-empty. Only active (non-deleted) elements on the Canvas are updated. Returns the elements that were actually updated.",
@@ -476,13 +482,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         }
       ],
       "requestBody": {
@@ -521,7 +527,7 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}/annotation": {
+  "/api/v1/users/me/canvas/{canvas_id}/annotation": {
     "post": {
       "summary": "Create an Annotation on a Canvas",
       "description": "Creates a Canvas Annotation with the given text and rectangle. Content, x, y, width and height are all required; null is not accepted for any of them. Position and size are changed afterwards through the graph geometry endpoint, and the text through the annotation update endpoint.",
@@ -535,13 +541,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         }
       ],
       "requestBody": {
@@ -580,7 +586,7 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}/annotation/{annotation_id}": {
+  "/api/v1/users/me/canvas/{canvas_id}/annotation/{annotation_id}": {
     "put": {
       "summary": "Update the text of a Canvas Annotation",
       "description": "Replaces a Canvas Annotation's content. Position and size are updated through the graph geometry endpoint, not here. Returns the updated Canvas Annotation.",
@@ -594,13 +600,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         },
         {
           "name": "annotation_id",
@@ -648,7 +654,7 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}/node/{id}": {
+  "/api/v1/users/me/canvas/{canvas_id}/node/{id}": {
     "get": {
       "summary": "Get the underlying data entity for a Canvas Node",
       "description": "Returns the underlying data-pool entity (the signed SummaryNode) for a Canvas Node. The node must belong to the given Canvas, have Translator data, and that Canvas must be owned by the current user and not trashed; otherwise the response is 404.",
@@ -662,13 +668,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         },
         {
           "name": "id",
@@ -715,13 +721,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         },
         {
           "name": "id",
@@ -758,7 +764,10 @@
           "description": "The update request is malformed"
         },
         "404": {
-          "description": "No active node with the given id exists on the canvas"
+          "description": "No active node with the given id exists on the canvas, the user data is not an active User Node owned by the current User, or an active user edge connects to this node through its current user data"
+        },
+        "409": {
+          "description": "The user data is already on this canvas, or detaching it would leave the node without Translator or user data"
         },
         "401": {
           "description": "Authentication Required"
@@ -769,7 +778,7 @@
       }
     }
   },
-  "/api/v1/users/me/canvas/{save_id}/edge/{id}": {
+  "/api/v1/users/me/canvas/{canvas_id}/edge/{id}": {
     "get": {
       "summary": "Get the underlying data entity for a Canvas Edge",
       "description": "Returns the underlying data-pool entity (the signed SummaryEdge) for a Canvas Edge. The edge must belong to the given Canvas, have Translator data, and that Canvas must be owned by the current user and not trashed; otherwise the response is 404.",
@@ -783,13 +792,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         },
         {
           "name": "id",
@@ -836,13 +845,13 @@
       ],
       "parameters": [
         {
-          "name": "save_id",
+          "name": "canvas_id",
           "in": "path",
           "required": true,
           "schema": {
             "type": "integer"
           },
-          "description": "The Canvas Save ID"
+          "description": "The Canvas ID"
         },
         {
           "name": "id",
@@ -879,7 +888,10 @@
           "description": "The update request is malformed"
         },
         "404": {
-          "description": "No active edge with the given id exists on the canvas"
+          "description": "No active edge with the given id exists on the canvas, the user data is not an active User Edge owned by the current User, or the User Edge does not connect this edge's endpoints"
+        },
+        "409": {
+          "description": "The user data is already on this canvas, or detaching it would leave the edge without Translator or user data"
         },
         "401": {
           "description": "Authentication Required"

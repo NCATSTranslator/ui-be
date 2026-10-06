@@ -4,7 +4,8 @@ export { UserAPIController };
 import * as wutil from '../lib/webutils.mjs';
 import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 import * as cmn from '../lib/common.mjs';
-import { CanvasRequestError } from "../models/Canvas.mjs";
+import { CanvasRequestError, CanvasConflictError } from "../models/Canvas.mjs";
+import { UserEntityRequestError } from "../models/UserEntity.mjs";
 import { validate as uuid_validate } from 'uuid';
 import { ApiKeyLimitError, API_KEY_NAME_MAX_LEN, API_KEY_MAX_TTL_DAYS, api_key_expiry,
   parse_api_key_expiry } from '../models/ApiKey.mjs';
@@ -382,6 +383,15 @@ class UserAPIController {
     return next();
   }
 
+  parse_user_entity_id(req, res, next, value) {
+    const entity_id = parseInt(value, 10);
+    if (!Number.isInteger(entity_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid user entity ID: ${value}`);
+    }
+    req.entity_id = entity_id;
+    return next();
+  }
+
   parse_canvas_annotation_id(req, res, next, value) {
     const annotation_id = parseInt(value, 10);
     if (!Number.isInteger(annotation_id)) {
@@ -484,6 +494,9 @@ class UserAPIController {
       if (err instanceof CanvasRequestError) {
         return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
       }
+      if (err instanceof CanvasConflictError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.CONFLICT, err.message);
+      }
       wutil.log_internal_server_error(req, err);
       return wutil.send_internal_server_error(res);
     }
@@ -503,6 +516,9 @@ class UserAPIController {
       if (err instanceof CanvasRequestError) {
         return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
       }
+      if (err instanceof CanvasConflictError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.CONFLICT, err.message);
+      }
       wutil.log_internal_server_error(req, err);
       return wutil.send_internal_server_error(res);
     }
@@ -521,6 +537,9 @@ class UserAPIController {
     } catch (err) {
       if (err instanceof CanvasRequestError) {
         return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      if (err instanceof CanvasConflictError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.CONFLICT, err.message);
       }
       wutil.log_internal_server_error(req, err);
       return wutil.send_internal_server_error(res);
@@ -654,6 +673,128 @@ class UserAPIController {
     }
   }
 
+  async get_user_nodes(req, res) {
+    return this._get_user_entities(req, res,
+      (user_id, include_deleted) => this.user_service.get_user_nodes(user_id, include_deleted));
+  }
+
+  async get_user_edges(req, res) {
+    return this._get_user_entities(req, res,
+      (user_id, include_deleted) => this.user_service.get_user_edges(user_id, include_deleted));
+  }
+
+  async get_user_node(req, res) {
+    return this._get_user_entities(req, res, async (user_id, include_deleted) =>
+      (await this.user_service.get_user_nodes(user_id, include_deleted, [req.entity_id]))[0]);
+  }
+
+  async get_user_edge(req, res) {
+    return this._get_user_entities(req, res, async (user_id, include_deleted) =>
+      (await this.user_service.get_user_edges(user_id, include_deleted, [req.entity_id]))[0]);
+  }
+
+  async create_user_node(req, res) {
+    return this._create_user_entity(req, res, async (user_id, entity_req) =>
+      (await this.user_service.create_user_nodes(user_id, [entity_req]))[0]);
+  }
+
+  async create_user_edge(req, res) {
+    return this._create_user_entity(req, res, async (user_id, entity_req) =>
+      (await this.user_service.create_user_edges(user_id, [entity_req]))[0]);
+  }
+
+  async update_user_node(req, res) {
+    return this._update_user_entity(req, res, async (user_id, update_req) =>
+      (await this.user_service.update_user_nodes(user_id, [{ id: req.entity_id, update_req: update_req }]))[0]);
+  }
+
+  async update_user_edge(req, res) {
+    return this._update_user_entity(req, res, async (user_id, update_req) =>
+      (await this.user_service.update_user_edges(user_id, [{ id: req.entity_id, update_req: update_req }]))[0]);
+  }
+
+  async trash_user_nodes(req, res) {
+    return this._set_user_entities_deleted(req, res,
+      (user_id, ids) => this.user_service.trash_user_nodes(user_id, ids));
+  }
+
+  async trash_user_edges(req, res) {
+    return this._set_user_entities_deleted(req, res,
+      (user_id, ids) => this.user_service.trash_user_edges(user_id, ids));
+  }
+
+  async restore_user_nodes(req, res) {
+    return this._set_user_entities_deleted(req, res,
+      (user_id, ids) => this.user_service.restore_user_nodes(user_id, ids));
+  }
+
+  async restore_user_edges(req, res) {
+    return this._set_user_entities_deleted(req, res,
+      (user_id, ids) => this.user_service.restore_user_edges(user_id, ids));
+  }
+
+  async _get_user_entities(req, res, get_entities) {
+    const user_id = wutil.request_to_user_id(req);
+    const include_deleted = req.query.include_deleted === "true";
+    try {
+      const entities = await get_entities(user_id, include_deleted);
+      if (entities === undefined) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No user entity found for id ${req.entity_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(entities);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async _create_user_entity(req, res, create_entity) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const entity = await create_entity(user_id, req.body);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(entity);
+    } catch (err) {
+      if (err instanceof UserEntityRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async _update_user_entity(req, res, update_entity) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const entity = await update_entity(user_id, req.body);
+      if (entity === undefined) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No user entity found for id ${req.entity_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(entity);
+    } catch (err) {
+      if (err instanceof UserEntityRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async _set_user_entities_deleted(req, res, set_deleted) {
+    const user_id = wutil.request_to_user_id(req);
+    const ids = req.body;
+    if (!cmn.is_array(ids) || !ids.every((id) => Number.isInteger(id))) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST,
+        `Expected body to be a JSON array of user entity IDs. Got: ${JSON.stringify(ids)}`);
+    }
+    try {
+      await set_deleted(user_id, ids);
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async create_user_canvas(req, res) {
     const user_id = wutil.request_to_user_id(req);
     try {
@@ -663,6 +804,8 @@ class UserAPIController {
     } catch (err) {
       if (err instanceof CanvasRequestError) {
         wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      } else if (err instanceof CanvasConflictError) {
+        wutil.send_error(res, cmn.HTTP_CODE.CONFLICT, err.message);
       } else {
         wutil.log_internal_server_error(req, err);
         wutil.send_internal_server_error(res);

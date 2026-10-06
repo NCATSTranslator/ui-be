@@ -1,4 +1,4 @@
-/* Standalone API test: GET /api/v1/users/me/canvas/:save_id/node/:id.
+/* Standalone API test: GET /api/v1/users/me/canvas/:canvas_id/node/:id.
  *
  * The node-data endpoint returns the underlying data-pool entity (the signed SummaryNode) for a
  * Canvas Node, by its id. Unlike the graph endpoint - which returns the canvas_node row with a
@@ -30,7 +30,7 @@ import {
 
 const { ok, fail, finish } = createHarness();
 
-console.log(`# GET ${CANVAS_PATH}/:save_id/node/:id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# GET ${CANVAS_PATH}/:canvas_id/node/:id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const label = `api-test canvas node-data ${new Date().toISOString()}`;
   const layout = 'horizontal';
@@ -44,8 +44,8 @@ try {
     },
   }));
   const graph = {
-    nodes: { [ref]: node },
-    edges: {},
+    nodes: [node],
+    edges: [],
     tag_descriptions: {
       [NODE_TAG_DRUG]: tagObject(NODE_TAG_DRUG, 'Drug'),
       [NODE_TAG_FDA]: tagObject(NODE_TAG_FDA, 'FDA Approved'),
@@ -93,7 +93,7 @@ try {
   const crossCanvas = await getJson(`${CANVAS_PATH}/${other.json.id}/node/${canvasNode.id}`);
   ok(crossCanvas.res.status === 404, `a real node addressed through a canvas it is not on -> 404 (got ${crossCanvas.res.status})`);
 
-  // A real node id under a nonexistent canvas is a 404 - the save_id is enforced, not decorative.
+  // A real node id under a nonexistent canvas is a 404 - the canvas_id is enforced, not decorative.
   const bogusCanvas = await getJson(`${CANVAS_PATH}/999999999/node/${canvasNode.id}`);
   ok(bogusCanvas.res.status === 404, `a real node under a nonexistent canvas -> 404 (got ${bogusCanvas.res.status})`);
 } catch (err) {

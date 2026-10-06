@@ -585,18 +585,18 @@ app.put('/api/v1/users/me/canvas/restore', (req, res) => {
 });
 
 // Get canvas graph
-app.get('/api/v1/users/me/canvas/:save_id/graph', (req, res) => {
-  const { save_id } = req.params;
+app.get('/api/v1/users/me/canvas/:canvas_id/graph', (req, res) => {
+  const { canvas_id } = req.params;
 
   let canvases = loadMockData('api/v1/users/me/canvases.json');
   if (canvases && cmn.is_array(canvases)) {
-    const canvas = canvases.find(c => c.id == save_id);
+    const canvas = canvases.find(c => c.id == canvas_id);
     if (!canvas) {
       return res.status(400).json({ error: 'The Canvas does not exist' });
     }
   }
 
-  const data = loadMockData(`api/v1/users/me/canvas/${save_id}/graph.json`);
+  const data = loadMockData(`api/v1/users/me/canvas/${canvas_id}/graph.json`);
   if (data) {
     res.status(200).json(data);
   } else {
@@ -605,13 +605,13 @@ app.get('/api/v1/users/me/canvas/:save_id/graph', (req, res) => {
 });
 
 // Merge graph into canvas
-app.post('/api/v1/users/me/canvas/:save_id/graph', (req, res) => {
-  const { save_id } = req.params;
-  console.log(`POST /api/v1/users/me/canvas/${save_id}/graph - Received data:`, JSON.stringify(req.body, null, 2));
+app.post('/api/v1/users/me/canvas/:canvas_id/graph', (req, res) => {
+  const { canvas_id } = req.params;
+  console.log(`POST /api/v1/users/me/canvas/${canvas_id}/graph - Received data:`, JSON.stringify(req.body, null, 2));
 
   let canvases = loadMockData('api/v1/users/me/canvases.json');
   if (canvases && cmn.is_array(canvases)) {
-    const canvas = canvases.find(c => c.id == save_id);
+    const canvas = canvases.find(c => c.id == canvas_id);
     if (!canvas) {
       return res.status(400).json({ error: 'The Canvas does not exist' });
     }
@@ -661,6 +661,6 @@ app.listen(PORT, () => {
   console.log('  PUT /api/v1/users/me/canvas');
   console.log('  PUT /api/v1/users/me/canvas/trash');
   console.log('  PUT /api/v1/users/me/canvas/restore');
-  console.log('  GET /api/v1/users/me/canvas/:save_id/graph');
-  console.log('  POST /api/v1/users/me/canvas/:save_id/graph');
+  console.log('  GET /api/v1/users/me/canvas/:canvas_id/graph');
+  console.log('  POST /api/v1/users/me/canvas/:canvas_id/graph');
 });

@@ -19,7 +19,10 @@ const suite = {
     UserCanvas: true,
     CanvasGraph: true,
     CanvasAnnotation: true,
-    CanvasRequestError: true
+    CanvasRequestError: true,
+    CanvasConflictError: true,
+    CanvasNode: true,
+    CanvasEdge: true
   }
 };
 
@@ -163,6 +166,26 @@ function _test_make_canvas_element_update_from_req() {
     "non_boolean_hidden_throws": {
       "args": [{ hidden: "yes" }],
       "expected": CanvasRequestError
+    },
+    "user_data_id_attach": {
+      "args": [{ user_data_id: 7 }],
+      "expected": { user_data_id: 7 }
+    },
+    "user_data_id_null_detaches": {
+      "args": [{ user_data_id: null }],
+      "expected": { user_data_id: null }
+    },
+    "user_data_id_with_label": {
+      "args": [{ label: "Node A", user_data_id: 7 }],
+      "expected": { label: "Node A", user_data_id: 7 }
+    },
+    "non_integer_user_data_id_throws": {
+      "args": [{ user_data_id: 1.5 }],
+      "expected": CanvasRequestError
+    },
+    "string_user_data_id_throws": {
+      "args": [{ user_data_id: "7" }],
+      "expected": CanvasRequestError
     }
   });
 }
@@ -179,6 +202,78 @@ function _test_make_graph_merge_from_req() {
     },
     "empty_object_throws": {
       "args": [{}, "secret"],
+      "expected": CanvasRequestError
+    },
+    "user_only_node_and_edge": {
+      "args": [{
+        nodes: [{ x: 1, y: 2, user_data_id: 7 }],
+        edges: [{ user_data_id: 9, label: "relates" }]
+      }, "secret"],
+      "expected": {
+        graph: {
+          _nodes: [{ data: null, user_data_id: 7, x: 1, y: 2, hidden: false, label: null }],
+          _edges: [{ data: null, user_data_id: 9, hidden: false, label: "relates" }]
+        },
+        tag_descriptions: null
+      }
+    },
+    "node_without_any_slot_throws": {
+      "args": [{ nodes: [{ x: 1, y: 2 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "node_with_non_integer_user_data_id_throws": {
+      "args": [{ nodes: [{ x: 1, y: 2, user_data_id: "7" }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "user_only_node_missing_coordinates_throws": {
+      "args": [{ nodes: [{ user_data_id: 7 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "node_with_unsigned_data_throws": {
+      "args": [{ nodes: [{ x: 1, y: 2, data: { names: ["X"] }, user_data_id: 7 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "node_with_non_object_data_throws": {
+      "args": [{ nodes: [{ x: 1, y: 2, data: "MONDO:1" }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edge_without_any_slot_throws": {
+      "args": [{ edges: [{ hidden: true }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edge_with_non_integer_user_data_id_throws": {
+      "args": [{ edges: [{ user_data_id: 1.5 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edge_with_explicit_subject_throws": {
+      "args": [{ edges: [{ user_data_id: 9, subject: "a" }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edge_with_explicit_object_throws": {
+      "args": [{ edges: [{ user_data_id: 9, object: 2 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "duplicate_user_node_throws": {
+      "args": [{
+        nodes: [{ x: 1, y: 2, user_data_id: 7 }, { x: 3, y: 4, user_data_id: 7 }]
+      }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "nodes_as_map_throws": {
+      "args": [{ nodes: { "note-1": { x: 1, y: 2, user_data_id: 7 } } }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edges_as_map_throws": {
+      "args": [{ edges: { "link-1": { user_data_id: 9 } } }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "duplicate_user_edge_throws": {
+      "args": [{
+        edges: [
+          { user_data_id: 9 },
+          { user_data_id: 9, hidden: true }
+        ]
+      }, "secret"],
       "expected": CanvasRequestError
     }
   });

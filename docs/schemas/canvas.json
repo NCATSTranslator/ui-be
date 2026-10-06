@@ -282,13 +282,20 @@
   },
   "GraphNode": {
     "type": "object",
-    "description": "A node submitted as part of a canvas Graph",
-    "allOf": [
-      {
-        "$ref": "./summary.json#/SummaryNode"
-      }
-    ],
+    "description": "A node submitted as part of a canvas Graph. It carries Translator data, user data, or both. Its ref is the id of its Translator data.",
     "properties": {
+      "data": {
+        "allOf": [
+          {
+            "$ref": "./summary.json#/SummaryNode"
+          }
+        ],
+        "description": "The Translator slot: the signed SummaryNode exactly as the server returned it, including its id and signature"
+      },
+      "user_data_id": {
+        "type": "integer",
+        "description": "The user data slot: a User Node owned by the current User. On an entity already active on the Canvas it fills an empty slot, is a no-op if the slot already holds it, and is a 409 if the slot holds different user data or the User Node is on another entity of the Canvas. An entry with only user data is a no-op if its User Node is already on the Canvas."
+      },
       "x": {
         "type": "number",
         "format": "double",
@@ -306,20 +313,35 @@
       },
       "label": {
         "type": "string",
-        "description": "Optional display label override"
+        "description": "Optional display label override. Defaults to the Translator name, or to the User Node's label for a node with only user data"
       }
     },
-    "required": ["x", "y"]
+    "required": ["x", "y"],
+    "anyOf": [
+      {
+        "required": ["data"]
+      },
+      {
+        "required": ["user_data_id"]
+      }
+    ]
   },
   "GraphEdge": {
     "type": "object",
-    "description": "An edge submitted as part of a canvas Graph",
-    "allOf": [
-      {
-        "$ref": "./summary.json#/SummaryEdge"
-      }
-    ],
+    "description": "An edge submitted as part of a canvas Graph. It carries Translator data, user data, or both, and takes its endpoints from that data: an edge with Translator data connects the nodes with its subject and object refs, and an edge with only user data connects the active Canvas Nodes matching its User Edge's endpoints (by ref, or by the User Node in their user data slot). subject and object must not be sent.",
     "properties": {
+      "data": {
+        "allOf": [
+          {
+            "$ref": "./summary.json#/SummaryEdge"
+          }
+        ],
+        "description": "The Translator slot: the signed SummaryEdge exactly as the server returned it, including its id and signature"
+      },
+      "user_data_id": {
+        "type": "integer",
+        "description": "The user data slot: a User Edge owned by the current User. On an entity already active on the Canvas it fills an empty slot, is a no-op if the slot already holds it, and is a 409 if the slot holds different user data or the User Edge is on another entity of the Canvas. An entry with only user data is a no-op if its User Edge is already on the Canvas. On an edge with Translator data, the User Edge's endpoints must be refs equal to the Translator edge's subject and object, or the request is a 409."
+      },
       "hidden": {
         "type": "boolean",
         "default": false,
@@ -327,22 +349,32 @@
       },
       "label": {
         "type": "string",
-        "description": "Optional display label override"
+        "description": "Optional display label override. Defaults to the Translator predicate, or to the User Edge's label for an edge with only user data"
       }
-    }
+    },
+    "anyOf": [
+      {
+        "required": ["data"]
+      },
+      {
+        "required": ["user_data_id"]
+      }
+    ]
   },
   "Graph": {
     "type": "object",
     "properties": {
       "nodes": {
-        "type": "object",
-        "additionalProperties": {
+        "type": "array",
+        "description": "The nodes to merge. No two nodes may share a Translator id or a user_data_id.",
+        "items": {
           "$ref": "./canvas.json#/GraphNode"
         }
       },
       "edges": {
-        "type": "object",
-        "additionalProperties": {
+        "type": "array",
+        "description": "The edges to merge. No two edges may share a Translator id or a user_data_id.",
+        "items": {
           "$ref": "./canvas.json#/GraphEdge"
         }
       },
@@ -369,7 +401,7 @@
   },
   "UpdateCanvasElementRequest": {
     "type": "object",
-    "description": "A partial update of a Canvas Node or Edge's display properties; only the fields present are changed. Node position is updated through the dedicated move endpoint, not here.",
+    "description": "A partial update of a Canvas Node or Edge's display properties and user data; only the fields present are changed. Node position is updated through the dedicated move endpoint, not here.",
     "properties": {
       "label": {
         "type": "string",
@@ -378,6 +410,11 @@
       "hidden": {
         "type": "boolean",
         "description": "Whether the Canvas Node or Edge is hidden on the canvas"
+      },
+      "user_data_id": {
+        "type": "integer",
+        "nullable": true,
+        "description": "The User Node or Edge to attach, or null to detach the current one. The user data must be owned by the current User, be active, and not already be on this Canvas. Detaching from an entity without Translator data is a 409. A User Edge must connect the Canvas Edge's endpoints (only by ref for an edge with Translator data), and a Canvas Node's user data cannot be detached or replaced while an active edge connects to it through that User Node."
       }
     },
     "minProperties": 1

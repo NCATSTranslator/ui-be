@@ -1,4 +1,4 @@
-/* Standalone API test: PUT /api/v1/users/me/canvas/:save_id/graph/trash and /restore.
+/* Standalone API test: PUT /api/v1/users/me/canvas/:canvas_id/graph/trash and /restore.
  *
  * These soft delete (and restore) the display-only Canvas Nodes and Edges, leaving the underlying
  * shared data pool untouched. The interesting rule: soft deleting a node also soft deletes every
@@ -22,7 +22,7 @@ const { ok, fail, finish } = createHarness();
 
 const refsOf = (rows) => new Set((Array.isArray(rows) ? rows : []).map((r) => r.ref));
 
-console.log(`# PUT ${CANVAS_PATH}/:save_id/graph/{trash,restore}  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# PUT ${CANVAS_PATH}/:canvas_id/graph/{trash,restore}  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const s = Date.now();
   const refA = `API_TEST:trash-A-${s}`;
@@ -33,15 +33,15 @@ try {
 
   // Create a canvas: A -> B -> C. B is the cut vertex; trashing it must take both edges with it.
   const createGraph = {
-    nodes: {
-      [refA]: signNode(refA, testNode(refA, 'Trash A', 'biolink:Disease', 10, 20)),
-      [refB]: signNode(refB, testNode(refB, 'Trash B', 'biolink:ChemicalEntity', 30, 40)),
-      [refC]: signNode(refC, testNode(refC, 'Trash C', 'biolink:Gene', 50, 60)),
-    },
-    edges: {
-      [eAB]: signEdge(eAB, testEdge(refA, refB, 'biolink:treats')),
-      [eBC]: signEdge(eBC, testEdge(refB, refC, 'biolink:treats')),
-    },
+    nodes: [
+      signNode(refA, testNode(refA, 'Trash A', 'biolink:Disease', 10, 20)),
+      signNode(refB, testNode(refB, 'Trash B', 'biolink:ChemicalEntity', 30, 40)),
+      signNode(refC, testNode(refC, 'Trash C', 'biolink:Gene', 50, 60)),
+    ],
+    edges: [
+      signEdge(eAB, testEdge(refA, refB, 'biolink:treats')),
+      signEdge(eBC, testEdge(refB, refC, 'biolink:treats')),
+    ],
     tag_descriptions: {},
     source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   };

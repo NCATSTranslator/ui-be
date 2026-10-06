@@ -197,26 +197,46 @@ export function start_server(config, services) {
 
   // User canvas
   const canvas_router = express.Router();
-  canvas_router.param('save_id', user_api_controller.parse_canvas_id.bind(user_api_controller));
+  canvas_router.param('canvas_id', user_api_controller.parse_canvas_id.bind(user_api_controller));
   canvas_router.param('id', user_api_controller.parse_canvas_entity_id.bind(user_api_controller));
   canvas_router.param('annotation_id', user_api_controller.parse_canvas_annotation_id.bind(user_api_controller));
   canvas_router.get('/', user_api_controller.get_user_canvases.bind(user_api_controller));
   canvas_router.post('/', user_api_controller.create_user_canvas.bind(user_api_controller));
   canvas_router.put('/trash', user_api_controller.trash_user_canvases.bind(user_api_controller));
   canvas_router.put('/restore', user_api_controller.restore_user_canvases.bind(user_api_controller));
-  canvas_router.put('/:save_id', user_api_controller.update_user_canvas.bind(user_api_controller));
-  canvas_router.get('/:save_id/graph', user_api_controller.get_user_canvas_graph.bind(user_api_controller));
-  canvas_router.post('/:save_id/graph', user_api_controller.merge_user_canvas_graph.bind(user_api_controller));
-  canvas_router.put('/:save_id/graph/geometry', user_api_controller.set_user_canvas_graph_geometry.bind(user_api_controller));
-  canvas_router.put('/:save_id/graph/trash', user_api_controller.trash_user_canvas_graph.bind(user_api_controller));
-  canvas_router.put('/:save_id/graph/restore', user_api_controller.restore_user_canvas_graph.bind(user_api_controller));
-  canvas_router.get('/:save_id/node/:id', user_api_controller.get_user_canvas_node_data.bind(user_api_controller));
-  canvas_router.put('/:save_id/node/:id', user_api_controller.update_user_canvas_node.bind(user_api_controller));
-  canvas_router.get('/:save_id/edge/:id', user_api_controller.get_user_canvas_edge_data.bind(user_api_controller));
-  canvas_router.put('/:save_id/edge/:id', user_api_controller.update_user_canvas_edge.bind(user_api_controller));
-  canvas_router.post('/:save_id/annotation', user_api_controller.create_user_canvas_annotation.bind(user_api_controller));
-  canvas_router.put('/:save_id/annotation/:annotation_id', user_api_controller.update_user_canvas_annotation_content.bind(user_api_controller));
+  canvas_router.put('/:canvas_id', user_api_controller.update_user_canvas.bind(user_api_controller));
+  canvas_router.get('/:canvas_id/graph', user_api_controller.get_user_canvas_graph.bind(user_api_controller));
+  canvas_router.post('/:canvas_id/graph', user_api_controller.merge_user_canvas_graph.bind(user_api_controller));
+  canvas_router.put('/:canvas_id/graph/geometry', user_api_controller.set_user_canvas_graph_geometry.bind(user_api_controller));
+  canvas_router.put('/:canvas_id/graph/trash', user_api_controller.trash_user_canvas_graph.bind(user_api_controller));
+  canvas_router.put('/:canvas_id/graph/restore', user_api_controller.restore_user_canvas_graph.bind(user_api_controller));
+  canvas_router.get('/:canvas_id/node/:id', user_api_controller.get_user_canvas_node_data.bind(user_api_controller));
+  canvas_router.put('/:canvas_id/node/:id', user_api_controller.update_user_canvas_node.bind(user_api_controller));
+  canvas_router.get('/:canvas_id/edge/:id', user_api_controller.get_user_canvas_edge_data.bind(user_api_controller));
+  canvas_router.put('/:canvas_id/edge/:id', user_api_controller.update_user_canvas_edge.bind(user_api_controller));
+  canvas_router.post('/:canvas_id/annotation', user_api_controller.create_user_canvas_annotation.bind(user_api_controller));
+  canvas_router.put('/:canvas_id/annotation/:annotation_id', user_api_controller.update_user_canvas_annotation_content.bind(user_api_controller));
   app.use(`${API_PATH_V1}/users/me/canvas`, canvas_router);
+
+  const user_node_router = express.Router();
+  user_node_router.param('id', user_api_controller.parse_user_entity_id.bind(user_api_controller));
+  user_node_router.get('/', user_api_controller.get_user_nodes.bind(user_api_controller));
+  user_node_router.post('/', user_api_controller.create_user_node.bind(user_api_controller));
+  user_node_router.put('/trash', user_api_controller.trash_user_nodes.bind(user_api_controller));
+  user_node_router.put('/restore', user_api_controller.restore_user_nodes.bind(user_api_controller));
+  user_node_router.get('/:id', user_api_controller.get_user_node.bind(user_api_controller));
+  user_node_router.put('/:id', user_api_controller.update_user_node.bind(user_api_controller));
+  app.use(`${API_PATH_V1}/users/me/nodes`, user_node_router);
+
+  const user_edge_router = express.Router();
+  user_edge_router.param('id', user_api_controller.parse_user_entity_id.bind(user_api_controller));
+  user_edge_router.get('/', user_api_controller.get_user_edges.bind(user_api_controller));
+  user_edge_router.post('/', user_api_controller.create_user_edge.bind(user_api_controller));
+  user_edge_router.put('/trash', user_api_controller.trash_user_edges.bind(user_api_controller));
+  user_edge_router.put('/restore', user_api_controller.restore_user_edges.bind(user_api_controller));
+  user_edge_router.get('/:id', user_api_controller.get_user_edge.bind(user_api_controller));
+  user_edge_router.put('/:id', user_api_controller.update_user_edge.bind(user_api_controller));
+  app.use(`${API_PATH_V1}/users/me/edges`, user_edge_router);
 
   app.all('/api{/*splat}', (req, res) => {
     return res.status(403).send('API action Forbidden');

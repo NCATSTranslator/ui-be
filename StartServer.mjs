@@ -22,6 +22,7 @@ import { UserSavedDataStorePostgres } from './stores/UserSavedDataStorePostgres.
 import { CanvasStorePostgres } from './stores/CanvasStorePostgres.mjs';
 import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
 import { ApiKeyStorePostgres } from './stores/ApiKeyStorePostgres.mjs';
+import { UserEntityStorePostgres } from './stores/UserEntityStorePostgres.mjs';
 
 
 // Load the config asap as basically everything depends on it
@@ -104,6 +105,7 @@ const USER_SERVICE = (function (config) {
     new UserSavedDataStorePostgres(dbPool),
     new CanvasStorePostgres(dbPool),
     new ApiKeyStorePostgres(dbPool),
+    new UserEntityStorePostgres(dbPool),
     config.secrets.hmac.key
   );
 })(SERVER_CONFIG);

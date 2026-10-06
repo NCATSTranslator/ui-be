@@ -1,4 +1,4 @@
-/* Standalone API test: PUT /api/v1/users/me/canvas/:save_id/node/:id and .../edge/:id.
+/* Standalone API test: PUT /api/v1/users/me/canvas/:canvas_id/node/:id and .../edge/:id.
  *
  * These partially update the display-only properties (label, hidden) of a single Canvas Node or
  * Edge. They never touch node position (x/y) - that is handled by the dedicated move endpoint - so a
@@ -19,7 +19,7 @@ import { postCanvas, testNode, signNode, testEdge, signEdge, CANVAS_PATH } from 
 
 const { ok, fail, finish } = createHarness();
 
-console.log(`# PUT ${CANVAS_PATH}/:save_id/{node,edge}/:id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# PUT ${CANVAS_PATH}/:canvas_id/{node,edge}/:id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const s = Date.now();
   const refA = `API_TEST:elt-A-${s}`;
@@ -28,11 +28,11 @@ try {
 
   // Create a canvas with two nodes and one edge so we have a node and an edge to update.
   const createGraph = {
-    nodes: {
-      [refA]: signNode(refA, testNode(refA, 'Element A', 'biolink:Disease', 10, 20)),
-      [refB]: signNode(refB, testNode(refB, 'Element B', 'biolink:ChemicalEntity', 30, 40, { hidden: true })),
-    },
-    edges: { [eAB]: signEdge(eAB, testEdge(refA, refB, 'biolink:treats')) },
+    nodes: [
+      signNode(refA, testNode(refA, 'Element A', 'biolink:Disease', 10, 20)),
+      signNode(refB, testNode(refB, 'Element B', 'biolink:ChemicalEntity', 30, 40, { hidden: true })),
+    ],
+    edges: [signEdge(eAB, testEdge(refA, refB, 'biolink:treats'))],
     tag_descriptions: {},
     source: { query_ref: 'API_TEST_QID', result_ref: 'API_TEST_RID' },
   };
