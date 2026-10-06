@@ -36,16 +36,33 @@ class UserEntityStorePostgres {
   }
 
   async create_user_nodes(user_nodes) {
-    return this._create_entities(null, ENTITY_KIND.NODE, user_nodes);
+    if (user_nodes.length === 0) return [];
+    const columns = ["user_id", ...UserNode.create_fields()];
+    const [params, args] = models_to_params_and_args(
+      user_nodes, columns, columns.map((column) => _COLUMN_TYPES[column]));
+    const res = await pgExec(this._db_pool, `
+      INSERT INTO ${user_data_table(ENTITY_KIND.NODE)} (${columns.join(", ")})
+      VALUES ${params}
+      RETURNING *`, args);
+    return res.rows;
   }
 
   async create_user_edges(user_edges) {
-    const owned_endpoint = (end) => `(input.${end}_user_node_id IS NULL OR EXISTS (
+    if (user_edges.length === 0) return [];
+    const columns = ["user_id", ...UserEdge.create_fields()];
+    const [params, args] = models_to_params_and_args(
+      user_edges, columns, columns.map((column) => _COLUMN_TYPES[column]));
+    const input_alias = "input";
+    const owned_endpoint = (end) => `(${input_alias}.${end}_user_node_id IS NULL OR EXISTS (
           SELECT 1 FROM ${user_data_table(ENTITY_KIND.NODE)} un
-          WHERE un.id = input.${end}_user_node_id AND un.user_id = input.user_id AND un.time_deleted IS NULL))`;
+          WHERE un.id = ${input_alias}.${end}_user_node_id AND un.user_id = ${input_alias}.user_id AND un.time_deleted IS NULL))`;
     return pgExecTrans(this._db_pool, async (client) => {
-      const rows = await this._create_entities(client, ENTITY_KIND.EDGE, user_edges,
-        `${owned_endpoint("subject")}\n        AND ${owned_endpoint("object")}`);
+      const { rows } = await client.query(`
+        INSERT INTO ${user_data_table(ENTITY_KIND.EDGE)} (${columns.join(", ")})
+        SELECT * FROM (VALUES ${params}) AS ${input_alias}(${columns.join(", ")})
+        WHERE ${owned_endpoint("subject")}
+          AND ${owned_endpoint("object")}
+        RETURNING *`, args);
       if (rows.length !== user_edges.length) {
         throw new UserEntityRequestError("User edge endpoints must be active user nodes owned by the current user");
       }
@@ -86,20 +103,6 @@ class UserEntityStorePostgres {
       SELECT * FROM ${table}
       WHERE user_id = $1${sql_include_deleted}${sql_ids}
       ORDER BY id`, args);
-    return res.rows;
-  }
-
-  async _create_entities(client, kind, entities, sql_filter = "TRUE") {
-    if (entities.length === 0) return [];
-    const columns = ["user_id", ..._ENTITY_CLASS[kind].create_fields()];
-    const [params, args] = models_to_params_and_args(
-      entities, columns, columns.map((column) => _COLUMN_TYPES[column]));
-    const sql = `
-      INSERT INTO ${user_data_table(kind)} (${columns.join(", ")})
-      SELECT * FROM (VALUES ${params}) AS input(${columns.join(", ")})
-      WHERE ${sql_filter}
-      RETURNING *`;
-    const res = client ? await client.query(sql, args) : await pgExec(this._db_pool, sql, args);
     return res.rows;
   }
 
