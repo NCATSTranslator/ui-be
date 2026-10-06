@@ -1,7 +1,7 @@
 export { suite }
 
 import * as test from "#test/lib/common.mjs";
-import { load_trapi, CONSTANTS } from "#lib/trapi/core.mjs";
+import { load_trapi, CONSTANTS, _QNode, _QEdge, _QEdgeQualifierSet, _QEdgeQualifier, _QPath, _QGraph } from "#lib/trapi/core.mjs";
 
 const suite = {
   tests: {
@@ -12,7 +12,7 @@ const suite = {
     get_auxiliary_graph: _test_get_auxiliary_graph(),
     get_auxiliary_graph_edges: _test_get_auxiliary_graph_edges(),
     get_edge_bindings: _test_get_edge_bindings(),
-    get_node_binding: _test_get_node_binding(),
+    get_node_bindings: _test_get_node_bindings(),
     get_path_bindings: _test_get_path_bindings(),
     get_kgraph: _test_get_kgraph(),
     get_kedge: _test_get_kedge(),
@@ -39,7 +39,16 @@ const suite = {
     is_pathfinder_query: _test_is_pathfinder_query(),
     is_lookup_query: _test_is_lookup_query(),
     is_valid_query: _test_is_valid_query(),
-    AttributeIterator: _test_AttributeIterator()
+    AttributeIterator: _test_AttributeIterator(),
+    _Query: _test_Query(),
+    _QNode: _test_QNode(),
+    _QEdge: _test_QEdge(),
+    _QEdgeQualifierSet: _test_QEdgeQualifierSet(),
+    _QEdgeQualifier: _test_QEdgeQualifier(),
+    _QPath: _test_QPath(),
+    _QGraph: _test_QGraph(),
+    _InvalidQualifiersError: _test_InvalidQualifiersError(),
+    _MissingQueryGraphError: _test_MissingQueryGraphError()
   },
   skip: {
     load_trapi: true,
@@ -831,7 +840,7 @@ function _test_get_edge_bindings() {
   });
 }
 
-function _test_get_node_binding() {
+function _test_get_node_bindings() {
   return test.make_function_test({
     "valid_node_bindings": {
       "args": [
@@ -3301,3 +3310,1225 @@ const _test_config = {
   "query_subject_key": "sn",
   "query_object_key":  "on"
 };
+
+function _test_Query() {
+  return test.make_class_test({
+    "drug_request": {
+      "class_constructor": {
+        "args": [
+          {
+            "type": "drug",
+            "curie": "MONDO:123",
+            "direction": null
+          }
+        ],
+        "expected": {
+          "type": CONSTANTS.QGRAPH.TEMPLATE.CHEMICAL_DISEASE,
+          "curie": "MONDO:123",
+          "direction": null,
+          "subject": null,
+          "object": null,
+          "constraint": null
+        }
+      }
+    },
+    "gene_request": {
+      "class_constructor": {
+        "args": [
+          {
+            "type": "gene",
+            "curie": "CHEBI:123",
+            "direction": "increased"
+          }
+        ],
+        "expected": {
+          "type": CONSTANTS.QGRAPH.TEMPLATE.GENE_CHEMICAL,
+          "curie": "CHEBI:123",
+          "direction": "increased",
+          "subject": null,
+          "object": null,
+          "constraint": null
+        }
+      }
+    },
+    "chemical_request": {
+      "class_constructor": {
+        "args": [
+          {
+            "type": "chemical",
+            "curie": "NCBIGene:123",
+            "direction": "decreased"
+          }
+        ],
+        "expected": {
+          "type": CONSTANTS.QGRAPH.TEMPLATE.CHEMICAL_GENE,
+          "curie": "NCBIGene:123",
+          "direction": "decreased",
+          "subject": null,
+          "object": null,
+          "constraint": null
+        }
+      }
+    },
+    "pathfinder_request": {
+      "class_constructor": {
+        "args": [
+          {
+            "type": "pathfinder",
+            "subject": { "id": "MONDO:123", "category": "Disease" },
+            "object": { "id": "CHEBI:123", "category": "ChemicalEntity" },
+            "constraint": "biolink:Gene"
+          }
+        ],
+        "expected": {
+          "type": CONSTANTS.QGRAPH.TEMPLATE.PATHFINDER,
+          "curie": null,
+          "direction": null,
+          "subject": { "id": "MONDO:123", "category": "Disease" },
+          "object": { "id": "CHEBI:123", "category": "ChemicalEntity" },
+          "constraint": "biolink:Gene"
+        }
+      }
+    },
+    "lookup_request": {
+      "class_constructor": {
+        "args": [
+          {
+            "type": "lookup",
+            "subject": { "id": "MONDO:123", "category": "Disease" },
+            "object": { "category": "ChemicalEntity" }
+          }
+        ],
+        "expected": {
+          "type": CONSTANTS.QGRAPH.TEMPLATE.LOOKUP,
+          "curie": null,
+          "direction": null,
+          "subject": { "id": "MONDO:123", "category": "Disease" },
+          "object": { "category": "ChemicalEntity" },
+          "constraint": null
+        }
+      }
+    },
+    "request_not_an_object": {
+      "class_constructor": {
+        "args": [null],
+        "expected": TypeError
+      }
+    },
+    "request_is_an_array": {
+      "class_constructor": {
+        "args": [["drug"]],
+        "expected": TypeError
+      }
+    },
+    "unknown_type": {
+      "class_constructor": {
+        "args": [{ "type": "protein", "curie": "UniProtKB:P12345" }],
+        "expected": RangeError
+      }
+    },
+    "missing_type": {
+      "class_constructor": {
+        "args": [{ "curie": "MONDO:123" }],
+        "expected": RangeError
+      }
+    }
+  });
+}
+
+function _test_QNode() {
+  return test.make_class_test({
+    "with_curies": {
+      "class_constructor": {
+        "args": ["on", "Disease", ["MONDO:123"]],
+        "expected": _expected_qnode_on_disease()
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "ids": ["MONDO:123"],
+            "categories": ["biolink:Disease"]
+          }
+        },
+        {
+          "get": "binding",
+          "expected": "on"
+        }
+      ]
+    },
+    "without_curies": {
+      "class_constructor": {
+        "args": ["sn", "ChemicalEntity"],
+        "expected": _expected_qnode_sn_chemical()
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "categories": ["biolink:ChemicalEntity"]
+          }
+        }
+      ]
+    },
+    "empty_curies": {
+      "class_constructor": {
+        "args": ["sn", "ChemicalEntity", []],
+        "expected": _expected_qnode_sn_chemical()
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "categories": ["biolink:ChemicalEntity"]
+          }
+        }
+      ]
+    },
+    "pretagged_category": {
+      "class_constructor": {
+        "args": ["sn", "biolink:ChemicalEntity"],
+        "expected": _expected_qnode_sn_chemical()
+      }
+    },
+    "missing_category": {
+      "class_constructor": {
+        "args": ["sn"],
+        "expected": TypeError
+      }
+    },
+    "null_category": {
+      "class_constructor": {
+        "args": ["sn", null, ["MONDO:123"]],
+        "expected": TypeError
+      }
+    },
+    "from_trapi": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": [
+            "on",
+            {
+              "ids": ["MONDO:123"],
+              "categories": ["biolink:Disease"]
+            }
+          ],
+          "expected": _expected_qnode_on_disease()
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            "sn",
+            {
+              "categories": ["biolink:ChemicalEntity"]
+            }
+          ],
+          "expected": _expected_qnode_sn_chemical()
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            "sn",
+            {
+              "ids": ["CHEBI:123"]
+            }
+          ],
+          "expected": ReferenceError
+        }
+      ]
+    }
+  });
+}
+
+function _test_QEdge() {
+  return test.make_class_test({
+    "inferred_without_constraints": {
+      "class_constructor": {
+        "args": [_qnode_sn_chemical(), _qnode_on_disease(), "treats"],
+        "expected": {
+          "subject": _expected_qnode_sn_chemical(),
+          "object": _expected_qnode_on_disease(),
+          "predicates": ["biolink:treats"],
+          "query_mode": "inferred"
+        }
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "subject": "sn",
+            "object": "on",
+            "predicates": ["biolink:treats"],
+            "knowledge_type": "inferred"
+          }
+        },
+        {
+          "method": "get_constraints",
+          "args": [],
+          "expected": undefined
+        },
+        {
+          "method": "gen_binding",
+          "args": [],
+          "expected": "539ce0db"
+        }
+      ]
+    },
+    "pretagged_predicate": {
+      "class_constructor": {
+        "args": [_qnode_sn_chemical(), _qnode_on_disease(), "biolink:treats"],
+        "expected": {
+          "subject": _expected_qnode_sn_chemical(),
+          "object": _expected_qnode_on_disease(),
+          "predicates": ["biolink:treats"],
+          "query_mode": "inferred"
+        }
+      },
+      "steps": [
+        {
+          "method": "gen_binding",
+          "args": [],
+          "expected": "539ce0db"
+        }
+      ]
+    },
+    "lookup_mode": {
+      "class_constructor": {
+        "args": [_qnode_sn_disease(), _qnode_on_chemical(), "related_to", null, "lookup"],
+        "expected": {
+          "subject": _expected_qnode_sn_disease(),
+          "object": _expected_qnode_on_chemical(),
+          "predicates": ["biolink:related_to"],
+          "query_mode": "lookup"
+        }
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "subject": "sn",
+            "object": "on",
+            "predicates": ["biolink:related_to"],
+            "knowledge_type": "lookup"
+          }
+        },
+        {
+          "method": "gen_binding",
+          "args": [],
+          "expected": "701bc289"
+        }
+      ]
+    },
+    "empty_constraints": {
+      "class_constructor": {
+        "args": [_qnode_sn_chemical(), _qnode_on_gene(), "affects", []],
+        "expected": {
+          "subject": _expected_qnode_sn_chemical(),
+          "object": _expected_qnode_on_gene(),
+          "predicates": ["biolink:affects"],
+          "query_mode": "inferred"
+        }
+      },
+      "steps": [
+        {
+          "method": "get_constraints",
+          "args": [],
+          "expected": undefined
+        }
+      ]
+    },
+    "with_constraints": {
+      "class_constructor": {
+        "args": [_qnode_sn_chemical(), _qnode_on_gene(), "affects", [_qualifier_set_increased()]],
+        "expected": {
+          "subject": _expected_qnode_sn_chemical(),
+          "object": _expected_qnode_on_gene(),
+          "predicates": ["biolink:affects"],
+          "query_mode": "inferred",
+          "qualifier_constraints": [_expected_qualifier_set_increased()]
+        }
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "subject": "sn",
+            "object": "on",
+            "predicates": ["biolink:affects"],
+            "qualifier_constraints": [_expected_qualifier_set_increased()],
+            "knowledge_type": "inferred"
+          }
+        },
+        {
+          "method": "get_constraints",
+          "args": [],
+          "expected": [_expected_qualifier_set_increased()]
+        },
+        {
+          "method": "get_qualifiers",
+          "args": [],
+          "expected": [_expected_qualifier_set_increased()]
+        }
+      ]
+    },
+    "set_constraints_after_construction": {
+      "class_constructor": {
+        "args": [_qnode_sn_chemical(), _qnode_on_gene(), "affects"]
+      },
+      "steps": [
+        {
+          "method": "get_constraints",
+          "args": [],
+          "expected": undefined
+        },
+        {
+          "method": "set_constraints",
+          "args": [[_qualifier_set_increased()]],
+          "expected": [_expected_qualifier_set_increased()]
+        },
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "subject": "sn",
+            "object": "on",
+            "predicates": ["biolink:affects"],
+            "qualifier_constraints": [_expected_qualifier_set_increased()],
+            "knowledge_type": "inferred"
+          }
+        }
+      ]
+    },
+    "from_trapi": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "subject": "sn",
+              "object": "on",
+              "predicates": ["biolink:treats"],
+              "knowledge_type": "inferred"
+            },
+            { "sn": _qnode_sn_chemical(), "on": _qnode_on_disease() }
+          ],
+          "expected": {
+            "subject": _expected_qnode_sn_chemical(),
+            "object": _expected_qnode_on_disease(),
+            "predicates": ["biolink:treats"],
+            "query_mode": "inferred"
+          }
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "subject": "sn",
+              "object": "on",
+              "predicates": ["biolink:related_to"]
+            },
+            { "sn": _qnode_sn_disease(), "on": _qnode_on_chemical() }
+          ],
+          "expected": {
+            "subject": _expected_qnode_sn_disease(),
+            "object": _expected_qnode_on_chemical(),
+            "predicates": ["biolink:related_to"],
+            "query_mode": "lookup"
+          }
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "subject": "sn",
+              "object": "on",
+              "predicates": ["biolink:treats"],
+              "qualifier_constraints": [{ "attribute_constraint": {} }]
+            },
+            { "sn": _qnode_sn_chemical(), "on": _qnode_on_disease() }
+          ],
+          "expected": TypeError
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "subject": "sn",
+              "object": "on"
+            },
+            { "sn": _qnode_sn_chemical(), "on": _qnode_on_disease() }
+          ],
+          "expected": ReferenceError
+        }
+      ]
+    },
+    "round_trip_without_constraints": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": [
+            new _QEdge(_qnode_sn_chemical(), _qnode_on_disease(), "treats").to_trapi(),
+            { "sn": _qnode_sn_chemical(), "on": _qnode_on_disease() }
+          ],
+          "expected": {
+            "subject": _expected_qnode_sn_chemical(),
+            "object": _expected_qnode_on_disease(),
+            "predicates": ["biolink:treats"],
+            "query_mode": "inferred"
+          }
+        }
+      ]
+    },
+    "round_trip_with_constraints": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": [
+            new _QEdge(_qnode_sn_chemical(), _qnode_on_gene(), "affects", [_qualifier_set_increased()]).to_trapi(),
+            { "sn": _qnode_sn_chemical(), "on": _qnode_on_gene() }
+          ],
+          "expected": {
+            "subject": _expected_qnode_sn_chemical(),
+            "object": _expected_qnode_on_gene(),
+            "predicates": ["biolink:affects"],
+            "query_mode": "inferred",
+            "qualifier_constraints": [_expected_qualifier_set_increased()]
+          }
+        }
+      ]
+    }
+  });
+}
+
+function _test_QEdgeQualifierSet() {
+  return test.make_class_test({
+    "empty": {
+      "class_constructor": {
+        "args": [],
+        "expected": { "qualifier_set": [] }
+      },
+      "steps": [
+        {
+          "method": "add",
+          "args": [_qualifier_direction_increased()],
+          "expected": undefined
+        },
+        {
+          "get": "qualifier_set",
+          "expected": [_expected_qualifier_direction_increased()]
+        },
+        {
+          "method": "add",
+          "args": [_qualifier_aspect_activity()],
+          "expected": undefined
+        },
+        {
+          "get": "qualifier_set",
+          "expected": [
+            _expected_qualifier_direction_increased(),
+            _expected_qualifier_aspect_activity()
+          ]
+        }
+      ]
+    },
+    "prefilled": {
+      "class_constructor": {
+        "args": [[_qualifier_predicate_causes(), _qualifier_aspect_activity()]],
+        "expected": {
+          "qualifier_set": [
+            _expected_qualifier_predicate_causes(),
+            _expected_qualifier_aspect_activity()
+          ]
+        }
+      }
+    },
+    "from_trapi": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": [
+            [
+              _expected_qualifier_predicate_causes(),
+              _expected_qualifier_aspect_activity(),
+              _expected_qualifier_direction_increased()
+            ]
+          ],
+          "expected": _expected_qualifier_set_increased()
+        },
+        {
+          "method": "from_trapi",
+          "args": [[]],
+          "expected": { "qualifier_set": [] }
+        }
+      ]
+    }
+  });
+}
+
+function _test_QEdgeQualifier() {
+  return test.make_class_test({
+    "construct": {
+      "class_constructor": {
+        "args": ["biolink:qualified_predicate", "biolink:causes"],
+        "expected": _expected_qualifier_predicate_causes()
+      },
+      "steps": [
+        {
+          "get": "qualifier_type_id",
+          "expected": "biolink:qualified_predicate"
+        },
+        {
+          "get": "qualifier_value",
+          "expected": "biolink:causes"
+        }
+      ]
+    },
+    "from_trapi": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": [_expected_qualifier_direction_increased()],
+          "expected": _expected_qualifier_direction_increased()
+        },
+        {
+          "method": "from_trapi",
+          "args": [{ "qualifier_type_id": "biolink:object_direction_qualifier" }],
+          "expected": ReferenceError
+        },
+        {
+          "method": "from_trapi",
+          "args": [{ "qualifier_value": "increased" }],
+          "expected": ReferenceError
+        }
+      ]
+    }
+  });
+}
+
+function _test_QPath() {
+  return test.make_class_test({
+    "with_constraint": {
+      "class_constructor": {
+        "args": ["p0", "sn", "on", "biolink:Gene"],
+        "expected": {
+          "binding": "p0",
+          "subject": "sn",
+          "object": "on",
+          "constraint": "biolink:Gene"
+        }
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "subject": "sn",
+            "object": "on",
+            "constraints": [{ "intermediate_categories": ["biolink:Gene"] }]
+          }
+        }
+      ]
+    },
+    "without_constraint": {
+      "class_constructor": {
+        "args": ["p0", "sn", "on", null],
+        "expected": {
+          "binding": "p0",
+          "subject": "sn",
+          "object": "on",
+          "constraint": null
+        }
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "subject": "sn",
+            "object": "on"
+          }
+        }
+      ]
+    },
+    "gen_binding": {
+      "steps": [
+        {
+          "method": "gen_binding",
+          "args": [],
+          "expected": "p0"
+        }
+      ]
+    },
+    "from_trapi": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": ["p0", { "subject": "sn", "object": "on" }],
+          "expected": {
+            "binding": "p0",
+            "subject": "sn",
+            "object": "on",
+            "constraint": null
+          }
+        },
+        {
+          "method": "from_trapi",
+          "args": ["p0", { "subject": "sn" }],
+          "expected": ReferenceError
+        }
+      ]
+    },
+    "round_trip_without_constraint": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": ["p0", new _QPath("p0", "sn", "on", null).to_trapi()],
+          "expected": {
+            "binding": "p0",
+            "subject": "sn",
+            "object": "on",
+            "constraint": null
+          }
+        }
+      ]
+    },
+    "round_trip_with_constraint": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": ["p0", new _QPath("p0", "sn", "on", "biolink:Gene").to_trapi()],
+          "expected": {
+            "binding": "p0",
+            "subject": "sn",
+            "object": "on",
+            "constraint": "biolink:Gene"
+          }
+        }
+      ]
+    }
+  });
+}
+
+function _test_QGraph() {
+  return test.make_class_test({
+    "default_constructor": {
+      "class_constructor": {
+        "args": [],
+        "expected": {
+          "qnodes": {},
+          "qconnections": {},
+          "_query_type": "standard"
+        }
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "nodes": {},
+            "edges": {}
+          }
+        }
+      ]
+    },
+    "chemical_disease": {
+      "config_loader": () => load_trapi(_test_config),
+      "class_constructor": {
+        "args": [
+          { "sn": _qnode_sn_chemical(), "on": _qnode_on_disease() },
+          { "e0": new _QEdge(_qnode_sn_chemical(), _qnode_on_disease(), "treats") }
+        ],
+        "expected": {
+          "qnodes": {
+            "sn": _expected_qnode_sn_chemical(),
+            "on": _expected_qnode_on_disease()
+          },
+          "qconnections": {
+            "e0": {
+              "subject": _expected_qnode_sn_chemical(),
+              "object": _expected_qnode_on_disease(),
+              "predicates": ["biolink:treats"],
+              "query_mode": "inferred"
+            }
+          },
+          "_query_type": "standard"
+        }
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "nodes": {
+              "sn": { "categories": ["biolink:ChemicalEntity"] },
+              "on": { "ids": ["MONDO:123"], "categories": ["biolink:Disease"] }
+            },
+            "edges": {
+              "e0": {
+                "subject": "sn",
+                "object": "on",
+                "predicates": ["biolink:treats"],
+                "knowledge_type": "inferred"
+              }
+            }
+          }
+        },
+        {
+          "method": "get_type",
+          "args": [],
+          "expected": CONSTANTS.QGRAPH.TEMPLATE.CHEMICAL_DISEASE
+        },
+        {
+          "method": "_is_lookup",
+          "args": [],
+          "expected": false
+        }
+      ]
+    },
+    "gene_chemical": {
+      "config_loader": () => load_trapi(_test_config),
+      "class_constructor": {
+        "args": [
+          { "sn": _qnode_sn_chemical_with_id(), "on": _qnode_on_gene_without_id() },
+          { "e0": new _QEdge(_qnode_sn_chemical_with_id(), _qnode_on_gene_without_id(), "affects", [_qualifier_set_increased()]) }
+        ]
+      },
+      "steps": [
+        {
+          "method": "get_type",
+          "args": [],
+          "expected": CONSTANTS.QGRAPH.TEMPLATE.GENE_CHEMICAL
+        }
+      ]
+    },
+    "chemical_gene": {
+      "config_loader": () => load_trapi(_test_config),
+      "class_constructor": {
+        "args": [
+          { "sn": _qnode_sn_chemical(), "on": _qnode_on_gene() },
+          { "e0": new _QEdge(_qnode_sn_chemical(), _qnode_on_gene(), "affects", [_qualifier_set_increased()]) }
+        ]
+      },
+      "steps": [
+        {
+          "method": "get_type",
+          "args": [],
+          "expected": CONSTANTS.QGRAPH.TEMPLATE.CHEMICAL_GENE
+        }
+      ]
+    },
+    "lookup": {
+      "config_loader": () => load_trapi(_test_config),
+      "class_constructor": {
+        "args": [
+          { "sn": _qnode_sn_disease(), "on": _qnode_on_chemical() },
+          { "e0": new _QEdge(_qnode_sn_disease(), _qnode_on_chemical(), "related_to", null, "lookup") }
+        ]
+      },
+      "steps": [
+        {
+          "method": "_is_lookup",
+          "args": [],
+          "expected": true
+        },
+        {
+          "method": "get_type",
+          "args": [],
+          "expected": CONSTANTS.QGRAPH.TEMPLATE.LOOKUP
+        },
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "nodes": {
+              "sn": { "ids": ["MONDO:123"], "categories": ["biolink:Disease"] },
+              "on": { "categories": ["biolink:ChemicalEntity"] }
+            },
+            "edges": {
+              "e0": {
+                "subject": "sn",
+                "object": "on",
+                "predicates": ["biolink:related_to"],
+                "knowledge_type": "lookup"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "pathfinder": {
+      "config_loader": () => load_trapi(_test_config),
+      "class_constructor": {
+        "args": [
+          { "sn": _qnode_sn_disease(), "on": _qnode_on_chemical_with_id() },
+          { "p0": new _QPath("p0", "sn", "on", "biolink:Gene") },
+          "pathfinder"
+        ],
+        "expected": {
+          "qnodes": {
+            "sn": _expected_qnode_sn_disease(),
+            "on": _expected_qnode_on_chemical_with_id()
+          },
+          "qconnections": {
+            "p0": {
+              "binding": "p0",
+              "subject": "sn",
+              "object": "on",
+              "constraint": "biolink:Gene"
+            }
+          },
+          "_query_type": "pathfinder"
+        }
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": {
+            "nodes": {
+              "sn": { "ids": ["MONDO:123"], "categories": ["biolink:Disease"] },
+              "on": { "ids": ["CHEBI:123"], "categories": ["biolink:ChemicalEntity"] }
+            },
+            "paths": {
+              "p0": {
+                "subject": "sn",
+                "object": "on",
+                "constraints": [{ "intermediate_categories": ["biolink:Gene"] }]
+              }
+            }
+          }
+        },
+        {
+          "method": "get_type",
+          "args": [],
+          "expected": CONSTANTS.QGRAPH.TEMPLATE.PATHFINDER
+        }
+      ]
+    },
+    "unsupported_query_type": {
+      "class_constructor": {
+        "args": [{}, {}, "bogus"]
+      },
+      "steps": [
+        {
+          "method": "to_trapi",
+          "args": [],
+          "expected": Error
+        }
+      ]
+    },
+    "unsupported_template": {
+      "config_loader": () => load_trapi(_test_config),
+      "class_constructor": {
+        "args": [
+          { "sn": new _QNode("sn", "Disease"), "on": _qnode_on_gene() },
+          { "e0": new _QEdge(new _QNode("sn", "Disease"), _qnode_on_gene(), "related_to") }
+        ]
+      },
+      "steps": [
+        {
+          "method": "get_type",
+          "args": [],
+          "expected": RangeError
+        }
+      ]
+    },
+    "from_trapi": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "nodes": {
+                "sn": { "categories": ["biolink:ChemicalEntity"] },
+                "on": { "ids": ["MONDO:123"], "categories": ["biolink:Disease"] }
+              },
+              "edges": {
+                "e0": {
+                  "subject": "sn",
+                  "object": "on",
+                  "predicates": ["biolink:treats"],
+                  "knowledge_type": "inferred"
+                }
+              }
+            }
+          ],
+          "expected": {
+            "qnodes": {
+              "sn": _expected_qnode_sn_chemical(),
+              "on": _expected_qnode_on_disease()
+            },
+            "qconnections": {
+              "e0": {
+                "subject": _expected_qnode_sn_chemical(),
+                "object": _expected_qnode_on_disease(),
+                "predicates": ["biolink:treats"],
+                "query_mode": "inferred"
+              }
+            },
+            "_query_type": "standard"
+          }
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "nodes": {
+                "sn": { "ids": ["MONDO:123"], "categories": ["biolink:Disease"] },
+                "on": { "ids": ["CHEBI:123"], "categories": ["biolink:ChemicalEntity"] }
+              },
+              "paths": {
+                "p0": { "subject": "sn", "object": "on" }
+              }
+            }
+          ],
+          "expected": {
+            "qnodes": {
+              "sn": _expected_qnode_sn_disease(),
+              "on": _expected_qnode_on_chemical_with_id()
+            },
+            "qconnections": {
+              "p0": {
+                "binding": "p0",
+                "subject": "sn",
+                "object": "on",
+                "constraint": null
+              }
+            },
+            "_query_type": "pathfinder"
+          }
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "nodes": {
+                "sn": { "categories": ["biolink:ChemicalEntity"] },
+                "on": { "ids": ["MONDO:123"], "categories": ["biolink:Disease"] }
+              },
+              "edges": {},
+              "paths": {}
+            }
+          ],
+          "expected": Error
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "nodes": {
+                "sn": { "categories": ["biolink:ChemicalEntity"] },
+                "on": { "ids": ["MONDO:123"], "categories": ["biolink:Disease"] }
+              }
+            }
+          ],
+          "expected": Error
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "edges": {}
+            }
+          ],
+          "expected": ReferenceError
+        }
+      ]
+    },
+    "round_trip_gene_chemical": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": [
+            new _QGraph(
+              { "sn": _qnode_sn_chemical_with_id(), "on": _qnode_on_gene_without_id() },
+              { "e0": new _QEdge(_qnode_sn_chemical_with_id(), _qnode_on_gene_without_id(), "affects", [_qualifier_set_increased()]) }
+            ).to_trapi()
+          ],
+          "expected": {
+            "qnodes": {
+              "sn": { "ids": ["CHEBI:123"], "categories": ["biolink:ChemicalEntity"], "binding": "sn" },
+              "on": { "categories": ["biolink:Gene"], "binding": "on" }
+            },
+            "qconnections": {
+              "e0": {
+                "subject": { "ids": ["CHEBI:123"], "categories": ["biolink:ChemicalEntity"], "binding": "sn" },
+                "object": { "categories": ["biolink:Gene"], "binding": "on" },
+                "predicates": ["biolink:affects"],
+                "query_mode": "inferred",
+                "qualifier_constraints": [_expected_qualifier_set_increased()]
+              }
+            },
+            "_query_type": "standard"
+          }
+        }
+      ]
+    },
+    "round_trip_pathfinder": {
+      "steps": [
+        {
+          "method": "from_trapi",
+          "args": [
+            new _QGraph(
+              { "sn": _qnode_sn_disease(), "on": _qnode_on_chemical_with_id() },
+              { "p0": new _QPath("p0", "sn", "on", "biolink:Gene") },
+              "pathfinder"
+            ).to_trapi()
+          ],
+          "expected": {
+            "qnodes": {
+              "sn": _expected_qnode_sn_disease(),
+              "on": _expected_qnode_on_chemical_with_id()
+            },
+            "qconnections": {
+              "p0": {
+                "binding": "p0",
+                "subject": "sn",
+                "object": "on",
+                "constraint": "biolink:Gene"
+              }
+            },
+            "_query_type": "pathfinder"
+          }
+        }
+      ]
+    }
+  });
+}
+
+function _test_InvalidQualifiersError() {
+  return test.make_class_test({
+    "message_includes_edge": {
+      "class_constructor": {
+        "args": [{ "subject": "CHEBI:123", "object": "MONDO:123", "qualifiers": "bad" }]
+      },
+      "steps": [
+        {
+          "get": "message",
+          "expected": 'Invalid qualifiers in knowledge edge: {"subject":"CHEBI:123","object":"MONDO:123","qualifiers":"bad"}'
+        }
+      ]
+    }
+  });
+}
+
+function _test_MissingQueryGraphError() {
+  return test.make_class_test({
+    "message_includes_message": {
+      "class_constructor": {
+        "args": [{ "message": { "knowledge_graph": {} } }]
+      },
+      "steps": [
+        {
+          "get": "message",
+          "expected": 'No query graph in {"message":{"knowledge_graph":{}}}'
+        }
+      ]
+    }
+  });
+}
+
+function _qnode_sn_chemical() {
+  return new _QNode("sn", "ChemicalEntity");
+}
+
+function _expected_qnode_sn_chemical() {
+  return { "categories": ["biolink:ChemicalEntity"], "binding": "sn" };
+}
+
+function _qnode_sn_chemical_with_id() {
+  return new _QNode("sn", "ChemicalEntity", ["CHEBI:123"]);
+}
+
+function _qnode_on_chemical() {
+  return new _QNode("on", "ChemicalEntity");
+}
+
+function _expected_qnode_on_chemical() {
+  return { "categories": ["biolink:ChemicalEntity"], "binding": "on" };
+}
+
+function _qnode_on_chemical_with_id() {
+  return new _QNode("on", "ChemicalEntity", ["CHEBI:123"]);
+}
+
+function _expected_qnode_on_chemical_with_id() {
+  return { "ids": ["CHEBI:123"], "categories": ["biolink:ChemicalEntity"], "binding": "on" };
+}
+
+function _qnode_on_disease() {
+  return new _QNode("on", "Disease", ["MONDO:123"]);
+}
+
+function _expected_qnode_on_disease() {
+  return { "ids": ["MONDO:123"], "categories": ["biolink:Disease"], "binding": "on" };
+}
+
+function _qnode_sn_disease() {
+  return new _QNode("sn", "Disease", ["MONDO:123"]);
+}
+
+function _expected_qnode_sn_disease() {
+  return { "ids": ["MONDO:123"], "categories": ["biolink:Disease"], "binding": "sn" };
+}
+
+function _qnode_on_gene() {
+  return new _QNode("on", "Gene", ["NCBIGene:123"]);
+}
+
+function _expected_qnode_on_gene() {
+  return { "ids": ["NCBIGene:123"], "categories": ["biolink:Gene"], "binding": "on" };
+}
+
+function _qnode_on_gene_without_id() {
+  return new _QNode("on", "Gene");
+}
+
+function _qualifier_predicate_causes() {
+  return new _QEdgeQualifier("biolink:qualified_predicate", "biolink:causes");
+}
+
+function _expected_qualifier_predicate_causes() {
+  return { "qualifier_type_id": "biolink:qualified_predicate", "qualifier_value": "biolink:causes" };
+}
+
+function _qualifier_aspect_activity() {
+  return new _QEdgeQualifier("biolink:object_aspect_qualifier", "activity_or_abundance");
+}
+
+function _expected_qualifier_aspect_activity() {
+  return { "qualifier_type_id": "biolink:object_aspect_qualifier", "qualifier_value": "activity_or_abundance" };
+}
+
+function _qualifier_direction_increased() {
+  return new _QEdgeQualifier("biolink:object_direction_qualifier", "increased");
+}
+
+function _expected_qualifier_direction_increased() {
+  return { "qualifier_type_id": "biolink:object_direction_qualifier", "qualifier_value": "increased" };
+}
+
+function _qualifier_set_increased() {
+  return new _QEdgeQualifierSet([
+    _qualifier_predicate_causes(),
+    _qualifier_aspect_activity(),
+    _qualifier_direction_increased()
+  ]);
+}
+
+function _expected_qualifier_set_increased() {
+  return {
+    "qualifier_set": [
+      _expected_qualifier_predicate_causes(),
+      _expected_qualifier_aspect_activity(),
+      _expected_qualifier_direction_increased()
+    ]
+  };
+}

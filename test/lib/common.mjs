@@ -102,7 +102,7 @@ async function _class_test({test_class, test_cases}) {
   for (let case_name of Object.keys(test_cases)) {
     console.log(`-- Running ${case_name}`);
     const tc = test_cases[case_name];
-    if (tc.config) {
+    if (tc.config_loader) {
       await tc.config_loader();
     }
     if (!cmn.is_missing(tc.class_constructor) && !cmn.is_missing(tc.injected)) {

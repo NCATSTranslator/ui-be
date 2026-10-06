@@ -10,6 +10,7 @@ const suite = {
     make_rule_transform_and_aggregate_property: _test_make_rule_transform_and_aggregate_property(),
     make_rule_aggregate_property: _test_make_rule_aggregate_property(),
     make_rule_transform_attribute_value: _test_make_rule_transform_attribute_value(),
+    make_rule_collect_attribute_values: _test_make_rule_collect_attribute_values(),
     make_rule_map_attributes: _test_make_rule_map_attributes()
   }
 };
@@ -553,3 +554,179 @@ function _test_make_rule_map_attributes() {
   });
 }
 
+
+function _test_make_rule_collect_attribute_values() {
+  return test.make_function_test({
+    single_attr: {
+      args: [{
+        attr_ids: ["test-attr-id"],
+        target_key: "test-prop"
+      }],
+      expected: {
+        "test-prop": ["ok"]
+      },
+      context: {
+        source: {
+          attributes: [
+            {
+              attribute_type_id: "test-attr-id",
+              value: "ok"
+            }
+          ]
+        },
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    multi_attr: {
+      args: [{
+        attr_ids: ["test-attr-id-1", "test-attr-id-2"],
+        target_key: "test-prop"
+      }],
+      expected: {
+        "test-prop": [1, 2, 1]
+      },
+      context: {
+        source: {
+          attributes: [
+            {
+              attribute_type_id: "test-attr-id-1",
+              value: 1
+            },
+            {
+              attribute_type_id: "test-attr-id-2",
+              value: 2
+            },
+            {
+              attribute_type_id: "test-attr-id-1",
+              value: 1
+            },
+            {
+              attribute_type_id: "other-attr-id",
+              value: 3
+            }
+          ]
+        },
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    array_values_are_flattened: {
+      args: [{
+        attr_ids: ["test-attr-id"],
+        target_key: "test-prop"
+      }],
+      expected: {
+        "test-prop": ["a", "b", "c"]
+      },
+      context: {
+        source: {
+          attributes: [
+            {
+              attribute_type_id: "test-attr-id",
+              value: ["a", "b"]
+            },
+            {
+              attribute_type_id: "test-attr-id",
+              value: "c"
+            }
+          ]
+        },
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    aggregate_across_sources: {
+      args: [{
+        attr_ids: ["test-attr-id"],
+        target_key: "test-prop"
+      }],
+      expected: {
+        "test-prop": [1, 2, 3]
+      },
+      context: {
+        source: [
+          {
+            attributes: [
+              {
+                attribute_type_id: "test-attr-id",
+                value: 1
+              }
+            ]
+          },
+          {
+            attributes: [
+              {
+                attribute_type_id: "test-attr-id",
+                value: 2
+              },
+              {
+                attribute_type_id: "test-attr-id",
+                value: 3
+              }
+            ]
+          }
+        ],
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    no_matching_attrs: {
+      args: [{
+        attr_ids: ["test-attr-id"],
+        target_key: "test-prop"
+      }],
+      expected: {
+        "test-prop": []
+      },
+      context: {
+        source: {
+          attributes: [
+            {
+              attribute_type_id: "other-attr-id",
+              value: "ok"
+            }
+          ]
+        },
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    no_attributes: {
+      args: [{
+        attr_ids: ["test-attr-id"],
+        target_key: "test-prop"
+      }],
+      expected: {
+        "test-prop": []
+      },
+      context: {
+        source: {},
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    caller_transform_is_ignored: {
+      args: [{
+        attr_ids: ["test-attr-id"],
+        target_key: "test-prop",
+        transform: () => "overridden"
+      }],
+      expected: {
+        "test-prop": ["ok"]
+      },
+      context: {
+        source: {
+          attributes: [
+            {
+              attribute_type_id: "test-attr-id",
+              value: "ok"
+            }
+          ]
+        },
+        target: {}
+      },
+      post: test.apply_rule
+    }
+  });
+}
