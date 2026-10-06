@@ -14,6 +14,12 @@ const suite = {
     get_edge_bindings: _test_get_edge_bindings(),
     get_node_bindings: _test_get_node_bindings(),
     get_path_bindings: _test_get_path_bindings(),
+    get_binding_id: _test_get_binding_id(),
+    get_analyses: _test_get_analyses(),
+    get_resource_id: _test_get_resource_id(),
+    get_analysis_score: _test_get_analysis_score(),
+    get_ordering_components: _test_get_ordering_components(),
+    get_normalized_score: _test_get_normalized_score(),
     get_kgraph: _test_get_kgraph(),
     get_kedge: _test_get_kedge(),
     get_knode: _test_get_knode(),
@@ -996,6 +1002,97 @@ function _test_get_path_bindings() {
     no_path_bindings: {
       args: [{}],
       expected: {}
+    }
+  });
+}
+
+function _test_get_binding_id() {
+  return test.make_function_test({
+    node_binding: {
+      args: [{id: 'CHEBI:15420', attributes: []}],
+      expected: 'CHEBI:15420'
+    },
+    edge_binding: {
+      args: [{id: 'medik:creative_edge#56', attributes: []}],
+      expected: 'medik:creative_edge#56'
+    },
+    missing_id: {
+      args: [{attributes: []}],
+      expected: ReferenceError
+    }
+  });
+}
+
+function _test_get_analyses() {
+  const analysis_list = [{resource_id: 'infores:unsecret-agent', edge_bindings: {}}];
+  return test.make_function_test({
+    valid_analyses: {
+      args: [{analyses: analysis_list}],
+      expected: analysis_list
+    },
+    empty_analyses: {
+      args: [{analyses: []}],
+      expected: []
+    },
+    missing_analyses: {
+      args: [{}],
+      expected: ReferenceError
+    }
+  });
+}
+
+function _test_get_resource_id() {
+  return test.make_function_test({
+    valid_resource_id: {
+      args: [{resource_id: 'infores:unsecret-agent'}],
+      expected: 'infores:unsecret-agent'
+    },
+    missing_resource_id: {
+      args: [{}],
+      expected: false
+    }
+  });
+}
+
+function _test_get_analysis_score() {
+  return test.make_function_test({
+    valid_score: {
+      args: [{score: 0.75}],
+      expected: 0.75
+    },
+    zero_score: {
+      args: [{score: 0}],
+      expected: 0
+    },
+    missing_score: {
+      args: [{}],
+      expected: 0.0
+    }
+  });
+}
+
+function _test_get_ordering_components() {
+  return test.make_function_test({
+    valid_ordering_components: {
+      args: [{ordering_components: {confidence: 1, novelty: 0.5, clinical_evidence: 0}}],
+      expected: {confidence: 1, novelty: 0.5, clinical_evidence: 0}
+    },
+    missing_ordering_components: {
+      args: [{}],
+      expected: {confidence: 0, novelty: 0, clinical_evidence: 0}
+    }
+  });
+}
+
+function _test_get_normalized_score() {
+  return test.make_function_test({
+    valid_normalized_score: {
+      args: [{normalized_score: 100}],
+      expected: 100
+    },
+    missing_normalized_score: {
+      args: [{}],
+      expected: 0
     }
   });
 }
