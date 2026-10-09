@@ -9,17 +9,17 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "4337abb3-6494-417f-a44a-aa584d1ed5ff",
+      "uuid": "54ccf1be-3847-4a94-88a6-182f898f647a",
       "id": "MONDO:0007254"
     },
     {
-      "name": "Adrenocortical Hypofunction, Chronic Primary Congenital",
+      "name": "Adrenocortical Insufficiency",
       "type": "drug",
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "9b0ef86c-1495-4a64-92ca-6dbb0b8e8b45",
-      "id": "MONDO:0007071"
+      "uuid": "b97edb39-19b9-480f-bb9d-53d5b736cea3",
+      "id": "MONDO:0000004"
     },
     {
       "name": "Hypertensive Heart Disease",
@@ -27,7 +27,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "dcd69271-7d1b-459c-aa4f-154097cd048b",
+      "uuid": "55125de4-d98a-4903-a115-a85a010fde80",
       "id": "MONDO:0001302"
     },
     {
@@ -36,7 +36,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "829a8afc-602e-4332-bcc3-bc2eb6898149",
+      "uuid": "f5333a36-2116-4358-ad85-f7e150a45fbf",
       "id": "MONDO:0005439"
     },
     {
@@ -45,7 +45,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "8f298f5b-05bd-4b9b-bd87-d2878dbf2362",
+      "uuid": "c37573a8-3658-4cba-a120-e76687086c4a",
       "id": "MONDO:0005002"
     },
     {
@@ -54,7 +54,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "e2458312-96d4-469a-86ef-0ec63efe421d",
+      "uuid": "105d384a-9f48-4b2b-b6aa-2351b1f903a6",
       "id": "MONDO:0005147"
     },
     {
@@ -63,7 +63,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "e0b7fd22-d08c-421d-a551-ea62d1417a36",
+      "uuid": "6f54a5b7-f338-41ba-b96f-f1a9981a5c61",
       "id": "MONDO:0008029"
     },
     {
@@ -72,7 +72,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "2ec40fba-81f8-4806-8134-a0ef42c67ed5",
+      "uuid": "d2522714-fa80-4849-8cf8-6f3b76aadfb2",
       "id": "MONDO:0007523"
     },
     {
@@ -81,7 +81,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "47e65e67-657f-437a-8502-e569d59e6569",
+      "uuid": "bcfadd15-ef1b-4eaf-a60a-896b072c309d",
       "id": "MONDO:0017314"
     },
     {
@@ -90,7 +90,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "d5712fe0-19bf-4f93-ac06-23139670b453",
+      "uuid": "823e7526-3aa4-4ffc-b201-9cb2d781fd42",
       "id": "MONDO:0020066"
     },
     {
@@ -99,7 +99,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "a9bbbc94-c542-4248-96af-3c0d52e71d08",
+      "uuid": "f941027b-ee07-4b57-9020-32d416581bc8",
       "id": "MONDO:0007827"
     },
     {
@@ -108,7 +108,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "fef4a235-aef6-45cf-b338-714239df5f71",
+      "uuid": "01cbf884-fcc7-43f8-931a-ca406f7a6818",
       "id": "MONDO:0000355"
     },
     {
@@ -117,7 +117,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "b411cd2f-7380-47a3-b908-eeee82424108",
+      "uuid": "3d596eb8-0358-4a1c-9863-44d89243fda0",
       "id": "MONDO:0010808"
     },
     {
@@ -126,7 +126,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "3a3923c2-61a5-44ff-8b59-830a6056fca8",
+      "uuid": "014a12b2-820b-444f-86fb-34c5bd6ca092",
       "id": "MONDO:0007432"
     },
     {
@@ -135,7 +135,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "e806d6fb-d36d-42ab-bdf0-3b0ab576b17e",
+      "uuid": "e692d1e7-8b83-4cc7-a8e3-3376ef6f4992",
       "id": "MONDO:0009746"
     },
     {
@@ -144,7 +144,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "cf7f2b0a-8b87-446b-9690-ee0aceed62c6",
+      "uuid": "8f316e30-018b-4130-b60a-68ba83b8e255",
       "id": "MONDO:0034024"
     },
     {
@@ -153,7 +153,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "c3121e22-0814-4daa-aee2-0cceb5568906",
+      "uuid": "f73b3e8f-6a36-4a7f-a52e-e94859cdc155",
       "id": "MONDO:0007525"
     },
     {
@@ -162,7 +162,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "97f4ac2a-5f1b-4f22-86ea-d436f83b5fd1",
+      "uuid": "8ee805db-7038-408a-a0fa-bea5d1f501c4",
       "id": "MONDO:0007522"
     },
     {
@@ -171,7 +171,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "edd6cfd6-2ba8-4ccc-b908-ec46d3f1c4a3",
+      "uuid": "7d9634ea-8647-4a34-b631-b700c67a8feb",
       "id": "MONDO:0009161"
     },
     {
@@ -180,7 +180,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "2d5a78f8-bebc-47dc-9250-4cb93920b338",
+      "uuid": "cc815ddd-2abf-49d8-8ad4-d0a07727781e",
       "id": "NCBIGene:55768"
     },
     {
@@ -189,7 +189,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "5c97438d-3b77-4e45-a5b6-adc25d749c31",
+      "uuid": "b2b7c8df-3052-482f-b76c-372bf90ff3c8",
       "id": "NCBIGene:55768"
     },
     {
@@ -198,7 +198,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "84afe2c6-dfd9-473a-b29f-01f846b429d9",
+      "uuid": "a0be1c5e-e5a9-4d44-a720-f4f6d7235592",
       "id": "NCBIGene:23394"
     },
     {
@@ -207,7 +207,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "f631d450-cd27-4791-80e4-a2a8df73e419",
+      "uuid": "f9181873-52c3-41cf-81ea-0a68fd8cd577",
       "id": "NCBIGene:23394"
     },
     {
@@ -216,7 +216,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "bcdda80b-6c8c-4d12-8446-f7ca9273a031",
+      "uuid": "2dae89f5-9fac-4357-b6ec-84b88ffcab43",
       "id": "NCBIGene:6323"
     },
     {
@@ -225,7 +225,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "105f1813-e08c-49df-a9ca-c34795f73519",
+      "uuid": "c32be9e8-bc5d-4cc2-a72f-fe448f8a77c1",
       "id": "NCBIGene:6323"
     },
     {
@@ -234,7 +234,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "2f9d972c-572b-4e11-9dd1-9f3914a59b77",
+      "uuid": "6f3147e0-da71-46f4-b0c4-70353878aaff",
       "id": "NCBIGene:6529"
     },
     {
@@ -243,7 +243,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "6f0a6210-d108-4b6c-a720-850221723f30",
+      "uuid": "bdfbcd9e-6c74-4709-b1ab-614ac2427755",
       "id": "NCBIGene:6529"
     },
     {
@@ -251,17 +251,8 @@
       "type": "gene",
       "allow_inbound": false,
       "allow_outbound": true,
-      "direction": "increased",
-      "uuid": "1d253123-91f4-4f50-9455-4d1f02f0342a",
-      "id": "PUBCHEM.COMPOUND:5486971"
-    },
-    {
-      "name": "Pregabalin",
-      "type": "gene",
-      "allow_inbound": false,
-      "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "46420bb1-7111-470b-9732-2168a21118dd",
+      "uuid": "2bce652b-6267-46f2-b01e-04f0bcedec56",
       "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -270,7 +261,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "175f24d8-3084-4970-a945-00c293bc95e9",
+      "uuid": "f8c35f34-b59f-4ed4-970d-70e4a4d1b573",
       "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -279,7 +270,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "8c19c6b0-de81-46d2-be63-d93cf3307601",
+      "uuid": "454c96d0-3f7f-4a11-bf37-dab922de7239",
       "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -288,7 +279,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "d7ba9329-ff76-4d94-9c79-9c8d3194e2ab",
+      "uuid": "cf6d4261-b36c-44ff-b7cc-1f77b5c6ae3b",
       "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -297,7 +288,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "6901ed08-7463-4da0-9081-193dc9d1ad2b",
+      "uuid": "1099fdc1-8efc-4118-84e7-f9862ae41e66",
       "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -306,7 +297,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "5c3348a5-8923-47c8-8280-d9dc7d99a9b1",
+      "uuid": "6b9055f3-06e2-4c80-8900-c6bef26a7dc0",
       "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -315,7 +306,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "14769a86-ad40-48c6-91f6-e7bc4511a2e1",
+      "uuid": "ebe27811-286b-4726-9fe6-51a317e51337",
       "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -324,7 +315,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "1172cee7-dcd5-405a-8051-55081fdb9dde",
+      "uuid": "9b0779bc-df68-4510-b255-df73db9526c8",
       "id": "PUBCHEM.COMPOUND:2162"
     },
     {
@@ -333,7 +324,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "a322a704-34ae-477f-8a28-6c05822fc95b",
+      "uuid": "44bf6082-56b7-4f9f-a24d-7f6f23183fa9",
       "id": "PUBCHEM.COMPOUND:2162"
     }
   ],
