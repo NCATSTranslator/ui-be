@@ -1,6 +1,8 @@
 export {
   biolink_config,
   simple_kgraph,
+  sourced_kgraph,
+  dangling_object_kgraph,
   with_support_kgraph,
   with_nested_support_kgraph,
   dead_support_kgraph
@@ -29,6 +31,85 @@ function simple_kgraph() {
         "subject": "nb1",
         "predicate": "biolink:treats",
         "object": "nb2"
+      }
+    }
+  };
+}
+
+function sourced_kgraph() {
+  return {
+    "nodes": {
+      "nb1": { "name": "node 1" },
+      "nb2": { "name": "node 2" }
+    },
+    "edges": {
+      "eb1": {
+        "subject": "nb1",
+        "predicate": "biolink:treats",
+        "object": "nb2",
+        "sources": [
+          {
+            "resource_id": "infores:gtopdb",
+            "resource_role": "primary_knowledge_source"
+          }
+        ],
+        "attributes": [
+          {
+            "attribute_type_id": "biolink:knowledge_level",
+            "value": "knowledge_assertion"
+          }
+        ]
+      },
+      "eb2": {
+        "subject": "nb1",
+        "predicate": "biolink:treats",
+        "object": "nb2",
+        "sources": [
+          {
+            "resource_id": "infores:arax",
+            "resource_role": "primary_knowledge_source"
+          }
+        ],
+        "attributes": [
+          {
+            "attribute_type_id": "biolink:knowledge_level",
+            "value": "prediction"
+          }
+        ]
+      },
+      "eb3": {
+        "subject": "nb1",
+        "predicate": "biolink:treats",
+        "object": "nb2",
+        "sources": [
+          {
+            "resource_id": "infores:not-a-real-source",
+            "resource_role": "primary_knowledge_source"
+          }
+        ],
+        "attributes": []
+      }
+    }
+  };
+}
+
+function dangling_object_kgraph() {
+  return {
+    "nodes": {
+      "nb1": { "name": "node 1" }
+    },
+    "edges": {
+      "eb1": {
+        "subject": "nb1",
+        "predicate": "biolink:treats",
+        "object": "nb2",
+        "sources": [
+          {
+            "resource_id": "infores:gtopdb",
+            "resource_role": "primary_knowledge_source"
+          }
+        ],
+        "attributes": []
       }
     }
   };
