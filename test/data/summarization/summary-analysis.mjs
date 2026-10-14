@@ -289,7 +289,411 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
     with_support: __with_support_test_case(),
     support_graph_with_no_paths_fails_the_analysis: __dead_support_test_case(),
     with_nested_support: await __with_nested_support_test_case(),
-    with_nested_support_sharing_an_eid_cache: await __with_nested_support_test_case(new Map())
+    with_nested_support_sharing_an_eid_cache: await __with_nested_support_test_case(new Map()),
+    compress_simple: {
+      args: [
+        _simple_summary_analysis(),
+        _simple_analysis_paths(),
+        simple_kgraph(),
+        true
+      ],
+      expected: [
+        [
+          {
+            "id": "772682cb",
+            "score": 0,
+            "subgraph": [
+              "nb1",
+              "20c21303",
+              "nb2"
+            ],
+            "aras": []
+          }
+        ],
+        {
+          "20c21303": {
+            "id": "20c21303",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "eb1"
+              ],
+              "inverted_id": null,
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          }
+        }
+      ]
+    },
+    compress_with_support_replaces_supported_edge: {
+      args: [
+        _with_support_summary_analysis(),
+        _with_support_analysis_paths(),
+        with_support_kgraph(),
+        true
+      ],
+      expected: [
+        [
+          {
+            "id": "3bdd57a8",
+            "score": 0,
+            "subgraph": [
+              "nb1",
+              "ef66c744",
+              "nb2.1",
+              "59de6b3a",
+              "nb2"
+            ],
+            "aras": []
+          }
+        ],
+        {
+          "ef66c744": {
+            "id": "ef66c744",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "eb2"
+              ],
+              "inverted_id": null,
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          },
+          "59de6b3a": {
+            "id": "59de6b3a",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "eb3"
+              ],
+              "inverted_id": null,
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          }
+        }
+      ]
+    },
+    compress_with_nested_support_expands_every_level: {
+      config_loader: () => bl.load_biolink(biolink_config()),
+      args: [
+        _with_nested_support_summary_analysis(),
+        _with_nested_support_analysis_paths(),
+        with_nested_support_kgraph(),
+        true
+      ],
+      expected: [
+        [
+          {
+            "id": "4a462738",
+            "score": 0,
+            "subgraph": [
+              "target",
+              "18dacd2a",
+              "nb1",
+              "cef6f110",
+              "answer-1"
+            ],
+            "aras": []
+          },
+          {
+            "id": "2ef6ba97",
+            "score": 0,
+            "subgraph": [
+              "target",
+              "24b56ec2",
+              "nb1",
+              "cef6f110",
+              "answer-1"
+            ],
+            "aras": []
+          },
+          {
+            "id": "2bd5f37a",
+            "score": 0,
+            "subgraph": [
+              "target",
+              "0dd6dbc7",
+              "nb3",
+              "98235736",
+              "nb2.1",
+              "aec9727e",
+              "nb2",
+              "6fe7cd1a",
+              "answer-2"
+            ],
+            "aras": []
+          }
+        ],
+        {
+          "98235736": {
+            "id": "98235736",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "ax4-eb2"
+              ],
+              "inverted_id": "2f249e02",
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          },
+          "18dacd2a": {
+            "id": "18dacd2a",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "ax1-eb2"
+              ],
+              "inverted_id": "29172243",
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          },
+          "cef6f110": {
+            "id": "cef6f110",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "ax1-eb1"
+              ],
+              "inverted_id": "e9b0db54",
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          },
+          "24b56ec2": {
+            "id": "24b56ec2",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "ax2-eb1"
+              ],
+              "inverted_id": "3cdc57d0",
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          },
+          "0dd6dbc7": {
+            "id": "0dd6dbc7",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "ax3-eb3"
+              ],
+              "inverted_id": "b336b588",
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          },
+          "aec9727e": {
+            "id": "aec9727e",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "ax4-eb1"
+              ],
+              "inverted_id": "45186a37",
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          },
+          "6fe7cd1a": {
+            "id": "6fe7cd1a",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "ax3-eb1"
+              ],
+              "inverted_id": "7565d960",
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          }
+        }
+      ]
+    },
+    compress_path_binding_scores_paths: {
+      args: [
+        _path_binding_summary_analysis(),
+        _path_binding_analysis_paths(),
+        with_support_kgraph(),
+        true
+      ],
+      expected: [
+        [
+          {
+            "id": "3bdd57a8",
+            "score": 0.9,
+            "subgraph": [
+              "nb1",
+              "ef66c744",
+              "nb2.1",
+              "59de6b3a",
+              "nb2"
+            ],
+            "aras": []
+          }
+        ],
+        {
+          "ef66c744": {
+            "id": "ef66c744",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "eb2"
+              ],
+              "inverted_id": null,
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          },
+          "59de6b3a": {
+            "id": "59de6b3a",
+            "aras": [],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": null,
+            "object": null,
+            "predicate": null,
+            "predicate_url": null,
+            "provenance": [],
+            "publications": {},
+            "metadata": {
+              "edge_bindings": [
+                "eb3"
+              ],
+              "inverted_id": null,
+              "is_root": true
+            },
+            "trials": [],
+            "source_time": null
+          }
+        }
+      ]
+    },
+    compress_support_graph_with_no_paths_fails_the_analysis: {
+      args: [
+        _dead_support_summary_analysis(),
+        _dead_support_analysis_paths(),
+        dead_support_kgraph(),
+        true
+      ],
+      expected: MissingSupportPathsError
+    }
   });
 
   function __simple_test_case() {
@@ -587,6 +991,44 @@ function _dead_support_analysis_paths() {
     args: [
       _dead_support_summary_analysis(),
       dead_support_kgraph(),
+      "nb1",
+      ["nb2"],
+      4
+    ]
+  });
+}
+
+function _path_binding_summary_analysis() {
+  return test.make_lazy({
+    call: analysis_to_summary_analysis,
+    args: [
+      {
+        "path_bindings": {
+          "pb1": [
+            { "id": "ax1" }
+          ]
+        },
+        "score": 0.9
+      },
+      with_support_kgraph(),
+      {
+        "ax1": {
+          "edges": [
+            "eb2",
+            "eb3"
+          ]
+        }
+      }
+    ]
+  });
+}
+
+function _path_binding_analysis_paths() {
+  return test.make_lazy({
+    call: gen_analysis_paths,
+    args: [
+      _path_binding_summary_analysis(),
+      with_support_kgraph(),
       "nb1",
       ["nb2"],
       4
