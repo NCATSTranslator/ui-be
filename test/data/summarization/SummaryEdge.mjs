@@ -196,6 +196,24 @@ function _test_SummaryEdge() {
         }
       ]
     },
+    merge_copies_metadata_when_own_is_null: {
+      injected: {
+        id: EDGE_ID
+      },
+      steps: [
+        {
+          method: "merge",
+          args: [{
+            ...default_other,
+            metadata: { inverted_id: "EDGE_INV_2", edge_bindings: ["eb2"] }
+          }],
+          expected: {
+            ...default_state,
+            metadata: { inverted_id: "EDGE_INV_2", edge_bindings: ["eb2"] }
+          }
+        }
+      ]
+    },
     merge_combines_publications_by_knowledge_level: {
       injected: {
         id: EDGE_ID,

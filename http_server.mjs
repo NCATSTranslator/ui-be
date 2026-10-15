@@ -7,6 +7,7 @@ import { default as express } from 'express';
 import { default as pino } from 'pino';
 import { default as pinoHttp } from 'pino-http';
 import { default as cookieParser } from 'cookie-parser';
+import * as wutil from './lib/webutils.mjs';
 
 import { validateDemoQueryRequest, handleDemoQueryRequest } from './DemoQueryHandler.mjs';
 
@@ -21,6 +22,25 @@ import { BiolinkAPIController } from './controllers/BiolinkAPIController.mjs';
 // Adapters
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
 import { QueryServicexFEAdapter } from './adapters/QueryServicexFEAdapter.mjs';
+
+export function _legacy_prefix_redirect(req, res, _next) {
+  const stripped = req.originalUrl.replace(/^\/(main|demo)/, '');
+  const target = stripped.startsWith('/') ? stripped : `/${stripped}`;
+  logger.info(`redirection: ${req.originalUrl} -> ${target}`);
+  return res.redirect(308, target);
+}
+
+export function _handle_uncaught_error(err, req, res, next) {
+  wutil.log_internal_server_error(req, err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  const status = err.status || err.statusCode;
+  if (status >= 400 && status < 500) {
+    return wutil.send_error(res, status, err.expose ? err.message : 'Malformed Request');
+  }
+  return res.status(500).send('Internal server error');
+}
 
 export function start_server(config, services) {
 
@@ -51,7 +71,7 @@ export function start_server(config, services) {
   const biolink_api_controller = new BiolinkAPIController();
   const API_PATH_V1 = '/api/v1';
   const SITE_PATH_PREFIX = '';
-  app.use(pinoHttp({logger: logger}));
+  app.use(pinoHttp({logger: logger, redact: config.logging.redact}));
   app.use(express.json({
     limit: config.json_payload_limit,
     verify: (req, _res, buf, _encoding) => {req.rawBody = buf;}
@@ -84,7 +104,9 @@ export function start_server(config, services) {
 
   // Session status API
   app.get(`${API_PATH_V1}/session/status`, session_controller.getStatus.bind(session_controller));
-  app.post(`${API_PATH_V1}/session/status`, session_controller.updateStatus.bind(session_controller));
+  app.post(`${API_PATH_V1}/session/status`,
+    session_controller.requireSessionAuth.bind(session_controller),
+    session_controller.updateStatus.bind(session_controller));
 
   // Login/logout
   app.get('/oauth2/redir/:provider', login_controller.authRedir.bind(login_controller));
@@ -107,6 +129,9 @@ export function start_server(config, services) {
   app.post(`${API_PATH_V1}/biolink/node/description`,
     session_controller.authenticateUnprivilegedRequest.bind(session_controller),
     biolink_api_controller.get_node_descriptions.bind(biolink_api_controller));
+  app.get(`${API_PATH_V1}/biolink/infores/:infores_id`,
+    session_controller.authenticateUnprivilegedRequest.bind(session_controller),
+    biolink_api_controller.get_infores_catalog_entry.bind(biolink_api_controller));
 
   // Submit query route: privileged session
   app.post(`${API_PATH_V1}/query`,
@@ -125,6 +150,14 @@ export function start_server(config, services) {
   // User routes: privileged
   app.use(`${API_PATH_V1}/users`, session_controller.authenticatePrivilegedRequest.bind(session_controller));
   app.get(`${API_PATH_V1}/users/me`, user_api_controller.get_user.bind(user_api_controller));
+
+  /* API keys: privileged AND session-only. requireSessionAuth keeps a bearer of one key from
+   * minting more or revoking the others; managing keys always requires a logged-in session. */
+  app.use(`${API_PATH_V1}/users/me/api-keys`, session_controller.requireSessionAuth.bind(session_controller));
+  app.get(`${API_PATH_V1}/users/me/api-keys`, user_api_controller.get_user_api_keys.bind(user_api_controller));
+  app.post(`${API_PATH_V1}/users/me/api-keys`, user_api_controller.create_user_api_key.bind(user_api_controller));
+  app.delete(`${API_PATH_V1}/users/me/api-keys/:key_id`, user_api_controller.revoke_user_api_key.bind(user_api_controller));
+
   app.get(`${API_PATH_V1}/users/me/preferences`, user_api_controller.get_user_prefs.bind(user_api_controller));
   app.post(`${API_PATH_V1}/users/me/preferences`, user_api_controller.update_user_prefs.bind(user_api_controller));
 
@@ -185,7 +218,7 @@ export function start_server(config, services) {
   canvas_router.put('/:save_id/annotation/:annotation_id', user_api_controller.update_user_canvas_annotation_content.bind(user_api_controller));
   app.use(`${API_PATH_V1}/users/me/canvas`, canvas_router);
 
-  app.all(['/api', '/api/*'], (req, res) => {
+  app.all('/api{/*splat}', (req, res) => {
     return res.status(403).send('API action Forbidden');
   });
 
@@ -203,20 +236,16 @@ export function start_server(config, services) {
     handleDemoQueryRequest(SITE_PATH_PREFIX));
 
   // Redirect old /main and /demo URLs
-  app.all(['/main', '/main/*', '/demo', '/demo/*'], (req, res, next) => {
-    if (['/main', '/demo'].includes(req.originalUrl)) {
-      res.redirect(308, '/');
-    }
-    logger.info(`redirection: ${req.originalUrl} -> ${req.originalUrl.replace(/^\/(main|demo)/, '')}`);
-    res.redirect(308, req.originalUrl.replace(/^\/(main|demo)/, ''));
-  });
+  app.all(['/main{/*splat}', '/demo{/*splat}'], _legacy_prefix_redirect);
 
   // Any route not explicitly handled above should simply return the page skeleton and allow the FE to handle it
-  app.all('*', (req, res, next) => {
+  app.all('/{*splat}', (req, res, next) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.sendFile(path.join(build_dir, 'index.html'));
   });
 
+  app.use(_handle_uncaught_error);
   app.listen(config.port ?? 8386);
+
   logger.info("Der Anfang ist das Ende und das Ende ist der Anfang");
 }

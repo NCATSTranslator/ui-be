@@ -9,7 +9,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "723a8922-0aae-4e1b-aca2-8706bb902619",
+      "uuid": "b9b690a6-e045-4a0e-859f-37fd4e535949",
       "id": "MONDO:0007254"
     },
     {
@@ -18,7 +18,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "4b9a408b-cda3-4eda-9470-bc5f437e6b33",
+      "uuid": "3f55829f-9b0f-4929-b276-8e581672b918",
       "id": "MONDO:0007071"
     },
     {
@@ -27,7 +27,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "9012c31d-7c37-482c-a86e-d084b3a6eb04",
+      "uuid": "fc428e39-25c7-4ebe-84f6-048f4957e654",
       "id": "MONDO:0001302"
     },
     {
@@ -36,7 +36,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "e9c8febc-88b8-4763-950f-deafac52a9dd",
+      "uuid": "13525d5d-ca12-47df-9f2a-d3193f527019",
       "id": "MONDO:0005439"
     },
     {
@@ -45,7 +45,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "5a495bb2-30db-4a54-9e02-4fa37b62ec52",
+      "uuid": "49cf15e0-8e59-415b-b905-ca3801e3fd7f",
       "id": "MONDO:0005002"
     },
     {
@@ -54,7 +54,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "3fbd7d56-84b4-4ad0-9ad7-fee4855dd899",
+      "uuid": "49298bf7-83b2-4896-a5a8-b02074e53bc7",
       "id": "MONDO:0005147"
     },
     {
@@ -63,7 +63,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "b851031e-658e-4d44-a231-08a80f732674",
+      "uuid": "0590e8e1-06b2-4d1b-9ac1-1da6f68e5464",
       "id": "MONDO:0008029"
     },
     {
@@ -72,7 +72,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "8a9d890c-6075-4235-bb59-a6129511724f",
+      "uuid": "21925c9c-4964-4b24-809d-3ad1f0d84df2",
       "id": "MONDO:0007523"
     },
     {
@@ -81,7 +81,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "cb1b93b3-de3d-47c7-9992-e8f4f3307561",
+      "uuid": "8056ea9b-035e-4680-8a28-fde65e9a9fd8",
       "id": "MONDO:0017314"
     },
     {
@@ -90,7 +90,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "55996893-7884-4949-93c9-415dd9631f44",
+      "uuid": "795d81e8-ba2b-47b4-b8ad-cd93efcd3393",
       "id": "MONDO:0020066"
     },
     {
@@ -99,7 +99,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "77a66407-43b3-4aa8-a0ea-c303a3480aff",
+      "uuid": "ca6f0e12-783e-4c76-b15b-06e522c78dfd",
       "id": "MONDO:0007827"
     },
     {
@@ -108,7 +108,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "b7df1174-e7dd-4479-8f7c-b4139d429f1c",
+      "uuid": "3ace1f62-2b01-40e8-954e-b34fd3ed02d1",
       "id": "MONDO:0000355"
     },
     {
@@ -117,7 +117,7 @@
       "allow_inbound": true,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "661ec8cf-58fd-456f-ae27-9830600cc033",
+      "uuid": "02bb5827-035e-4f7b-9bd7-7d77da6371a5",
       "id": "MONDO:0010808"
     },
     {
@@ -126,7 +126,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "19e618e1-a6d3-40c1-a295-158327e813c3",
+      "uuid": "04933713-4548-4fd6-b7e8-ca7e7835b5e3",
       "id": "MONDO:0007432"
     },
     {
@@ -135,7 +135,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "0df92169-e449-40a5-a0e1-e1c72cc4fc11",
+      "uuid": "659dfafe-a387-4138-8f0f-a5389584009f",
       "id": "MONDO:0009746"
     },
     {
@@ -144,7 +144,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "b87bff6a-2137-4749-92e1-7e8b4cdc8405",
+      "uuid": "ea4eb925-11a7-45fc-872d-ae3875266636",
       "id": "MONDO:0034024"
     },
     {
@@ -153,7 +153,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "6d403878-931f-4bab-af62-2346fd685428",
+      "uuid": "68f1d5ae-f32f-4ca7-8874-dd182bc76a91",
       "id": "MONDO:0007525"
     },
     {
@@ -162,7 +162,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "1c457838-4565-468e-bb94-017f41265d4e",
+      "uuid": "c5f27483-1a77-452e-a4d5-f56307676b68",
       "id": "MONDO:0007522"
     },
     {
@@ -171,7 +171,7 @@
       "allow_inbound": true,
       "allow_outbound": false,
       "direction": null,
-      "uuid": "da695024-2b13-448e-b5af-965e814ba121",
+      "uuid": "ef740889-5f81-487c-917c-27b78fb0f0b6",
       "id": "MONDO:0009161"
     },
     {
@@ -180,7 +180,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "6068f164-4d0d-403f-9d0f-ced37be1e38e",
+      "uuid": "711487a2-0cd9-4775-a62a-096670d4dd83",
       "id": "NCBIGene:55768"
     },
     {
@@ -189,7 +189,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "216cdc0a-c95d-4b60-92ec-50425dc2eb81",
+      "uuid": "ae43af82-dabb-429d-9a94-0fb1d5bfa3d6",
       "id": "NCBIGene:55768"
     },
     {
@@ -198,7 +198,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "2fe8cef0-c54a-468c-9f59-ef89374b16e7",
+      "uuid": "c20377b3-af67-4478-bb9b-ee45e53e9115",
       "id": "NCBIGene:23394"
     },
     {
@@ -207,7 +207,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "e303902d-4a84-4aab-9dcf-669af5f57704",
+      "uuid": "fa3fd3e9-3d71-4bac-b144-d63f6a380f68",
       "id": "NCBIGene:23394"
     },
     {
@@ -216,7 +216,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "cd4c2092-d846-41b0-99d4-bc933db47b1e",
+      "uuid": "cf543f5c-8060-45b1-a6ba-17f014c1cefe",
       "id": "NCBIGene:6323"
     },
     {
@@ -225,7 +225,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "32ebb05a-8bff-449d-b584-2b12d222d9b9",
+      "uuid": "fb059891-3ff6-4acf-80b3-30419026cc70",
       "id": "NCBIGene:6323"
     },
     {
@@ -234,7 +234,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "5ce708cf-ac4a-4c28-a75e-c69376d5dd6d",
+      "uuid": "3db327ce-8690-4a7b-bcc4-c323e31b2755",
       "id": "NCBIGene:6529"
     },
     {
@@ -243,7 +243,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "d8091d2f-73ea-4a9d-a29d-536f86d7f446",
+      "uuid": "5178ee97-f404-4fb2-9313-9764720e4167",
       "id": "NCBIGene:6529"
     },
     {
@@ -252,7 +252,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "6c5e2db3-84ea-491b-af47-406b438c5e53",
+      "uuid": "929354e6-0fb7-41e7-a9cf-a2523ad6f0f6",
       "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -261,7 +261,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "af810a67-bc61-4342-8a94-8566aafe7d3b",
+      "uuid": "3b2216b6-39c1-4ede-8057-d7857ede41a1",
       "id": "PUBCHEM.COMPOUND:5486971"
     },
     {
@@ -270,7 +270,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "8f8aecc3-6603-4aef-9fdd-5dd7b81f4724",
+      "uuid": "0d50c9ee-1114-40b4-bf3b-29169b291fb5",
       "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -279,7 +279,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "8e6e5f30-9466-4ef2-be58-335cf21baf67",
+      "uuid": "c2ee1e5b-f3cd-48a2-b57a-ae0940f60609",
       "id": "PUBCHEM.COMPOUND:446157"
     },
     {
@@ -288,7 +288,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "4a24b844-9cc5-4890-94af-248fbd974dc1",
+      "uuid": "070149c0-024a-422c-8cef-8275ff348caa",
       "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -297,7 +297,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "922c0769-9867-4ad0-9eb8-914c86ca2797",
+      "uuid": "df2ff024-a72a-40ca-9d7b-00bb5b8903e3",
       "id": "PUBCHEM.COMPOUND:4946"
     },
     {
@@ -306,7 +306,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "5c29ec29-3568-4f08-a7d2-62e9f487caf8",
+      "uuid": "774c185a-ebf6-4769-bbb1-90a8122fbbb3",
       "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -315,7 +315,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "000e3529-73ea-46d5-957b-6a33d6cc82af",
+      "uuid": "8b2e6fe8-c700-47b6-a37e-ff471ec42ba3",
       "id": "PUBCHEM.COMPOUND:77993"
     },
     {
@@ -324,7 +324,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "increased",
-      "uuid": "dc787f7b-6660-46fb-b34d-c6848942a8ea",
+      "uuid": "6fcd58e7-2b25-494e-a334-d0c2dec17792",
       "id": "PUBCHEM.COMPOUND:2162"
     },
     {
@@ -333,7 +333,7 @@
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": "decreased",
-      "uuid": "73b57a92-82a5-4fe7-ad84-94eb5056e9fc",
+      "uuid": "6cccd770-9393-4d7d-bf8a-dd5705eba46f",
       "id": "PUBCHEM.COMPOUND:2162"
     }
   ],

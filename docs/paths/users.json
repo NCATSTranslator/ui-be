@@ -6,6 +6,9 @@
       "security": [
         {
           "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
         }
       ],
       "responses": {
@@ -35,6 +38,9 @@
       "security": [
         {
           "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
         }
       ],
       "responses": {
@@ -65,6 +71,9 @@
       "security": [
         {
           "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
         }
       ],
       "requestBody": {

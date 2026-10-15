@@ -3,7 +3,8 @@ export {
   make_function_test,
   make_class_test,
   make_lazy,
-  apply_rule
+  apply_rule,
+  apply_rules
 }
 
 import * as ast from 'node:assert';
@@ -74,14 +75,21 @@ async function make_lazy({call, args}) {
 }
 
 async function apply_rule({actual, case_context}) {
+  return apply_rules({
+    actual: (src, cxt) => [actual(src, cxt)],
+    case_context: case_context
+  });
+}
+
+async function apply_rules({actual, case_context}) {
   let {source, target} = case_context;
-  const rule = actual;
   if (!cmn.is_array(source)) {
     source = [source];
   }
   for (const src of source) {
-    const transform = rule(src, src['__context__']);
-    target = transform(target);
+    for (const transform of actual(src, src['__context__'])) {
+      target = transform(target);
+    }
   }
   return target;
 }
@@ -102,7 +110,7 @@ async function _class_test({test_class, test_cases}) {
   for (let case_name of Object.keys(test_cases)) {
     console.log(`-- Running ${case_name}`);
     const tc = test_cases[case_name];
-    if (tc.config) {
+    if (tc.config_loader) {
       await tc.config_loader();
     }
     if (!cmn.is_missing(tc.class_constructor) && !cmn.is_missing(tc.injected)) {

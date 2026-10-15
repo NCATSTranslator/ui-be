@@ -2,14 +2,109 @@ export { suite }
 
 import * as test from "#test/lib/common.mjs";
 import * as taglib from "#lib/taglib.mjs";
+import * as bl from "#lib/biolink-model.mjs";
+import { biolink_config } from "#test/data/summarization/kgraphs.mjs";
+
+await bl.load_biolink(biolink_config());
 
 const suite = {
   tests: {
+    make_knode_rules: _test_make_knode_rules(),
+    make_kedge_rules: _test_make_kedge_rules(),
     make_rule_group_publications_by_knowledge_level: _test_make_rule_group_publications_by_knowledge_level(),
     make_rule_collect_publication_supporting_text: _test_make_rule_collect_publication_supporting_text(),
     make_rule_collect_clinical_trial_metadata: _test_make_rule_collect_clinical_trial_metadata(),
     make_rule_tag_attribute: _test_make_rule_tag_attribute()
   }
+}
+
+function _test_make_knode_rules() {
+  return test.make_function_test({
+    "extracts-all-node-properties": {
+      "args": [],
+      "expected": {
+        "names": ["node 1"],
+        "types": ["biolink:ChemicalEntity"],
+        "synonyms": ["syn a", "syn b"],
+        "curies": ["CHEBI:1234"],
+        "descriptions": ["a description"],
+        "annotations": {
+          "chemical": {
+            "curies": null,
+            "approval": null,
+            "descriptions": null,
+            "indications": null,
+            "synonyms": null,
+            "roles": null,
+            "otc_status": null,
+            "clinical_trials": null
+          },
+          "gene": {
+            "curies": null,
+            "descriptions": null,
+            "name": null,
+            "species": null,
+            "tdl": null
+          },
+          "disease": {
+            "descriptions": null,
+            "curies": null,
+            "synonyms": null,
+            "clinical_trials": null
+          }
+        }
+      },
+      "context": {
+        "source": {
+          "name": "node 1",
+          "categories": ["biolink:ChemicalEntity"],
+          "attributes": [
+            { "attribute_type_id": "biolink:synonym", "value": ["syn a", "syn b"] },
+            { "attribute_type_id": "biolink:same_as", "value": ["CHEBI:1234", "NOTAPREFIX:1"] },
+            { "attribute_type_id": "biolink:description", "value": "a description" }
+          ]
+        },
+        "target": {}
+      },
+      post: test.apply_rules
+    }
+  });
+}
+
+function _test_make_kedge_rules() {
+  return test.make_function_test({
+    "extracts-all-edge-properties": {
+      "args": [],
+      "expected": {
+        "predicate": "treats",
+        "provenance": [{ "infores": "infores:gtopdb", "records": [] }],
+        "qualifiers": false,
+        "subject": "nb1",
+        "object": "nb2",
+        "publications": {
+          "trusted": [{ "id": "PMID:123", "infores": "infores:gtopdb" }]
+        },
+        "supporting_text": {},
+        "supporting_trials": {}
+      },
+      "context": {
+        "source": {
+          "subject": "nb1",
+          "predicate": "biolink:treats",
+          "object": "nb2",
+          "sources": [
+            { "resource_id": "infores:gtopdb", "resource_role": "primary_knowledge_source" }
+          ],
+          "attributes": [
+            { "attribute_type_id": "biolink:publications", "value": ["PMID:123"] }
+          ],
+          "__context__": { "infores": "infores:gtopdb", "knowledge_level": "trusted" }
+        },
+        "target": {}
+      },
+      post: test.apply_rules
+    }
+  });
 }
 
 function _test_make_rule_group_publications_by_knowledge_level() {
