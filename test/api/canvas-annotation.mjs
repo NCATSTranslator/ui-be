@@ -1,7 +1,7 @@
 /* Standalone API test: the Canvas Annotation endpoints.
  *
- *   POST /api/v1/users/me/canvas/:save_id/annotation
- *   PUT  /api/v1/users/me/canvas/:save_id/annotation/:annotation_id
+ *   POST /api/v1/users/me/canvas/:canvas_id/annotation
+ *   PUT  /api/v1/users/me/canvas/:canvas_id/annotation/:annotation_id
  *
  * Trash and restore are not annotation-specific endpoints: annotations ride along in the
  * GraphSelection that /graph/trash and /graph/restore already accept, so a mixed selection of
