@@ -9,6 +9,8 @@ const suite = {
     sanitize: _test_sanitize(),
     is_clinical_trial: _test_is_clinical_trial(),
     is_publication: _test_is_publication(),
+    is_dailymed: _test_is_dailymed(),
+    dakp_record_ids: _test_dakp_record_ids(),
     is_ontological: _test_is_ontological(),
     id_to_type_and_url: _test_id_to_type_and_url()
   }
@@ -147,6 +149,132 @@ function _test_is_publication() {
   });
 }
 
+function _test_is_dailymed() {
+  return test.make_function_test({
+    "lowercase_prefix": {
+      "args": ["dailymed:e1ada3ec-c2c0-4f43-9b4b-1234567890ab"],
+      "expected": true
+    },
+    "uppercase_prefix_is_case_insensitive": {
+      "args": ["DailyMed:e1ada3ec-c2c0-4f43-9b4b-1234567890ab"],
+      "expected": true
+    },
+    "different_prefix": {
+      "args": ["PMID:12345"],
+      "expected": false
+    },
+    "prefix_without_colon": {
+      "args": ["dailymed"],
+      "expected": false
+    },
+    "non_string_input": {
+      "args": [12345],
+      "expected": false
+    },
+    "undefined_input": {
+      "args": [undefined],
+      "expected": false
+    },
+    "null_input": {
+      "args": [null],
+      "expected": false
+    },
+    "object_input": {
+      "args": [{ "id": "dailymed:e1ada3ec-c2c0-4f43-9b4b-1234567890ab" }],
+      "expected": false
+    }
+  });
+}
+
+function _test_dakp_record_ids() {
+  return test.make_function_test({
+    "dakp_source_with_record": {
+      "args": [
+        "infores:multiomics-drugapprovals",
+        ["https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf"]
+      ],
+      "expected": ["dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf"]
+    },
+    "one_id_per_resolvable_record": {
+      "args": [
+        "infores:multiomics-drugapprovals",
+        [
+          "https://example.com/no-id-here",
+          "https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf",
+          "https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=41f26d7a-ca0e-3a85-ac53-9db1fbd0221d"
+        ]
+      ],
+      "expected": [
+        "dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf",
+        "dakp:41f26d7a-ca0e-3a85-ac53-9db1fbd0221d"
+      ]
+    },
+    "non_dakp_source": {
+      "args": [
+        "infores:dailymed",
+        ["https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf"]
+      ],
+      "expected": []
+    },
+    "no_records": {
+      "args": ["infores:multiomics-drugapprovals", []],
+      "expected": []
+    },
+    "null_records": {
+      "args": ["infores:multiomics-drugapprovals", null],
+      "expected": []
+    },
+    "record_without_id_param": {
+      "args": ["infores:multiomics-drugapprovals", ["https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl"]],
+      "expected": []
+    },
+    "record_with_empty_id_param": {
+      "args": ["infores:multiomics-drugapprovals", ["https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id="]],
+      "expected": []
+    },
+    "record_is_not_a_url": {
+      "args": ["infores:multiomics-drugapprovals", ["not a url"]],
+      "expected": []
+    },
+    "record_is_not_a_string": {
+      "args": ["infores:multiomics-drugapprovals", [12345]],
+      "expected": []
+    },
+    "record_is_null": {
+      "args": ["infores:multiomics-drugapprovals", [null]],
+      "expected": []
+    },
+    "record_is_undefined": {
+      "args": ["infores:multiomics-drugapprovals", [undefined]],
+      "expected": []
+    },
+    "record_is_object": {
+      "args": ["infores:multiomics-drugapprovals", [{ "url": "https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf" }]],
+      "expected": []
+    },
+    "undefined_records": {
+      "args": ["infores:multiomics-drugapprovals", undefined],
+      "expected": []
+    },
+    "string_records": {
+      "args": ["infores:multiomics-drugapprovals", "https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf"],
+      "expected": []
+    },
+    "non_string_infores": {
+      "args": [12345, ["https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf"]],
+      "expected": []
+    },
+    "undefined_infores": {
+      "args": [undefined, ["https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf"]],
+      "expected": []
+    },
+    "null_infores": {
+      "args": [null, ["https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf"]],
+      "expected": []
+    }
+  });
+}
+
 function _test_is_ontological() {
   return test.make_function_test({
     "superclass_predicate": {
@@ -227,6 +355,10 @@ function _test_id_to_type_and_url() {
       "args": ["dailymed:e1ada3ec-c2c0-4f43-9b4b-1234567890ab"],
       "expected": ["dailymed", "https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=e1ada3ec-c2c0-4f43-9b4b-1234567890ab"]
     },
+    "dakp": {
+      "args": ["dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf"],
+      "expected": ["dakp", "https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf"]
+    },
     "https_url_is_other": {
       "args": ["https://example.com/article"],
       "expected": ["other", "https://example.com/article"]
@@ -278,6 +410,10 @@ function _test_id_to_type_and_url() {
     },
     "dailymed_prefix_without_colon": {
       "args": ["dailymed"],
+      "expected": [null, null]
+    },
+    "dakp_empty_value": {
+      "args": ["dakp:"],
       "expected": [null, null]
     },
     // --- No matching tag and not a URL -> [null, null] ---

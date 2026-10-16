@@ -98,7 +98,7 @@ function _test_make_kedge_rules() {
           "attributes": [
             { "attribute_type_id": "biolink:publications", "value": ["PMID:123"] }
           ],
-          "__context__": { "infores": "infores:gtopdb", "knowledge_level": "trusted" }
+          "__context__": { "infores": "infores:gtopdb", "knowledge_level": "trusted", "dakp_ids": [] }
         },
         "target": {}
       },
@@ -123,7 +123,7 @@ function _test_make_rule_group_publications_by_knowledge_level() {
           "attributes": [
             {"attribute_type_id": "biolink:publications", "value": ["PMID:123"]}
           ],
-          "__context__": {"infores":"test-source", "knowledge_level": "test-kl"}
+          "__context__": {"infores":"test-source", "knowledge_level": "test-kl", "dakp_ids": []}
         },
         "target": {}
       },
@@ -150,25 +150,25 @@ function _test_make_rule_group_publications_by_knowledge_level() {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:1", "PMID:2"]}
             ],
-            "__context__": {"infores":"test-source-1", "knowledge_level": "test-kl-1"}
+            "__context__": {"infores":"test-source-1", "knowledge_level": "test-kl-1", "dakp_ids": []}
           },
           {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:4"]}
             ],
-            "__context__": {"infores":"test-source-1", "knowledge_level": "test-kl-2"}
+            "__context__": {"infores":"test-source-1", "knowledge_level": "test-kl-2", "dakp_ids": []}
           },
           {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:3"]}
             ],
-            "__context__": {"infores":"test-source-2", "knowledge_level": "test-kl-1"}
+            "__context__": {"infores":"test-source-2", "knowledge_level": "test-kl-1", "dakp_ids": []}
           },
           {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:1"]}
             ],
-            "__context__": {"infores":"test-source-3", "knowledge_level": "test-kl-2"}
+            "__context__": {"infores":"test-source-3", "knowledge_level": "test-kl-2", "dakp_ids": []}
           }
         ],
         "target": {}
@@ -191,13 +191,13 @@ function _test_make_rule_group_publications_by_knowledge_level() {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:1"]}
             ],
-            "__context__": {"infores":"test-source", "knowledge_level": "test-kl"}
+            "__context__": {"infores":"test-source", "knowledge_level": "test-kl", "dakp_ids": []}
           },
           {
             "attributes": [
               {"attribute_type_id": "biolink:publications", "value": ["PMID:1"]}
             ],
-            "__context__": {"infores":"test-source", "knowledge_level": "test-kl"}
+            "__context__": {"infores":"test-source", "knowledge_level": "test-kl", "dakp_ids": []}
           }
         ],
         "target": {}
@@ -211,6 +211,137 @@ function _test_make_rule_group_publications_by_knowledge_level() {
       },
       "context": {
         "source": {},
+        "target": {}
+      },
+      post: test.apply_rule
+    },
+    "dakp-dailymed-collapsed-into-record-id": {
+      "args": [],
+      "expected": {
+        "publications": {
+          "trusted": [
+            {"id": "dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf", "infores": "infores:multiomics-drugapprovals"}
+          ]
+        }
+      },
+      "context": {
+        "source": {
+          "attributes": [
+            {
+              "attribute_type_id": "biolink:publications",
+              "value": [
+                "dailymed:01f0126c-da22-4ac0-8755-3bc589602e6a",
+                "dailymed:05d95a56-b03a-4d5b-9877-2853ac470fa1",
+                "dailymed:060bcf13-ce9e-488c-ad43-9d66abb23b18"
+              ]
+            }
+          ],
+          "__context__": {
+            "infores": "infores:multiomics-drugapprovals",
+            "knowledge_level": "trusted",
+            "dakp_ids": ["dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf"]
+          }
+        },
+        "target": {}
+      },
+      post: test.apply_rule
+    },
+    "dakp-dailymed-collapsed-into-one-entry-per-record": {
+      "args": [],
+      "expected": {
+        "publications": {
+          "trusted": [
+            {"id": "dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf", "infores": "infores:multiomics-drugapprovals"},
+            {"id": "dakp:41f26d7a-ca0e-3a85-ac53-9db1fbd0221d", "infores": "infores:multiomics-drugapprovals"}
+          ]
+        }
+      },
+      "context": {
+        "source": {
+          "attributes": [
+            {
+              "attribute_type_id": "biolink:publications",
+              "value": [
+                "dailymed:01f0126c-da22-4ac0-8755-3bc589602e6a",
+                "dailymed:05d95a56-b03a-4d5b-9877-2853ac470fa1",
+                "dailymed:060bcf13-ce9e-488c-ad43-9d66abb23b18"
+              ]
+            }
+          ],
+          "__context__": {
+            "infores": "infores:multiomics-drugapprovals",
+            "knowledge_level": "trusted",
+            "dakp_ids": [
+              "dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf",
+              "dakp:41f26d7a-ca0e-3a85-ac53-9db1fbd0221d"
+            ]
+          }
+        },
+        "target": {}
+      },
+      post: test.apply_rule
+    },
+    "dakp-collapse-keeps-non-dailymed-publications": {
+      "args": [],
+      "expected": {
+        "publications": {
+          "trusted": [
+            {"id": "PMID:1", "infores": "infores:multiomics-drugapprovals"},
+            {"id": "dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf", "infores": "infores:multiomics-drugapprovals"},
+            {"id": "PMID:2", "infores": "infores:multiomics-drugapprovals"}
+          ]
+        }
+      },
+      "context": {
+        "source": {
+          "attributes": [
+            {
+              "attribute_type_id": "biolink:publications",
+              "value": [
+                "PMID:1",
+                "dailymed:01f0126c-da22-4ac0-8755-3bc589602e6a",
+                "PMID:2",
+                "dailymed:05d95a56-b03a-4d5b-9877-2853ac470fa1"
+              ]
+            }
+          ],
+          "__context__": {
+            "infores": "infores:multiomics-drugapprovals",
+            "knowledge_level": "trusted",
+            "dakp_ids": ["dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf"]
+          }
+        },
+        "target": {}
+      },
+      post: test.apply_rule
+    },
+    "dailymed-without-dakp-ids-not-collapsed": {
+      "args": [],
+      "expected": {
+        "publications": {
+          "trusted": [
+            {"id": "dailymed:01f0126c-da22-4ac0-8755-3bc589602e6a", "infores": "infores:multiomics-drugapprovals"},
+            {"id": "dailymed:05d95a56-b03a-4d5b-9877-2853ac470fa1", "infores": "infores:multiomics-drugapprovals"}
+          ]
+        }
+      },
+      "context": {
+        "source": {
+          "attributes": [
+            {
+              "attribute_type_id": "biolink:publications",
+              "value": [
+                "dailymed:01f0126c-da22-4ac0-8755-3bc589602e6a",
+                "dailymed:05d95a56-b03a-4d5b-9877-2853ac470fa1"
+              ]
+            }
+          ],
+          "__context__": {
+            "infores": "infores:multiomics-drugapprovals",
+            "knowledge_level": "trusted",
+            "dakp_ids": []
+          }
+        },
         "target": {}
       },
       post: test.apply_rule

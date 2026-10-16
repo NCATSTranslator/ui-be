@@ -56,6 +56,10 @@ function _predicate_and_context_rules(kedge, context) {
   return [kedge.predicate, context.agent, context.infores, context.knowledge_level];
 }
 
+function _dakp_ids_rules(kedge, context) {
+  return [context.infores, context.dakp_ids];
+}
+
 function _error_recording_knode_rules(knode, context) {
   const agent_errors = context.errors[context.agent] ?? (context.errors[context.agent] = []);
   agent_errors.push(knode.name);
@@ -1013,6 +1017,81 @@ function _test_make_kedge_transform() {
       "expected": {
         "id": "se1",
         "transforms": ["biolink:treats", "ara1", "infores:arax", "inferred"]
+      }
+    },
+    "extends-context-with-dakp-ids-from-primary-source-records": {
+      "args": [
+        "se1",
+        {
+          "subject": "nb1",
+          "predicate": "biolink:treats",
+          "object": "nb2",
+          "sources": [
+            {
+              "resource_id": "infores:multiomics-drugapprovals",
+              "resource_role": "primary_knowledge_source",
+              "source_record_urls": [
+                "https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf",
+                "https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=41f26d7a-ca0e-3a85-ac53-9db1fbd0221d"
+              ]
+            },
+            { "resource_id": "infores:dailymed", "resource_role": "supporting_data_source" }
+          ],
+          "attributes": []
+        },
+        _dakp_ids_rules,
+        { "agent": "ara1" }
+      ],
+      "expected": {
+        "id": "se1",
+        "transforms": [
+          "infores:multiomics-drugapprovals",
+          ["dakp:dff4b784-4cb0-3346-af4a-fac7c3f096bf", "dakp:41f26d7a-ca0e-3a85-ac53-9db1fbd0221d"]
+        ]
+      }
+    },
+    "dakp-ids-empty-for-dakp-source-without-records": {
+      "args": [
+        "se1",
+        {
+          "subject": "nb1",
+          "predicate": "biolink:treats",
+          "object": "nb2",
+          "sources": [
+            { "resource_id": "infores:multiomics-drugapprovals", "resource_role": "primary_knowledge_source", "source_record_urls": null }
+          ],
+          "attributes": []
+        },
+        _dakp_ids_rules,
+        { "agent": "ara1" }
+      ],
+      "expected": {
+        "id": "se1",
+        "transforms": ["infores:multiomics-drugapprovals", []]
+      }
+    },
+    "dakp-ids-empty-for-non-dakp-source-with-records": {
+      "args": [
+        "se1",
+        {
+          "subject": "nb1",
+          "predicate": "biolink:treats",
+          "object": "nb2",
+          "sources": [
+            {
+              "resource_id": "infores:gtopdb",
+              "resource_role": "primary_knowledge_source",
+              "source_record_urls": ["https://db.systemsbiology.net/gestalt/cgi-pub/KGinfo.pl?id=dff4b784-4cb0-3346-af4a-fac7c3f096bf"]
+            }
+          ],
+          "attributes": []
+        },
+        _dakp_ids_rules,
+        { "agent": "ara1" }
+      ],
+      "expected": {
+        "id": "se1",
+        "transforms": ["infores:gtopdb", []]
       }
     },
     "missing-infores": {
