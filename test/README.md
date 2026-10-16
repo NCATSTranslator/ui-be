@@ -132,3 +132,18 @@ args = {
 `args` the arguments to pass into the function
 
 `apply_rule` is a specialized utility used for testing the property-rule libraries for TRAPI property gathering. The property-rule libraries return functions that act on specific structures. When creating tests for property-rule libraries you can use `apply_rule` as the value for the `post` field of a `<function_test>`
+
+# Database Tests
+`test/db/` holds standalone tests that call the Postgres stores directly against a real database, without the HTTP server. Each file connects with the same config as the mock-ars server (`configurations/mock.json` plus `configurations/local-overrides.json`), creates fresh users with random ids, and leaves its rows behind, like the API tests.
+
+```
+npm run test-db                 # every file in test/db/
+node test/db/canvas-store.mjs   # a single file
+```
+
+Set `DB_TEST_CONFIG` to use a different base config file. `test/lib/db-harness.mjs` provides:
+- `connect_test_db()`: returns `{ pool, signing_secret }` for the configured database
+- `create_test_user(pool)`: inserts a new user with a random id
+- `rejects_with(promise, error_class)`: whether the promise rejects with that error class
+
+Report checks with `createHarness()` from `test/lib/api-harness.mjs`, and end each file with `await pool.end()` and `finish()`.

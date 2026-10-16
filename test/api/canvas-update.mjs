@@ -1,4 +1,4 @@
-/* Standalone API test: PUT /api/v1/users/me/canvas/:save_id (update canvas properties).
+/* Standalone API test: PUT /api/v1/users/me/canvas/:canvas_id (update canvas properties).
  *
  * The update endpoint applies a partial change to a canvas's own properties (label, layout). Only
  * the fields present in the body are changed; the rest are left untouched. The update is scoped to a
@@ -20,7 +20,7 @@ import { postCanvas, CANVAS_PATH } from '../lib/api-canvas.mjs';
 
 const { ok, fail, finish } = createHarness();
 
-console.log(`# PUT ${CANVAS_PATH}/:save_id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
+console.log(`# PUT ${CANVAS_PATH}/:canvas_id  (target: ${BASE_URL}, test user: ${TEST_USER_ID})`);
 try {
   const stamp = new Date().toISOString();
   const create = await postCanvas({ label: `api-test canvas update ${stamp}`, layout: 'horizontal' });

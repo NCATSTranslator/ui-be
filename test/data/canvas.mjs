@@ -19,7 +19,10 @@ const suite = {
     UserCanvas: true,
     CanvasGraph: true,
     CanvasAnnotation: true,
-    CanvasRequestError: true
+    CanvasRequestError: true,
+    CanvasConflictError: true,
+    CanvasNode: true,
+    CanvasEdge: true
   }
 };
 
@@ -163,6 +166,26 @@ function _test_make_canvas_element_update_from_req() {
     "non_boolean_hidden_throws": {
       "args": [{ hidden: "yes" }],
       "expected": CanvasRequestError
+    },
+    "user_data_id_attach": {
+      "args": [{ user_data_id: 7 }],
+      "expected": { user_data_id: 7 }
+    },
+    "user_data_id_null_detaches": {
+      "args": [{ user_data_id: null }],
+      "expected": { user_data_id: null }
+    },
+    "user_data_id_with_label": {
+      "args": [{ label: "Node A", user_data_id: 7 }],
+      "expected": { label: "Node A", user_data_id: 7 }
+    },
+    "non_integer_user_data_id_throws": {
+      "args": [{ user_data_id: 1.5 }],
+      "expected": CanvasRequestError
+    },
+    "string_user_data_id_throws": {
+      "args": [{ user_data_id: "7" }],
+      "expected": CanvasRequestError
     }
   });
 }
@@ -179,6 +202,78 @@ function _test_make_graph_merge_from_req() {
     },
     "empty_object_throws": {
       "args": [{}, "secret"],
+      "expected": CanvasRequestError
+    },
+    "user_only_node_and_edge": {
+      "args": [{
+        nodes: [{ x: 1, y: 2, user_data_id: 7 }],
+        edges: [{ user_data_id: 9, label: "relates" }]
+      }, "secret"],
+      "expected": {
+        graph: {
+          _nodes: [{ data: null, user_data_id: 7, x: 1, y: 2, hidden: false, label: null }],
+          _edges: [{ data: null, user_data_id: 9, hidden: false, label: "relates" }]
+        },
+        tag_descriptions: null
+      }
+    },
+    "node_without_any_slot_throws": {
+      "args": [{ nodes: [{ x: 1, y: 2 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "node_with_non_integer_user_data_id_throws": {
+      "args": [{ nodes: [{ x: 1, y: 2, user_data_id: "7" }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "user_only_node_missing_coordinates_throws": {
+      "args": [{ nodes: [{ user_data_id: 7 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "node_with_unsigned_data_throws": {
+      "args": [{ nodes: [{ x: 1, y: 2, data: { names: ["X"] }, user_data_id: 7 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "node_with_non_object_data_throws": {
+      "args": [{ nodes: [{ x: 1, y: 2, data: "MONDO:1" }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edge_without_any_slot_throws": {
+      "args": [{ edges: [{ hidden: true }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edge_with_non_integer_user_data_id_throws": {
+      "args": [{ edges: [{ user_data_id: 1.5 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edge_with_explicit_subject_throws": {
+      "args": [{ edges: [{ user_data_id: 9, subject: "a" }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edge_with_explicit_object_throws": {
+      "args": [{ edges: [{ user_data_id: 9, object: 2 }] }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "duplicate_user_node_throws": {
+      "args": [{
+        nodes: [{ x: 1, y: 2, user_data_id: 7 }, { x: 3, y: 4, user_data_id: 7 }]
+      }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "nodes_as_map_throws": {
+      "args": [{ nodes: { "note-1": { x: 1, y: 2, user_data_id: 7 } } }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "edges_as_map_throws": {
+      "args": [{ edges: { "link-1": { user_data_id: 9 } } }, "secret"],
+      "expected": CanvasRequestError
+    },
+    "duplicate_user_edge_throws": {
+      "args": [{
+        edges: [
+          { user_data_id: 9 },
+          { user_data_id: 9, hidden: true }
+        ]
+      }, "secret"],
       "expected": CanvasRequestError
     }
   });
@@ -414,13 +509,13 @@ function _test_make_annotation_content_update_from_req() {
 function _test_make_graph_geometry_from_req() {
   return test.make_function_test({
     "single_node": {
-      "args": [{ nodes: [{ data_id: 1, x: 10, y: 20 }] }],
-      "expected": { node_moves: [{ data_id: 1, x: 10, y: 20 }], annotation_geometries: [] }
+      "args": [{ nodes: [{ id: 1, x: 10, y: 20 }] }],
+      "expected": { node_moves: [{ id: 1, x: 10, y: 20 }], annotation_geometries: [] }
     },
     "multiple_nodes": {
-      "args": [{ nodes: [{ data_id: 1, x: 1, y: 2 }, { data_id: 2, x: 3, y: 4 }] }],
+      "args": [{ nodes: [{ id: 1, x: 1, y: 2 }, { id: 2, x: 3, y: 4 }] }],
       "expected": {
-        node_moves: [{ data_id: 1, x: 1, y: 2 }, { data_id: 2, x: 3, y: 4 }],
+        node_moves: [{ id: 1, x: 1, y: 2 }, { id: 2, x: 3, y: 4 }],
         annotation_geometries: []
       }
     },
@@ -453,11 +548,11 @@ function _test_make_graph_geometry_from_req() {
     },
     "nodes_and_annotations_together": {
       "args": [{
-        nodes: [{ data_id: 1, x: 1, y: 2 }],
+        nodes: [{ id: 1, x: 1, y: 2 }],
         annotations: [{ id: 7, x: 3, y: 4, width: 5, height: 6 }]
       }],
       "expected": {
-        node_moves: [{ data_id: 1, x: 1, y: 2 }],
+        node_moves: [{ id: 1, x: 1, y: 2 }],
         annotation_geometries: [{ id: 7, x: 3, y: 4, width: 5, height: 6 }]
       }
     },
@@ -469,16 +564,16 @@ function _test_make_graph_geometry_from_req() {
       }
     },
     "empty_annotations_with_nodes": {
-      "args": [{ nodes: [{ data_id: 1, x: 1, y: 2 }], annotations: [] }],
-      "expected": { node_moves: [{ data_id: 1, x: 1, y: 2 }], annotation_geometries: [] }
+      "args": [{ nodes: [{ id: 1, x: 1, y: 2 }], annotations: [] }],
+      "expected": { node_moves: [{ id: 1, x: 1, y: 2 }], annotation_geometries: [] }
     },
     "fractional_and_negative_coordinates": {
       "args": [{
-        nodes: [{ data_id: 1, x: 1.5, y: -2.5 }],
+        nodes: [{ id: 1, x: 1.5, y: -2.5 }],
         annotations: [{ id: 1, x: -1.5, y: -2.5, width: 3.5, height: 4.5 }]
       }],
       "expected": {
-        node_moves: [{ data_id: 1, x: 1.5, y: -2.5 }],
+        node_moves: [{ id: 1, x: 1.5, y: -2.5 }],
         annotation_geometries: [{ id: 1, x: -1.5, y: -2.5, width: 3.5, height: 4.5 }]
       }
     },
@@ -491,11 +586,11 @@ function _test_make_graph_geometry_from_req() {
     },
     "extra_fields_are_stripped": {
       "args": [{
-        nodes: [{ data_id: 1, x: 1, y: 2, label: "ignore", junk: 9 }],
+        nodes: [{ id: 1, x: 1, y: 2, label: "ignore", junk: 9 }],
         annotations: [{ id: 1, x: 1, y: 2, width: 3, height: 4, content: "no" }]
       }],
       "expected": {
-        node_moves: [{ data_id: 1, x: 1, y: 2 }],
+        node_moves: [{ id: 1, x: 1, y: 2 }],
         annotation_geometries: [{ id: 1, x: 1, y: 2, width: 3, height: 4 }]
       }
     },
@@ -516,31 +611,31 @@ function _test_make_graph_geometry_from_req() {
       "expected": CanvasRequestError
     },
     "non_array_nodes_throws": {
-      "args": [{ nodes: { data_id: 1, x: 1, y: 2 } }],
+      "args": [{ nodes: { id: 1, x: 1, y: 2 } }],
       "expected": CanvasRequestError
     },
     "non_array_annotations_throws": {
       "args": [{ annotations: { id: 1, x: 1, y: 2, width: 3, height: 4 } }],
       "expected": CanvasRequestError
     },
-    "non_integer_data_id_throws": {
-      "args": [{ nodes: [{ data_id: 1.5, x: 1, y: 2 }] }],
+    "non_integer_node_id_throws": {
+      "args": [{ nodes: [{ id: 1.5, x: 1, y: 2 }] }],
       "expected": CanvasRequestError
     },
-    "string_data_id_throws": {
-      "args": [{ nodes: [{ data_id: "1", x: 1, y: 2 }] }],
+    "string_node_id_throws": {
+      "args": [{ nodes: [{ id: "1", x: 1, y: 2 }] }],
       "expected": CanvasRequestError
     },
     "node_missing_coordinates_throws": {
-      "args": [{ nodes: [{ data_id: 1 }] }],
+      "args": [{ nodes: [{ id: 1 }] }],
       "expected": CanvasRequestError
     },
     "node_non_numeric_coordinate_throws": {
-      "args": [{ nodes: [{ data_id: 1, x: "a", y: 2 }] }],
+      "args": [{ nodes: [{ id: 1, x: "a", y: 2 }] }],
       "expected": CanvasRequestError
     },
     "node_infinite_coordinate_throws": {
-      "args": [{ nodes: [{ data_id: 1, x: Infinity, y: 2 }] }],
+      "args": [{ nodes: [{ id: 1, x: Infinity, y: 2 }] }],
       "expected": CanvasRequestError
     },
     "annotation_non_integer_id_throws": {

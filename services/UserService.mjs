@@ -22,6 +22,14 @@ import {
   make_annotation_content_update_from_req,
   Graph
 } from "#model/Canvas.mjs";
+import {
+  UserNode,
+  UserEdge,
+  make_user_node_from_req,
+  make_user_edge_from_req,
+  make_user_node_update_from_req,
+  make_user_edge_update_from_req
+} from "#model/UserEntity.mjs";
 
 class UserService {
   constructor(
@@ -30,6 +38,7 @@ class UserService {
       userSavedDataStore,
       canvasStore,
       apiKeyStore,
+      userEntityStore,
       entitySigningSecret = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
@@ -37,6 +46,7 @@ class UserService {
     this.canvasStore = canvasStore;
     this.entitySigningSecret = entitySigningSecret;
     this.apiKeyStore = apiKeyStore;
+    this.userEntityStore = userEntityStore;
   }
 
   async getUserById(uid) {
@@ -148,14 +158,14 @@ class UserService {
     return new CanvasGraph(merged);
   }
 
-  async update_canvas_node(user_id, canvas_id, data_id, node_req) {
+  async update_canvas_node(user_id, canvas_id, id, node_req) {
     const fields = make_canvas_element_update_from_req(node_req);
-    return this.canvasStore.update_canvas_node_by_user(user_id, canvas_id, data_id, fields);
+    return this.canvasStore.update_canvas_node_by_user(user_id, canvas_id, id, fields);
   }
 
-  async update_canvas_edge(user_id, canvas_id, data_id, edge_req) {
+  async update_canvas_edge(user_id, canvas_id, id, edge_req) {
     const fields = make_canvas_element_update_from_req(edge_req);
-    return this.canvasStore.update_canvas_edge_by_user(user_id, canvas_id, data_id, fields);
+    return this.canvasStore.update_canvas_edge_by_user(user_id, canvas_id, id, fields);
   }
 
   async set_canvas_graph_geometry(user_id, canvas_id, geometry_req) {
@@ -189,12 +199,64 @@ class UserService {
     return this.canvasStore.update_canvas_annotation_content_by_user(user_id, canvas_id, annotation_id, content);
   }
 
-  async get_node_data(user_id, canvas_id, data_id) {
-    return this.canvasStore.get_node_data(user_id, canvas_id, data_id);
+  async get_user_nodes(user_id, include_deleted=false, ids=null) {
+    const rows = await this.userEntityStore.get_user_nodes(user_id, include_deleted, ids);
+    return rows.map((row) => new UserNode(row));
   }
 
-  async get_edge_data(user_id, canvas_id, data_id) {
-    return this.canvasStore.get_edge_data(user_id, canvas_id, data_id);
+  async get_user_edges(user_id, include_deleted=false, ids=null) {
+    const rows = await this.userEntityStore.get_user_edges(user_id, include_deleted, ids);
+    return rows.map((row) => new UserEdge(row));
+  }
+
+  async create_user_nodes(user_id, node_reqs) {
+    const user_nodes = node_reqs.map((node_req) => make_user_node_from_req(user_id, node_req));
+    const rows = await this.userEntityStore.create_user_nodes(user_nodes);
+    return rows.map((row) => new UserNode(row));
+  }
+
+  async create_user_edges(user_id, edge_reqs) {
+    const user_edges = edge_reqs.map((edge_req) => make_user_edge_from_req(user_id, edge_req));
+    const rows = await this.userEntityStore.create_user_edges(user_edges);
+    return rows.map((row) => new UserEdge(row));
+  }
+
+  async update_user_nodes(user_id, update_reqs) {
+    const updates = update_reqs.map(({ id, update_req }) =>
+      ({ id: id, fields: make_user_node_update_from_req(update_req) }));
+    const rows = await this.userEntityStore.update_user_nodes(user_id, updates);
+    return rows.map((row) => new UserNode(row));
+  }
+
+  async update_user_edges(user_id, update_reqs) {
+    const updates = update_reqs.map(({ id, update_req }) =>
+      ({ id: id, fields: make_user_edge_update_from_req(update_req) }));
+    const rows = await this.userEntityStore.update_user_edges(user_id, updates);
+    return rows.map((row) => new UserEdge(row));
+  }
+
+  async trash_user_nodes(user_id, ids) {
+    return this.userEntityStore.trash_user_nodes(user_id, ids);
+  }
+
+  async trash_user_edges(user_id, ids) {
+    return this.userEntityStore.trash_user_edges(user_id, ids);
+  }
+
+  async restore_user_nodes(user_id, ids) {
+    return this.userEntityStore.restore_user_nodes(user_id, ids);
+  }
+
+  async restore_user_edges(user_id, ids) {
+    return this.userEntityStore.restore_user_edges(user_id, ids);
+  }
+
+  async get_node_data(user_id, canvas_id, id) {
+    return this.canvasStore.get_node_data(user_id, canvas_id, id);
+  }
+
+  async get_edge_data(user_id, canvas_id, id) {
+    return this.canvasStore.get_edge_data(user_id, canvas_id, id);
   }
 
   async update_canvas(user_id, canvas_id, canvas_req) {
@@ -217,7 +279,6 @@ class UserService {
   async create_user_canvas(user_id, canvas_req) {
     const user_canvas = make_user_canvas_from_req(user_id, canvas_req);
     const graph = Graph.from_req(canvas_req, this.entitySigningSecret);
-    graph.assert_edges_reference_nodes();
     const canvas = await this.canvasStore.create_user_canvas(user_canvas, graph);
     user_canvas.populate_from_raw(canvas);
     return user_canvas;
