@@ -1649,6 +1649,75 @@ function _test_get_primary_source() {
         "infores": "infores:gtopdb",
         "records": []
       }
+    },
+    "primary_records_take_precedence": {
+      "args": [
+        {
+          "sources": [
+            {
+              "resource_id": "infores:automat-gtopdb",
+              "resource_role": "aggregator_knowledge_source",
+              "source_record_urls": [
+                "https://automat.renci.org/gtopdb/record/1"
+              ]
+            },
+            {
+              "resource_id": "infores:gtopdb",
+              "resource_role": "primary_knowledge_source",
+              "source_record_urls": [
+                "https://www.guidetopharmacology.org/record/1",
+                "https://www.guidetopharmacology.org/record/2"
+              ]
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "infores": "infores:gtopdb",
+        "records": [
+          "https://www.guidetopharmacology.org/record/1",
+          "https://www.guidetopharmacology.org/record/2"
+        ]
+      }
+    },
+    "aggregator_records_fallback": {
+      "args": [
+        {
+          "sources": [
+            {
+              "resource_id": "infores:aragorn",
+              "resource_role": "aggregator_knowledge_source",
+              "source_record_urls": []
+            },
+            {
+              "resource_id": "infores:gtopdb",
+              "resource_role": "primary_knowledge_source",
+              "upstream_resource_ids": []
+            },
+            {
+              "resource_id": "infores:automat-gtopdb",
+              "resource_role": "aggregator_knowledge_source",
+              "source_record_urls": [
+                "https://automat.renci.org/gtopdb/record/2",
+                "https://automat.renci.org/gtopdb/record/1"
+              ]
+            },
+            {
+              "resource_id": "infores:automat-robokop",
+              "resource_role": "aggregator_knowledge_source",
+              "source_record_urls": [
+                "https://automat.renci.org/robokop/record/1"
+              ]
+            }
+          ]
+        }
+      ],
+      "expected": {
+        "infores": "infores:gtopdb",
+        "records": [
+          "https://automat.renci.org/gtopdb/record/2"
+        ]
+      }
     }
   });
 }
