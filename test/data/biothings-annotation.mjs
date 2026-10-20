@@ -179,7 +179,7 @@ function _test_make_rule_collect_chemical_annotations() {
         annotations: {
           chemical: {
             curies: null,
-            approval: make_section(3, [make_source(SOURCES.CHEMBL, "CHEMBL001")]),
+            approval: { value: 3, metadata: { sources: [{ id: "clinical_trials", name: "Multiomics Clinical Trials KP", url: "https://github.com/NCATSTranslator/Translator-All/wiki/Multiomics-ClinicalTrials-KP" }] } },
             descriptions: make_section(["NCIT description", "CHEBI definition"], [make_source(SOURCES.NCIT, "C001"), make_source(SOURCES.CHEBI, "CHEBI:001")]),
             indications: make_section([{
               name: "disease one",
@@ -202,7 +202,7 @@ function _test_make_rule_collect_chemical_annotations() {
           chembl: {
             molecule_chembl_id: "CHEMBL001",
             availability_type: 2,
-            max_phase: 3
+            max_phase: 4
           },
           clinical_approval: [
             { disease: { mondo: "MONDO:001", name: "disease one" }, status: "approved_for_condition", source_record_urls: ["https://kp.example/mondo001a"] },
@@ -215,10 +215,37 @@ function _test_make_rule_collect_chemical_annotations() {
           pharmgkb: { trade_names: ["Aspirin"] },
           ndc: [{ proprietaryname: "Aspirin", nonproprietaryname: "Acetylsalicylic Acid" }],
           clinical_trials: [
-            { id: "NCT001", disease: { mondo: "MONDO:001", name: "disease one" } },
-            { id: "NCT002", disease: { name: "disease two" } },
-            { id: "NCT003" }
+            { id: "NCT001", disease: { mondo: "MONDO:001", name: "disease one" }, phase: "clinical_trial_phase_2_to_3" },
+            { id: "NCT002", disease: { name: "disease two" }, phase: "not_provided" },
+            { id: "NCT003", phase: "clinical_trial_phase_1" }
           ]
+        }),
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    "approval_ignores_chembl_max_phase_without_trials": {
+      args: [],
+      expected: {
+        annotations: {
+          chemical: {
+            curies: null,
+            approval: null,
+            descriptions: null,
+            indications: null,
+            synonyms: null,
+            roles: null,
+            otc_status: null,
+            clinical_trials: null
+          }
+        }
+      },
+      context: {
+        source: _make_attr_source({
+          chembl: {
+            molecule_chembl_id: "CHEMBL001",
+            max_phase: 4
+          }
         }),
         target: {}
       },
