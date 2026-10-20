@@ -25,7 +25,11 @@ const suite = {
     decorate_role_tags: _test_decorate_role_tags(),
     decorate_otc_tag: _test_decorate_otc_tag(),
     decorate_indication_tag: _test_decorate_indication_tag(),
-    decorate_max_phase_tag: _test_decorate_max_phase_tag()
+    decorate_max_phase_tag: _test_decorate_max_phase_tag(),
+    decorate_effect_tag: _test_decorate_effect_tag(),
+    decorate_direction_tag: _test_decorate_direction_tag(),
+    _get_object_aspect: _test_get_object_aspect(),
+    _get_object_direction: _test_get_object_direction()
   },
   skip: {
     TAG_SCOPE: true,
@@ -476,6 +480,123 @@ function _test_decorate_max_phase_tag() {
       args: _max_phase_case([], [tags.TAGS.NODE.FDA.APPROVED], -1),
       post: _raw_tags,
       expected: {}
+    }
+  });
+}
+
+function _test_decorate_effect_tag() {
+  return test.make_function_test({
+    single_word_aspect: {
+      args: [taglib.make_taggable({
+        qualifiers: [
+          {qualifier_type_id: 'biolink:object_aspect_qualifier', qualifier_value: 'activity'},
+          {qualifier_type_id: 'biolink:object_direction_qualifier', qualifier_value: 'increased'}
+        ]
+      })],
+      post: _raw_tags,
+      expected: {'e/eff/activity': {id: 'e/eff/activity', description: {name: 'Activity', description: ''}}}
+    },
+    multi_word_aspect_keeps_raw_id: {
+      args: [taglib.make_taggable({
+        qualifiers: [{qualifier_type_id: 'biolink:object_aspect_qualifier', qualifier_value: 'activity_or_abundance'}]
+      })],
+      post: _raw_tags,
+      expected: {'e/eff/activity_or_abundance': {id: 'e/eff/activity_or_abundance', description: {name: 'Activity or Abundance', description: ''}}}
+    },
+    no_aspect_qualifier: {
+      args: [taglib.make_taggable({
+        qualifiers: [{qualifier_type_id: 'biolink:object_direction_qualifier', qualifier_value: 'increased'}]
+      })],
+      post: _raw_tags,
+      expected: {}
+    },
+    no_qualifiers: {
+      args: [taglib.make_taggable({qualifiers: false})],
+      post: _raw_tags,
+      expected: {}
+    }
+  });
+}
+
+function _test_get_object_aspect() {
+  return test.make_function_test({
+    aspect_present: {
+      args: [{
+        qualifiers: [
+          {qualifier_type_id: 'biolink:object_direction_qualifier', qualifier_value: 'increased'},
+          {qualifier_type_id: 'biolink:object_aspect_qualifier', qualifier_value: 'activity_or_abundance'}
+        ]
+      }],
+      expected: 'activity_or_abundance'
+    },
+    subject_aspect_is_ignored: {
+      args: [{
+        qualifiers: [{qualifier_type_id: 'biolink:subject_aspect_qualifier', qualifier_value: 'activity'}]
+      }],
+      expected: null
+    },
+    empty_qualifiers: {
+      args: [{qualifiers: []}],
+      expected: null
+    },
+    missing_qualifiers: {
+      args: [{}],
+      expected: null
+    },
+    invalid_qualifiers: {
+      args: [{qualifiers: false}],
+      expected: null
+    }
+  });
+}
+
+function _test_decorate_direction_tag() {
+  return test.make_function_test({
+    direction_present: {
+      args: [taglib.make_taggable({
+        qualifiers: [
+          {qualifier_type_id: 'biolink:object_aspect_qualifier', qualifier_value: 'activity'},
+          {qualifier_type_id: 'biolink:object_direction_qualifier', qualifier_value: 'decreased'}
+        ]
+      })],
+      post: _raw_tags,
+      expected: {'e/dir/decreased': {id: 'e/dir/decreased', description: {name: 'Decreased', description: ''}}}
+    },
+    no_direction_qualifier: {
+      args: [taglib.make_taggable({
+        qualifiers: [{qualifier_type_id: 'biolink:object_aspect_qualifier', qualifier_value: 'activity'}]
+      })],
+      post: _raw_tags,
+      expected: {}
+    },
+    no_qualifiers: {
+      args: [taglib.make_taggable({qualifiers: false})],
+      post: _raw_tags,
+      expected: {}
+    }
+  });
+}
+
+function _test_get_object_direction() {
+  return test.make_function_test({
+    direction_present: {
+      args: [{
+        qualifiers: [
+          {qualifier_type_id: 'biolink:object_aspect_qualifier', qualifier_value: 'activity'},
+          {qualifier_type_id: 'biolink:object_direction_qualifier', qualifier_value: 'upregulated'}
+        ]
+      }],
+      expected: 'upregulated'
+    },
+    subject_direction_is_ignored: {
+      args: [{
+        qualifiers: [{qualifier_type_id: 'biolink:subject_direction_qualifier', qualifier_value: 'increased'}]
+      }],
+      expected: null
+    },
+    missing_qualifiers: {
+      args: [{}],
+      expected: null
     }
   });
 }
