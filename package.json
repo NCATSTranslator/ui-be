@@ -12,7 +12,8 @@
     "mock": "node mock/server.mjs",
     "mock-ars": "node StartServer.mjs configurations/mock.json configurations/local-overrides.json",
     "test-unit": "node test/test.mjs",
-    "test-api": "node test/api.mjs"
+    "test-api": "node test/api.mjs",
+    "test-db": "node test/db.mjs"
   },
   "author": "Guthrie Price",
   "license": "ISC",

@@ -179,20 +179,26 @@ function _test_make_rule_collect_chemical_annotations() {
         annotations: {
           chemical: {
             curies: null,
-            approval: make_section(3, [make_source(SOURCES.CHEMBL, "CHEMBL001")]),
+            approval: { value: 4, metadata: { sources: [{ id: "clinical_trials", name: "Multiomics Clinical Trials KP", url: "https://github.com/NCATSTranslator/Translator-All/wiki/Multiomics-ClinicalTrials-KP" }] } },
             descriptions: make_section(["NCIT description", "CHEBI definition"], [make_source(SOURCES.NCIT, "C001"), make_source(SOURCES.CHEBI, "CHEBI:001")]),
-            indications: make_section([{
-              name: "disease one",
-              ids: ["MONDO:001", "UMLS:001"],
-              urls: ["https://kp.example/mondo001a", "https://kp.example/umls001", "https://kp.example/mondo001b"]
-            }]),
+            indications: {
+              value: [{
+                name: "disease one",
+                ids: ["UMLS:001", "MONDO:001"],
+                urls: ["https://kp.example/nct004", "https://kp.example/nct005"]
+              }],
+              metadata: { sources: [{ id: "clinical_trials", name: "Multiomics Clinical Trials KP", url: "https://github.com/NCATSTranslator/Translator-All/wiki/Multiomics-ClinicalTrials-KP" }] }
+            },
             synonyms: make_section({ commercial: ["aspirin"], generic: ["acetylsalicylic acid"] }),
             roles: null,
             otc_status: make_section({ code: 2, label: "Over the Counter" }, [make_source(SOURCES.CHEMBL, "CHEMBL001")]),
             clinical_trials: make_section([
               { id: "NCT001", disease_ids: ["MONDO:001"] },
               { id: "NCT002", disease_ids: [] },
-              { id: "NCT003", disease_ids: [] }
+              { id: "NCT003", disease_ids: [] },
+              { id: "NCT004", disease_ids: ["UMLS:001"] },
+              { id: "NCT005", disease_ids: ["MONDO:001"] },
+              { id: "NCT006", disease_ids: ["MONDO:002"] }
             ])
           }
         }
@@ -202,23 +208,47 @@ function _test_make_rule_collect_chemical_annotations() {
           chembl: {
             molecule_chembl_id: "CHEMBL001",
             availability_type: 2,
-            max_phase: 3
+            max_phase: 4
           },
-          clinical_approval: [
-            { disease: { mondo: "MONDO:001", name: "disease one" }, status: "approved_for_condition", source_record_urls: ["https://kp.example/mondo001a"] },
-            { disease: { umls: "UMLS:001", name: "disease one" }, status: "approved_for_condition", source_record_urls: ["https://kp.example/umls001"] },
-            { disease: { mondo: "MONDO:001", name: "disease one" }, status: "approved_for_condition", source_record_urls: ["https://kp.example/mondo001b"] },
-            { disease: { hp: "HP:001", name: "phenotype two" }, status: "not_approved_for_condition", source_record_urls: ["https://kp.example/hp001"] }
-          ],
           unii: { ncit: "C001", ncit_description: "NCIT description" },
           chebi: { id: "CHEBI:001", definition: "CHEBI definition" },
           pharmgkb: { trade_names: ["Aspirin"] },
           ndc: [{ proprietaryname: "Aspirin", nonproprietaryname: "Acetylsalicylic Acid" }],
           clinical_trials: [
-            { id: "NCT001", disease: { mondo: "MONDO:001", name: "disease one" } },
-            { id: "NCT002", disease: { name: "disease two" } },
-            { id: "NCT003" }
+            { id: "NCT001", disease: { mondo: "MONDO:001", name: "disease one" }, phase: "clinical_trial_phase_2_to_3", source_record_urls: ["https://kp.example/nct001"] },
+            { id: "NCT002", disease: { name: "disease two" }, phase: "not_provided" },
+            { id: "NCT003", phase: "clinical_trial_phase_1" },
+            { id: "NCT004", disease: { umls: "UMLS:001", name: "disease one" }, phase: "clinical_trial_phase_4", status: "COMPLETED", source_record_urls: ["https://kp.example/nct004"] },
+            { id: "NCT005", disease: { mondo: "MONDO:001", name: "disease one" }, phase: "clinical_trial_phase_4", status: "COMPLETED", source_record_urls: ["https://kp.example/nct005"] },
+            { id: "NCT006", disease: { mondo: "MONDO:002", name: "disease three" }, phase: "clinical_trial_phase_4", status: "TERMINATED", source_record_urls: ["https://kp.example/nct006"] }
           ]
+        }),
+        target: {}
+      },
+      post: test.apply_rule
+    },
+    "approval_ignores_chembl_max_phase_without_trials": {
+      args: [],
+      expected: {
+        annotations: {
+          chemical: {
+            curies: null,
+            approval: null,
+            descriptions: null,
+            indications: null,
+            synonyms: null,
+            roles: null,
+            otc_status: null,
+            clinical_trials: null
+          }
+        }
+      },
+      context: {
+        source: _make_attr_source({
+          chembl: {
+            molecule_chembl_id: "CHEMBL001",
+            max_phase: 4
+          }
         }),
         target: {}
       },
