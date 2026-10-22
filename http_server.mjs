@@ -18,6 +18,7 @@ import { LoginController } from './controllers/LoginController.mjs';
 import { SessionController } from './controllers/SessionController.mjs';
 import { UserAPIController } from './controllers/UserAPIController.mjs';
 import { BiolinkAPIController } from './controllers/BiolinkAPIController.mjs';
+import { FILTER_STATE_MAX_BYTES } from './models/FilterState.mjs';
 
 // Adapters
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
@@ -72,6 +73,7 @@ export function start_server(config, services) {
   const API_PATH_V1 = '/api/v1';
   const SITE_PATH_PREFIX = '';
   app.use(pinoHttp({logger: logger, redact: config.logging.redact}));
+  app.use(`${API_PATH_V1}/users/me/filters`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
   app.use(express.json({
     limit: config.json_payload_limit,
     verify: (req, _res, buf, _encoding) => {req.rawBody = buf;}
@@ -237,6 +239,16 @@ export function start_server(config, services) {
   user_edge_router.get('/:id', user_api_controller.get_user_edge.bind(user_api_controller));
   user_edge_router.put('/:id', user_api_controller.update_user_edge.bind(user_api_controller));
   app.use(`${API_PATH_V1}/users/me/edges`, user_edge_router);
+
+  const filter_state_router = express.Router();
+  filter_state_router.param('id', user_api_controller.parse_filter_state_id.bind(user_api_controller));
+  filter_state_router.get('/', user_api_controller.get_filter_states.bind(user_api_controller));
+  filter_state_router.post('/', user_api_controller.create_filter_state.bind(user_api_controller));
+  filter_state_router.put('/trash', user_api_controller.trash_filter_states.bind(user_api_controller));
+  filter_state_router.put('/restore', user_api_controller.restore_filter_states.bind(user_api_controller));
+  filter_state_router.get('/:id', user_api_controller.get_filter_state.bind(user_api_controller));
+  filter_state_router.put('/:id', user_api_controller.update_filter_state.bind(user_api_controller));
+  app.use(`${API_PATH_V1}/users/me/filters`, filter_state_router);
 
   app.all('/api{/*splat}', (req, res) => {
     return res.status(403).send('API action Forbidden');

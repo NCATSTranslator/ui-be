@@ -6,6 +6,7 @@ import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 import * as cmn from '../lib/common.mjs';
 import { CanvasRequestError, CanvasConflictError } from "../models/Canvas.mjs";
 import { UserEntityRequestError } from "../models/UserEntity.mjs";
+import { FilterStateRequestError } from "../models/FilterState.mjs";
 import { validate as uuid_validate } from 'uuid';
 import { ApiKeyLimitError, API_KEY_NAME_MAX_LEN, API_KEY_MAX_TTL_DAYS, api_key_expiry,
   parse_api_key_expiry } from '../models/ApiKey.mjs';
@@ -392,6 +393,15 @@ class UserAPIController {
     return next();
   }
 
+  parse_filter_state_id(req, res, next, value) {
+    const filter_state_id = parseInt(value, 10);
+    if (!Number.isInteger(filter_state_id)) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid filter state ID: ${value}`);
+    }
+    req.filter_state_id = filter_state_id;
+    return next();
+  }
+
   parse_canvas_annotation_id(req, res, next, value) {
     const annotation_id = parseInt(value, 10);
     if (!Number.isInteger(annotation_id)) {
@@ -733,6 +743,67 @@ class UserAPIController {
       (user_id, ids) => this.user_service.restore_user_edges(user_id, ids));
   }
 
+  async get_filter_states(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const include_deleted = req.query.include_deleted === "true";
+    const include_hidden = req.query.include_hidden === "true";
+    try {
+      const filter_states = await this.user_service.get_filter_states(user_id, include_deleted, include_hidden);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(filter_states);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  async get_filter_state(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const include_deleted = req.query.include_deleted === "true";
+    try {
+      const [filter_state] = await this.user_service.get_filter_states(
+        user_id, include_deleted, true, [req.filter_state_id]);
+      if (filter_state === undefined) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No filter state found for id ${req.filter_state_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(filter_state);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  async create_filter_state(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const [filter_state] = await this.user_service.create_filter_states(user_id, [req.body]);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(filter_state);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  async update_filter_state(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const [filter_state] = await this.user_service.update_filter_states(
+        user_id, [{ id: req.filter_state_id, update_req: req.body }]);
+      if (filter_state === undefined) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No filter state found for id ${req.filter_state_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(filter_state);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  async trash_filter_states(req, res) {
+    return this._set_filter_states_deleted(req, res,
+      (user_id, ids) => this.user_service.trash_filter_states(user_id, ids));
+  }
+
+  async restore_filter_states(req, res) {
+    return this._set_filter_states_deleted(req, res,
+      (user_id, ids) => this.user_service.restore_filter_states(user_id, ids));
+  }
+
   async _get_user_entities(req, res, get_entities) {
     const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === "true";
@@ -793,6 +864,29 @@ class UserAPIController {
       wutil.log_internal_server_error(req, err);
       return wutil.send_internal_server_error(res);
     }
+  }
+
+  async _set_filter_states_deleted(req, res, set_deleted) {
+    const user_id = wutil.request_to_user_id(req);
+    const ids = req.body;
+    if (!cmn.is_array(ids) || !ids.every((id) => Number.isInteger(id))) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST,
+        `Expected body to be a JSON array of filter state IDs. Got: ${JSON.stringify(ids)}`);
+    }
+    try {
+      await set_deleted(user_id, ids);
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  _send_filter_state_error(req, res, err) {
+    if (err instanceof FilterStateRequestError) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+    }
+    wutil.log_internal_server_error(req, err);
+    return wutil.send_internal_server_error(res);
   }
 
   async create_user_canvas(req, res) {

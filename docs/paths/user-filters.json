@@ -1,0 +1,298 @@
+{
+  "/api/v1/users/me/filters": {
+    "get": {
+      "summary": "Get the Filter State presets for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Include trashed Filter States when true"
+        },
+        {
+          "name": "include_hidden",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Include hidden Filter States when true"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The Filter States",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/filter-state.json#/FilterState"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create a Filter State for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/filter-state.json#/CreateFilterStateRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The created Filter State, or the existing active Filter State with the same state",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/filter-state.json#/FilterState"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The request is malformed or a visible Filter State has no label"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "413": {
+          "description": "The request body exceeds 64 KiB"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/filters/trash": {
+    "put": {
+      "summary": "Trash a list of Filter State IDs for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Filter States trashed successfully"
+        },
+        "400": {
+          "description": "The request body is not a valid array of Filter State IDs"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/filters/restore": {
+    "put": {
+      "summary": "Restore a list of trashed Filter State IDs for the current User",
+      "description": "A trashed Filter State whose state equals an active Filter State is left trashed.",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Filter States restored successfully"
+        },
+        "400": {
+          "description": "The request body is not a valid array of Filter State IDs, or two of the IDs have the same state"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/filters/{id}": {
+    "get": {
+      "summary": "Get a Filter State owned by the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Filter State ID"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Include trashed Filter States when true. Hidden Filter States are always returned by ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The Filter State",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/filter-state.json#/FilterState"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The id is not an integer"
+        },
+        "404": {
+          "description": "No such Filter State for the current User (trashed ones are excluded unless include_deleted is true)"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Update a Filter State owned by the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Filter State ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/filter-state.json#/UpdateFilterStateRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The updated Filter State",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/filter-state.json#/FilterState"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The update request is malformed or would make an unlabeled Filter State visible"
+        },
+        "404": {
+          "description": "No active Filter State with the given id for the current User"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "413": {
+          "description": "The request body exceeds 64 KiB"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  }
+}

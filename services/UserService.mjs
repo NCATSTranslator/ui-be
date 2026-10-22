@@ -30,6 +30,11 @@ import {
   make_user_node_update_from_req,
   make_user_edge_update_from_req
 } from "#model/UserEntity.mjs";
+import {
+  FilterState,
+  make_filter_state_from_req,
+  make_filter_state_update_from_req
+} from "#model/FilterState.mjs";
 
 class UserService {
   constructor(
@@ -39,6 +44,7 @@ class UserService {
       canvasStore,
       apiKeyStore,
       userEntityStore,
+      filterStateStore,
       entitySigningSecret = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
@@ -47,6 +53,7 @@ class UserService {
     this.entitySigningSecret = entitySigningSecret;
     this.apiKeyStore = apiKeyStore;
     this.userEntityStore = userEntityStore;
+    this.filterStateStore = filterStateStore;
   }
 
   async getUserById(uid) {
@@ -249,6 +256,33 @@ class UserService {
 
   async restore_user_edges(user_id, ids) {
     return this.userEntityStore.restore_user_edges(user_id, ids);
+  }
+
+  async get_filter_states(user_id, include_deleted=false, include_hidden=false, ids=null) {
+    const rows = await this.filterStateStore.get_filter_states(user_id, include_deleted, include_hidden, ids);
+    return rows.map((row) => new FilterState(row));
+  }
+
+  async create_filter_states(user_id, filter_state_reqs) {
+    const filter_states = filter_state_reqs.map((filter_state_req) =>
+      make_filter_state_from_req(user_id, filter_state_req));
+    const rows = await this.filterStateStore.create_filter_states(filter_states);
+    return rows.map((row) => new FilterState(row));
+  }
+
+  async update_filter_states(user_id, update_reqs) {
+    const updates = update_reqs.map(({ id, update_req }) =>
+      ({ id: id, fields: make_filter_state_update_from_req(update_req) }));
+    const rows = await this.filterStateStore.update_filter_states(user_id, updates);
+    return rows.map((row) => new FilterState(row));
+  }
+
+  async trash_filter_states(user_id, ids) {
+    return this.filterStateStore.trash_filter_states(user_id, ids);
+  }
+
+  async restore_filter_states(user_id, ids) {
+    return this.filterStateStore.restore_filter_states(user_id, ids);
   }
 
   async get_node_data(user_id, canvas_id, id) {

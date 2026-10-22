@@ -23,6 +23,7 @@ import { CanvasStorePostgres } from './stores/CanvasStorePostgres.mjs';
 import { QueryStorePostgres } from './stores/QueryStorePostgres.mjs';
 import { ApiKeyStorePostgres } from './stores/ApiKeyStorePostgres.mjs';
 import { UserEntityStorePostgres } from './stores/UserEntityStorePostgres.mjs';
+import { FilterStateStorePostgres } from './stores/FilterStateStorePostgres.mjs';
 
 
 // Load the config asap as basically everything depends on it
@@ -106,6 +107,7 @@ const USER_SERVICE = (function (config) {
     new CanvasStorePostgres(dbPool),
     new ApiKeyStorePostgres(dbPool),
     new UserEntityStorePostgres(dbPool),
+    new FilterStateStorePostgres(dbPool),
     config.secrets.hmac.key
   );
 })(SERVER_CONFIG);
