@@ -7,7 +7,6 @@ import * as cmn from '../lib/common.mjs';
 import { CanvasRequestError, CanvasConflictError } from "../models/Canvas.mjs";
 import { UserEntityRequestError } from "../models/UserEntity.mjs";
 import { FilterStateRequestError } from "../models/FilterState.mjs";
-import { validate as uuid_validate } from 'uuid';
 import { ApiKeyLimitError, API_KEY_NAME_MAX_LEN, API_KEY_MAX_TTL_DAYS, api_key_expiry,
   parse_api_key_expiry } from '../models/ApiKey.mjs';
 
@@ -83,10 +82,7 @@ class UserAPIController {
 
   async revoke_user_api_key(req, res, _next) {
     const user_id = wutil.request_to_user_id(req);
-    const key_id = req.params.key_id;
-    if (!uuid_validate(key_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid API key ID: ${key_id}`);
-    }
+    const key_id = req.key_id;
     try {
       const result = await this.user_service.revokeUserApiKey(user_id, key_id);
       if (result === null) {
@@ -364,51 +360,6 @@ class UserAPIController {
       wutil.log_internal_server_error(req, err);
       return wutil.send_internal_server_error(res);
     }
-  }
-
-  parse_canvas_id(req, res, next, value) {
-    const canvas_id = parseInt(value, 10);
-    if (!Number.isInteger(canvas_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${value}`);
-    }
-    req.canvas_id = canvas_id;
-    return next();
-  }
-
-  parse_canvas_entity_id(req, res, next, value) {
-    const entity_id = parseInt(value, 10);
-    if (!Number.isInteger(entity_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas entity ID: ${value}`);
-    }
-    req.entity_id = entity_id;
-    return next();
-  }
-
-  parse_user_entity_id(req, res, next, value) {
-    const entity_id = parseInt(value, 10);
-    if (!Number.isInteger(entity_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid user entity ID: ${value}`);
-    }
-    req.entity_id = entity_id;
-    return next();
-  }
-
-  parse_filter_state_id(req, res, next, value) {
-    const filter_state_id = parseInt(value, 10);
-    if (!Number.isInteger(filter_state_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid filter state ID: ${value}`);
-    }
-    req.filter_state_id = filter_state_id;
-    return next();
-  }
-
-  parse_canvas_annotation_id(req, res, next, value) {
-    const annotation_id = parseInt(value, 10);
-    if (!Number.isInteger(annotation_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid annotation ID: ${value}`);
-    }
-    req.annotation_id = annotation_id;
-    return next();
   }
 
   async get_user_canvases(req, res) {

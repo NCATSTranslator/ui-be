@@ -155,10 +155,13 @@ export function start_server(config, services) {
 
   /* API keys: privileged AND session-only. requireSessionAuth keeps a bearer of one key from
    * minting more or revoking the others; managing keys always requires a logged-in session. */
-  app.use(`${API_PATH_V1}/users/me/api-keys`, session_controller.requireSessionAuth.bind(session_controller));
-  app.get(`${API_PATH_V1}/users/me/api-keys`, user_api_controller.get_user_api_keys.bind(user_api_controller));
-  app.post(`${API_PATH_V1}/users/me/api-keys`, user_api_controller.create_user_api_key.bind(user_api_controller));
-  app.delete(`${API_PATH_V1}/users/me/api-keys/:key_id`, user_api_controller.revoke_user_api_key.bind(user_api_controller));
+  const api_key_router = express.Router();
+  api_key_router.use(session_controller.requireSessionAuth.bind(session_controller));
+  api_key_router.param('key_id', wutil.parse_uuid_param('key_id'));
+  api_key_router.get('/', user_api_controller.get_user_api_keys.bind(user_api_controller));
+  api_key_router.post('/', user_api_controller.create_user_api_key.bind(user_api_controller));
+  api_key_router.delete('/:key_id', user_api_controller.revoke_user_api_key.bind(user_api_controller));
+  app.use(`${API_PATH_V1}/users/me/api-keys`, api_key_router);
 
   app.get(`${API_PATH_V1}/users/me/preferences`, user_api_controller.get_user_prefs.bind(user_api_controller));
   app.post(`${API_PATH_V1}/users/me/preferences`, user_api_controller.update_user_prefs.bind(user_api_controller));
@@ -199,9 +202,9 @@ export function start_server(config, services) {
 
   // User canvas
   const canvas_router = express.Router();
-  canvas_router.param('canvas_id', user_api_controller.parse_canvas_id.bind(user_api_controller));
-  canvas_router.param('id', user_api_controller.parse_canvas_entity_id.bind(user_api_controller));
-  canvas_router.param('annotation_id', user_api_controller.parse_canvas_annotation_id.bind(user_api_controller));
+  canvas_router.param('canvas_id', wutil.parse_int_param('canvas_id'));
+  canvas_router.param('id', wutil.parse_int_param('entity_id'));
+  canvas_router.param('annotation_id', wutil.parse_int_param('annotation_id'));
   canvas_router.get('/', user_api_controller.get_user_canvases.bind(user_api_controller));
   canvas_router.post('/', user_api_controller.create_user_canvas.bind(user_api_controller));
   canvas_router.put('/trash', user_api_controller.trash_user_canvases.bind(user_api_controller));
@@ -221,7 +224,7 @@ export function start_server(config, services) {
   app.use(`${API_PATH_V1}/users/me/canvas`, canvas_router);
 
   const user_node_router = express.Router();
-  user_node_router.param('id', user_api_controller.parse_user_entity_id.bind(user_api_controller));
+  user_node_router.param('id', wutil.parse_int_param('entity_id'));
   user_node_router.get('/', user_api_controller.get_user_nodes.bind(user_api_controller));
   user_node_router.post('/', user_api_controller.create_user_node.bind(user_api_controller));
   user_node_router.put('/trash', user_api_controller.trash_user_nodes.bind(user_api_controller));
@@ -231,7 +234,7 @@ export function start_server(config, services) {
   app.use(`${API_PATH_V1}/users/me/nodes`, user_node_router);
 
   const user_edge_router = express.Router();
-  user_edge_router.param('id', user_api_controller.parse_user_entity_id.bind(user_api_controller));
+  user_edge_router.param('id', wutil.parse_int_param('entity_id'));
   user_edge_router.get('/', user_api_controller.get_user_edges.bind(user_api_controller));
   user_edge_router.post('/', user_api_controller.create_user_edge.bind(user_api_controller));
   user_edge_router.put('/trash', user_api_controller.trash_user_edges.bind(user_api_controller));
@@ -241,7 +244,7 @@ export function start_server(config, services) {
   app.use(`${API_PATH_V1}/users/me/edges`, user_edge_router);
 
   const filter_state_router = express.Router();
-  filter_state_router.param('id', user_api_controller.parse_filter_state_id.bind(user_api_controller));
+  filter_state_router.param('id', wutil.parse_int_param('filter_state_id'));
   filter_state_router.get('/', user_api_controller.get_filter_states.bind(user_api_controller));
   filter_state_router.post('/', user_api_controller.create_filter_state.bind(user_api_controller));
   filter_state_router.put('/trash', user_api_controller.trash_filter_states.bind(user_api_controller));
