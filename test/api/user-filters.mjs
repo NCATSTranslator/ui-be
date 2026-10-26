@@ -105,6 +105,30 @@ try {
   ok(duplicate.json.label === `api-test preset ${run_id}`,
     'the existing visible label is kept');
 
+  const reversioned = await postJson(FILTERS_PATH, {
+    label: `api-test reversioned ${run_id}`,
+    version: 3,
+    state: { filters: [{ id: 'n/fda/4', value: '', negated: false }], run: run_id }
+  });
+  ok(reversioned.res.status === 200,
+    `create the same state with another version responds 200 (got ${reversioned.res.status})`);
+  ok(reversioned.json.id !== preset_id,
+    'the same state with another version gets a new id');
+  const reversioned_id = reversioned.json.id;
+  ok(
+    isDeepStrictEqual(stored_fields((await getJson(`${FILTERS_PATH}/${reversioned_id}`)).json), {
+      user_id: TEST_USER_ID,
+      label: `api-test reversioned ${run_id}`,
+      hidden: false,
+      version: 3,
+      state: { filters: [{ id: 'n/fda/4', value: '', negated: false }], run: run_id },
+      time_deleted: null
+    }),
+    'get by id returns the reversioned filter state with its own version'
+  );
+  ok((await getJson(`${FILTERS_PATH}/${preset_id}`)).json.version === 1,
+    'the original filter state keeps its version');
+
   const hidden = await postJson(FILTERS_PATH, {
     hidden: true,
     version: 1,
@@ -243,6 +267,12 @@ try {
   const trash = await putJson(`${FILTERS_PATH}/trash`, [preset_id]);
   ok(trash.res.status === 200,
     `trash filter state responds 200 (got ${trash.res.status})`);
+  ok(isDeepStrictEqual(trash.json, [preset_id]),
+    'trash responds with the trashed ids');
+
+  const trash_unknown = await putJson(`${FILTERS_PATH}/trash`, [UNKNOWN_ID]);
+  ok(trash_unknown.res.status === 200 && isDeepStrictEqual(trash_unknown.json, []),
+    'trash of an unknown filter state responds 200 with no ids');
 
   const trashed_get = await getJson(`${FILTERS_PATH}/${preset_id}`);
   ok(trashed_get.res.status === 404,
@@ -299,6 +329,8 @@ try {
   const blocked_restore = await putJson(`${FILTERS_PATH}/restore`, [preset_id]);
   ok(blocked_restore.res.status === 200,
     `restore while an equal state is active responds 200 (got ${blocked_restore.res.status})`);
+  ok(isDeepStrictEqual(blocked_restore.json, []),
+    'restore while an equal state is active responds with no ids');
 
   const blocked_get = await getJson(`${FILTERS_PATH}/${preset_id}`);
   ok(blocked_get.res.status === 404,
@@ -312,10 +344,17 @@ try {
   const restore = await putJson(`${FILTERS_PATH}/restore`, [preset_id]);
   ok(restore.res.status === 200,
     `restore filter state responds 200 (got ${restore.res.status})`);
+  ok(isDeepStrictEqual(restore.json, [preset_id]),
+    'restore responds with the restored ids');
 
   const restored_get = await getJson(`${FILTERS_PATH}/${preset_id}`);
   ok(restored_get.res.status === 200 && restored_get.json.time_deleted === null,
     'a restored filter state is active again');
+
+  await putJson(`${FILTERS_PATH}/trash`, [reversioned_id]);
+  const restore_reversioned = await putJson(`${FILTERS_PATH}/restore`, [reversioned_id]);
+  ok(isDeepStrictEqual(restore_reversioned.json, [reversioned_id]),
+    'a trashed filter state is restored while an equal state with another version is active');
 
   const non_array_trash = await putJson(`${FILTERS_PATH}/trash`, { id: preset_id });
   ok(non_array_trash.res.status === 400,

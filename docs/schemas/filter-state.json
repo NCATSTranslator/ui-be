@@ -48,7 +48,7 @@
   },
   "CreateFilterStateRequest": {
     "type": "object",
-    "description": "A new Filter State. The request body is limited to 64 KiB. A User has at most one active Filter State per distinct state: creating one whose state already exists returns the existing Filter State, un-hiding and labeling it when it was hidden.",
+    "description": "A new Filter State. The request body is limited to 64 KiB. A User has at most one active Filter State per distinct version and state: creating one whose version and state already exist returns the existing Filter State, un-hiding and labeling it when it was hidden.",
     "properties": {
       "label": {
         "type": "string",

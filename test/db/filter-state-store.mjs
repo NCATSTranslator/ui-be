@@ -135,6 +135,24 @@ try {
     "a scalar JSON state round-trips"
   );
 
+  const reversioned = await create_filter_state(user.id, { label: "reversioned", version: 4, state: "just a string" });
+  ok(reversioned.id !== scalar.id,
+    "the same state with a different version is a separate row");
+  ok(
+    isDeepStrictEqual(stored_fields(await get_filter_state(user.id, reversioned.id)), {
+      user_id: user.id,
+      label: "reversioned",
+      hidden: false,
+      version: 4,
+      state: "just a string",
+      time_deleted: null
+    }),
+    "the reversioned filter state is stored with its own version"
+  );
+  ok((await get_filter_state(user.id, scalar.id)).version === 3,
+    "the original version is left unchanged by the reversioned state"
+  );
+
   const hidden_again = await create_filter_state(user.id, { hidden: true, version: 1, state: [1, 2, 3] });
 
   const visible = await list_filter_states(user.id, false, false);
@@ -258,6 +276,13 @@ try {
     }),
     "a restored filter state is active again with its fields intact"
   );
+
+  await store.trash_filter_states(user.id, [scalar.id]);
+  const restored_reversioned_ids = await store.restore_filter_states(user.id, [scalar.id]);
+  ok(isDeepStrictEqual(restored_reversioned_ids, [scalar.id]),
+    "a trashed filter state is restored while an equal state with another version is active");
+  ok((await get_filter_state(user.id, scalar.id)).time_deleted === null,
+    "the restored filter state is active alongside the other version");
 } catch (err) {
   fail(`unexpected error: ${err.stack}`);
 }

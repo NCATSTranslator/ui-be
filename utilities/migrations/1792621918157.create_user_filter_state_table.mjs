@@ -21,7 +21,7 @@ class Migration_1792621918157 extends BaseMigration {
       super(dbPool);
       this.sql = [[
         "CREATE TABLE IF NOT EXISTS user_filter_state (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, user_id UUID NOT NULL REFERENCES users(id), label TEXT DEFAULT NULL, hidden BOOLEAN NOT NULL DEFAULT FALSE, version INTEGER NOT NULL, state JSONB NOT NULL, state_hash TEXT GENERATED ALWAYS AS (md5(state::text)) STORED, time_created TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, time_updated TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, time_deleted TIMESTAMPTZ DEFAULT NULL, CONSTRAINT user_filter_state_visible_has_label CHECK (hidden OR label IS NOT NULL), UNIQUE (id, user_id));",
-        "CREATE UNIQUE INDEX IF NOT EXISTS user_filter_state_active_state_idx ON user_filter_state(user_id, state_hash) WHERE time_deleted IS NULL;",
+        "CREATE UNIQUE INDEX IF NOT EXISTS user_filter_state_active_state_idx ON user_filter_state(user_id, version, state_hash) WHERE time_deleted IS NULL;",
         "CREATE INDEX IF NOT EXISTS user_filter_state_preset_idx ON user_filter_state(user_id) WHERE time_deleted IS NULL AND NOT hidden;"
       ].join("\n")];
   }

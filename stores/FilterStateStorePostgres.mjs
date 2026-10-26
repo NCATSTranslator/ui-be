@@ -48,7 +48,7 @@ class FilterStateStorePostgres {
     const res = await pgExec(this._db_pool, `
       INSERT INTO ${_TABLE} (${columns.join(", ")})
       VALUES ${params}
-      ON CONFLICT (user_id, state_hash) WHERE time_deleted IS NULL DO UPDATE
+      ON CONFLICT (user_id, version, state_hash) WHERE time_deleted IS NULL DO UPDATE
       SET label = CASE WHEN ${_TABLE}.hidden THEN COALESCE(EXCLUDED.label, ${_TABLE}.label) ELSE ${_TABLE}.label END,
           hidden = ${_TABLE}.hidden AND EXCLUDED.hidden,
           time_updated = CURRENT_TIMESTAMP
@@ -103,6 +103,7 @@ class FilterStateStorePostgres {
     const sql_no_active_duplicate = deleted ? "" : ` AND NOT EXISTS (
         SELECT 1 FROM ${_TABLE} active
         WHERE active.user_id = ${_TABLE}.user_id
+          AND active.version = ${_TABLE}.version
           AND active.state_hash = ${_TABLE}.state_hash
           AND active.time_deleted IS NULL)`;
     try {
@@ -114,7 +115,7 @@ class FilterStateStorePostgres {
       return res.rows.map((row) => row.id);
     } catch (err) {
       if (err.code === _UNIQUE_VIOLATION) {
-        throw new FilterStateRequestError("Filter states with the same state cannot both be restored");
+        throw new FilterStateRequestError("Filter states with the same version and state cannot both be restored");
       }
       throw err;
     }

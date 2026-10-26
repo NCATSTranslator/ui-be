@@ -874,8 +874,8 @@ class UserAPIController {
         `Expected body to be a JSON array of filter state IDs. Got: ${JSON.stringify(ids)}`);
     }
     try {
-      await set_deleted(user_id, ids);
-      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
+      const affected_ids = await set_deleted(user_id, ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(affected_ids);
     } catch (err) {
       return this._send_filter_state_error(req, res, err);
     }

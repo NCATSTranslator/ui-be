@@ -74,7 +74,7 @@
       },
       "responses": {
         "200": {
-          "description": "The created Filter State, or the existing active Filter State with the same state",
+          "description": "The created Filter State, or the existing active Filter State with the same version and state",
           "content": {
             "application/json": {
               "schema": {
@@ -124,7 +124,17 @@
       },
       "responses": {
         "200": {
-          "description": "Filter States trashed successfully"
+          "description": "The IDs of the Filter States that were trashed",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
         },
         "400": {
           "description": "The request body is not a valid array of Filter State IDs"
@@ -141,7 +151,7 @@
   "/api/v1/users/me/filters/restore": {
     "put": {
       "summary": "Restore a list of trashed Filter State IDs for the current User",
-      "description": "A trashed Filter State whose state equals an active Filter State is left trashed.",
+      "description": "A trashed Filter State whose version and state equal an active Filter State is left trashed and omitted from the response.",
       "security": [
         {
           "cookieAuth": []
@@ -165,10 +175,20 @@
       },
       "responses": {
         "200": {
-          "description": "Filter States restored successfully"
+          "description": "The IDs of the Filter States that were restored",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
         },
         "400": {
-          "description": "The request body is not a valid array of Filter State IDs, or two of the IDs have the same state"
+          "description": "The request body is not a valid array of Filter State IDs, or two of the IDs have the same version and state"
         },
         "401": {
           "description": "Authentication Required"
