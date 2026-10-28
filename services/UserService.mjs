@@ -35,6 +35,7 @@ import {
   make_filter_state_from_req,
   make_filter_state_update_from_req
 } from "#model/FilterState.mjs";
+import { make_query_view_from_req } from "#model/QueryView.mjs";
 
 class UserService {
   constructor(
@@ -45,6 +46,7 @@ class UserService {
       apiKeyStore,
       userEntityStore,
       filterStateStore,
+      queryViewStore,
       entitySigningSecret = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
@@ -54,6 +56,7 @@ class UserService {
     this.apiKeyStore = apiKeyStore;
     this.userEntityStore = userEntityStore;
     this.filterStateStore = filterStateStore;
+    this.queryViewStore = queryViewStore;
   }
 
   async getUserById(uid) {
@@ -283,6 +286,32 @@ class UserService {
 
   async restore_filter_states(user_id, ids) {
     return this.filterStateStore.restore_filter_states(user_id, ids);
+  }
+
+  async get_query_views(user_id, query_pk, include_deleted=false, ids=null) {
+    return this.queryViewStore.get_query_views(user_id, query_pk, include_deleted, ids);
+  }
+
+  async get_query_view(query_pk, id) {
+    return this.queryViewStore.get_query_view(query_pk, id);
+  }
+
+  async create_query_view(user_id, query_pk, query_view_req) {
+    const source = make_query_view_from_req(user_id, query_view_req);
+    let filter_state_id = source.filter_state_id;
+    if (filter_state_id === null) {
+      const [filter_state] = await this.filterStateStore.create_filter_states([source.filter_state]);
+      filter_state_id = filter_state.id;
+    }
+    return this.queryViewStore.create_query_view(user_id, query_pk, filter_state_id);
+  }
+
+  async trash_query_views(user_id, query_pk, ids) {
+    return this.queryViewStore.trash_query_views(user_id, query_pk, ids);
+  }
+
+  async restore_query_views(user_id, query_pk, ids) {
+    return this.queryViewStore.restore_query_views(user_id, query_pk, ids);
   }
 
   async get_node_data(user_id, canvas_id, id) {

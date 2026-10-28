@@ -74,6 +74,7 @@ export function start_server(config, services) {
   const SITE_PATH_PREFIX = '';
   app.use(pinoHttp({logger: logger, redact: config.logging.redact}));
   app.use(`${API_PATH_V1}/users/me/filters`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
+  app.use(`${API_PATH_V1}/users/me/queries/:qid/views`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
   app.use(express.json({
     limit: config.json_payload_limit,
     verify: (req, _res, buf, _encoding) => {req.rawBody = buf;}
@@ -148,6 +149,14 @@ export function start_server(config, services) {
     query_api_controller.get_query_result.bind(query_api_controller));
   // Query callback route: behind hmac
   app.post(`${API_PATH_V1}/query/update`, query_api_controller.update_query.bind(query_api_controller));
+  // Query view share route: unprivileged session
+  const query_view_share_router = express.Router();
+  query_view_share_router.param('qid', wutil.parse_uuid_param('qid'));
+  query_view_share_router.param('id', wutil.parse_int_param('view_id'));
+  query_view_share_router.get('/:qid/views/:id',
+    session_controller.authenticateUnprivilegedRequest.bind(session_controller),
+    query_api_controller.get_query_view.bind(query_api_controller));
+  app.use(`${API_PATH_V1}/query`, query_view_share_router);
 
   // User routes: privileged
   app.use(`${API_PATH_V1}/users`, session_controller.authenticatePrivilegedRequest.bind(session_controller));
@@ -252,6 +261,14 @@ export function start_server(config, services) {
   filter_state_router.get('/:id', user_api_controller.get_filter_state.bind(user_api_controller));
   filter_state_router.put('/:id', user_api_controller.update_filter_state.bind(user_api_controller));
   app.use(`${API_PATH_V1}/users/me/filters`, filter_state_router);
+
+  const query_view_router = express.Router();
+  query_view_router.param('qid', wutil.parse_uuid_param('qid'));
+  query_view_router.get('/:qid/views', user_api_controller.get_query_views.bind(user_api_controller));
+  query_view_router.post('/:qid/views', user_api_controller.create_query_view.bind(user_api_controller));
+  query_view_router.put('/:qid/views/trash', user_api_controller.trash_query_views.bind(user_api_controller));
+  query_view_router.put('/:qid/views/restore', user_api_controller.restore_query_views.bind(user_api_controller));
+  app.use(`${API_PATH_V1}/users/me/queries`, query_view_router);
 
   app.all('/api{/*splat}', (req, res) => {
     return res.status(403).send('API action Forbidden');

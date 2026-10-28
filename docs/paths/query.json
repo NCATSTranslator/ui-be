@@ -154,5 +154,53 @@
         }
       }
     }
+  },
+  "/api/v1/query/{qid}/views/{id}": {
+    "get": {
+      "summary": "Get a Query View of a Query",
+      "description": "Open to anyone who knows the Query PK so a Query View can be shared by URL. A trashed Query View still resolves.",
+      "parameters": [
+        {
+          "name": "qid",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The Query PK"
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Query View ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The Query View",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/query-view.json#/QueryView"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The qid is not a UUID or the id is not an integer"
+        },
+        "404": {
+          "description": "No Query View with the given id belongs to the Query"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
   }
 }

@@ -7,6 +7,7 @@ import * as cmn from '../lib/common.mjs';
 import { CanvasRequestError, CanvasConflictError } from "../models/Canvas.mjs";
 import { UserEntityRequestError } from "../models/UserEntity.mjs";
 import { FilterStateRequestError } from "../models/FilterState.mjs";
+import { QueryViewRequestError } from "../models/QueryView.mjs";
 import { ApiKeyLimitError, API_KEY_NAME_MAX_LEN, API_KEY_MAX_TTL_DAYS, api_key_expiry,
   parse_api_key_expiry } from '../models/ApiKey.mjs';
 
@@ -755,6 +756,40 @@ class UserAPIController {
       (user_id, ids) => this.user_service.restore_filter_states(user_id, ids));
   }
 
+  async get_query_views(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const include_deleted = req.query.include_deleted === "true";
+    try {
+      const query_views = await this.user_service.get_query_views(user_id, req.qid, include_deleted);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(query_views);
+    } catch (err) {
+      return this._send_query_view_error(req, res, err);
+    }
+  }
+
+  async create_query_view(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const query_view = await this.user_service.create_query_view(user_id, req.qid, req.body);
+      if (query_view === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No query found for qid ${req.qid}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(query_view);
+    } catch (err) {
+      return this._send_query_view_error(req, res, err);
+    }
+  }
+
+  async trash_query_views(req, res) {
+    return this._set_query_views_deleted(req, res,
+      (user_id, query_pk, ids) => this.user_service.trash_query_views(user_id, query_pk, ids));
+  }
+
+  async restore_query_views(req, res) {
+    return this._set_query_views_deleted(req, res,
+      (user_id, query_pk, ids) => this.user_service.restore_query_views(user_id, query_pk, ids));
+  }
+
   async _get_user_entities(req, res, get_entities) {
     const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === "true";
@@ -834,6 +869,29 @@ class UserAPIController {
 
   _send_filter_state_error(req, res, err) {
     if (err instanceof FilterStateRequestError) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+    }
+    wutil.log_internal_server_error(req, err);
+    return wutil.send_internal_server_error(res);
+  }
+
+  async _set_query_views_deleted(req, res, set_deleted) {
+    const user_id = wutil.request_to_user_id(req);
+    const ids = req.body;
+    if (!cmn.is_array(ids) || !ids.every((id) => Number.isInteger(id))) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST,
+        `Expected body to be a JSON array of query view IDs. Got: ${JSON.stringify(ids)}`);
+    }
+    try {
+      const affected_ids = await set_deleted(user_id, req.qid, ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(affected_ids);
+    } catch (err) {
+      return this._send_query_view_error(req, res, err);
+    }
+  }
+
+  _send_query_view_error(req, res, err) {
+    if (err instanceof QueryViewRequestError) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
     }
     wutil.log_internal_server_error(req, err);

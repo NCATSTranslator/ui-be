@@ -1,0 +1,246 @@
+{
+  "/api/v1/users/me/queries/{qid}/views": {
+    "get": {
+      "summary": "Get the Query Views of the current User for a Query",
+      "description": "Newest time_updated first.",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "qid",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The Query PK"
+        },
+        {
+          "name": "include_deleted",
+          "in": "query",
+          "required": false,
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Include trashed Query Views when true"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The Query Views. Empty when the Query is unknown or not owned by the current User",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/query-view.json#/QueryView"
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The qid is not a UUID"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create a Query View of a Query for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "qid",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The Query PK"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/query-view.json#/CreateQueryViewRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The created Query View, or the existing active Query View with the same Filter State",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/query-view.json#/QueryView"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The qid is not a UUID, the request is malformed, or the Filter State is not owned by the current User"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "404": {
+          "description": "No Query with the given qid is owned by the current User"
+        },
+        "413": {
+          "description": "The request body exceeds 64 KiB"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/queries/{qid}/views/trash": {
+    "put": {
+      "summary": "Trash a list of Query View IDs of a Query for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "qid",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The Query PK"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The IDs of the Query Views that were trashed",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The qid is not a UUID or the request body is not a valid array of Query View IDs"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/queries/{qid}/views/restore": {
+    "put": {
+      "summary": "Restore a list of trashed Query View IDs of a Query for the current User",
+      "description": "A trashed Query View whose Filter State is already active for the Query is left trashed and omitted from the response.",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "qid",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The Query PK"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The IDs of the Query Views that were restored",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The qid is not a UUID, the request body is not a valid array of Query View IDs, or two of the IDs have the same Filter State"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  }
+}
