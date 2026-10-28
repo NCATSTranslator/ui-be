@@ -60,7 +60,7 @@ function _test_make_knode_rules() {
           "categories": ["biolink:ChemicalEntity"],
           "attributes": [
             { "attribute_type_id": "biolink:synonym", "value": ["syn a", "syn b"] },
-            { "attribute_type_id": "biolink:same_as", "value": ["CHEBI:1234", "NOTAPREFIX:1"] },
+            { "attribute_type_id": "biolink:equivalent_identifiers", "value": ["CHEBI:1234", "NOTAPREFIX:1"] },
             { "attribute_type_id": "biolink:description", "value": "a description" }
           ]
         },
