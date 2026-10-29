@@ -6,7 +6,9 @@ import { UserSavedData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 import * as cmn from '../lib/common.mjs';
 import { CanvasRequestError, CanvasConflictError } from "../models/Canvas.mjs";
 import { UserEntityRequestError } from "../models/UserEntity.mjs";
-import { validate as uuid_validate } from 'uuid';
+import { FilterStateRequestError } from "../models/FilterState.mjs";
+import { QueryViewRequestError } from "../models/QueryView.mjs";
+import { WorkingViewRequestError } from "../models/WorkingView.mjs";
 import { ApiKeyLimitError, API_KEY_NAME_MAX_LEN, API_KEY_MAX_TTL_DAYS, api_key_expiry,
   parse_api_key_expiry } from '../models/ApiKey.mjs';
 
@@ -82,10 +84,7 @@ class UserAPIController {
 
   async revoke_user_api_key(req, res, _next) {
     const user_id = wutil.request_to_user_id(req);
-    const key_id = req.params.key_id;
-    if (!uuid_validate(key_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid API key ID: ${key_id}`);
-    }
+    const key_id = req.key_id;
     try {
       const result = await this.user_service.revokeUserApiKey(user_id, key_id);
       if (result === null) {
@@ -363,42 +362,6 @@ class UserAPIController {
       wutil.log_internal_server_error(req, err);
       return wutil.send_internal_server_error(res);
     }
-  }
-
-  parse_canvas_id(req, res, next, value) {
-    const canvas_id = parseInt(value, 10);
-    if (!Number.isInteger(canvas_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas ID: ${value}`);
-    }
-    req.canvas_id = canvas_id;
-    return next();
-  }
-
-  parse_canvas_entity_id(req, res, next, value) {
-    const entity_id = parseInt(value, 10);
-    if (!Number.isInteger(entity_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid canvas entity ID: ${value}`);
-    }
-    req.entity_id = entity_id;
-    return next();
-  }
-
-  parse_user_entity_id(req, res, next, value) {
-    const entity_id = parseInt(value, 10);
-    if (!Number.isInteger(entity_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid user entity ID: ${value}`);
-    }
-    req.entity_id = entity_id;
-    return next();
-  }
-
-  parse_canvas_annotation_id(req, res, next, value) {
-    const annotation_id = parseInt(value, 10);
-    if (!Number.isInteger(annotation_id)) {
-      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Invalid annotation ID: ${value}`);
-    }
-    req.annotation_id = annotation_id;
-    return next();
   }
 
   async get_user_canvases(req, res) {
@@ -733,6 +696,140 @@ class UserAPIController {
       (user_id, ids) => this.user_service.restore_user_edges(user_id, ids));
   }
 
+  async get_filter_states(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const include_deleted = req.query.include_deleted === "true";
+    const include_hidden = req.query.include_hidden === "true";
+    try {
+      const filter_states = await this.user_service.get_filter_states(user_id, include_deleted, include_hidden);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(filter_states);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  async get_filter_state(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const include_deleted = req.query.include_deleted === "true";
+    try {
+      const [filter_state] = await this.user_service.get_filter_states(
+        user_id, include_deleted, true, [req.filter_state_id]);
+      if (filter_state === undefined) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No filter state found for id ${req.filter_state_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(filter_state);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  async create_filter_state(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const [filter_state] = await this.user_service.create_filter_states(user_id, [req.body]);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(filter_state);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  async update_filter_state(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const [filter_state] = await this.user_service.update_filter_states(
+        user_id, [{ id: req.filter_state_id, update_req: req.body }]);
+      if (filter_state === undefined) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No filter state found for id ${req.filter_state_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(filter_state);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  async trash_filter_states(req, res) {
+    return this._set_filter_states_deleted(req, res,
+      (user_id, ids) => this.user_service.trash_filter_states(user_id, ids));
+  }
+
+  async restore_filter_states(req, res) {
+    return this._set_filter_states_deleted(req, res,
+      (user_id, ids) => this.user_service.restore_filter_states(user_id, ids));
+  }
+
+  async get_query_views(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const include_deleted = req.query.include_deleted === "true";
+    try {
+      const query_views = await this.user_service.get_query_views(user_id, req.qid, include_deleted);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(query_views);
+    } catch (err) {
+      return this._send_query_view_error(req, res, err);
+    }
+  }
+
+  async create_query_view(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const query_view = await this.user_service.create_query_view(user_id, req.qid, req.body);
+      if (query_view === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No query found for qid ${req.qid}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(query_view);
+    } catch (err) {
+      return this._send_query_view_error(req, res, err);
+    }
+  }
+
+  async trash_query_views(req, res) {
+    return this._set_query_views_deleted(req, res,
+      (user_id, query_pk, ids) => this.user_service.trash_query_views(user_id, query_pk, ids));
+  }
+
+  async restore_query_views(req, res) {
+    return this._set_query_views_deleted(req, res,
+      (user_id, query_pk, ids) => this.user_service.restore_query_views(user_id, query_pk, ids));
+  }
+
+  async get_working_view(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const working_view = await this.user_service.get_working_view(user_id, req.qid);
+      if (working_view === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No working view found for qid ${req.qid}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(working_view);
+    } catch (err) {
+      return this._send_working_view_error(req, res, err);
+    }
+  }
+
+  async set_working_view(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const working_view = await this.user_service.set_working_view(user_id, req.qid, req.body);
+      if (working_view === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No query found for qid ${req.qid}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(working_view);
+    } catch (err) {
+      return this._send_working_view_error(req, res, err);
+    }
+  }
+
+  async snapshot_working_view(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const query_view = await this.user_service.snapshot_working_view(user_id, req.qid);
+      if (query_view === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No working view found for qid ${req.qid}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(query_view);
+    } catch (err) {
+      return this._send_query_view_error(req, res, err);
+    }
+  }
+
   async _get_user_entities(req, res, get_entities) {
     const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === "true";
@@ -793,6 +890,60 @@ class UserAPIController {
       wutil.log_internal_server_error(req, err);
       return wutil.send_internal_server_error(res);
     }
+  }
+
+  async _set_filter_states_deleted(req, res, set_deleted) {
+    const user_id = wutil.request_to_user_id(req);
+    const ids = req.body;
+    if (!cmn.is_array(ids) || !ids.every((id) => Number.isInteger(id))) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST,
+        `Expected body to be a JSON array of filter state IDs. Got: ${JSON.stringify(ids)}`);
+    }
+    try {
+      const affected_ids = await set_deleted(user_id, ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(affected_ids);
+    } catch (err) {
+      return this._send_filter_state_error(req, res, err);
+    }
+  }
+
+  _send_filter_state_error(req, res, err) {
+    if (err instanceof FilterStateRequestError) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+    }
+    wutil.log_internal_server_error(req, err);
+    return wutil.send_internal_server_error(res);
+  }
+
+  async _set_query_views_deleted(req, res, set_deleted) {
+    const user_id = wutil.request_to_user_id(req);
+    const ids = req.body;
+    if (!cmn.is_array(ids) || !ids.every((id) => Number.isInteger(id))) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST,
+        `Expected body to be a JSON array of query view IDs. Got: ${JSON.stringify(ids)}`);
+    }
+    try {
+      const affected_ids = await set_deleted(user_id, req.qid, ids);
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(affected_ids);
+    } catch (err) {
+      return this._send_query_view_error(req, res, err);
+    }
+  }
+
+  _send_query_view_error(req, res, err) {
+    if (err instanceof QueryViewRequestError || err instanceof FilterStateRequestError) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+    }
+    wutil.log_internal_server_error(req, err);
+    return wutil.send_internal_server_error(res);
+  }
+
+  _send_working_view_error(req, res, err) {
+    if (err instanceof WorkingViewRequestError || err instanceof FilterStateRequestError) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+    }
+    wutil.log_internal_server_error(req, err);
+    return wutil.send_internal_server_error(res);
   }
 
   async create_user_canvas(req, res) {

@@ -30,6 +30,13 @@ import {
   make_user_node_update_from_req,
   make_user_edge_update_from_req
 } from "#model/UserEntity.mjs";
+import {
+  FilterState,
+  make_filter_state_from_req,
+  make_filter_state_update_from_req,
+  make_filter_state_ref_from_req
+} from "#model/FilterState.mjs";
+import { WorkingViewRequestError } from "#model/WorkingView.mjs";
 
 class UserService {
   constructor(
@@ -39,6 +46,8 @@ class UserService {
       canvasStore,
       apiKeyStore,
       userEntityStore,
+      filterStateStore,
+      queryViewStore,
       entitySigningSecret = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
@@ -47,6 +56,8 @@ class UserService {
     this.entitySigningSecret = entitySigningSecret;
     this.apiKeyStore = apiKeyStore;
     this.userEntityStore = userEntityStore;
+    this.filterStateStore = filterStateStore;
+    this.queryViewStore = queryViewStore;
   }
 
   async getUserById(uid) {
@@ -251,6 +262,79 @@ class UserService {
     return this.userEntityStore.restore_user_edges(user_id, ids);
   }
 
+  async get_filter_states(user_id, include_deleted=false, include_hidden=false, ids=null) {
+    const rows = await this.filterStateStore.get_filter_states(user_id, include_deleted, include_hidden, ids);
+    return rows.map((row) => new FilterState(row));
+  }
+
+  async create_filter_states(user_id, filter_state_reqs) {
+    const filter_states = filter_state_reqs.map((filter_state_req) =>
+      make_filter_state_from_req(user_id, filter_state_req));
+    const rows = await this.filterStateStore.create_filter_states(filter_states);
+    return rows.map((row) => new FilterState(row));
+  }
+
+  async update_filter_states(user_id, update_reqs) {
+    const updates = update_reqs.map(({ id, update_req }) =>
+      ({ id: id, fields: make_filter_state_update_from_req(update_req) }));
+    const rows = await this.filterStateStore.update_filter_states(user_id, updates);
+    return rows.map((row) => new FilterState(row));
+  }
+
+  async trash_filter_states(user_id, ids) {
+    return this.filterStateStore.trash_filter_states(user_id, ids);
+  }
+
+  async restore_filter_states(user_id, ids) {
+    return this.filterStateStore.restore_filter_states(user_id, ids);
+  }
+
+  async get_query_views(user_id, query_pk, include_deleted=false, ids=null) {
+    return this.queryViewStore.get_query_views(user_id, query_pk, include_deleted, ids);
+  }
+
+  async get_query_view(query_pk, id) {
+    return this.queryViewStore.get_query_view(query_pk, id);
+  }
+
+  async create_query_view(user_id, query_pk, query_view_req) {
+    const filter_state_ref = make_filter_state_ref_from_req(user_id, query_view_req);
+    const filter_state_id = await this._resolve_filter_state_id(filter_state_ref);
+    return this.queryViewStore.create_query_view(user_id, query_pk, filter_state_id);
+  }
+
+  async trash_query_views(user_id, query_pk, ids) {
+    return this.queryViewStore.trash_query_views(user_id, query_pk, ids);
+  }
+
+  async restore_query_views(user_id, query_pk, ids) {
+    return this.queryViewStore.restore_query_views(user_id, query_pk, ids);
+  }
+
+  async get_working_view(user_id, query_pk) {
+    return this.queryViewStore.get_working_view(user_id, query_pk);
+  }
+
+  async set_working_view(user_id, query_pk, working_view_req) {
+    let { filter_state_id, filter_state } = make_filter_state_ref_from_req(user_id, working_view_req);
+    if (filter_state_id !== null) {
+      [filter_state] = await this.filterStateStore.get_filter_states(user_id, true, true, [filter_state_id]);
+      if (filter_state === undefined) {
+        throw new WorkingViewRequestError(`Unknown filter state id: ${filter_state_id}`);
+      }
+    }
+    return this.queryViewStore.set_working_view(user_id, query_pk, filter_state.version, filter_state.state);
+  }
+
+  async snapshot_working_view(user_id, query_pk) {
+    const working_view = await this.queryViewStore.get_working_view(user_id, query_pk);
+    if (working_view === null) return null;
+    const filter_state = make_filter_state_from_req(user_id,
+      { hidden: true, version: working_view.version, state: working_view.state });
+    const filter_state_id = await this._resolve_filter_state_id({ filter_state_id: null, filter_state: filter_state });
+    return this.queryViewStore.create_query_view(user_id, query_pk, filter_state_id);
+  }
+
   async get_node_data(user_id, canvas_id, id) {
     return this.canvasStore.get_node_data(user_id, canvas_id, id);
   }
@@ -316,5 +400,11 @@ class UserService {
       });
     }
     return retval;
+  }
+
+  async _resolve_filter_state_id(filter_state_ref) {
+    if (filter_state_ref.filter_state_id !== null) return filter_state_ref.filter_state_id;
+    const [filter_state] = await this.filterStateStore.create_filter_states([filter_state_ref.filter_state]);
+    return filter_state.id;
   }
 }
