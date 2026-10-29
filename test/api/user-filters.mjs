@@ -315,31 +315,18 @@ try {
   ok(trashed_update.res.status === 404,
     `a trashed filter state cannot be updated (got ${trashed_update.res.status})`);
 
-  const recreated = await postJson(FILTERS_PATH, {
-    label: `api-test recreated ${run_id}`,
+  const hidden_resave = await postJson(FILTERS_PATH, {
+    hidden: true,
     version: 1,
     state: { filters: [{ id: 'n/fda/4', value: '', negated: false }], run: run_id }
   });
-  ok(recreated.res.status === 200,
-    `recreate a trashed state responds 200 (got ${recreated.res.status})`);
-  ok(recreated.json.id !== preset_id,
-    'a trashed state can be created again under a new id');
-  const recreated_id = recreated.json.id;
-
-  const blocked_restore = await putJson(`${FILTERS_PATH}/restore`, [preset_id]);
-  ok(blocked_restore.res.status === 200,
-    `restore while an equal state is active responds 200 (got ${blocked_restore.res.status})`);
-  ok(isDeepStrictEqual(blocked_restore.json, []),
-    'restore while an equal state is active responds with no ids');
-
-  const blocked_get = await getJson(`${FILTERS_PATH}/${preset_id}`);
-  ok(blocked_get.res.status === 404,
-    'a trashed filter state stays trashed while an equal state is active');
-
-  await putJson(`${FILTERS_PATH}/trash`, [recreated_id]);
-  const double_restore = await putJson(`${FILTERS_PATH}/restore`, [preset_id, recreated_id]);
-  ok(double_restore.res.status === 400,
-    `restoring two equal trashed states -> 400 (got ${double_restore.res.status})`);
+  ok(hidden_resave.res.status === 200 && hidden_resave.json.id === preset_id,
+    `a hidden duplicate of a trashed state responds 200 with the trashed state (got ${hidden_resave.res.status})`);
+  ok(hidden_resave.json.time_deleted !== null && hidden_resave.json.hidden === false
+    && hidden_resave.json.label === 'renamed',
+    'a hidden duplicate leaves the trashed state trashed, visible and labeled');
+  ok((await getJson(`${FILTERS_PATH}/${preset_id}`)).res.status === 404,
+    'a trashed state stays trashed after a hidden duplicate');
 
   const restore = await putJson(`${FILTERS_PATH}/restore`, [preset_id]);
   ok(restore.res.status === 200,
@@ -350,6 +337,25 @@ try {
   const restored_get = await getJson(`${FILTERS_PATH}/${preset_id}`);
   ok(restored_get.res.status === 200 && restored_get.json.time_deleted === null,
     'a restored filter state is active again');
+
+  await putJson(`${FILTERS_PATH}/trash`, [preset_id]);
+  const resaved = await postJson(FILTERS_PATH, {
+    label: `api-test recreated ${run_id}`,
+    version: 1,
+    state: { filters: [{ id: 'n/fda/4', value: '', negated: false }], run: run_id }
+  });
+  ok(resaved.res.status === 200 && resaved.json.id === preset_id,
+    `recreate a trashed state responds 200 with the same id (got ${resaved.res.status})`);
+  ok(resaved.json.time_deleted === null && resaved.json.label === `api-test recreated ${run_id}`,
+    'recreating a trashed state restores it with the new label');
+  ok((await getJson(`${FILTERS_PATH}/${preset_id}`)).res.status === 200,
+    'a recreated state is found again');
+
+  const trash_unlabeled = await putJson(`${FILTERS_PATH}/trash`, [unlabeled.json.id]);
+  ok(trash_unlabeled.res.status === 200 && isDeepStrictEqual(trash_unlabeled.json, []),
+    'trash of an unlabeled filter state responds 200 with no ids');
+  ok((await getJson(`${FILTERS_PATH}/${unlabeled.json.id}`)).json.time_deleted === null,
+    'an unlabeled filter state stays active');
 
   await putJson(`${FILTERS_PATH}/trash`, [reversioned_id]);
   const restore_reversioned = await putJson(`${FILTERS_PATH}/restore`, [reversioned_id]);

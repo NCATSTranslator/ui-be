@@ -231,6 +231,12 @@
     "/api/v1/users/me/queries/{qid}/views/restore": {
       "$ref": "paths/user-query-views.json#/~1api~1v1~1users~1me~1queries~1{qid}~1views~1restore"
     },
+    "/api/v1/users/me/queries/{qid}/views/snapshot": {
+      "$ref": "paths/user-query-views.json#/~1api~1v1~1users~1me~1queries~1{qid}~1views~1snapshot"
+    },
+    "/api/v1/users/me/queries/{qid}/working-view": {
+      "$ref": "paths/user-working-view.json#/~1api~1v1~1users~1me~1queries~1{qid}~1working-view"
+    },
     "/demo/disease/{disease_id}": {
       "$ref": "paths/demo.json#/~1demo~1disease~1{disease_id}"
     },
@@ -425,6 +431,12 @@
       },
       "CreateQueryViewRequest": {
         "$ref": "schemas/query-view.json#/CreateQueryViewRequest"
+      },
+      "WorkingView": {
+        "$ref": "schemas/working-view.json#/WorkingView"
+      },
+      "SetWorkingViewRequest": {
+        "$ref": "schemas/working-view.json#/SetWorkingViewRequest"
       },
       "Annotation": {
         "$ref": "schemas/annotation.json#/Annotation"

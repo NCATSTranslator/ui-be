@@ -8,6 +8,7 @@ import { CanvasRequestError, CanvasConflictError } from "../models/Canvas.mjs";
 import { UserEntityRequestError } from "../models/UserEntity.mjs";
 import { FilterStateRequestError } from "../models/FilterState.mjs";
 import { QueryViewRequestError } from "../models/QueryView.mjs";
+import { WorkingViewRequestError } from "../models/WorkingView.mjs";
 import { ApiKeyLimitError, API_KEY_NAME_MAX_LEN, API_KEY_MAX_TTL_DAYS, api_key_expiry,
   parse_api_key_expiry } from '../models/ApiKey.mjs';
 
@@ -790,6 +791,45 @@ class UserAPIController {
       (user_id, query_pk, ids) => this.user_service.restore_query_views(user_id, query_pk, ids));
   }
 
+  async get_working_view(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const working_view = await this.user_service.get_working_view(user_id, req.qid);
+      if (working_view === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No working view found for qid ${req.qid}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(working_view);
+    } catch (err) {
+      return this._send_working_view_error(req, res, err);
+    }
+  }
+
+  async set_working_view(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const working_view = await this.user_service.set_working_view(user_id, req.qid, req.body);
+      if (working_view === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No query found for qid ${req.qid}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(working_view);
+    } catch (err) {
+      return this._send_working_view_error(req, res, err);
+    }
+  }
+
+  async snapshot_working_view(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    try {
+      const query_view = await this.user_service.snapshot_working_view(user_id, req.qid);
+      if (query_view === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No working view found for qid ${req.qid}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(query_view);
+    } catch (err) {
+      return this._send_query_view_error(req, res, err);
+    }
+  }
+
   async _get_user_entities(req, res, get_entities) {
     const user_id = wutil.request_to_user_id(req);
     const include_deleted = req.query.include_deleted === "true";
@@ -891,7 +931,15 @@ class UserAPIController {
   }
 
   _send_query_view_error(req, res, err) {
-    if (err instanceof QueryViewRequestError) {
+    if (err instanceof QueryViewRequestError || err instanceof FilterStateRequestError) {
+      return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+    }
+    wutil.log_internal_server_error(req, err);
+    return wutil.send_internal_server_error(res);
+  }
+
+  _send_working_view_error(req, res, err) {
+    if (err instanceof WorkingViewRequestError || err instanceof FilterStateRequestError) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
     }
     wutil.log_internal_server_error(req, err);

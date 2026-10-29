@@ -244,27 +244,32 @@ try {
   ok((await get_filter_state(user.id, preset.id)).label === "updated",
     "a trashed filter state is left unchanged");
 
-  const recreated = await create_filter_state(user.id, {
-    label: "recreated",
+  const trashed_before = await get_filter_state(user.id, preset.id);
+  const resaved_hidden = await create_filter_state(user.id, {
+    hidden: true,
     version: 1,
     state: { filters: [{ id: "n/fda/4", value: "", negated: false }], order: ["b", "a"] }
   });
-  ok(recreated.id !== preset.id,
-    "a trashed state can be created again as a new row");
-
-  const blocked_ids = await store.restore_filter_states(user.id, [preset.id]);
-  ok(blocked_ids.length === 0,
-    "restore returns nothing while an equal state is active");
-  ok((await get_filter_state(user.id, preset.id)).time_deleted !== null,
-    "a trashed filter state stays trashed while an equal state is active");
-
-  await store.trash_filter_states(user.id, [recreated.id]);
-  ok(await rejects_with(store.restore_filter_states(user.id, [preset.id, recreated.id]), FilterStateRequestError),
-    "restoring two trashed filter states with the same state is rejected");
+  ok(resaved_hidden.id === preset.id,
+    "a hidden duplicate of a trashed preset resolves to the trashed row");
+  ok(
+    isDeepStrictEqual(stored_fields(resaved_hidden), {
+      user_id: user.id,
+      label: "updated",
+      hidden: true,
+      version: 1,
+      state: { filters: [{ id: "n/fda/4", value: "", negated: false }], order: ["b", "a"] },
+      time_deleted: resaved_hidden.time_deleted
+    }) && resaved_hidden.time_deleted instanceof Date,
+    "a hidden duplicate leaves the trashed preset trashed with its fields intact"
+  );
+  ok(resaved_hidden.time_updated.getTime() === trashed_before.time_updated.getTime()
+    && !(await list_filter_states(user.id, false, true)).has(preset.id),
+    "a hidden duplicate does not restore or touch the trashed preset");
 
   const restored_ids = await store.restore_filter_states(user.id, [preset.id]);
   ok(isDeepStrictEqual(restored_ids, [preset.id]),
-    "a trashed filter state is restored once no equal state is active");
+    "a trashed filter state is restored");
   ok(
     isDeepStrictEqual(stored_fields(await get_filter_state(user.id, preset.id)), {
       user_id: user.id,
@@ -276,6 +281,34 @@ try {
     }),
     "a restored filter state is active again with its fields intact"
   );
+
+  await store.trash_filter_states(user.id, [preset.id]);
+  const resaved = await create_filter_state(user.id, {
+    label: "recreated",
+    version: 1,
+    state: { filters: [{ id: "n/fda/4", value: "", negated: false }], order: ["b", "a"] }
+  });
+  ok(resaved.id === preset.id,
+    "a visible duplicate of a trashed preset resolves to the trashed row");
+  ok(
+    isDeepStrictEqual(stored_fields(await get_filter_state(user.id, preset.id)), {
+      user_id: user.id,
+      label: "recreated",
+      hidden: false,
+      version: 1,
+      state: { filters: [{ id: "n/fda/4", value: "", negated: false }], order: ["b", "a"] },
+      time_deleted: null
+    }),
+    "a visible duplicate restores the trashed preset with the new label"
+  );
+
+  const unlabeled = await create_filter_state(user.id, { hidden: true, version: 1, state: ["unlabeled"] });
+  ok(isDeepStrictEqual(await store.trash_filter_states(user.id, [unlabeled.id, promoted.id]), [promoted.id]),
+    "trash skips filter states without a label");
+  ok((await get_filter_state(user.id, unlabeled.id)).time_deleted === null,
+    "an unlabeled filter state stays active");
+  ok(isDeepStrictEqual(await store.restore_filter_states(user.id, [promoted.id]), [promoted.id]),
+    "a labeled filter state is trashed and restored");
 
   await store.trash_filter_states(user.id, [scalar.id]);
   const restored_reversioned_ids = await store.restore_filter_states(user.id, [scalar.id]);

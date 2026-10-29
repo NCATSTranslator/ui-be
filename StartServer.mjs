@@ -85,13 +85,14 @@ const AUTH_SERVICE = (function (config) {
  * (ars_endpoint.host === "mock"): anywhere else we refuse to start so a real deployment can never
  * accidentally run with session auth turned off. */
 const IS_MOCK_CONFIG = SERVER_CONFIG.ars_endpoint.host === 'mock';
+let MOCK_USER = null;
 if (SERVER_CONFIG.auth_check === false) {
   if (!IS_MOCK_CONFIG) {
     throw new Error('Refusing to start: "auth_check" is false but this is not the mock '
       + 'configuration (ars_endpoint.host !== "mock"). Session auth may only be disabled under mock.');
   }
   const { bypassSessionAuth } = await import('./mock/auth.mjs');
-  await bypassSessionAuth(AUTH_SERVICE);
+  MOCK_USER = await bypassSessionAuth(AUTH_SERVICE);
 }
 
 // Bootstrap the user service
@@ -123,6 +124,10 @@ const QUERY_SERVICE = (function (config) {
   return new QueryService(new QueryStorePostgres(dbPool),
                           new ARSCallbackxQueryServiceAdapter());
 })(SERVER_CONFIG);
+if (MOCK_USER !== null) {
+  const { seed_mock_queries } = await import('./mock/seed.mjs');
+  await seed_mock_queries(TRANSLATOR_SERVICE.queryClient, QUERY_SERVICE, USER_SERVICE, MOCK_USER.id);
+}
 logger.info(SERVER_CONFIG, "Server configuration");
 
 httpserver.start_server(SERVER_CONFIG, {

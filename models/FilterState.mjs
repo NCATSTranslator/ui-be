@@ -1,6 +1,7 @@
 export {
   make_filter_state_from_req,
   make_filter_state_update_from_req,
+  make_filter_state_ref_from_req,
   FilterState,
   FilterStateRequestError,
   FILTER_STATE_MAX_BYTES
@@ -25,6 +26,23 @@ function make_filter_state_from_req(user_id, filter_state_req) {
     version: filter_state_req.version,
     state: filter_state_req.state
   });
+}
+
+function make_filter_state_ref_from_req(user_id, filter_state_ref_req) {
+  if (!cmn.is_object(filter_state_ref_req)) {
+    throw new FilterStateRequestError(`Request body is malformed: ${JSON.stringify(filter_state_ref_req)}`);
+  }
+  const fields = Object.keys(filter_state_ref_req);
+  if (fields.length === 1 && fields[0] === "filter_state_id") {
+    _validate_filter_state_id(filter_state_ref_req.filter_state_id);
+    return { filter_state_id: filter_state_ref_req.filter_state_id, filter_state: null };
+  }
+  if (fields.length > 0 && fields.every((field) => _REF_STATE_FIELDS.includes(field))) {
+    const filter_state = make_filter_state_from_req(user_id, { hidden: true, ...filter_state_ref_req });
+    return { filter_state_id: null, filter_state: filter_state };
+  }
+  throw new FilterStateRequestError(
+    `Request must have either filter_state_id or version and state. Got fields: ${fields.join(", ")}`);
 }
 
 function make_filter_state_update_from_req(filter_state_req) {
@@ -81,6 +99,7 @@ class FilterStateRequestError extends Error {
 }
 
 const _IMMUTABLE_FIELDS = Object.freeze(["version", "state"]);
+const _REF_STATE_FIELDS = Object.freeze(["version", "state"]);
 
 function _validate_req_object(filter_state_req, allowed_fields) {
   if (!cmn.is_object(filter_state_req)) {
@@ -122,5 +141,11 @@ function _validate_version(version) {
 function _validate_state(state) {
   if (state === undefined) {
     throw new FilterStateRequestError("State is required");
+  }
+}
+
+function _validate_filter_state_id(filter_state_id) {
+  if (!Number.isSafeInteger(filter_state_id) || filter_state_id < 1) {
+    throw new FilterStateRequestError(`Filter state id must be a positive integer: ${JSON.stringify(filter_state_id)}`);
   }
 }

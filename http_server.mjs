@@ -75,6 +75,7 @@ export function start_server(config, services) {
   app.use(pinoHttp({logger: logger, redact: config.logging.redact}));
   app.use(`${API_PATH_V1}/users/me/filters`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
   app.use(`${API_PATH_V1}/users/me/queries/:qid/views`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
+  app.use(`${API_PATH_V1}/users/me/queries/:qid/working-view`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
   app.use(express.json({
     limit: config.json_payload_limit,
     verify: (req, _res, buf, _encoding) => {req.rawBody = buf;}
@@ -268,6 +269,9 @@ export function start_server(config, services) {
   query_view_router.post('/:qid/views', user_api_controller.create_query_view.bind(user_api_controller));
   query_view_router.put('/:qid/views/trash', user_api_controller.trash_query_views.bind(user_api_controller));
   query_view_router.put('/:qid/views/restore', user_api_controller.restore_query_views.bind(user_api_controller));
+  query_view_router.get('/:qid/working-view', user_api_controller.get_working_view.bind(user_api_controller));
+  query_view_router.put('/:qid/working-view', user_api_controller.set_working_view.bind(user_api_controller));
+  query_view_router.post('/:qid/views/snapshot', user_api_controller.snapshot_working_view.bind(user_api_controller));
   app.use(`${API_PATH_V1}/users/me/queries`, query_view_router);
 
   app.all('/api{/*splat}', (req, res) => {

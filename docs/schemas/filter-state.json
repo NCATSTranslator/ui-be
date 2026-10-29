@@ -42,13 +42,13 @@
         "type": "string",
         "format": "date-time",
         "nullable": true,
-        "description": "When this Filter State was soft deleted, or null if active"
+        "description": "When this Filter State was trashed, or null if active. Only labeled Filter States can be trashed"
       }
     }
   },
   "CreateFilterStateRequest": {
     "type": "object",
-    "description": "A new Filter State. The request body is limited to 64 KiB. A User has at most one active Filter State per distinct version and state: creating one whose version and state already exist returns the existing Filter State, un-hiding and labeling it when it was hidden.",
+    "description": "A new Filter State. The request body is limited to 64 KiB. A User has at most one Filter State per distinct version and state, trashed or not: creating one whose version and state already exist returns the existing Filter State. A hidden request leaves the existing Filter State untouched. A visible request un-hides it, restores it if it was trashed, and sets the label when it was hidden or trashed.",
     "properties": {
       "label": {
         "type": "string",

@@ -6,7 +6,6 @@ import { FilterState, FilterStateRequestError } from "#model/FilterState.mjs";
 
 const _TABLE = "user_filter_state";
 const _CHECK_VIOLATION = "23514";
-const _UNIQUE_VIOLATION = "23505";
 
 const _COLUMN_TYPES = Object.freeze({
   id: SQL_TYPES.BIGINT,
@@ -48,10 +47,14 @@ class FilterStateStorePostgres {
     const res = await pgExec(this._db_pool, `
       INSERT INTO ${_TABLE} (${columns.join(", ")})
       VALUES ${params}
-      ON CONFLICT (user_id, version, state_hash) WHERE time_deleted IS NULL DO UPDATE
-      SET label = CASE WHEN ${_TABLE}.hidden THEN COALESCE(EXCLUDED.label, ${_TABLE}.label) ELSE ${_TABLE}.label END,
+      ON CONFLICT (user_id, version, state_hash) DO UPDATE
+      SET label = CASE
+            WHEN EXCLUDED.hidden THEN ${_TABLE}.label
+            WHEN ${_TABLE}.hidden OR ${_TABLE}.time_deleted IS NOT NULL THEN EXCLUDED.label
+            ELSE ${_TABLE}.label END,
           hidden = ${_TABLE}.hidden AND EXCLUDED.hidden,
-          time_updated = CURRENT_TIMESTAMP
+          time_deleted = CASE WHEN EXCLUDED.hidden THEN ${_TABLE}.time_deleted ELSE NULL END,
+          time_updated = CASE WHEN EXCLUDED.hidden THEN ${_TABLE}.time_updated ELSE CURRENT_TIMESTAMP END
       RETURNING *`, args);
     return res.rows;
   }
@@ -100,24 +103,11 @@ class FilterStateStorePostgres {
     if (ids.length === 0) return [];
     const sql_time_deleted = deleted ? "CURRENT_TIMESTAMP" : "NULL";
     const sql_current_state = deleted ? "time_deleted IS NULL" : "time_deleted IS NOT NULL";
-    const sql_no_active_duplicate = deleted ? "" : ` AND NOT EXISTS (
-        SELECT 1 FROM ${_TABLE} active
-        WHERE active.user_id = ${_TABLE}.user_id
-          AND active.version = ${_TABLE}.version
-          AND active.state_hash = ${_TABLE}.state_hash
-          AND active.time_deleted IS NULL)`;
-    try {
-      const res = await pgExec(this._db_pool, `
-        UPDATE ${_TABLE}
-        SET time_deleted = ${sql_time_deleted}, time_updated = CURRENT_TIMESTAMP
-        WHERE id = ANY($1::bigint[]) AND user_id = $2 AND ${sql_current_state}${sql_no_active_duplicate}
-        RETURNING id`, [ids, user_id]);
-      return res.rows.map((row) => row.id);
-    } catch (err) {
-      if (err.code === _UNIQUE_VIOLATION) {
-        throw new FilterStateRequestError("Filter states with the same version and state cannot both be restored");
-      }
-      throw err;
-    }
+    const res = await pgExec(this._db_pool, `
+      UPDATE ${_TABLE}
+      SET time_deleted = ${sql_time_deleted}, time_updated = CURRENT_TIMESTAMP
+      WHERE id = ANY($1::bigint[]) AND user_id = $2 AND label IS NOT NULL AND ${sql_current_state}
+      RETURNING id`, [ids, user_id]);
+    return res.rows.map((row) => row.id);
   }
 }

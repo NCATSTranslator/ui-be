@@ -6,7 +6,8 @@ import { FilterStateRequestError } from "#model/FilterState.mjs";
 const suite = {
   tests: {
     make_filter_state_from_req: _test_make_filter_state_from_req(),
-    make_filter_state_update_from_req: _test_make_filter_state_update_from_req()
+    make_filter_state_update_from_req: _test_make_filter_state_update_from_req(),
+    make_filter_state_ref_from_req: _test_make_filter_state_ref_from_req()
   },
   skip: {
     FilterState: true,
@@ -172,6 +173,105 @@ function _test_make_filter_state_update_from_req() {
     },
     "non_boolean_hidden_throws": {
       "args": [{ hidden: 1 }],
+      "expected": FilterStateRequestError
+    }
+  });
+}
+
+function _test_make_filter_state_ref_from_req() {
+  return test.make_function_test({
+    "existing_filter_state": {
+      "args": ["user-1", { filter_state_id: 7 }],
+      "expected": { filter_state_id: 7, filter_state: null }
+    },
+    "new_filter_state_is_hidden": {
+      "args": ["user-1", { version: 1, state: [{ id: "n/fda/4", value: "", negated: false }] }],
+      "expected": {
+        filter_state_id: null,
+        filter_state: {
+          id: null,
+          user_id: "user-1",
+          label: null,
+          hidden: true,
+          version: 1,
+          state: [{ id: "n/fda/4", value: "", negated: false }],
+          time_created: "*",
+          time_updated: "*",
+          time_deleted: null
+        }
+      }
+    },
+    "null_state": {
+      "args": ["user-1", { version: 0, state: null }],
+      "expected": {
+        filter_state_id: null,
+        filter_state: {
+          id: null,
+          user_id: "user-1",
+          label: null,
+          hidden: true,
+          version: 0,
+          state: null,
+          time_created: "*",
+          time_updated: "*",
+          time_deleted: null
+        }
+      }
+    },
+    "missing_throws": {
+      "args": ["user-1", undefined],
+      "expected": FilterStateRequestError
+    },
+    "array_body_throws": {
+      "args": ["user-1", [{ filter_state_id: 7 }]],
+      "expected": FilterStateRequestError
+    },
+    "empty_throws": {
+      "args": ["user-1", {}],
+      "expected": FilterStateRequestError
+    },
+    "string_filter_state_id_throws": {
+      "args": ["user-1", { filter_state_id: "7" }],
+      "expected": FilterStateRequestError
+    },
+    "zero_filter_state_id_throws": {
+      "args": ["user-1", { filter_state_id: 0 }],
+      "expected": FilterStateRequestError
+    },
+    "float_filter_state_id_throws": {
+      "args": ["user-1", { filter_state_id: 1.5 }],
+      "expected": FilterStateRequestError
+    },
+    "unsafe_filter_state_id_throws": {
+      "args": ["user-1", { filter_state_id: 9007199254740993 }],
+      "expected": FilterStateRequestError
+    },
+    "filter_state_id_with_state_throws": {
+      "args": ["user-1", { filter_state_id: 7, version: 1, state: {} }],
+      "expected": FilterStateRequestError
+    },
+    "missing_version_throws": {
+      "args": ["user-1", { state: {} }],
+      "expected": FilterStateRequestError
+    },
+    "missing_state_throws": {
+      "args": ["user-1", { version: 1 }],
+      "expected": FilterStateRequestError
+    },
+    "negative_version_throws": {
+      "args": ["user-1", { version: -1, state: {} }],
+      "expected": FilterStateRequestError
+    },
+    "label_throws": {
+      "args": ["user-1", { label: "L", version: 1, state: {} }],
+      "expected": FilterStateRequestError
+    },
+    "hidden_throws": {
+      "args": ["user-1", { hidden: false, version: 1, state: {} }],
+      "expected": FilterStateRequestError
+    },
+    "unknown_field_throws": {
+      "args": ["user-1", { version: 1, state: {}, user_id: "someone-else" }],
       "expected": FilterStateRequestError
     }
   });

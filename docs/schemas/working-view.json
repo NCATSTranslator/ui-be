@@ -1,0 +1,68 @@
+{
+  "WorkingView": {
+    "type": "object",
+    "description": "The filters a User is currently viewing a Query with. One per User and Query, replaced as the filters change. It holds its own version and state and references no Filter State. Snapshot it to get an immutable Query View with an ID.",
+    "properties": {
+      "user_id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The ID of the User this state belongs to"
+      },
+      "pk": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The PK of the Query this state applies to"
+      },
+      "version": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The client defined version of the state format"
+      },
+      "state": {
+        "description": "Opaque client defined filter state. Any JSON value"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time the working view changed"
+      }
+    }
+  },
+  "SetWorkingViewRequest": {
+    "description": "The filters the working view now has, given either the ID of a Filter State owned by the User, whose version and state are copied, or a version and state. No Filter State is created or changed. The request body is limited to 64 KiB.",
+    "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "filter_state_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The ID of a Filter State owned by the current User, trashed or not, whose version and state are copied"
+          }
+        },
+        "required": [
+          "filter_state_id"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The client defined version of the state format"
+          },
+          "state": {
+            "description": "Opaque client defined filter state. Any JSON value"
+          }
+        },
+        "required": [
+          "version",
+          "state"
+        ],
+        "additionalProperties": false
+      }
+    ]
+  }
+}
