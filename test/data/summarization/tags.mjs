@@ -18,6 +18,8 @@ const suite = {
     make_node_type_tag: _test_make_node_type_tag(),
     make_ara_tag: _test_make_ara_tag(),
     make_path_length_tag: _test_make_path_length_tag(),
+    make_node_query_tag: _test_make_node_query_tag(),
+    make_edge_query_tag: _test_make_edge_query_tag(),
     promote_edge_tags_to_path: _test_promote_edge_tags_to_path(),
     promote_start_node_tags_to_path: _test_promote_start_node_tags_to_path(),
     promote_internal_node_tags_to_path: _test_promote_internal_node_tags_to_path(),
@@ -219,6 +221,24 @@ function _test_make_path_length_tag() {
     zero: {
       args: [0],
       expected: new taglib.Tag({id: 'p/pt/0', name: '0 Connections'})
+    }
+  });
+}
+
+function _test_make_node_query_tag() {
+  return test.make_function_test({
+    uuid_pk: {
+      args: ['3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c'],
+      expected: new taglib.Tag({id: 'n/q/3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c', name: '3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c'})
+    }
+  });
+}
+
+function _test_make_edge_query_tag() {
+  return test.make_function_test({
+    uuid_pk: {
+      args: ['3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c'],
+      expected: new taglib.Tag({id: 'e/q/3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c', name: '3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c'})
     }
   });
 }
