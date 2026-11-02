@@ -13,6 +13,8 @@ const suite = {
     is_result_tag: _test_is_result_tag(),
     is_external_tag: _test_is_external_tag(),
     is_fda_tag: _test_is_fda_tag(),
+    is_query_tag: _test_is_query_tag(),
+    query_tag_to_pk: _test_query_tag_to_pk(),
     make_predicate_tag: _test_make_predicate_tag(),
     make_tdl_tag: _test_make_tdl_tag(),
     make_node_type_tag: _test_make_node_type_tag(),
@@ -153,6 +155,32 @@ function _test_is_fda_tag() {
     result_chemical_class: {
       args: [tags.TAGS.RESULT.CHEMICAL_CLASS.DRUG],
       expected: false
+    }
+  });
+}
+
+function _test_is_query_tag() {
+  return test.make_function_test({
+    node_query: {
+      args: [new taglib.Tag({id: 'n/q/3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c', name: '3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c'})],
+      expected: true
+    },
+    edge_query: {
+      args: [new taglib.Tag({id: 'e/q/3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c', name: '3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c'})],
+      expected: true
+    },
+    node_fda: {
+      args: [tags.TAGS.NODE.FDA.APPROVED],
+      expected: false
+    }
+  });
+}
+
+function _test_query_tag_to_pk() {
+  return test.make_function_test({
+    uuid_pk: {
+      args: [new taglib.Tag({id: 'n/q/3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c', name: '3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c'})],
+      expected: '3f2a9c1e-5b7d-4e8a-9c0b-1d2e3f4a5b6c'
     }
   });
 }

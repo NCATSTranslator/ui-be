@@ -106,7 +106,8 @@ const USER_SERVICE = (function (config) {
     new CanvasStorePostgres(dbPool),
     new ApiKeyStorePostgres(dbPool),
     new UserEntityStorePostgres(dbPool),
-    config.secrets.hmac.key
+    config.secrets.hmac.key,
+    TRANSLATOR_SERVICE
   );
 })(SERVER_CONFIG);
 
