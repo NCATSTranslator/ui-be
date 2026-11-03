@@ -18,6 +18,7 @@ import { LoginController } from './controllers/LoginController.mjs';
 import { SessionController } from './controllers/SessionController.mjs';
 import { UserAPIController } from './controllers/UserAPIController.mjs';
 import { BiolinkAPIController } from './controllers/BiolinkAPIController.mjs';
+import { FILTER_STATE_MAX_BYTES } from './models/FilterState.mjs';
 
 // Adapters
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
@@ -72,6 +73,9 @@ export function start_server(config, services) {
   const API_PATH_V1 = '/api/v1';
   const SITE_PATH_PREFIX = '';
   app.use(pinoHttp({logger: logger, redact: config.logging.redact}));
+  app.use(`${API_PATH_V1}/users/me/filters`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
+  app.use(`${API_PATH_V1}/users/me/queries/:qid/views`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
+  app.use(`${API_PATH_V1}/users/me/queries/:qid/working-view`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
   app.use(express.json({
     limit: config.json_payload_limit,
     verify: (req, _res, buf, _encoding) => {req.rawBody = buf;}
@@ -146,6 +150,14 @@ export function start_server(config, services) {
     query_api_controller.get_query_result.bind(query_api_controller));
   // Query callback route: behind hmac
   app.post(`${API_PATH_V1}/query/update`, query_api_controller.update_query.bind(query_api_controller));
+  // Query view share route: unprivileged session
+  const query_view_share_router = express.Router();
+  query_view_share_router.param('qid', wutil.parse_uuid_param('qid'));
+  query_view_share_router.param('id', wutil.parse_int_param('view_id'));
+  query_view_share_router.get('/:qid/views/:id',
+    session_controller.authenticateUnprivilegedRequest.bind(session_controller),
+    query_api_controller.get_query_view.bind(query_api_controller));
+  app.use(`${API_PATH_V1}/query`, query_view_share_router);
 
   // User routes: privileged
   app.use(`${API_PATH_V1}/users`, session_controller.authenticatePrivilegedRequest.bind(session_controller));
@@ -153,10 +165,13 @@ export function start_server(config, services) {
 
   /* API keys: privileged AND session-only. requireSessionAuth keeps a bearer of one key from
    * minting more or revoking the others; managing keys always requires a logged-in session. */
-  app.use(`${API_PATH_V1}/users/me/api-keys`, session_controller.requireSessionAuth.bind(session_controller));
-  app.get(`${API_PATH_V1}/users/me/api-keys`, user_api_controller.get_user_api_keys.bind(user_api_controller));
-  app.post(`${API_PATH_V1}/users/me/api-keys`, user_api_controller.create_user_api_key.bind(user_api_controller));
-  app.delete(`${API_PATH_V1}/users/me/api-keys/:key_id`, user_api_controller.revoke_user_api_key.bind(user_api_controller));
+  const api_key_router = express.Router();
+  api_key_router.use(session_controller.requireSessionAuth.bind(session_controller));
+  api_key_router.param('key_id', wutil.parse_uuid_param('key_id'));
+  api_key_router.get('/', user_api_controller.get_user_api_keys.bind(user_api_controller));
+  api_key_router.post('/', user_api_controller.create_user_api_key.bind(user_api_controller));
+  api_key_router.delete('/:key_id', user_api_controller.revoke_user_api_key.bind(user_api_controller));
+  app.use(`${API_PATH_V1}/users/me/api-keys`, api_key_router);
 
   app.get(`${API_PATH_V1}/users/me/preferences`, user_api_controller.get_user_prefs.bind(user_api_controller));
   app.post(`${API_PATH_V1}/users/me/preferences`, user_api_controller.update_user_prefs.bind(user_api_controller));
@@ -197,9 +212,9 @@ export function start_server(config, services) {
 
   // User canvas
   const canvas_router = express.Router();
-  canvas_router.param('canvas_id', user_api_controller.parse_canvas_id.bind(user_api_controller));
-  canvas_router.param('id', user_api_controller.parse_canvas_entity_id.bind(user_api_controller));
-  canvas_router.param('annotation_id', user_api_controller.parse_canvas_annotation_id.bind(user_api_controller));
+  canvas_router.param('canvas_id', wutil.parse_int_param('canvas_id'));
+  canvas_router.param('id', wutil.parse_int_param('entity_id'));
+  canvas_router.param('annotation_id', wutil.parse_int_param('annotation_id'));
   canvas_router.get('/', user_api_controller.get_user_canvases.bind(user_api_controller));
   canvas_router.post('/', user_api_controller.create_user_canvas.bind(user_api_controller));
   canvas_router.put('/trash', user_api_controller.trash_user_canvases.bind(user_api_controller));
@@ -219,7 +234,7 @@ export function start_server(config, services) {
   app.use(`${API_PATH_V1}/users/me/canvas`, canvas_router);
 
   const user_node_router = express.Router();
-  user_node_router.param('id', user_api_controller.parse_user_entity_id.bind(user_api_controller));
+  user_node_router.param('id', wutil.parse_int_param('entity_id'));
   user_node_router.get('/', user_api_controller.get_user_nodes.bind(user_api_controller));
   user_node_router.post('/', user_api_controller.create_user_node.bind(user_api_controller));
   user_node_router.put('/trash', user_api_controller.trash_user_nodes.bind(user_api_controller));
@@ -229,7 +244,7 @@ export function start_server(config, services) {
   app.use(`${API_PATH_V1}/users/me/nodes`, user_node_router);
 
   const user_edge_router = express.Router();
-  user_edge_router.param('id', user_api_controller.parse_user_entity_id.bind(user_api_controller));
+  user_edge_router.param('id', wutil.parse_int_param('entity_id'));
   user_edge_router.get('/', user_api_controller.get_user_edges.bind(user_api_controller));
   user_edge_router.post('/', user_api_controller.create_user_edge.bind(user_api_controller));
   user_edge_router.put('/trash', user_api_controller.trash_user_edges.bind(user_api_controller));
@@ -237,6 +252,27 @@ export function start_server(config, services) {
   user_edge_router.get('/:id', user_api_controller.get_user_edge.bind(user_api_controller));
   user_edge_router.put('/:id', user_api_controller.update_user_edge.bind(user_api_controller));
   app.use(`${API_PATH_V1}/users/me/edges`, user_edge_router);
+
+  const filter_state_router = express.Router();
+  filter_state_router.param('id', wutil.parse_int_param('filter_state_id'));
+  filter_state_router.get('/', user_api_controller.get_filter_states.bind(user_api_controller));
+  filter_state_router.post('/', user_api_controller.create_filter_state.bind(user_api_controller));
+  filter_state_router.put('/trash', user_api_controller.trash_filter_states.bind(user_api_controller));
+  filter_state_router.put('/restore', user_api_controller.restore_filter_states.bind(user_api_controller));
+  filter_state_router.get('/:id', user_api_controller.get_filter_state.bind(user_api_controller));
+  filter_state_router.put('/:id', user_api_controller.update_filter_state.bind(user_api_controller));
+  app.use(`${API_PATH_V1}/users/me/filters`, filter_state_router);
+
+  const query_view_router = express.Router();
+  query_view_router.param('qid', wutil.parse_uuid_param('qid'));
+  query_view_router.get('/:qid/views', user_api_controller.get_query_views.bind(user_api_controller));
+  query_view_router.post('/:qid/views', user_api_controller.create_query_view.bind(user_api_controller));
+  query_view_router.put('/:qid/views/trash', user_api_controller.trash_query_views.bind(user_api_controller));
+  query_view_router.put('/:qid/views/restore', user_api_controller.restore_query_views.bind(user_api_controller));
+  query_view_router.get('/:qid/working-view', user_api_controller.get_working_view.bind(user_api_controller));
+  query_view_router.put('/:qid/working-view', user_api_controller.set_working_view.bind(user_api_controller));
+  query_view_router.post('/:qid/views/snapshot', user_api_controller.snapshot_working_view.bind(user_api_controller));
+  app.use(`${API_PATH_V1}/users/me/queries`, query_view_router);
 
   app.all('/api{/*splat}', (req, res) => {
     return res.status(403).send('API action Forbidden');

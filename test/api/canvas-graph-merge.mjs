@@ -2,8 +2,9 @@
  *
  * Merge folds a submitted graph into an existing canvas as a union: new nodes/edges are added, the
  * underlying shared data is refreshed, and (not exercisable via the API yet) soft-deleted entities
- * are undeleted. Entities already on the canvas keep their display fields (x/y/hidden/label/tags) -
- * merge never moves what is already there; positioning is handled elsewhere. Crucially, a submitted
+ * are undeleted. Entities already on the canvas keep their display fields (x/y/hidden/label) and
+ * gain any tag ids the submission carries; merge never moves what is already there - positioning is
+ * handled elsewhere. Crucially, a submitted
  * edge may connect to a node already on the canvas (not just nodes in the same submission). The
  * endpoint returns the resulting CanvasGraph.
  *
@@ -259,6 +260,69 @@ try {
   ok(byRef(reviveMerge.json.edges, rAB), 'revive: cascaded edge A->B is re-added by the merge');
   ok(reviveMerge.json.nodes.length === 2 && reviveMerge.json.edges.length === 1,
     `revive: the canvas is whole again (got ${reviveMerge.json.nodes.length} nodes, ${reviveMerge.json.edges.length} edges)`);
+
+  // A canvas entity retains the query tag of every submission it came from. Re-merging an entity that
+  // is active on the canvas, or reviving a trashed one, unions its tag ids with the submission's. B is
+  // never re-submitted, so it must keep only its original query tag.
+  const qs = Date.now();
+  const qA = `API_TEST:query-A-${qs}`;
+  const qB = `API_TEST:query-B-${qs}`;
+  const qAB = `${qA}->${qB}`;
+  const queryCreate = await postCanvas({
+    label: `api-test merge query tags ${qs}`, layout: 'horizontal',
+    graph: {
+      nodes: [
+        signNode(qA, testNode(qA, 'Query A', 'biolink:Disease', 1, 2,
+          { tags: { 'n/q/API_TEST_Q1': tagObject('n/q/API_TEST_Q1', 'API_TEST_Q1') } })),
+        signNode(qB, testNode(qB, 'Query B', 'biolink:ChemicalEntity', 3, 4,
+          { tags: { 'n/q/API_TEST_Q1': tagObject('n/q/API_TEST_Q1', 'API_TEST_Q1') } })),
+      ],
+      edges: [signEdge(qAB, testEdge(qA, qB, 'biolink:treats',
+        { tags: { 'e/q/API_TEST_Q1': tagObject('e/q/API_TEST_Q1', 'API_TEST_Q1') } }))],
+      tag_descriptions: {}, source,
+    },
+  });
+  ok(queryCreate.res.status === 200, `query tags: create responds 200 (got ${queryCreate.res.status})`);
+  const queryId = queryCreate.json && queryCreate.json.id;
+
+  const secondQuery = await postJson(`${CANVAS_PATH}/${queryId}/graph`, {
+    nodes: [signNode(qA, testNode(qA, 'Query A', 'biolink:Disease', 1, 2,
+      { tags: { 'n/q/API_TEST_Q2': tagObject('n/q/API_TEST_Q2', 'API_TEST_Q2') } }))],
+    edges: [signEdge(qAB, testEdge(qA, qB, 'biolink:treats',
+      { tags: { 'e/q/API_TEST_Q2': tagObject('e/q/API_TEST_Q2', 'API_TEST_Q2') } }))],
+    tag_descriptions: {}, source,
+  });
+  ok(secondQuery.res.status === 200, `query tags: merge from a second query responds 200 (got ${secondQuery.res.status})`);
+  const afterSecond = await getJson(`${CANVAS_PATH}/${queryId}/graph`);
+  const activeA = byRef(afterSecond.json && afterSecond.json.nodes, qA);
+  const activeB = byRef(afterSecond.json && afterSecond.json.nodes, qB);
+  const activeAB = byRef(afterSecond.json && afterSecond.json.edges, qAB);
+  ok(activeA && sameTagIds(activeA.tags, { 'n/q/API_TEST_Q1': null, 'n/q/API_TEST_Q2': null }),
+    'query tags: an active node gains the second query tag and keeps the first');
+  ok(activeB && sameTagIds(activeB.tags, { 'n/q/API_TEST_Q1': null }),
+    'query tags: a node not re-submitted keeps only its original query tag');
+  ok(activeAB && sameTagIds(activeAB.tags, { 'e/q/API_TEST_Q1': null, 'e/q/API_TEST_Q2': null }),
+    'query tags: an active edge gains the second query tag and keeps the first');
+
+  await putJson(`${CANVAS_PATH}/${queryId}/graph/trash`, { nodes: [activeA && activeA.id] });
+  const thirdQuery = await postJson(`${CANVAS_PATH}/${queryId}/graph`, {
+    nodes: [signNode(qA, testNode(qA, 'Query A', 'biolink:Disease', 1, 2,
+      { tags: { 'n/q/API_TEST_Q3': tagObject('n/q/API_TEST_Q3', 'API_TEST_Q3') } }))],
+    edges: [signEdge(qAB, testEdge(qA, qB, 'biolink:treats',
+      { tags: { 'e/q/API_TEST_Q3': tagObject('e/q/API_TEST_Q3', 'API_TEST_Q3') } }))],
+    tag_descriptions: {}, source,
+  });
+  ok(thirdQuery.res.status === 200, `query tags: merge reviving a trashed node responds 200 (got ${thirdQuery.res.status})`);
+  const afterThird = await getJson(`${CANVAS_PATH}/${queryId}/graph`);
+  const revivedA = byRef(afterThird.json && afterThird.json.nodes, qA);
+  const revivedB = byRef(afterThird.json && afterThird.json.nodes, qB);
+  const revivedAB = byRef(afterThird.json && afterThird.json.edges, qAB);
+  ok(revivedA && sameTagIds(revivedA.tags, { 'n/q/API_TEST_Q1': null, 'n/q/API_TEST_Q2': null, 'n/q/API_TEST_Q3': null }),
+    'query tags: a revived node keeps every earlier query tag and gains the new one');
+  ok(revivedAB && sameTagIds(revivedAB.tags, { 'e/q/API_TEST_Q1': null, 'e/q/API_TEST_Q2': null, 'e/q/API_TEST_Q3': null }),
+    'query tags: a revived edge keeps every earlier query tag and gains the new one');
+  ok(revivedB && sameTagIds(revivedB.tags, { 'n/q/API_TEST_Q1': null }),
+    'query tags: the untouched node still carries only its original query tag');
 
   // Merging into a trashed (soft-deleted, but still existing) canvas is a 404, distinct from the
   // unknown-canvas 404 above.
