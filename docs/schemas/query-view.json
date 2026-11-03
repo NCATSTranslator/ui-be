@@ -1,0 +1,73 @@
+{
+  "QueryView": {
+    "type": "object",
+    "description": "A snapshot of a Filter State applied to a Query by a User. Immutable: changing the filters creates a new Query View.",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this Query View"
+      },
+      "user_id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The ID of the User that owns this Query View"
+      },
+      "pk": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The PK of the Query this Query View applies to"
+      },
+      "filter_state": {
+        "$ref": "filter-state.json#/FilterState"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this Query View was created"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this Query View was created again or trashed or restored"
+      },
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this Query View was soft deleted, or null if active"
+      }
+    }
+  },
+  "CreateQueryViewRequest": {
+    "description": "A new Query View, given either the ID of an existing Filter State owned by the User, or a version and state that is saved as a hidden Filter State (or resolves to the existing Filter State with the same version and state). The request body is limited to 64 KiB. A User has at most one active Query View per Query and Filter State: creating one that already exists returns the existing Query View with its time_updated bumped.",
+    "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "filter_state_id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The ID of a Filter State owned by the current User"
+          }
+        },
+        "required": ["filter_state_id"],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The client defined version of the state format"
+          },
+          "state": {
+            "description": "Opaque client defined filter state. Any JSON value"
+          }
+        },
+        "required": ["version", "state"],
+        "additionalProperties": false
+      }
+    ]
+  }
+}

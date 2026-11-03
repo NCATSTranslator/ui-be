@@ -50,6 +50,19 @@ class QueryAPIController {
     }
   }
 
+  async get_query_view(req, res, _next) {
+    try {
+      const query_view = await this.user_service.get_query_view(req.qid, req.view_id);
+      if (query_view === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No query view found for id ${req.view_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(query_view);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res, err);
+    }
+  }
+
   async update_query(req, res, _next) {
     const req_verification = this._is_valid_query_update_request(req);
     if (!req_verification.valid) {

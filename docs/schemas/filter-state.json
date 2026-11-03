@@ -1,0 +1,90 @@
+{
+  "FilterState": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "description": "The ID of this Filter State"
+      },
+      "user_id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The ID of the User that owns this Filter State"
+      },
+      "label": {
+        "type": "string",
+        "nullable": true,
+        "description": "The user friendly label for this Filter State. Always present when the Filter State is visible"
+      },
+      "hidden": {
+        "type": "boolean",
+        "description": "When true this Filter State is not listed as a preset but can still be referenced"
+      },
+      "version": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The client defined version of the state format"
+      },
+      "state": {
+        "description": "Opaque client defined filter state. Any JSON value. Immutable once created"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this Filter State was created"
+      },
+      "time_updated": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The last time this Filter State was edited"
+      },
+      "time_deleted": {
+        "type": "string",
+        "format": "date-time",
+        "nullable": true,
+        "description": "When this Filter State was trashed, or null if active. Only labeled Filter States can be trashed"
+      }
+    }
+  },
+  "CreateFilterStateRequest": {
+    "type": "object",
+    "description": "A new Filter State. The request body is limited to 64 KiB. A User has at most one Filter State per distinct version and state, trashed or not: creating one whose version and state already exist returns the existing Filter State. A hidden request leaves the existing Filter State untouched. A visible request un-hides it, restores it if it was trashed, and sets the label when it was hidden or trashed.",
+    "properties": {
+      "label": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The label for the Filter State. Required unless hidden is true"
+      },
+      "hidden": {
+        "type": "boolean",
+        "default": false,
+        "description": "When true the Filter State is not listed as a preset"
+      },
+      "version": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The client defined version of the state format"
+      },
+      "state": {
+        "description": "Opaque client defined filter state. Any JSON value"
+      }
+    },
+    "required": ["version", "state"]
+  },
+  "UpdateFilterStateRequest": {
+    "type": "object",
+    "description": "A partial update of a Filter State; only the fields present are changed. The version and state are immutable.",
+    "properties": {
+      "label": {
+        "type": "string",
+        "minLength": 1,
+        "description": "A new label"
+      },
+      "hidden": {
+        "type": "boolean",
+        "description": "Whether the Filter State is listed as a preset. A Filter State without a label cannot be made visible"
+      }
+    },
+    "minProperties": 1
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "/api/v1/users/me/queries/{qid}/working-view": {
+    "get": {
+      "summary": "Get the working view of a Query for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "qid",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The Query PK"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The working view",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/working-view.json#/WorkingView"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The qid is not a UUID"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "404": {
+          "description": "The current User has no working view of the Query, or the Query is unknown or not owned by the current User"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "put": {
+      "summary": "Set the working view of a Query for the current User",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "qid",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The Query PK"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/working-view.json#/SetWorkingViewRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The working view as now set",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/working-view.json#/WorkingView"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The qid is not a UUID, the request is malformed, or no Filter State with the given filter_state_id is owned by the current User"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "404": {
+          "description": "No Query with the given qid is owned by the current User"
+        },
+        "413": {
+          "description": "The request body exceeds 64 KiB"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  }
+}
