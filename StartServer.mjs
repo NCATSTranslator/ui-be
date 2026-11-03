@@ -111,7 +111,8 @@ const USER_SERVICE = (function (config) {
     new UserEntityStorePostgres(dbPool),
     new FilterStateStorePostgres(dbPool),
     new QueryViewStorePostgres(dbPool),
-    config.secrets.hmac.key
+    config.secrets.hmac.key,
+    TRANSLATOR_SERVICE
   );
 })(SERVER_CONFIG);
 

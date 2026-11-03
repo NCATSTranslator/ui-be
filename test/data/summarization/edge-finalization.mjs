@@ -49,7 +49,8 @@ function _test_finalize_edges() {
             "qualifiers": false
           })
         },
-        {}
+        {},
+        "q1"
       ],
       "expected": {
         "edges": {
@@ -80,6 +81,7 @@ function _test_finalize_edges() {
               "e/ev/publications": { "id": "e/ev/publications", "description": { "name": "Publications", "description": "" } },
               "e/ev/clinical": { "id": "e/ev/clinical", "description": { "name": "Clinical Trials", "description": "" } },
               "e/ev/other": { "id": "e/ev/other", "description": { "name": "Other", "description": "" } },
+              "e/q/q1": { "id": "e/q/q1", "description": { "name": "q1", "description": "" } },
               "e/pred/treats": { "id": "e/pred/treats", "description": { "name": "treats", "description": "" } }
             }
           }
@@ -130,7 +132,8 @@ function _test_finalize_edges() {
             "tags": {}
           })
         },
-        { "infores:ara1": ["rule failed"] }
+        { "infores:ara1": ["rule failed"] },
+        "q1"
       ],
       "expected": {
         "edges": {},
@@ -165,7 +168,8 @@ function _test_finalize_edges() {
             "qualifiers": false
           })
         },
-        {}
+        {},
+        "q1"
       ],
       "expected": {
         "edges": {},

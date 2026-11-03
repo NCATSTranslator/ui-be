@@ -1,5 +1,6 @@
 'use strict';
 export { UserService };
+import { logger } from '../lib/logger.mjs';
 import { UserPreference } from '../models/UserPreference.mjs';
 import { UserSavedData, UserQueryData, SAVE_TYPE } from '../models/UserSavedData.mjs';
 import {
@@ -48,7 +49,8 @@ class UserService {
       userEntityStore,
       filterStateStore,
       queryViewStore,
-      entitySigningSecret = null) {
+      entitySigningSecret = null,
+      translatorService = null) {
     this.userStore = userStore;
     this.preferenceStore = userPreferenceStore;
     this.savedDataStore = userSavedDataStore;
@@ -58,6 +60,7 @@ class UserService {
     this.userEntityStore = userEntityStore;
     this.filterStateStore = filterStateStore;
     this.queryViewStore = queryViewStore;
+    this.translatorService = translatorService;
   }
 
   async getUserById(uid) {
@@ -166,6 +169,7 @@ class UserService {
     const { graph, tag_descriptions } = make_graph_merge_from_req(graph_req, this.entitySigningSecret);
     const merged = await this.canvasStore.merge_canvas_graph(user_id, canvas_id, graph, tag_descriptions);
     if (merged === null) return null;
+    await this._retain_graph_queries(graph);
     return new CanvasGraph(merged);
   }
 
@@ -365,6 +369,7 @@ class UserService {
     const graph = Graph.from_req(canvas_req, this.entitySigningSecret);
     const canvas = await this.canvasStore.create_user_canvas(user_canvas, graph);
     user_canvas.populate_from_raw(canvas);
+    await this._retain_graph_queries(graph);
     return user_canvas;
   }
 
@@ -406,5 +411,16 @@ class UserService {
     if (filter_state_ref.filter_state_id !== null) return filter_state_ref.filter_state_id;
     const [filter_state] = await this.filterStateStore.create_filter_states([filter_state_ref.filter_state]);
     return filter_state.id;
+  }
+
+  async _retain_graph_queries(graph) {
+    if (this.translatorService === null) return;
+    await Promise.all(graph.query_pks().map(async (pk) => {
+      try {
+        await this.translatorService.retainQuery(pk);
+      } catch (err) {
+        logger.warn(`Failed to retain query ${pk} for canvas: ${err.message}`);
+      }
+    }));
   }
 }
