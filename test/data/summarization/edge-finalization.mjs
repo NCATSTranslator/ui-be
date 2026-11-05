@@ -46,7 +46,7 @@ function _test_finalize_edges() {
           }), {
             "supporting_text": { "PMID:1": { "text": "t", "subject": [1, 2], "object": [3, 4] } },
             "supporting_trials": { "NCT01": { "phase": 2 } },
-            "qualifiers": false
+            "qualifiers": null
           })
         },
         {},
@@ -165,7 +165,7 @@ function _test_finalize_edges() {
           }), {
             "supporting_text": {},
             "supporting_trials": {},
-            "qualifiers": false
+            "qualifiers": null
           })
         },
         {},

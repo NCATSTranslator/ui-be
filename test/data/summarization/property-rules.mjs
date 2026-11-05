@@ -78,7 +78,7 @@ function _test_make_kedge_rules() {
       "expected": {
         "predicate": "treats",
         "provenance": [{ "infores": "infores:gtopdb", "records": [] }],
-        "qualifiers": false,
+        "qualifiers": { "object aspect qualifier": "activity or abundance" },
         "subject": "nb1",
         "object": "nb2",
         "publications": {
@@ -94,6 +94,9 @@ function _test_make_kedge_rules() {
           "object": "nb2",
           "sources": [
             { "resource_id": "infores:gtopdb", "resource_role": "primary_knowledge_source" }
+          ],
+          "qualifiers": [
+            { "qualifier_type_id": "biolink:object_aspect_qualifier", "qualifier_value": "activity_or_abundance" }
           ],
           "attributes": [
             { "attribute_type_id": "biolink:publications", "value": ["PMID:123"] }
