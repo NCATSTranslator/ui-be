@@ -1761,6 +1761,8 @@ function _test_get_primary_source() {
           "subject": "PUBCHEM.COMPOUND:91666633",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
+          "knowledge_level": "knowledge_assertion",
+          "agent_type": "manual_agent",
           "sources": [
             {
               "resource_id": "infores:gtopdb",
@@ -1790,12 +1792,6 @@ function _test_get_primary_source() {
               "original_attribute_name": "affinity_parameter"
             },
             {
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "knowledge_assertion",
-              "value_type_id": "EDAM:data_0006",
-              "original_attribute_name": "knowledge_level"
-            },
-            {
               "attribute_type_id": "aragorn:endogenous",
               "value": false,
               "value_type_id": "xsd:boolean",
@@ -1814,12 +1810,6 @@ function _test_get_primary_source() {
               "value": false,
               "value_type_id": "EDAM:data_0006",
               "original_attribute_name": "primaryTarget"
-            },
-            {
-              "attribute_type_id": "biolink:agent_type",
-              "value": "manual_agent",
-              "value_type_id": "EDAM:data_0006",
-              "original_attribute_name": "agent_type"
             },
             {
               "attribute_type_id": "biolink:Attribute",
@@ -1841,6 +1831,8 @@ function _test_get_primary_source() {
           "subject": "PUBCHEM.COMPOUND:91666633",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
+          "knowledge_level": "knowledge_assertion",
+          "agent_type": "manual_agent",
           "sources": [
             {
               "resource_id": "infores:automat-gtopdb",
@@ -1891,12 +1883,6 @@ function _test_get_primary_source() {
               "original_attribute_name": "affinity_parameter"
             },
             {
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "knowledge_assertion",
-              "value_type_id": "EDAM:data_0006",
-              "original_attribute_name": "knowledge_level"
-            },
-            {
               "attribute_type_id": "aragorn:endogenous",
               "value": false,
               "value_type_id": "xsd:boolean",
@@ -1915,12 +1901,6 @@ function _test_get_primary_source() {
               "value": false,
               "value_type_id": "EDAM:data_0006",
               "original_attribute_name": "primaryTarget"
-            },
-            {
-              "attribute_type_id": "biolink:agent_type",
-              "value": "manual_agent",
-              "value_type_id": "EDAM:data_0006",
-              "original_attribute_name": "agent_type"
             },
             {
               "attribute_type_id": "biolink:Attribute",
@@ -2016,6 +1996,8 @@ function _test_get_subject() {
           "subject": "PUBCHEM.COMPOUND:91666633",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
+          "knowledge_level": "knowledge_assertion",
+          "agent_type": "manual_agent",
           "sources": [
             {
               "resource_id": "infores:automat-gtopdb",
@@ -2066,12 +2048,6 @@ function _test_get_subject() {
               "original_attribute_name": "affinity_parameter"
             },
             {
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "knowledge_assertion",
-              "value_type_id": "EDAM:data_0006",
-              "original_attribute_name": "knowledge_level"
-            },
-            {
               "attribute_type_id": "aragorn:endogenous",
               "value": false,
               "value_type_id": "xsd:boolean",
@@ -2090,12 +2066,6 @@ function _test_get_subject() {
               "value": false,
               "value_type_id": "EDAM:data_0006",
               "original_attribute_name": "primaryTarget"
-            },
-            {
-              "attribute_type_id": "biolink:agent_type",
-              "value": "manual_agent",
-              "value_type_id": "EDAM:data_0006",
-              "original_attribute_name": "agent_type"
             },
             {
               "attribute_type_id": "biolink:Attribute",
@@ -2119,6 +2089,8 @@ function _test_get_object() {
           "subject": "PUBCHEM.COMPOUND:91666633",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
+          "knowledge_level": "knowledge_assertion",
+          "agent_type": "manual_agent",
           "sources": [
             {
               "resource_id": "infores:automat-gtopdb",
@@ -2169,12 +2141,6 @@ function _test_get_object() {
               "original_attribute_name": "affinity_parameter"
             },
             {
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "knowledge_assertion",
-              "value_type_id": "EDAM:data_0006",
-              "original_attribute_name": "knowledge_level"
-            },
-            {
               "attribute_type_id": "aragorn:endogenous",
               "value": false,
               "value_type_id": "xsd:boolean",
@@ -2193,12 +2159,6 @@ function _test_get_object() {
               "value": false,
               "value_type_id": "EDAM:data_0006",
               "original_attribute_name": "primaryTarget"
-            },
-            {
-              "attribute_type_id": "biolink:agent_type",
-              "value": "manual_agent",
-              "value_type_id": "EDAM:data_0006",
-              "original_attribute_name": "agent_type"
             },
             {
               "attribute_type_id": "biolink:Attribute",
@@ -2238,18 +2198,10 @@ function _test_get_support_graphs() {
               "value": [
                 "medik:auxiliary_graph#0"
               ]
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:agent_type",
-              "value": "computational_model"
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "prediction"
             }
           ],
+          "agent_type": "computational_model",
+          "knowledge_level": "prediction",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
           "qualifiers": [
@@ -2291,18 +2243,10 @@ function _test_get_support_graphs() {
             {
               "attribute_type_id": "biolink:support_graphs",
               "value": []
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:agent_type",
-              "value": "computational_model"
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "prediction"
             }
           ],
+          "agent_type": "computational_model",
+          "knowledge_level": "prediction",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
           "qualifiers": [
@@ -2338,18 +2282,9 @@ function _test_get_support_graphs() {
     "missing_support_graphs": {
       "args": [
         {
-          "attributes": [
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:agent_type",
-              "value": "computational_model"
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "prediction"
-            }
-          ],
+          "attributes": [],
+          "agent_type": "computational_model",
+          "knowledge_level": "prediction",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
           "qualifiers": [
@@ -2396,18 +2331,10 @@ function _test_get_qualifiers() {
               "value": [
                 "medik:auxiliary_graph#0"
               ]
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:agent_type",
-              "value": "computational_model"
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "prediction"
             }
           ],
+          "agent_type": "computational_model",
+          "knowledge_level": "prediction",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
           "qualifiers": [
@@ -2466,18 +2393,10 @@ function _test_get_qualifiers() {
               "value": [
                 "medik:auxiliary_graph#0"
               ]
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:agent_type",
-              "value": "computational_model"
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "prediction"
             }
           ],
+          "agent_type": "computational_model",
+          "knowledge_level": "prediction",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
           "qualifiers": [],
@@ -2502,18 +2421,10 @@ function _test_get_qualifiers() {
               "value": [
                 "medik:auxiliary_graph#0"
               ]
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:agent_type",
-              "value": "computational_model"
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "prediction"
             }
           ],
+          "agent_type": "computational_model",
+          "knowledge_level": "prediction",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
           "sources": [
@@ -2578,18 +2489,10 @@ function _test_get_knowledge_level() {
               "value": [
                 "medik:auxiliary_graph#0"
               ]
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:agent_type",
-              "value": "computational_model"
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "prediction"
             }
           ],
+          "agent_type": "computational_model",
+          "knowledge_level": "prediction",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
           "qualifiers": [
@@ -2631,13 +2534,9 @@ function _test_get_knowledge_level() {
               "value": [
                 "medik:auxiliary_graph#0"
               ]
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:agent_type",
-              "value": "computational_model"
             }
           ],
+          "agent_type": "computational_model",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
           "qualifiers": [
@@ -2669,6 +2568,23 @@ function _test_get_knowledge_level() {
         }
       ],
       "expected": null
+    },
+    "trapi_1_6_attribute_is_not_read": {
+      "args": [
+        {
+          "attributes": [
+            {
+              "attribute_source": "infores:unsecret-agent",
+              "attribute_type_id": "biolink:knowledge_level",
+              "value": "prediction"
+            }
+          ],
+          "object": "NCBIGene:6323",
+          "predicate": "biolink:affects",
+          "subject": "CHEBI:6121"
+        }
+      ],
+      "expected": null
     }
   });
 }
@@ -2684,18 +2600,10 @@ function _test_get_agent_type() {
               "value": [
                 "medik:auxiliary_graph#0"
               ]
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:agent_type",
-              "value": "computational_model"
-            },
-            {
-              "attribute_source": "infores:unsecret-agent",
-              "attribute_type_id": "biolink:knowledge_level",
-              "value": "prediction"
             }
           ],
+          "agent_type": "computational_model",
+          "knowledge_level": "prediction",
           "object": "NCBIGene:6323",
           "predicate": "biolink:affects",
           "qualifiers": [
@@ -2766,6 +2674,23 @@ function _test_get_agent_type() {
               "upstream_resource_ids": []
             }
           ],
+          "subject": "CHEBI:6121"
+        }
+      ],
+      "expected": null
+    },
+    "trapi_1_6_attribute_is_not_read": {
+      "args": [
+        {
+          "attributes": [
+            {
+              "attribute_source": "infores:unsecret-agent",
+              "attribute_type_id": "biolink:agent_type",
+              "value": "computational_model"
+            }
+          ],
+          "object": "NCBIGene:6323",
+          "predicate": "biolink:affects",
           "subject": "CHEBI:6121"
         }
       ],

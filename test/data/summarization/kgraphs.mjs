@@ -53,12 +53,7 @@ function sourced_kgraph() {
             "resource_role": "primary_knowledge_source"
           }
         ],
-        "attributes": [
-          {
-            "attribute_type_id": "biolink:knowledge_level",
-            "value": "knowledge_assertion"
-          }
-        ]
+        "knowledge_level": "knowledge_assertion"
       },
       "eb2": {
         "subject": "nb1",
@@ -70,12 +65,7 @@ function sourced_kgraph() {
             "resource_role": "primary_knowledge_source"
           }
         ],
-        "attributes": [
-          {
-            "attribute_type_id": "biolink:knowledge_level",
-            "value": "prediction"
-          }
-        ]
+        "knowledge_level": "prediction"
       },
       "eb3": {
         "subject": "nb1",

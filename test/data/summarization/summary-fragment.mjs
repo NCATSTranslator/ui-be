@@ -1034,9 +1034,7 @@ function _test_make_kedge_transform() {
           "sources": [
             { "resource_id": "infores:gtopdb", "resource_role": "primary_knowledge_source" }
           ],
-          "attributes": [
-            { "attribute_type_id": "biolink:knowledge_level", "value": "knowledge_assertion" }
-          ]
+          "knowledge_level": "knowledge_assertion"
         },
         _predicate_and_context_rules,
         { "agent": "ara1" }
@@ -1108,10 +1106,8 @@ function _test_get_knowledge_level() {
           "subject": "nb1",
           "predicate": "biolink:treats",
           "object": "nb2",
-          "attributes": [
-            { "attribute_type_id": "biolink:agent_type", "value": "text_mining_agent" },
-            { "attribute_type_id": "biolink:knowledge_level", "value": "knowledge_assertion" }
-          ]
+          "agent_type": "text_mining_agent",
+          "knowledge_level": "knowledge_assertion"
         },
         { "knowledge_level": "trusted" }
       ],
@@ -1123,10 +1119,8 @@ function _test_get_knowledge_level() {
           "subject": "nb1",
           "predicate": "biolink:treats",
           "object": "nb2",
-          "attributes": [
-            { "attribute_type_id": "biolink:agent_type", "value": "manual_agent" },
-            { "attribute_type_id": "biolink:knowledge_level", "value": "knowledge_assertion" }
-          ]
+          "agent_type": "manual_agent",
+          "knowledge_level": "knowledge_assertion"
         },
         { "knowledge_level": "unknown" }
       ],
@@ -1138,9 +1132,7 @@ function _test_get_knowledge_level() {
           "subject": "nb1",
           "predicate": "biolink:treats",
           "object": "nb2",
-          "attributes": [
-            { "attribute_type_id": "biolink:knowledge_level", "value": "not_provided" }
-          ]
+          "knowledge_level": "not_provided"
         },
         { "knowledge_level": "trusted" }
       ],
@@ -1152,21 +1144,18 @@ function _test_get_knowledge_level() {
           "subject": "nb1",
           "predicate": "biolink:treats",
           "object": "nb2",
-          "attributes": [
-            { "attribute_type_id": "biolink:knowledge_level", "value": "prediction" }
-          ]
+          "knowledge_level": "prediction"
         },
         { "knowledge_level": "trusted" }
       ],
       "expected": "inferred"
     },
-    "no-attributes-uses-provenance": {
+    "no-knowledge-level-uses-provenance": {
       "args": [
         {
           "subject": "nb1",
           "predicate": "biolink:treats",
-          "object": "nb2",
-          "attributes": []
+          "object": "nb2"
         },
         { "knowledge_level": "trusted" }
       ],
