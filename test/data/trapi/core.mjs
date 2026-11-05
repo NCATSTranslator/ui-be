@@ -6,6 +6,7 @@ import { load_trapi, CONSTANTS, _QNode, _QEdge, _QEdgeQualifierSet, _QEdgeQualif
 const suite = {
   tests: {
     client_request_to_trapi_query: _test_client_request_to_trapi_query(),
+    set_query_validation: _test_set_query_validation(),
     get_pk: _test_get_pk(),
     has_message: _test_has_message(),
     get_results: _test_get_results(),
@@ -499,6 +500,108 @@ function _test_client_request_to_trapi_query() {
         }
       ],
       "expected": TypeError
+    }
+  });
+}
+
+function _test_set_query_validation() {
+  return test.make_function_test({
+    validation_requested: {
+      args: [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": {"categories": ["biolink:ChemicalEntity"]},
+                "on": {"ids": ["MONDO:123"], "categories": ["biolink:Disease"]}
+              },
+              "edges": {
+                "e0": {"subject": "sn", "object": "on", "predicates": ["biolink:treats"], "knowledge_type": "inferred"}
+              }
+            }
+          }
+        },
+        true
+      ],
+      expected: {
+        "message": {
+          "query_graph": {
+            "nodes": {
+              "sn": {"categories": ["biolink:ChemicalEntity"]},
+              "on": {"ids": ["MONDO:123"], "categories": ["biolink:Disease"]}
+            },
+            "edges": {
+              "e0": {"subject": "sn", "object": "on", "predicates": ["biolink:treats"], "knowledge_type": "inferred"}
+            }
+          }
+        },
+        "validate": true
+      }
+    },
+    validation_not_requested: {
+      args: [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": {"categories": ["biolink:ChemicalEntity"]},
+                "on": {"ids": ["MONDO:123"], "categories": ["biolink:Disease"]}
+              },
+              "edges": {
+                "e0": {"subject": "sn", "object": "on", "predicates": ["biolink:treats"], "knowledge_type": "inferred"}
+              }
+            }
+          }
+        },
+        false
+      ],
+      expected: {
+        "message": {
+          "query_graph": {
+            "nodes": {
+              "sn": {"categories": ["biolink:ChemicalEntity"]},
+              "on": {"ids": ["MONDO:123"], "categories": ["biolink:Disease"]}
+            },
+            "edges": {
+              "e0": {"subject": "sn", "object": "on", "predicates": ["biolink:treats"], "knowledge_type": "inferred"}
+            }
+          }
+        },
+        "validate": false
+      }
+    },
+    replaces_existing_setting: {
+      args: [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": {"categories": ["biolink:ChemicalEntity"]},
+                "on": {"ids": ["MONDO:123"], "categories": ["biolink:Disease"]}
+              },
+              "edges": {
+                "e0": {"subject": "sn", "object": "on", "predicates": ["biolink:treats"], "knowledge_type": "inferred"}
+              }
+            }
+          },
+          "validate": false
+        },
+        true
+      ],
+      expected: {
+        "message": {
+          "query_graph": {
+            "nodes": {
+              "sn": {"categories": ["biolink:ChemicalEntity"]},
+              "on": {"ids": ["MONDO:123"], "categories": ["biolink:Disease"]}
+            },
+            "edges": {
+              "e0": {"subject": "sn", "object": "on", "predicates": ["biolink:treats"], "knowledge_type": "inferred"}
+            }
+          }
+        },
+        "validate": true
+      }
     }
   });
 }
