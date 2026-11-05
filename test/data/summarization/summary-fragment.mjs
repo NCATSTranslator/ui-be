@@ -278,6 +278,7 @@ function _test_answer_to_fragments() {
 
 function _test_result_to_fragment() {
   const eid = id.gen_eid("eb1", sourced_kgraph(), false, true);
+  const pid = id.gen_pid(["nb1", eid, "nb2"]);
   return test.make_function_test({
     "single-analysis-with-score": {
       "args": [
@@ -355,6 +356,56 @@ function _test_result_to_fragment() {
           "updates": [
             { "id": eid, "transforms": ["biolink:treats", "infores:ara1", "infores:gtopdb", "trusted"] },
             { "id": eid, "transforms": ["biolink:treats", "infores:ara2", "infores:gtopdb", "trusted"] }
+          ]
+        },
+        "scores": { "nb1": [{ "confidence": 1, "novelty": 0.5, "clinical_evidence": 0, "normalized_score": 0.7 }] },
+        "errors": {}
+      }
+    },
+    "multiple-pathfinder-analyses-are-merged": {
+      "args": [
+        {
+          "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] },
+          "analyses": [
+            { "resource_id": "infores:ara1", "path_bindings": { "pb1": [{ "id": "ax1" }] }, "score": 0.9 },
+            { "resource_id": "infores:ara2", "path_bindings": { "pb1": [{ "id": "ax2" }] }, "score": 0.4 }
+          ],
+          "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
+          "normalized_score": 0.7
+        },
+        sourced_kgraph(),
+        {
+          "ax1": { "edges": ["eb1"] },
+          "ax2": { "edges": ["eb2"] }
+        },
+        "sn",
+        "on",
+        {
+          "knode_rules": _name_and_agent_rules,
+          "kedge_rules": _predicate_and_context_rules,
+          "max_path_len": 3,
+          "replace_indirect_edges": false
+        },
+        {},
+        new Map()
+      ],
+      "expected": {
+        "agents": ["infores:ara1", "infores:ara2"],
+        "paths": [
+          { "id": pid, "score": 0.9, "subgraph": ["nb1", eid, "nb2"], "aras": [] },
+          { "id": pid, "score": 0.4, "subgraph": ["nb1", eid, "nb2"], "aras": [] }
+        ],
+        "nodes": [
+          { "id": "nb1", "transforms": ["node 1", "infores:ara1"] },
+          { "id": "nb2", "transforms": ["node 2", "infores:ara1"] },
+          { "id": "nb1", "transforms": ["node 1", "infores:ara2"] },
+          { "id": "nb2", "transforms": ["node 2", "infores:ara2"] }
+        ],
+        "edges": {
+          "base": { [eid]: _merged_summary_edge(eid, ["eb1", "eb2"], true) },
+          "updates": [
+            { "id": eid, "transforms": ["biolink:treats", "infores:ara1", "infores:gtopdb", "trusted"] },
+            { "id": eid, "transforms": ["biolink:treats", "infores:ara2", "infores:arax", "inferred"] }
           ]
         },
         "scores": { "nb1": [{ "confidence": 1, "novelty": 0.5, "clinical_evidence": 0, "normalized_score": 0.7 }] },
