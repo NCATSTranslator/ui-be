@@ -20,6 +20,7 @@ function _test_make_rule_transform_property() {
     get: {
       args: [{
         source_key: "test-prop",
+        target_key: "test-prop",
         transform: cmn.json_get
       }],
       expected: {
@@ -33,9 +34,27 @@ function _test_make_rule_transform_property() {
       },
       post: test.apply_rule
     },
+    rename: {
+      args: [{
+        source_key: "test-prop",
+        target_key: "diff-prop",
+        transform: cmn.json_get
+      }],
+      expected: {
+        "diff-prop": "ok"
+      },
+      context: {
+        source: {
+          "test-prop": "ok"
+        },
+        target: {}
+      },
+      post: test.apply_rule
+    },
     get_double: {
       args: [{
         source_key: "test-prop",
+        target_key: "test-prop",
         transform: (source, key) => 2 * cmn.json_get(source, key)
       }],
       expected: {
@@ -52,6 +71,7 @@ function _test_make_rule_transform_property() {
     no_rewrite: {
       args: [{
         source_key: "test-prop",
+        target_key: "test-prop",
         transform: cmn.json_get
       }],
       expected: {
@@ -70,6 +90,7 @@ function _test_make_rule_transform_property() {
     property_missing_empty_target: {
       args: [{
         source_key: "test-prop",
+        target_key: "test-prop",
         transform: cmn.json_get
       }],
       expected: {
@@ -87,7 +108,10 @@ function _test_make_rule_transform_property() {
 function _test_make_rule_get_property() {
   return test.make_function_test({
     prop_exists: {
-      args: ["test-prop"],
+      args: [{
+        source_key: "test-prop",
+        target_key: "test-prop"
+      }],
       expected: {
         "test-prop": "ok"
       },
@@ -99,8 +123,27 @@ function _test_make_rule_get_property() {
       },
       post: test.apply_rule
     },
+    rename: {
+      args: [{
+        source_key: "test-prop",
+        target_key: "diff-prop"
+      }],
+      expected: {
+        "diff-prop": "ok"
+      },
+      context: {
+        source: {
+          "test-prop": "ok"
+        },
+        target: {}
+      },
+      post: test.apply_rule
+    },
     no_rewrite: {
-      args: ["test-prop"],
+      args: [{
+        source_key: "test-prop",
+        target_key: "test-prop"
+      }],
       expected: {
         "test-prop": "ok"
       },
@@ -115,7 +158,10 @@ function _test_make_rule_get_property() {
       post: test.apply_rule
     },
     default_value: {
-      args: ["test-prop"],
+      args: [{
+        source_key: "test-prop",
+        target_key: "test-prop"
+      }],
       expected: {
         "test-prop": null
       },
@@ -126,7 +172,10 @@ function _test_make_rule_get_property() {
       post: test.apply_rule
     },
     no_rewrite_default_value: {
-      args: ["test-prop"],
+      args: [{
+        source_key: "test-prop",
+        target_key: "test-prop"
+      }],
       expected: {
         "test-prop": "ok"
       },
