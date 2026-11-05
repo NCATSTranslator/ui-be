@@ -51,6 +51,26 @@ function _test_gen_canonical_qualified_predicate() {
         { "causal mechanism qualifier": "inhibition" }
       ],
       "expected": "inhibits"
+    },
+    "regulates_special_case_canonical": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": [
+        "biolink:regulates",
+        { "object direction qualifier": "upregulated" }
+      ],
+      "expected": "upregulates"
+    },
+    "subject_and_object_qualifiers": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": [
+        "biolink:affects",
+        {
+          "subject aspect qualifier": "abundance",
+          "object aspect qualifier": "activity",
+          "object direction qualifier": "increased"
+        }
+      ],
+      "expected": "abundance affects increased activity of"
     }
   });
 }

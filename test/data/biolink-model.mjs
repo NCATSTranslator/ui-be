@@ -28,7 +28,8 @@ const suite = {
   },
   skip: {
     load_biolink: true,
-    deprecated_pred_to_pred_and_qualifiers: true
+    deprecated_pred_to_pred_and_qualifiers: true,
+    QUALIFIERS: true
   }
 };
 
