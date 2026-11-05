@@ -666,20 +666,12 @@ function _test_get_results() {
             "results": [
               {
                 "node_bindings": {
-                  "on": [
-                    {
-                      "id": "NCBIGene:6323",
-                      "query_id": "NCBIGene:6323",
-                      "attributes": []
-                    }
-                  ],
-                  "sn": [
-                    {
-                      "id": "CHEBI:15420",
-                      "query_id": null,
-                      "attributes": []
-                    }
-                  ]
+                  "on": {
+                    "ids": ["NCBIGene:6323"]
+                  },
+                  "sn": {
+                    "ids": ["CHEBI:15420"]
+                  }
                 },
                 "analyses": [
                   {
@@ -719,20 +711,12 @@ function _test_get_results() {
       "expected": [
         {
           "node_bindings": {
-            "on": [
-              {
-                "id": "NCBIGene:6323",
-                "query_id": "NCBIGene:6323",
-                "attributes": []
-              }
-            ],
-            "sn": [
-              {
-                "id": "CHEBI:15420",
-                "query_id": null,
-                "attributes": []
-              }
-            ]
+            "on": {
+              "ids": ["NCBIGene:6323"]
+            },
+            "sn": {
+              "ids": ["CHEBI:15420"]
+            }
           },
           "analyses": [
             {
@@ -1025,20 +1009,12 @@ function _test_get_node_binding_ids() {
       "args": [
         {
           "node_bindings": {
-            "on": [
-              {
-                "id": "NCBIGene:6323",
-                "query_id": "NCBIGene:6323",
-                "attributes": []
-              }
-            ],
-            "sn": [
-              {
-                "id": "CHEBI:15420",
-                "query_id": null,
-                "attributes": []
-              }
-            ]
+            "on": {
+              "ids": ["NCBIGene:6323"]
+            },
+            "sn": {
+              "ids": ["CHEBI:15420"]
+            }
           },
           "analyses": [
             {
@@ -1079,16 +1055,46 @@ function _test_get_node_binding_ids() {
       "args": [
         {
           "node_bindings": {
-            "on": [
-              {
-                "id": "NCBIGene:6323",
-                "attributes": []
-              },
-              {
-                "id": "NCBIGene:1017",
-                "attributes": []
-              }
-            ],
+            "on": {
+              "ids": ["NCBIGene:6323", "NCBIGene:1017"]
+            },
+            "sn": {
+              "ids": ["CHEBI:15420"]
+            }
+          }
+        },
+        "on"
+      ],
+      "expected": ["NCBIGene:6323", "NCBIGene:1017"]
+    },
+    "binding_without_ids": {
+      "args": [
+        {
+          "node_bindings": {
+            "sn": {}
+          }
+        },
+        "sn"
+      ],
+      "expected": []
+    },
+    "ids_not_an_array": {
+      "args": [
+        {
+          "node_bindings": {
+            "sn": {
+              "ids": "CHEBI:15420"
+            }
+          }
+        },
+        "sn"
+      ],
+      "expected": []
+    },
+    "trapi_1_6_binding_is_not_read": {
+      "args": [
+        {
+          "node_bindings": {
             "sn": [
               {
                 "id": "CHEBI:15420",
@@ -1097,38 +1103,9 @@ function _test_get_node_binding_ids() {
             ]
           }
         },
-        "on"
-      ],
-      "expected": ["NCBIGene:6323", "NCBIGene:1017"]
-    },
-    "binding_not_an_array": {
-      "args": [
-        {
-          "node_bindings": {
-            "sn": {
-              "id": "CHEBI:15420",
-              "attributes": []
-            }
-          }
-        },
         "sn"
       ],
       "expected": []
-    },
-    "binding_missing_id": {
-      "args": [
-        {
-          "node_bindings": {
-            "sn": [
-              {
-                "attributes": []
-              }
-            ]
-          }
-        },
-        "sn"
-      ],
-      "expected": ReferenceError
     },
     "no_node_bindings": {
       "args": [

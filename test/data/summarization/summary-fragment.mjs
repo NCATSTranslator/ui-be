@@ -106,7 +106,7 @@ function _test_answers_to_summary_fragments() {
               "auxiliary_graphs": {},
               "results": [
                 {
-                  "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] },
+                  "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
                   "analyses": [
                     { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
                   ],
@@ -136,7 +136,7 @@ function _test_answers_to_summary_fragments() {
               "auxiliary_graphs": {},
               "results": [
                 {
-                  "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] },
+                  "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
                   "analyses": [
                     { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
                   ],
@@ -253,7 +253,7 @@ function _test_answer_to_fragments() {
             "auxiliary_graphs": {},
             "results": [
               {
-                "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] },
+                "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
                 "analyses": [
                   { "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
                 ],
@@ -283,7 +283,7 @@ function _test_result_to_fragment() {
     "single-analysis-with-score": {
       "args": [
         {
-          "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] },
+          "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
           "analyses": [
             { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
           ],
@@ -321,7 +321,7 @@ function _test_result_to_fragment() {
     "multiple-analyses-are-merged": {
       "args": [
         {
-          "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] },
+          "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
           "analyses": [
             { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } },
             { "resource_id": "infores:ara2", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
@@ -365,7 +365,7 @@ function _test_result_to_fragment() {
     "multiple-pathfinder-analyses-are-merged": {
       "args": [
         {
-          "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] },
+          "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
           "analyses": [
             { "resource_id": "infores:ara1", "path_bindings": { "pb1": [{ "id": "ax1" }] }, "score": 0.9 },
             { "resource_id": "infores:ara2", "path_bindings": { "pb1": [{ "id": "ax2" }] }, "score": 0.4 }
@@ -415,7 +415,7 @@ function _test_result_to_fragment() {
     "error-analysis-gets-no-score": {
       "args": [
         {
-          "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] },
+          "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
           "analyses": [
             { "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
           ],
@@ -447,7 +447,7 @@ function _test_result_to_fragment() {
     "missing-start-binding": {
       "args": [
         {
-          "node_bindings": { "on": [{ "id": "nb2" }] },
+          "node_bindings": { "on": { "ids": ["nb2"] } },
           "analyses": [
             { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
           ],
@@ -479,7 +479,7 @@ function _test_result_to_fragment() {
     "missing-analyses": {
       "args": [
         {
-          "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] }
+          "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } }
         },
         sourced_kgraph(),
         {},
@@ -885,7 +885,7 @@ function _test_get_result_endpoints() {
   return test.make_function_test({
     "single-end": {
       "args": [
-        { "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] } },
+        { "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } } },
         "sn",
         "on",
         simple_kgraph()
@@ -894,7 +894,7 @@ function _test_get_result_endpoints() {
     },
     "multiple-ends": {
       "args": [
-        { "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }, { "id": "nb2.1" }] } },
+        { "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2", "nb2.1"] } } },
         "sn",
         "on",
         dead_support_kgraph()
@@ -903,7 +903,7 @@ function _test_get_result_endpoints() {
     },
     "missing-start-key": {
       "args": [
-        { "node_bindings": { "on": [{ "id": "nb2" }] } },
+        { "node_bindings": { "on": { "ids": ["nb2"] } } },
         "sn",
         "on",
         simple_kgraph()
@@ -912,7 +912,7 @@ function _test_get_result_endpoints() {
     },
     "missing-end-key": {
       "args": [
-        { "node_bindings": { "sn": [{ "id": "nb1" }] } },
+        { "node_bindings": { "sn": { "ids": ["nb1"] } } },
         "sn",
         "on",
         simple_kgraph()
@@ -926,7 +926,7 @@ function _test_flatten_binding() {
   return test.make_function_test({
     "single-binding": {
       "args": [
-        { "node_bindings": { "sn": [{ "id": "nb1" }], "on": [{ "id": "nb2" }] } },
+        { "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } } },
         "sn",
         simple_kgraph()
       ],
@@ -934,7 +934,7 @@ function _test_flatten_binding() {
     },
     "multiple-bindings": {
       "args": [
-        { "node_bindings": { "on": [{ "id": "nb2" }, { "id": "nb2.1" }] } },
+        { "node_bindings": { "on": { "ids": ["nb2", "nb2.1"] } } },
         "on",
         dead_support_kgraph()
       ],
@@ -942,7 +942,7 @@ function _test_flatten_binding() {
     },
     "missing-key": {
       "args": [
-        { "node_bindings": { "on": [{ "id": "nb2" }] } },
+        { "node_bindings": { "on": { "ids": ["nb2"] } } },
         "sn",
         simple_kgraph()
       ],
@@ -950,15 +950,15 @@ function _test_flatten_binding() {
     },
     "empty-bindings": {
       "args": [
-        { "node_bindings": { "sn": [] } },
+        { "node_bindings": { "sn": { "ids": [] } } },
         "sn",
         simple_kgraph()
       ],
       "expected": NodeBindingNotFoundError
     },
-    "binding-not-an-array": {
+    "binding-without-ids": {
       "args": [
-        { "node_bindings": { "sn": { "id": "nb1" } } },
+        { "node_bindings": { "sn": {} } },
         "sn",
         simple_kgraph()
       ],
@@ -966,7 +966,7 @@ function _test_flatten_binding() {
     },
     "binding-not-in-kgraph": {
       "args": [
-        { "node_bindings": { "sn": [{ "id": "nb-missing" }] } },
+        { "node_bindings": { "sn": { "ids": ["nb-missing"] } } },
         "sn",
         simple_kgraph()
       ],
