@@ -11,10 +11,9 @@ const suite = {
     get_auxiliary_graphs: _test_get_auxiliary_graphs(),
     get_auxiliary_graph: _test_get_auxiliary_graph(),
     get_auxiliary_graph_edges: _test_get_auxiliary_graph_edges(),
-    get_edge_bindings: _test_get_edge_bindings(),
+    get_edge_binding_ids: _test_get_edge_binding_ids(),
     get_node_binding_ids: _test_get_node_binding_ids(),
-    get_path_bindings: _test_get_path_bindings(),
-    get_binding_id: _test_get_binding_id(),
+    get_path_binding_ids: _test_get_path_binding_ids(),
     get_analyses: _test_get_analyses(),
     get_resource_id: _test_get_resource_id(),
     get_analysis_score: _test_get_analysis_score(),
@@ -781,7 +780,7 @@ function _test_get_auxiliary_graph_edges() {
   });
 }
 
-function _test_get_edge_bindings() {
+function _test_get_edge_binding_ids() {
   return test.make_function_test({
     "valid_edge_bindings": {
       "args": [
@@ -805,18 +804,48 @@ function _test_get_edge_bindings() {
           "attributes": null
         }
       ],
-      "expected": {
-        "t_edge": [
-          {
-            "id": "medik:creative_edge#56",
-            "attributes": []
-          },
-          {
-            "id": "medik:creative_edge#7",
-            "attributes": []
+      "expected": ["medik:creative_edge#56", "medik:creative_edge#7"]
+    },
+    "edge_bindings_for_multiple_qedges": {
+      "args": [
+        {
+          "resource_id": "infores:unsecret-agent",
+          "edge_bindings": {
+            "e0": [
+              {
+                "id": "medik:edge#1",
+                "attributes": []
+              }
+            ],
+            "e1": [
+              {
+                "id": "medik:edge#2",
+                "attributes": []
+              },
+              {
+                "id": "medik:edge#3",
+                "attributes": []
+              }
+            ]
           }
-        ]
-      }
+        }
+      ],
+      "expected": ["medik:edge#1", "medik:edge#2", "medik:edge#3"]
+    },
+    "binding_missing_id": {
+      "args": [
+        {
+          "resource_id": "infores:unsecret-agent",
+          "edge_bindings": {
+            "t_edge": [
+              {
+                "attributes": []
+              }
+            ]
+          }
+        }
+      ],
+      "expected": ReferenceError
     },
     "empty_edge_bindings": {
       "args": [
@@ -829,7 +858,7 @@ function _test_get_edge_bindings() {
           "attributes": null
         }
       ],
-      "expected": {}
+      "expected": []
     },
     "missing_edge_bindings": {
       "args": [
@@ -841,7 +870,7 @@ function _test_get_edge_bindings() {
           "attributes": null
         }
       ],
-      "expected": {}
+      "expected": []
     }
   });
 }
@@ -1037,37 +1066,42 @@ function _test_get_node_binding_ids() {
   });
 }
 
-function _test_get_path_bindings() {
-  const path_binding = {'test-path-binding': 123};
+function _test_get_path_binding_ids() {
   return test.make_function_test({
     valid_path_bindings: {
-      args: [{path_bindings: path_binding}],
-      expected: path_binding
+      args: [
+        {
+          resource_id: 'infores:unsecret-agent',
+          path_bindings: {
+            p0: [{id: 'aux_graph_1'}]
+          },
+          score: 0.9
+        }
+      ],
+      expected: ['aux_graph_1']
+    },
+    multiple_paths_bound_to_qpath: {
+      args: [
+        {
+          resource_id: 'infores:unsecret-agent',
+          path_bindings: {
+            p0: [{id: 'aux_graph_1'}, {id: 'aux_graph_2'}]
+          }
+        }
+      ],
+      expected: ['aux_graph_1', 'aux_graph_2']
+    },
+    binding_missing_id: {
+      args: [{path_bindings: {p0: [{}]}}],
+      expected: ReferenceError
     },
     empty_path_bindings: {
       args: [{path_bindings: {}}],
-      expected: {}
+      expected: []
     },
     no_path_bindings: {
       args: [{}],
-      expected: {}
-    }
-  });
-}
-
-function _test_get_binding_id() {
-  return test.make_function_test({
-    node_binding: {
-      args: [{id: 'CHEBI:15420', attributes: []}],
-      expected: 'CHEBI:15420'
-    },
-    edge_binding: {
-      args: [{id: 'medik:creative_edge#56', attributes: []}],
-      expected: 'medik:creative_edge#56'
-    },
-    missing_id: {
-      args: [{attributes: []}],
-      expected: ReferenceError
+      expected: []
     }
   });
 }
