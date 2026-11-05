@@ -32,9 +32,7 @@ function _test_analysis_to_summary_analysis() {
       "args": [
         {
           "edge_bindings": {
-            "ab1": [
-              { "id": "eb1" }
-            ]
+            "ab1": { "ids": ["eb1"] }
           }
         },
         simple_kgraph(),
@@ -67,9 +65,7 @@ function _test_analysis_to_summary_analysis() {
       "args": [
         {
           "edge_bindings": {
-            "ab1": [
-              { "id": "eb1" }
-            ]
+            "ab1": { "ids": ["eb1"] }
           }
         },
         with_support_kgraph(),
@@ -121,10 +117,7 @@ function _test_analysis_to_summary_analysis() {
       "args": [
         {
           "edge_bindings": {
-            "ab1": [
-              { "id": "eb1" },
-              { "id": "eb2" }
-            ]
+            "ab1": { "ids": ["eb1", "eb2"] }
           }
         },
         with_nested_support_kgraph(),
@@ -828,9 +821,7 @@ function _simple_summary_analysis() {
     args: [
       {
         "edge_bindings": {
-          "ab1": [
-            { "id": "eb1" }
-          ]
+          "ab1": { "ids": ["eb1"] }
         }
       },
       simple_kgraph(),
@@ -859,9 +850,7 @@ function _with_support_summary_analysis() {
     args: [
       {
         "edge_bindings": {
-          "ab1": [
-            { "id": "eb1" }
-          ]
+          "ab1": { "ids": ["eb1"] }
         }
       },
       with_support_kgraph(),
@@ -897,10 +886,7 @@ function _with_nested_support_summary_analysis() {
     args: [
       {
         "edge_bindings": {
-          "ab1": [
-            { "id": "eb1" },
-            { "id": "eb2" }
-          ]
+          "ab1": { "ids": ["eb1", "eb2"] }
         }
       },
       with_nested_support_kgraph(),
@@ -968,9 +954,7 @@ function _dead_support_summary_analysis() {
     args: [
       {
         "edge_bindings": {
-          "ab1": [
-            { "id": "eb1" }
-          ]
+          "ab1": { "ids": ["eb1"] }
         }
       },
       dead_support_kgraph(),
@@ -1004,9 +988,7 @@ function _path_binding_summary_analysis() {
     args: [
       {
         "path_bindings": {
-          "pb1": [
-            { "id": "ax1" }
-          ]
+          "pb1": { "ids": ["ax1"] }
         },
         "score": 0.9
       },

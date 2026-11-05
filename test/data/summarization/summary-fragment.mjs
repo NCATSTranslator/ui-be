@@ -108,7 +108,7 @@ function _test_answers_to_summary_fragments() {
                 {
                   "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
                   "analyses": [
-                    { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
+                    { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } }
                   ],
                   "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
                   "normalized_score": 0.7
@@ -138,7 +138,7 @@ function _test_answers_to_summary_fragments() {
                 {
                   "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
                   "analyses": [
-                    { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
+                    { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } }
                   ],
                   "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
                   "normalized_score": 0.7
@@ -255,7 +255,7 @@ function _test_answer_to_fragments() {
               {
                 "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
                 "analyses": [
-                  { "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
+                  { "edge_bindings": { "ab1": { "ids": ["eb1"] } } }
                 ],
                 "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
                 "normalized_score": 0.7
@@ -285,7 +285,7 @@ function _test_result_to_fragment() {
         {
           "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
           "analyses": [
-            { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
+            { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } }
           ],
           "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
           "normalized_score": 0.7
@@ -323,8 +323,8 @@ function _test_result_to_fragment() {
         {
           "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
           "analyses": [
-            { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } },
-            { "resource_id": "infores:ara2", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
+            { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } },
+            { "resource_id": "infores:ara2", "edge_bindings": { "ab1": { "ids": ["eb1"] } } }
           ],
           "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
           "normalized_score": 0.7
@@ -367,8 +367,8 @@ function _test_result_to_fragment() {
         {
           "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
           "analyses": [
-            { "resource_id": "infores:ara1", "path_bindings": { "pb1": [{ "id": "ax1" }] }, "score": 0.9 },
-            { "resource_id": "infores:ara2", "path_bindings": { "pb1": [{ "id": "ax2" }] }, "score": 0.4 }
+            { "resource_id": "infores:ara1", "path_bindings": { "pb1": { "ids": ["ax1"] } }, "score": 0.9 },
+            { "resource_id": "infores:ara2", "path_bindings": { "pb1": { "ids": ["ax2"] } }, "score": 0.4 }
           ],
           "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
           "normalized_score": 0.7
@@ -417,7 +417,7 @@ function _test_result_to_fragment() {
         {
           "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
           "analyses": [
-            { "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
+            { "edge_bindings": { "ab1": { "ids": ["eb1"] } } }
           ],
           "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
           "normalized_score": 0.7
@@ -449,7 +449,7 @@ function _test_result_to_fragment() {
         {
           "node_bindings": { "on": { "ids": ["nb2"] } },
           "analyses": [
-            { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } }
+            { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } }
           ],
           "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
           "normalized_score": 0.7
@@ -511,7 +511,7 @@ function _test_analysis_to_fragment() {
   return test.make_function_test({
     "single-edge": {
       "args": [
-        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } },
+        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } },
         sourced_kgraph(),
         {},
         "nb1",
@@ -542,7 +542,7 @@ function _test_analysis_to_fragment() {
     },
     "missing-resource-id": {
       "args": [
-        { "edge_bindings": { "ab1": [{ "id": "eb1" }] } },
+        { "edge_bindings": { "ab1": { "ids": ["eb1"] } } },
         sourced_kgraph(),
         {},
         "nb1",
@@ -567,7 +567,7 @@ function _test_analysis_to_fragment() {
     },
     "edge-binding-not-found": {
       "args": [
-        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb-missing" }] } },
+        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb-missing"] } } },
         sourced_kgraph(),
         {},
         "nb1",
@@ -592,7 +592,7 @@ function _test_analysis_to_fragment() {
     },
     "summary-analysis-construction-failed": {
       "args": [
-        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } },
+        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } },
         dangling_object_kgraph(),
         {},
         "nb1",
@@ -617,7 +617,7 @@ function _test_analysis_to_fragment() {
     },
     "missing-support-paths": {
       "args": [
-        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } },
+        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } },
         dead_support_kgraph(),
         { "ax1": { "edges": ["eb2"] } },
         "nb1",
@@ -642,7 +642,7 @@ function _test_analysis_to_fragment() {
     },
     "unknown-error": {
       "args": [
-        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": [{ "id": "eb1" }] } },
+        { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } },
         simple_kgraph(),
         {},
         "nb1",

@@ -677,16 +677,9 @@ function _test_get_results() {
                   {
                     "resource_id": "infores:unsecret-agent",
                     "edge_bindings": {
-                      "t_edge": [
-                        {
-                          "id": "medik:creative_edge#56",
-                          "attributes": []
-                        },
-                        {
-                          "id": "medik:creative_edge#7",
-                          "attributes": []
-                        }
-                      ]
+                      "t_edge": {
+                        "ids": ["medik:creative_edge#56", "medik:creative_edge#7"]
+                      }
                     },
                     "score": 1,
                     "support_graphs": null,
@@ -722,16 +715,9 @@ function _test_get_results() {
             {
               "resource_id": "infores:unsecret-agent",
               "edge_bindings": {
-                "t_edge": [
-                  {
-                    "id": "medik:creative_edge#56",
-                    "attributes": []
-                  },
-                  {
-                    "id": "medik:creative_edge#7",
-                    "attributes": []
-                  }
-                ]
+                "t_edge": {
+                  "ids": ["medik:creative_edge#56", "medik:creative_edge#7"]
+                }
               },
               "score": 1,
               "support_graphs": null,
@@ -915,16 +901,9 @@ function _test_get_edge_binding_ids() {
         {
           "resource_id": "infores:unsecret-agent",
           "edge_bindings": {
-            "t_edge": [
-              {
-                "id": "medik:creative_edge#56",
-                "attributes": []
-              },
-              {
-                "id": "medik:creative_edge#7",
-                "attributes": []
-              }
-            ]
+            "t_edge": {
+              "ids": ["medik:creative_edge#56", "medik:creative_edge#7"]
+            }
           },
           "score": 1,
           "support_graphs": null,
@@ -939,34 +918,36 @@ function _test_get_edge_binding_ids() {
         {
           "resource_id": "infores:unsecret-agent",
           "edge_bindings": {
-            "e0": [
-              {
-                "id": "medik:edge#1",
-                "attributes": []
-              }
-            ],
-            "e1": [
-              {
-                "id": "medik:edge#2",
-                "attributes": []
-              },
-              {
-                "id": "medik:edge#3",
-                "attributes": []
-              }
-            ]
+            "e0": {
+              "ids": ["medik:edge#1"]
+            },
+            "e1": {
+              "ids": ["medik:edge#2", "medik:edge#3"]
+            }
           }
         }
       ],
       "expected": ["medik:edge#1", "medik:edge#2", "medik:edge#3"]
     },
-    "binding_missing_id": {
+    "binding_without_ids": {
+      "args": [
+        {
+          "resource_id": "infores:unsecret-agent",
+          "edge_bindings": {
+            "t_edge": {}
+          }
+        }
+      ],
+      "expected": ReferenceError
+    },
+    "trapi_1_6_binding_is_rejected": {
       "args": [
         {
           "resource_id": "infores:unsecret-agent",
           "edge_bindings": {
             "t_edge": [
               {
+                "id": "medik:creative_edge#56",
                 "attributes": []
               }
             ]
@@ -1020,16 +1001,9 @@ function _test_get_node_binding_ids() {
             {
               "resource_id": "infores:unsecret-agent",
               "edge_bindings": {
-                "t_edge": [
-                  {
-                    "id": "medik:creative_edge#56",
-                    "attributes": []
-                  },
-                  {
-                    "id": "medik:creative_edge#7",
-                    "attributes": []
-                  }
-                ]
+                "t_edge": {
+                  "ids": ["medik:creative_edge#56", "medik:creative_edge#7"]
+                }
               },
               "score": 1,
               "support_graphs": null,
@@ -1115,16 +1089,9 @@ function _test_get_node_binding_ids() {
             {
               "resource_id": "infores:unsecret-agent",
               "edge_bindings": {
-                "t_edge": [
-                  {
-                    "id": "medik:creative_edge#56",
-                    "attributes": []
-                  },
-                  {
-                    "id": "medik:creative_edge#7",
-                    "attributes": []
-                  }
-                ]
+                "t_edge": {
+                  "ids": ["medik:creative_edge#56", "medik:creative_edge#7"]
+                }
               },
               "score": 1,
               "support_graphs": null,
@@ -1153,16 +1120,9 @@ function _test_get_node_binding_ids() {
             {
               "resource_id": "infores:unsecret-agent",
               "edge_bindings": {
-                "t_edge": [
-                  {
-                    "id": "medik:creative_edge#56",
-                    "attributes": []
-                  },
-                  {
-                    "id": "medik:creative_edge#7",
-                    "attributes": []
-                  }
-                ]
+                "t_edge": {
+                  "ids": ["medik:creative_edge#56", "medik:creative_edge#7"]
+                }
               },
               "score": 1,
               "support_graphs": null,
@@ -1194,7 +1154,7 @@ function _test_get_path_binding_ids() {
         {
           resource_id: 'infores:unsecret-agent',
           path_bindings: {
-            p0: [{id: 'aux_graph_1'}]
+            p0: {ids: ['aux_graph_1']}
           },
           score: 0.9
         }
@@ -1206,14 +1166,18 @@ function _test_get_path_binding_ids() {
         {
           resource_id: 'infores:unsecret-agent',
           path_bindings: {
-            p0: [{id: 'aux_graph_1'}, {id: 'aux_graph_2'}]
+            p0: {ids: ['aux_graph_1', 'aux_graph_2']}
           }
         }
       ],
       expected: ['aux_graph_1', 'aux_graph_2']
     },
-    binding_missing_id: {
-      args: [{path_bindings: {p0: [{}]}}],
+    binding_without_ids: {
+      args: [{path_bindings: {p0: {}}}],
+      expected: ReferenceError
+    },
+    trapi_1_6_binding_is_rejected: {
+      args: [{path_bindings: {p0: [{id: 'aux_graph_1'}]}}],
       expected: ReferenceError
     },
     empty_path_bindings: {
@@ -1234,7 +1198,7 @@ function _test_get_path_binding_edges() {
         {
           resource_id: 'infores:unsecret-agent',
           path_bindings: {
-            p0: [{id: 'aux_graph_1'}]
+            p0: {ids: ['aux_graph_1']}
           },
           score: 0.9
         },
@@ -1249,7 +1213,7 @@ function _test_get_path_binding_edges() {
       args: [
         {
           path_bindings: {
-            p0: [{id: 'aux_graph_2'}, {id: 'aux_graph_1'}]
+            p0: {ids: ['aux_graph_2', 'aux_graph_1']}
           }
         },
         {
@@ -1263,7 +1227,7 @@ function _test_get_path_binding_edges() {
       args: [
         {
           path_bindings: {
-            p0: [{id: 'aux_graph_9'}]
+            p0: {ids: ['aux_graph_9']}
           }
         },
         {
@@ -1276,7 +1240,7 @@ function _test_get_path_binding_edges() {
       args: [
         {
           edge_bindings: {
-            e0: [{id: 'edge_1', attributes: []}]
+            e0: {ids: ['edge_1']}
           }
         },
         {
@@ -1343,7 +1307,7 @@ function _test_is_pathfinder_analysis() {
         {
           resource_id: 'infores:unsecret-agent',
           path_bindings: {
-            p0: [{id: 'aux_graph_1'}]
+            p0: {ids: ['aux_graph_1']}
           },
           score: 0.9
         }
@@ -1355,7 +1319,7 @@ function _test_is_pathfinder_analysis() {
         {
           resource_id: 'infores:unsecret-agent',
           edge_bindings: {
-            e0: [{id: 'edge_1', attributes: []}]
+            e0: {ids: ['edge_1']}
           },
           score: 0.9
         }
@@ -1366,10 +1330,10 @@ function _test_is_pathfinder_analysis() {
       args: [
         {
           edge_bindings: {
-            e0: [{id: 'edge_1', attributes: []}]
+            e0: {ids: ['edge_1']}
           },
           path_bindings: {
-            p0: [{id: 'aux_graph_1'}]
+            p0: {ids: ['aux_graph_1']}
           }
         }
       ],
@@ -1380,7 +1344,7 @@ function _test_is_pathfinder_analysis() {
         {
           edge_bindings: {},
           path_bindings: {
-            p0: [{id: 'aux_graph_1'}]
+            p0: {ids: ['aux_graph_1']}
           }
         }
       ],
