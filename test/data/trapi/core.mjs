@@ -12,7 +12,7 @@ const suite = {
     get_auxiliary_graph: _test_get_auxiliary_graph(),
     get_auxiliary_graph_edges: _test_get_auxiliary_graph_edges(),
     get_edge_bindings: _test_get_edge_bindings(),
-    get_node_bindings: _test_get_node_bindings(),
+    get_node_binding_ids: _test_get_node_binding_ids(),
     get_path_bindings: _test_get_path_bindings(),
     get_binding_id: _test_get_binding_id(),
     get_analyses: _test_get_analyses(),
@@ -846,7 +846,7 @@ function _test_get_edge_bindings() {
   });
 }
 
-function _test_get_node_bindings() {
+function _test_get_node_binding_ids() {
   return test.make_function_test({
     "valid_node_bindings": {
       "args": [
@@ -900,13 +900,62 @@ function _test_get_node_bindings() {
         },
         "sn"
       ],
-      "expected": [
+      "expected": ["CHEBI:15420"]
+    },
+    "multiple_nodes_bound_to_key": {
+      "args": [
         {
-          "id": "CHEBI:15420",
-          "query_id": null,
-          "attributes": []
-        }
-      ]
+          "node_bindings": {
+            "on": [
+              {
+                "id": "NCBIGene:6323",
+                "attributes": []
+              },
+              {
+                "id": "NCBIGene:1017",
+                "attributes": []
+              }
+            ],
+            "sn": [
+              {
+                "id": "CHEBI:15420",
+                "attributes": []
+              }
+            ]
+          }
+        },
+        "on"
+      ],
+      "expected": ["NCBIGene:6323", "NCBIGene:1017"]
+    },
+    "binding_not_an_array": {
+      "args": [
+        {
+          "node_bindings": {
+            "sn": {
+              "id": "CHEBI:15420",
+              "attributes": []
+            }
+          }
+        },
+        "sn"
+      ],
+      "expected": []
+    },
+    "binding_missing_id": {
+      "args": [
+        {
+          "node_bindings": {
+            "sn": [
+              {
+                "attributes": []
+              }
+            ]
+          }
+        },
+        "sn"
+      ],
+      "expected": ReferenceError
     },
     "no_node_bindings": {
       "args": [
