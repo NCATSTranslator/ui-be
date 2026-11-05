@@ -14,9 +14,11 @@ const suite = {
     get_edge_binding_ids: _test_get_edge_binding_ids(),
     get_node_binding_ids: _test_get_node_binding_ids(),
     get_path_binding_ids: _test_get_path_binding_ids(),
+    get_path_binding_edges: _test_get_path_binding_edges(),
     get_analyses: _test_get_analyses(),
     get_resource_id: _test_get_resource_id(),
     get_analysis_score: _test_get_analysis_score(),
+    is_pathfinder_analysis: _test_is_pathfinder_analysis(),
     get_ordering_components: _test_get_ordering_components(),
     get_normalized_score: _test_get_normalized_score(),
     get_kgraph: _test_get_kgraph(),
@@ -1106,6 +1108,67 @@ function _test_get_path_binding_ids() {
   });
 }
 
+function _test_get_path_binding_edges() {
+  return test.make_function_test({
+    path_bound_to_auxiliary_graph: {
+      args: [
+        {
+          resource_id: 'infores:unsecret-agent',
+          path_bindings: {
+            p0: [{id: 'aux_graph_1'}]
+          },
+          score: 0.9
+        },
+        {
+          aux_graph_1: {edges: ['edge_1', 'edge_2'], attributes: []},
+          aux_graph_2: {edges: ['edge_3'], attributes: []}
+        }
+      ],
+      expected: ['edge_1', 'edge_2']
+    },
+    only_first_path_binding_is_used: {
+      args: [
+        {
+          path_bindings: {
+            p0: [{id: 'aux_graph_2'}, {id: 'aux_graph_1'}]
+          }
+        },
+        {
+          aux_graph_1: {edges: ['edge_1', 'edge_2'], attributes: []},
+          aux_graph_2: {edges: ['edge_3'], attributes: []}
+        }
+      ],
+      expected: ['edge_3']
+    },
+    path_bound_to_unknown_auxiliary_graph: {
+      args: [
+        {
+          path_bindings: {
+            p0: [{id: 'aux_graph_9'}]
+          }
+        },
+        {
+          aux_graph_1: {edges: ['edge_1', 'edge_2'], attributes: []}
+        }
+      ],
+      expected: []
+    },
+    no_path_bindings: {
+      args: [
+        {
+          edge_bindings: {
+            e0: [{id: 'edge_1', attributes: []}]
+          }
+        },
+        {
+          aux_graph_1: {edges: ['edge_1', 'edge_2'], attributes: []}
+        }
+      ],
+      expected: []
+    }
+  });
+}
+
 function _test_get_analyses() {
   const analysis_list = [{resource_id: 'infores:unsecret-agent', edge_bindings: {}}];
   return test.make_function_test({
@@ -1150,6 +1213,63 @@ function _test_get_analysis_score() {
     missing_score: {
       args: [{}],
       expected: 0.0
+    }
+  });
+}
+
+function _test_is_pathfinder_analysis() {
+  return test.make_function_test({
+    path_bindings_only: {
+      args: [
+        {
+          resource_id: 'infores:unsecret-agent',
+          path_bindings: {
+            p0: [{id: 'aux_graph_1'}]
+          },
+          score: 0.9
+        }
+      ],
+      expected: true
+    },
+    edge_bindings_only: {
+      args: [
+        {
+          resource_id: 'infores:unsecret-agent',
+          edge_bindings: {
+            e0: [{id: 'edge_1', attributes: []}]
+          },
+          score: 0.9
+        }
+      ],
+      expected: false
+    },
+    edge_and_path_bindings: {
+      args: [
+        {
+          edge_bindings: {
+            e0: [{id: 'edge_1', attributes: []}]
+          },
+          path_bindings: {
+            p0: [{id: 'aux_graph_1'}]
+          }
+        }
+      ],
+      expected: false
+    },
+    empty_edge_bindings: {
+      args: [
+        {
+          edge_bindings: {},
+          path_bindings: {
+            p0: [{id: 'aux_graph_1'}]
+          }
+        }
+      ],
+      expected: true
+    },
+    no_bindings: {
+      args: [{resource_id: 'infores:unsecret-agent'}],
+      expected: true
     }
   });
 }
