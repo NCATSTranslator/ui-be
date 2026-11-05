@@ -7,6 +7,7 @@ const suite = {
   tests: {
     client_request_to_trapi_query: _test_client_request_to_trapi_query(),
     get_pk: _test_get_pk(),
+    has_message: _test_has_message(),
     get_results: _test_get_results(),
     get_auxiliary_graphs: _test_get_auxiliary_graphs(),
     get_auxiliary_graph: _test_get_auxiliary_graph(),
@@ -510,6 +511,44 @@ function _test_get_pk() {
     },
     invalid_message: {
       args: [{"ok": "123"}],
+      expected: false
+    }
+  });
+}
+
+function _test_has_message() {
+  return test.make_function_test({
+    response_with_message: {
+      args: [
+        {
+          "logs": [],
+          "message": {
+            "query_graph": {"nodes": {}, "edges": {}},
+            "knowledge_graph": {"nodes": {}, "edges": {}},
+            "results": []
+          }
+        }
+      ],
+      expected: true
+    },
+    response_with_empty_message: {
+      args: [{"logs": [], "message": {}}],
+      expected: true
+    },
+    response_with_null_message: {
+      args: [{"logs": [], "message": null}],
+      expected: false
+    },
+    response_without_message: {
+      args: [{"logs": []}],
+      expected: false
+    },
+    empty_placeholder: {
+      args: [[]],
+      expected: false
+    },
+    missing_response: {
+      args: [null],
       expected: false
     }
   });

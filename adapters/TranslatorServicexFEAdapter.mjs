@@ -2,6 +2,7 @@
 
 import * as cmn from '../lib/common.mjs';
 import * as arsmsg from '../lib/ARSMessages.mjs';
+import * as trapi from '../lib/trapi/core.mjs';
 import * as sm from '../lib/summarization/core.mjs';
 
 /* Translate messages coming from the Translator Service into the formats that the Frontend (FE) app expects */
@@ -43,12 +44,9 @@ class TranslatorServicexFEAdapter {
     // Omit ARA results where the actual results array is empty
     // Need to account for the ARS returning both null and []
     const data = msg.completed.filter(e => {
-      return e.data && !(Array.isArray(e.data) && e.data.length === 0);
+      return trapi.has_message(e.data);
     }).map(e => {
-      return {
-        agent: e.agent,
-        message: e.data
-      }
+      return e.data;
     });
 
     const summary = await sm.answers_to_summary(

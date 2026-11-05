@@ -197,7 +197,7 @@ class ARSClient {
       if (fetchCompleted && mostRecentCompleted !== null) {
         // Finally get the actual result of the most recent complete merged version
         const [meta, results] = await this._fetchMessage(mostRecentCompleted.uuid, false, true);
-        mostRecentCompleted.data = results.message;
+        mostRecentCompleted.data = results;
         mostRecentCompleted.meta = meta;
         fetch_completed_meta = meta;
       }
