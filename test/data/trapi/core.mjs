@@ -1,7 +1,7 @@
 export { suite }
 
 import * as test from "#test/lib/common.mjs";
-import { load_trapi, CONSTANTS, _QNode, _QEdge, _QEdgeQualifierSet, _QEdgeQualifier, _QPath, _QGraph } from "#lib/trapi/core.mjs";
+import { load_trapi, CONSTANTS, _QNode, _QEdge, _QPath, _QGraph } from "#lib/trapi/core.mjs";
 
 const suite = {
   tests: {
@@ -52,8 +52,6 @@ const suite = {
     _Query: _test_Query(),
     _QNode: _test_QNode(),
     _QEdge: _test_QEdge(),
-    _QEdgeQualifierSet: _test_QEdgeQualifierSet(),
-    _QEdgeQualifier: _test_QEdgeQualifier(),
     _QPath: _test_QPath(),
     _QGraph: _test_QGraph(),
     _InvalidQualifiersError: _test_InvalidQualifiersError(),
@@ -129,24 +127,15 @@ function _test_client_request_to_trapi_query() {
                 "object": "on",
                 "knowledge_type": "inferred",
                 "predicates": ["biolink:affects"],
-                "qualifier_constraints": [
-                  {
-                    "qualifier_set": [
-                      {
-                        "qualifier_type_id": "biolink:qualified_predicate",
-                        "qualifier_value": "biolink:causes"
-                      },
-                      {
-                        "qualifier_type_id": "biolink:object_aspect_qualifier",
-                        "qualifier_value": "activity_or_abundance"
-                      },
-                      {
-                        "qualifier_type_id": "biolink:object_direction_qualifier",
-                        "qualifier_value": "increased"
-                      }
-                    ]
-                  }
-                ]
+                "constraints": {
+                  "qualifiers": [
+                    {
+                      "biolink:qualified_predicate": "biolink:causes",
+                      "biolink:object_aspect_qualifier": "activity_or_abundance",
+                      "biolink:object_direction_qualifier": "increased"
+                    }
+                  ]
+                }
               }
             }
           }
@@ -180,24 +169,15 @@ function _test_client_request_to_trapi_query() {
                 "object": "on",
                 "knowledge_type": "inferred",
                 "predicates": ["biolink:affects"],
-                "qualifier_constraints": [
-                  {
-                    "qualifier_set": [
-                      {
-                        "qualifier_type_id": "biolink:qualified_predicate",
-                        "qualifier_value": "biolink:causes"
-                      },
-                      {
-                        "qualifier_type_id": "biolink:object_aspect_qualifier",
-                        "qualifier_value": "activity_or_abundance"
-                      },
-                      {
-                        "qualifier_type_id": "biolink:object_direction_qualifier",
-                        "qualifier_value": "decreased"
-                      }
-                    ]
-                  }
-                ]
+                "constraints": {
+                  "qualifiers": [
+                    {
+                      "biolink:qualified_predicate": "biolink:causes",
+                      "biolink:object_aspect_qualifier": "activity_or_abundance",
+                      "biolink:object_direction_qualifier": "decreased"
+                    }
+                  ]
+                }
               }
             }
           }
@@ -231,24 +211,15 @@ function _test_client_request_to_trapi_query() {
                 "object": "on",
                 "knowledge_type": "inferred",
                 "predicates": ["biolink:affects"],
-                "qualifier_constraints": [
-                  {
-                    "qualifier_set": [
-                      {
-                        "qualifier_type_id": "biolink:qualified_predicate",
-                        "qualifier_value": "biolink:causes"
-                      },
-                      {
-                        "qualifier_type_id": "biolink:object_aspect_qualifier",
-                        "qualifier_value": "activity_or_abundance"
-                      },
-                      {
-                        "qualifier_type_id": "biolink:object_direction_qualifier",
-                        "qualifier_value": "increased"
-                      }
-                    ]
-                  }
-                ]
+                "constraints": {
+                  "qualifiers": [
+                    {
+                      "biolink:qualified_predicate": "biolink:causes",
+                      "biolink:object_aspect_qualifier": "activity_or_abundance",
+                      "biolink:object_direction_qualifier": "increased"
+                    }
+                  ]
+                }
               }
             }
           }
@@ -282,24 +253,15 @@ function _test_client_request_to_trapi_query() {
                 "object": "on",
                 "knowledge_type": "inferred",
                 "predicates": ["biolink:affects"],
-                "qualifier_constraints": [
-                  {
-                    "qualifier_set": [
-                      {
-                        "qualifier_type_id": "biolink:qualified_predicate",
-                        "qualifier_value": "biolink:causes"
-                      },
-                      {
-                        "qualifier_type_id": "biolink:object_aspect_qualifier",
-                        "qualifier_value": "activity_or_abundance"
-                      },
-                      {
-                        "qualifier_type_id": "biolink:object_direction_qualifier",
-                        "qualifier_value": "decreased"
-                      }
-                    ]
-                  }
-                ]
+                "constraints": {
+                  "qualifiers": [
+                    {
+                      "biolink:qualified_predicate": "biolink:causes",
+                      "biolink:object_aspect_qualifier": "activity_or_abundance",
+                      "biolink:object_direction_qualifier": "decreased"
+                    }
+                  ]
+                }
               }
             }
           }
@@ -2775,25 +2737,15 @@ function _test_message_to_query_type() {
                   "predicates": [
                     "biolink:affects"
                   ],
-                  "attribute_constraints": [],
-                  "qualifier_constraints": [
-                    {
-                      "qualifier_set": [
-                        {
-                          "qualifier_type_id": "biolink:qualified_predicate",
-                          "qualifier_value": "biolink:causes"
-                        },
-                        {
-                          "qualifier_type_id": "biolink:object_aspect_qualifier",
-                          "qualifier_value": "activity_or_abundance"
-                        },
-                        {
-                          "qualifier_type_id": "biolink:object_direction_qualifier",
-                          "qualifier_value": "decreased"
-                        }
-                      ]
-                    }
-                  ]
+                  "constraints": {
+                    "qualifiers": [
+                      {
+                        "biolink:qualified_predicate": "biolink:causes",
+                        "biolink:object_aspect_qualifier": "activity_or_abundance",
+                        "biolink:object_direction_qualifier": "decreased"
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -2877,25 +2829,15 @@ function _test_message_to_query_type() {
                   ],
                   "subject": "sn",
                   "object": "on",
-                  "attribute_constraints": [],
-                  "qualifier_constraints": [
-                    {
-                      "qualifier_set": [
-                        {
-                          "qualifier_type_id": "biolink:qualified_predicate",
-                          "qualifier_value": "biolink:causes"
-                        },
-                        {
-                          "qualifier_type_id": "biolink:object_aspect_qualifier",
-                          "qualifier_value": "activity_or_abundance"
-                        },
-                        {
-                          "qualifier_type_id": "biolink:object_direction_qualifier",
-                          "qualifier_value": "increased"
-                        }
-                      ]
-                    }
-                  ],
+                  "constraints": {
+                    "qualifiers": [
+                      {
+                        "biolink:qualified_predicate": "biolink:causes",
+                        "biolink:object_aspect_qualifier": "activity_or_abundance",
+                        "biolink:object_direction_qualifier": "increased"
+                      }
+                    ]
+                  },
                   "exclude": null,
                   "option_group_id": null
                 }
@@ -3065,25 +3007,15 @@ function _test_message_to_endpoints() {
                   "predicates": [
                     "biolink:affects"
                   ],
-                  "attribute_constraints": [],
-                  "qualifier_constraints": [
-                    {
-                      "qualifier_set": [
-                        {
-                          "qualifier_type_id": "biolink:qualified_predicate",
-                          "qualifier_value": "biolink:causes"
-                        },
-                        {
-                          "qualifier_type_id": "biolink:object_aspect_qualifier",
-                          "qualifier_value": "activity_or_abundance"
-                        },
-                        {
-                          "qualifier_type_id": "biolink:object_direction_qualifier",
-                          "qualifier_value": "decreased"
-                        }
-                      ]
-                    }
-                  ]
+                  "constraints": {
+                    "qualifiers": [
+                      {
+                        "biolink:qualified_predicate": "biolink:causes",
+                        "biolink:object_aspect_qualifier": "activity_or_abundance",
+                        "biolink:object_direction_qualifier": "decreased"
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -3169,25 +3101,15 @@ function _test_message_to_endpoints() {
                   ],
                   "subject": "sn",
                   "object": "on",
-                  "attribute_constraints": [],
-                  "qualifier_constraints": [
-                    {
-                      "qualifier_set": [
-                        {
-                          "qualifier_type_id": "biolink:qualified_predicate",
-                          "qualifier_value": "biolink:causes"
-                        },
-                        {
-                          "qualifier_type_id": "biolink:object_aspect_qualifier",
-                          "qualifier_value": "activity_or_abundance"
-                        },
-                        {
-                          "qualifier_type_id": "biolink:object_direction_qualifier",
-                          "qualifier_value": "increased"
-                        }
-                      ]
-                    }
-                  ],
+                  "constraints": {
+                    "qualifiers": [
+                      {
+                        "biolink:qualified_predicate": "biolink:causes",
+                        "biolink:object_aspect_qualifier": "activity_or_abundance",
+                        "biolink:object_direction_qualifier": "increased"
+                      }
+                    ]
+                  },
                   "exclude": null,
                   "option_group_id": null
                 }
@@ -4028,7 +3950,7 @@ function _test_QEdge() {
           "object": _expected_qnode_on_gene(),
           "predicates": ["biolink:affects"],
           "query_mode": "inferred",
-          "qualifier_constraints": [_expected_qualifier_set_increased()]
+          "qualifier_constraints": [_qualifier_set_increased()]
         }
       },
       "steps": [
@@ -4039,19 +3961,22 @@ function _test_QEdge() {
             "subject": "sn",
             "object": "on",
             "predicates": ["biolink:affects"],
-            "qualifier_constraints": [_expected_qualifier_set_increased()],
+            "constraints": {
+              "qualifiers": [
+                {
+                  "biolink:qualified_predicate": "biolink:causes",
+                  "biolink:object_aspect_qualifier": "activity_or_abundance",
+                  "biolink:object_direction_qualifier": "increased"
+                }
+              ]
+            },
             "knowledge_type": "inferred"
           }
         },
         {
           "method": "get_constraints",
           "args": [],
-          "expected": [_expected_qualifier_set_increased()]
-        },
-        {
-          "method": "get_qualifiers",
-          "args": [],
-          "expected": [_expected_qualifier_set_increased()]
+          "expected": [_qualifier_set_increased()]
         }
       ]
     },
@@ -4068,7 +3993,7 @@ function _test_QEdge() {
         {
           "method": "set_constraints",
           "args": [[_qualifier_set_increased()]],
-          "expected": [_expected_qualifier_set_increased()]
+          "expected": [_qualifier_set_increased()]
         },
         {
           "method": "to_trapi",
@@ -4077,7 +4002,15 @@ function _test_QEdge() {
             "subject": "sn",
             "object": "on",
             "predicates": ["biolink:affects"],
-            "qualifier_constraints": [_expected_qualifier_set_increased()],
+            "constraints": {
+              "qualifiers": [
+                {
+                  "biolink:qualified_predicate": "biolink:causes",
+                  "biolink:object_aspect_qualifier": "activity_or_abundance",
+                  "biolink:object_direction_qualifier": "increased"
+                }
+              ]
+            },
             "knowledge_type": "inferred"
           }
         }
@@ -4126,12 +4059,71 @@ function _test_QEdge() {
             {
               "subject": "sn",
               "object": "on",
+              "predicates": ["biolink:affects"],
+              "constraints": {
+                "qualifiers": [
+                  {
+                    "biolink:qualified_predicate": "biolink:causes",
+                    "biolink:object_aspect_qualifier": "activity_or_abundance",
+                    "biolink:object_direction_qualifier": "increased"
+                  }
+                ]
+              },
+              "knowledge_type": "inferred"
+            },
+            { "sn": _qnode_sn_chemical(), "on": _qnode_on_gene() }
+          ],
+          "expected": {
+            "subject": _expected_qnode_sn_chemical(),
+            "object": _expected_qnode_on_gene(),
+            "predicates": ["biolink:affects"],
+            "query_mode": "inferred",
+            "qualifier_constraints": [_qualifier_set_increased()]
+          }
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "subject": "sn",
+              "object": "on",
               "predicates": ["biolink:treats"],
-              "qualifier_constraints": [{ "attribute_constraint": {} }]
+              "constraints": {
+                "knowledge_level": { "behavior": "ALLOW", "values": ["knowledge_assertion"] }
+              }
             },
             { "sn": _qnode_sn_chemical(), "on": _qnode_on_disease() }
           ],
-          "expected": TypeError
+          "expected": {
+            "subject": _expected_qnode_sn_chemical(),
+            "object": _expected_qnode_on_disease(),
+            "predicates": ["biolink:treats"],
+            "query_mode": "lookup"
+          }
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            {
+              "subject": "sn",
+              "object": "on",
+              "predicates": ["biolink:affects"],
+              "qualifier_constraints": [
+                {
+                  "qualifier_set": [
+                    { "qualifier_type_id": "biolink:object_direction_qualifier", "qualifier_value": "increased" }
+                  ]
+                }
+              ]
+            },
+            { "sn": _qnode_sn_chemical(), "on": _qnode_on_gene() }
+          ],
+          "expected": {
+            "subject": _expected_qnode_sn_chemical(),
+            "object": _expected_qnode_on_gene(),
+            "predicates": ["biolink:affects"],
+            "query_mode": "lookup"
+          }
         },
         {
           "method": "from_trapi",
@@ -4176,113 +4168,8 @@ function _test_QEdge() {
             "object": _expected_qnode_on_gene(),
             "predicates": ["biolink:affects"],
             "query_mode": "inferred",
-            "qualifier_constraints": [_expected_qualifier_set_increased()]
+            "qualifier_constraints": [_qualifier_set_increased()]
           }
-        }
-      ]
-    }
-  });
-}
-
-function _test_QEdgeQualifierSet() {
-  return test.make_class_test({
-    "empty": {
-      "class_constructor": {
-        "args": [],
-        "expected": { "qualifier_set": [] }
-      },
-      "steps": [
-        {
-          "method": "add",
-          "args": [_qualifier_direction_increased()],
-          "expected": undefined
-        },
-        {
-          "get": "qualifier_set",
-          "expected": [_expected_qualifier_direction_increased()]
-        },
-        {
-          "method": "add",
-          "args": [_qualifier_aspect_activity()],
-          "expected": undefined
-        },
-        {
-          "get": "qualifier_set",
-          "expected": [
-            _expected_qualifier_direction_increased(),
-            _expected_qualifier_aspect_activity()
-          ]
-        }
-      ]
-    },
-    "prefilled": {
-      "class_constructor": {
-        "args": [[_qualifier_predicate_causes(), _qualifier_aspect_activity()]],
-        "expected": {
-          "qualifier_set": [
-            _expected_qualifier_predicate_causes(),
-            _expected_qualifier_aspect_activity()
-          ]
-        }
-      }
-    },
-    "from_trapi": {
-      "steps": [
-        {
-          "method": "from_trapi",
-          "args": [
-            [
-              _expected_qualifier_predicate_causes(),
-              _expected_qualifier_aspect_activity(),
-              _expected_qualifier_direction_increased()
-            ]
-          ],
-          "expected": _expected_qualifier_set_increased()
-        },
-        {
-          "method": "from_trapi",
-          "args": [[]],
-          "expected": { "qualifier_set": [] }
-        }
-      ]
-    }
-  });
-}
-
-function _test_QEdgeQualifier() {
-  return test.make_class_test({
-    "construct": {
-      "class_constructor": {
-        "args": ["biolink:qualified_predicate", "biolink:causes"],
-        "expected": _expected_qualifier_predicate_causes()
-      },
-      "steps": [
-        {
-          "get": "qualifier_type_id",
-          "expected": "biolink:qualified_predicate"
-        },
-        {
-          "get": "qualifier_value",
-          "expected": "biolink:causes"
-        }
-      ]
-    },
-    "from_trapi": {
-      "steps": [
-        {
-          "method": "from_trapi",
-          "args": [_expected_qualifier_direction_increased()],
-          "expected": _expected_qualifier_direction_increased()
-        },
-        {
-          "method": "from_trapi",
-          "args": [{ "qualifier_type_id": "biolink:object_direction_qualifier" }],
-          "expected": ReferenceError
-        },
-        {
-          "method": "from_trapi",
-          "args": [{ "qualifier_value": "increased" }],
-          "expected": ReferenceError
         }
       ]
     }
@@ -4740,7 +4627,7 @@ function _test_QGraph() {
                 "object": { "categories": ["biolink:Gene"], "binding": "on" },
                 "predicates": ["biolink:affects"],
                 "query_mode": "inferred",
-                "qualifier_constraints": [_expected_qualifier_set_increased()]
+                "qualifier_constraints": [_qualifier_set_increased()]
               }
             },
             "_query_type": "standard"
@@ -4868,44 +4755,10 @@ function _qnode_on_gene_without_id() {
   return new _QNode("on", "Gene");
 }
 
-function _qualifier_predicate_causes() {
-  return new _QEdgeQualifier("biolink:qualified_predicate", "biolink:causes");
-}
-
-function _expected_qualifier_predicate_causes() {
-  return { "qualifier_type_id": "biolink:qualified_predicate", "qualifier_value": "biolink:causes" };
-}
-
-function _qualifier_aspect_activity() {
-  return new _QEdgeQualifier("biolink:object_aspect_qualifier", "activity_or_abundance");
-}
-
-function _expected_qualifier_aspect_activity() {
-  return { "qualifier_type_id": "biolink:object_aspect_qualifier", "qualifier_value": "activity_or_abundance" };
-}
-
-function _qualifier_direction_increased() {
-  return new _QEdgeQualifier("biolink:object_direction_qualifier", "increased");
-}
-
-function _expected_qualifier_direction_increased() {
-  return { "qualifier_type_id": "biolink:object_direction_qualifier", "qualifier_value": "increased" };
-}
-
 function _qualifier_set_increased() {
-  return new _QEdgeQualifierSet([
-    _qualifier_predicate_causes(),
-    _qualifier_aspect_activity(),
-    _qualifier_direction_increased()
-  ]);
-}
-
-function _expected_qualifier_set_increased() {
   return {
-    "qualifier_set": [
-      _expected_qualifier_predicate_causes(),
-      _expected_qualifier_aspect_activity(),
-      _expected_qualifier_direction_increased()
-    ]
+    "biolink:qualified_predicate": "biolink:causes",
+    "biolink:object_aspect_qualifier": "activity_or_abundance",
+    "biolink:object_direction_qualifier": "increased"
   };
 }
