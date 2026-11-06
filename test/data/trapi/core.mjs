@@ -341,7 +341,7 @@ function _test_client_request_to_trapi_query() {
                 "object": "on",
                 "constraints": [
                   {
-                    "intermediate_categories": ["biolink:Gene"]
+                    "required_intermediate_categories": ["biolink:Gene"]
                   }
                 ]
               }
@@ -4195,7 +4195,7 @@ function _test_QPath() {
           "expected": {
             "subject": "sn",
             "object": "on",
-            "constraints": [{ "intermediate_categories": ["biolink:Gene"] }]
+            "constraints": [{ "required_intermediate_categories": ["biolink:Gene"] }]
           }
         }
       ]
@@ -4235,6 +4235,40 @@ function _test_QPath() {
         {
           "method": "from_trapi",
           "args": ["p0", { "subject": "sn", "object": "on" }],
+          "expected": {
+            "binding": "p0",
+            "subject": "sn",
+            "object": "on",
+            "constraint": null
+          }
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            "p0",
+            {
+              "subject": "sn",
+              "object": "on",
+              "constraints": [{ "required_intermediate_categories": ["biolink:Gene"] }]
+            }
+          ],
+          "expected": {
+            "binding": "p0",
+            "subject": "sn",
+            "object": "on",
+            "constraint": "biolink:Gene"
+          }
+        },
+        {
+          "method": "from_trapi",
+          "args": [
+            "p0",
+            {
+              "subject": "sn",
+              "object": "on",
+              "constraints": [{ "intermediate_categories": ["biolink:Gene"] }]
+            }
+          ],
           "expected": {
             "binding": "p0",
             "subject": "sn",
@@ -4464,7 +4498,7 @@ function _test_QGraph() {
               "p0": {
                 "subject": "sn",
                 "object": "on",
-                "constraints": [{ "intermediate_categories": ["biolink:Gene"] }]
+                "constraints": [{ "required_intermediate_categories": ["biolink:Gene"] }]
               }
             }
           }
