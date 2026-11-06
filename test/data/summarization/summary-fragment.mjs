@@ -495,12 +495,12 @@ function _test_result_to_fragment() {
         new Map()
       ],
       "expected": {
-        "agents": ["unknown"],
+        "agents": [],
         "paths": [],
         "nodes": [],
         "edges": { "base": {}, "updates": [] },
         "scores": {},
-        "errors": { "unknown": ["Unknown error while building result summary fragment"] }
+        "errors": {}
       }
     }
   });

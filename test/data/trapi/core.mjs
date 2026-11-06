@@ -1227,7 +1227,7 @@ function _test_get_analyses() {
     },
     missing_analyses: {
       args: [{}],
-      expected: ReferenceError
+      expected: []
     }
   });
 }
