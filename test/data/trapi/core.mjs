@@ -1,7 +1,15 @@
 export { suite }
 
 import * as test from "#test/lib/common.mjs";
-import { load_trapi, CONSTANTS, _QNode, _QEdge, _QPath, _QGraph } from "#lib/trapi/core.mjs";
+import {
+  load_trapi,
+  CONSTANTS,
+  _QNode,
+  _QEdge,
+  _QPath,
+  _QGraph,
+  _MissingKnowledgeGraphError
+} from "#lib/trapi/core.mjs";
 
 const suite = {
   tests: {
@@ -55,7 +63,8 @@ const suite = {
     _QPath: _test_QPath(),
     _QGraph: _test_QGraph(),
     _InvalidQualifiersError: _test_InvalidQualifiersError(),
-    _MissingQueryGraphError: _test_MissingQueryGraphError()
+    _MissingQueryGraphError: _test_MissingQueryGraphError(),
+    _MissingKnowledgeGraphError: _test_MissingKnowledgeGraphError()
   },
   skip: {
     load_trapi: true,
@@ -1382,6 +1391,64 @@ function _test_get_kgraph() {
           }
         }
       }
+    },
+    "no_data_response": {
+      "args": [
+        {
+          "message": {
+            "results": []
+          }
+        }
+      ],
+      "expected": {}
+    },
+    "query_message": {
+      "args": [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": {
+                  "categories": ["biolink:ChemicalEntity"]
+                },
+                "on": {
+                  "ids": ["MONDO:123"],
+                  "categories": ["biolink:Disease"]
+                }
+              },
+              "edges": {
+                "t_edge": {
+                  "subject": "sn",
+                  "object": "on",
+                  "predicates": ["biolink:treats"]
+                }
+              }
+            }
+          }
+        }
+      ],
+      "expected": {}
+    },
+    "results_without_kgraph": {
+      "args": [
+        {
+          "message": {
+            "results": [
+              {
+                "node_bindings": {
+                  "sn": {
+                    "ids": ["CHEBI:123"]
+                  },
+                  "on": {
+                    "ids": ["MONDO:123"]
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "expected": _MissingKnowledgeGraphError
     }
   });
 }
@@ -4727,6 +4794,22 @@ function _test_MissingQueryGraphError() {
         {
           "get": "message",
           "expected": 'No query graph in {"message":{"knowledge_graph":{}}}'
+        }
+      ]
+    }
+  });
+}
+
+function _test_MissingKnowledgeGraphError() {
+  return test.make_class_test({
+    "message_states_the_problem": {
+      "class_constructor": {
+        "args": []
+      },
+      "steps": [
+        {
+          "get": "message",
+          "expected": "Message has results but no knowledge graph"
         }
       ]
     }

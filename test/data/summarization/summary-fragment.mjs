@@ -231,6 +231,77 @@ function _test_answer_to_fragments() {
       ],
       "expected": []
     },
+    "no-data-response": {
+      "args": [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": { "categories": ["biolink:ChemicalEntity"] },
+                "on": { "categories": ["biolink:Disease"], "ids": ["MONDO:0008029"] }
+              },
+              "edges": {
+                "t_edge": {
+                  "subject": "sn",
+                  "object": "on",
+                  "predicates": ["biolink:treats"],
+                  "knowledge_type": "inferred"
+                }
+              }
+            },
+            "results": []
+          }
+        },
+        {
+          "knode_rules": _name_and_agent_rules,
+          "kedge_rules": _predicate_and_context_rules,
+          "max_path_len": 3,
+          "replace_indirect_edges": false
+        },
+        {}
+      ],
+      "expected": []
+    },
+    "results-without-kgraph": {
+      "args": [
+        {
+          "message": {
+            "query_graph": {
+              "nodes": {
+                "sn": { "categories": ["biolink:ChemicalEntity"] },
+                "on": { "categories": ["biolink:Disease"], "ids": ["MONDO:0008029"] }
+              },
+              "edges": {
+                "t_edge": {
+                  "subject": "sn",
+                  "object": "on",
+                  "predicates": ["biolink:treats"],
+                  "knowledge_type": "inferred"
+                }
+              }
+            },
+            "results": [
+              {
+                "node_bindings": { "sn": { "ids": ["nb1"] }, "on": { "ids": ["nb2"] } },
+                "analyses": [
+                  { "resource_id": "infores:ara1", "edge_bindings": { "ab1": { "ids": ["eb1"] } } }
+                ],
+                "ordering_components": { "confidence": 1, "novelty": 0.5, "clinical_evidence": 0 },
+                "normalized_score": 0.7
+              }
+            ]
+          }
+        },
+        {
+          "knode_rules": _name_and_agent_rules,
+          "kedge_rules": _predicate_and_context_rules,
+          "max_path_len": 3,
+          "replace_indirect_edges": false
+        },
+        {}
+      ],
+      "expected": trapi._MissingKnowledgeGraphError
+    },
     "error-only-result-is-dropped": {
       "args": [
         {
