@@ -4,7 +4,8 @@ export {
   make_class_test,
   make_lazy,
   apply_rule,
-  apply_rules
+  apply_rules,
+  apply_rules_and_collect_errors
 }
 
 import * as ast from 'node:assert';
@@ -92,6 +93,15 @@ async function apply_rules({actual, case_context}) {
     }
   }
   return target;
+}
+
+async function apply_rules_and_collect_errors({actual, case_context}) {
+  const errors = {};
+  const target = await apply_rules({
+    actual: (src, cxt) => actual(src, {...cxt, errors: errors}),
+    case_context: case_context
+  });
+  return [target, errors];
 }
 
 async function _delazy(args) {

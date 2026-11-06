@@ -67,6 +67,102 @@ function _test_make_knode_rules() {
         "target": {}
       },
       post: test.apply_rules
+    },
+    "node-without-name": {
+      "args": [],
+      "expected": [
+        {
+          "names": [],
+          "types": ["biolink:ChemicalEntity"],
+          "synonyms": [],
+          "curies": [],
+          "descriptions": [],
+          "annotations": {
+            "chemical": {
+              "curies": null,
+              "approval": null,
+              "descriptions": null,
+              "indications": null,
+              "synonyms": null,
+              "roles": null,
+              "otc_status": null,
+              "clinical_trials": null
+            },
+            "gene": {
+              "curies": null,
+              "descriptions": null,
+              "name": null,
+              "species": null,
+              "tdl": null
+            },
+            "disease": {
+              "descriptions": null,
+              "curies": null,
+              "synonyms": null,
+              "clinical_trials": null
+            }
+          }
+        },
+        {}
+      ],
+      "context": {
+        "source": {
+          "categories": ["biolink:ChemicalEntity"],
+          "__context__": { "agent": "infores:ara1" }
+        },
+        "target": {}
+      },
+      post: test.apply_rules_and_collect_errors
+    },
+    "node-without-categories": {
+      "args": [],
+      "expected": [
+        {
+          "names": ["node 1"],
+          "types": [],
+          "synonyms": [],
+          "curies": [],
+          "descriptions": [],
+          "annotations": {
+            "chemical": {
+              "curies": null,
+              "approval": null,
+              "descriptions": null,
+              "indications": null,
+              "synonyms": null,
+              "roles": null,
+              "otc_status": null,
+              "clinical_trials": null
+            },
+            "gene": {
+              "curies": null,
+              "descriptions": null,
+              "name": null,
+              "species": null,
+              "tdl": null
+            },
+            "disease": {
+              "descriptions": null,
+              "curies": null,
+              "synonyms": null,
+              "clinical_trials": null
+            }
+          }
+        },
+        {
+          "infores:ara1": [
+            `Key: 'categories' not found in object '{"name":"node 1","__context__":{"agent":"infores:ara1"}}' and no default provided`
+          ]
+        }
+      ],
+      "context": {
+        "source": {
+          "name": "node 1",
+          "__context__": { "agent": "infores:ara1" }
+        },
+        "target": {}
+      },
+      post: test.apply_rules_and_collect_errors
     }
   });
 }
