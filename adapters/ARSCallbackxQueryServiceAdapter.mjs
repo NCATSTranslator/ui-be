@@ -14,16 +14,24 @@ class ARSCallbackxQueryServiceAdapter {
     };
     switch (eventType) {
       case _UPDATE_EVENT.MV_AVAILABLE:
-      case _UPDATE_EVENT.ARS_COMPLETE:
+      case _UPDATE_EVENT.ARS_COMPLETE: {
         update.aras = cmn.json_get(queryUpdate, 'merged_versions_list').map(idAraPair => idAraPair[1]);
         update.aras.reverse();
-        update.stats = cmn.json_get(queryUpdate, 'stats', null);
+        const resultCount = cmn.json_get(queryUpdate, 'results_count', null);
+        const auxGraphCount = cmn.json_get(queryUpdate, 'aux_graph_count', null);
+        if (resultCount !== null || auxGraphCount !== null) {
+          update.stats = {
+            result_count: resultCount,
+            aux_graph_count: auxGraphCount
+          };
+        }
         if (cmn.json_get(queryUpdate, 'complete')) {
           update.status = cmn.QUERY_STATUS.COMPLETE;
         } else {
           update.status = cmn.QUERY_STATUS.RUNNING;
         }
         break;
+      }
       case _UPDATE_EVENT.MV_BEGUN:
       case _UPDATE_EVENT.ARA_COMPLETE:
         break; // We can ignore these events for now

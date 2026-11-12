@@ -49,7 +49,8 @@ function _test_finalize_edges() {
             "qualifiers": false
           })
         },
-        {}
+        {},
+        "q1"
       ],
       "expected": {
         "edges": {
@@ -80,6 +81,7 @@ function _test_finalize_edges() {
               "e/ev/publications": { "id": "e/ev/publications", "description": { "name": "Publications", "description": "" } },
               "e/ev/clinical": { "id": "e/ev/clinical", "description": { "name": "Clinical Trials", "description": "" } },
               "e/ev/other": { "id": "e/ev/other", "description": { "name": "Other", "description": "" } },
+              "e/q/q1": { "id": "e/q/q1", "description": { "name": "q1", "description": "" } },
               "e/pred/treats": { "id": "e/pred/treats", "description": { "name": "treats", "description": "" } }
             }
           }
@@ -98,6 +100,71 @@ function _test_finalize_edges() {
             "url": "https://clinicaltrials.gov/ct2/show/NCT01"
           }
         },
+        "provenance": {
+          "infores:gtopdb": {
+            "name": "Guide to Pharmacology Database",
+            "wiki": "https://github.com/NCATSTranslator/Translator-All/wiki/GtoPdb",
+            "url": null,
+            "knowledge_level": "trusted"
+          }
+        },
+        "errors": {}
+      },
+      post: _to_raw_output
+    },
+    "tags-inverted-edge-with-actual-direction": {
+      "args": [
+        {
+          "e1": Object.assign(SummaryEdge.from_object({
+            "id": "e1",
+            "aras": ["infores:ara1"],
+            "is_root": true,
+            "knowledge_level": null,
+            "description": null,
+            "subject": "nb1",
+            "object": "nb2",
+            "predicate": "treats",
+            "predicate_url": null,
+            "provenance": [{ "infores": "infores:gtopdb", "records": [] }],
+            "publications": {},
+            "metadata": { "edge_bindings": ["eb1"], "inverted_id": "e1-inv", "is_root": true },
+            "trials": [],
+            "tags": {}
+          }), {
+            "supporting_text": {},
+            "supporting_trials": {},
+            "qualifiers": false
+          })
+        },
+        {},
+        "q1"
+      ],
+      "expected": {
+        "edges": {
+          "e1": {
+            "id": "e1",
+            "aras": ["infores:ara1"],
+            "is_root": true,
+            "knowledge_level": "trusted",
+            "description": "*",
+            "subject": "nb2",
+            "object": "nb1",
+            "predicate": "treated by",
+            "predicate_url": "https://biolink.github.io/biolink-model/treats/",
+            "provenance": [{ "infores": "infores:gtopdb", "records": [] }],
+            "publications": {},
+            "metadata": { "edge_bindings": ["eb1"], "inverted_id": "e1-inv", "is_root": true },
+            "trials": [],
+            "source_time": null,
+            "tags": {
+              "e/ev/other": { "id": "e/ev/other", "description": { "name": "Other", "description": "" } },
+              "e/q/q1": { "id": "e/q/q1", "description": { "name": "q1", "description": "" } },
+              "e/pred/treated by": { "id": "e/pred/treated by", "description": { "name": "treated by", "description": "" } }
+            }
+          }
+        },
+        "publications": {},
+        "trials": {},
         "provenance": {
           "infores:gtopdb": {
             "name": "Guide to Pharmacology Database",
@@ -130,7 +197,8 @@ function _test_finalize_edges() {
             "tags": {}
           })
         },
-        { "infores:ara1": ["rule failed"] }
+        { "infores:ara1": ["rule failed"] },
+        "q1"
       ],
       "expected": {
         "edges": {},
@@ -165,7 +233,8 @@ function _test_finalize_edges() {
             "qualifiers": false
           })
         },
-        {}
+        {},
+        "q1"
       ],
       "expected": {
         "edges": {},

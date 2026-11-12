@@ -19,6 +19,7 @@ export {
 
 import * as cmn from "#lib/common.mjs";
 import * as taglib from "#lib/taglib.mjs";
+import * as summary_tags from "#lib/summarization/tags.mjs";
 import { SummaryNode } from "#lib/summarization/SummaryNode.mjs";
 import { SummaryEdge } from "#lib/summarization/SummaryEdge.mjs";
 
@@ -634,6 +635,19 @@ class Graph {
 
   edges() {
     return this._edges;
+  }
+
+  query_pks() {
+    const pks = new Set();
+    for (const entities of [this._nodes, this._edges]) {
+      for (const entity of entities) {
+        if (!entity.has_translator_data()) continue;
+        for (const tag of taglib.get_tags(entity.data)) {
+          if (summary_tags.is_query_tag(tag)) pks.add(summary_tags.query_tag_to_pk(tag));
+        }
+      }
+    }
+    return [...pks];
   }
 }
 

@@ -8,13 +8,13 @@ import { canvas_table, user_data_table, translator_data_table, rows_from_json } 
 const _WRITE_COLUMNS = Object.freeze({
   [ENTITY_KIND.NODE]: Object.freeze({
     insert: Object.freeze(["canvas_id", "data_id", "user_data_id", "ref", "label", "type", "x", "y", "hidden", "tags"]),
-    revive: Object.freeze(["label", "type", "x", "y", "hidden", "tags"])
+    revive: Object.freeze(["label", "type", "x", "y", "hidden"])
   }),
   [ENTITY_KIND.EDGE]: Object.freeze({
     insert: Object.freeze([
       "canvas_id", "data_id", "user_data_id", "subject_id", "object_id", "ref", "label", "hidden", "tags"
     ]),
-    revive: Object.freeze(["subject_id", "object_id", "label", "hidden", "tags"])
+    revive: Object.freeze(["subject_id", "object_id", "label", "hidden"])
   })
 });
 
@@ -608,6 +608,7 @@ class CanvasStorePostgres {
       VALUES ${params}
       ON CONFLICT (canvas_id, data_id) DO UPDATE
         SET ${columns.revive.map(revive).join(", ")},
+            tags = ${table}.tags || EXCLUDED.tags,
             user_data_id = CASE WHEN ${table}.time_deleted IS NULL
               THEN COALESCE(${table}.user_data_id, EXCLUDED.user_data_id)
               ELSE COALESCE(EXCLUDED.user_data_id, ${table}.user_data_id) END,
@@ -615,6 +616,7 @@ class CanvasStorePostgres {
             time_updated = CURRENT_TIMESTAMP
         WHERE ${table}.time_deleted IS NOT NULL
           OR ${table}.user_data_id IS DISTINCT FROM COALESCE(EXCLUDED.user_data_id, ${table}.user_data_id)
+          OR NOT ${table}.tags @> EXCLUDED.tags
       RETURNING data_id, user_data_id`, args);
     const requested = new Map(canvas_entities.map((entity) => [entity.data_id, entity.user_data_id]));
     if (res.rows.some((row) => (requested.get(row.data_id) ?? row.user_data_id) !== row.user_data_id)) {
