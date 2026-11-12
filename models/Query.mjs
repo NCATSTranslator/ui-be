@@ -37,8 +37,8 @@ class Query {
   }
 
   setStatistics(statistics) {
-    this.metadata.stats.result_count = statistics.results ?? null;
-    this.metadata.stats.aux_graph_count = statistics.auxiliary_graphs ?? null;
+    this.metadata.stats.result_count = statistics.result_count;
+    this.metadata.stats.aux_graph_count = statistics.aux_graph_count;
     this.time_updated = new Date();
     return this;
   }
