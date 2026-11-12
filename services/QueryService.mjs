@@ -37,8 +37,8 @@ class QueryService {
     }
   }
 
-  async createQuery(pk, queryReq) {
-    const query = new Query({pk: pk, metadata: new QueryMetadata(queryReq)});
+  async createQuery(pk, queryReq, status = cmn.QUERY_STATUS.RUNNING) {
+    const query = new Query({pk: pk, status: status, metadata: new QueryMetadata(queryReq)});
     const storeQueryModel = await this._queryStore.createQuery(query);
     if (storeQueryModel === null) throw new Error(`Query store failed to create new query with PK: ${pk}`);
     return storeQueryModel;

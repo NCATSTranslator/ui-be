@@ -37,8 +37,8 @@ class Query {
   }
 
   setStatistics(statistics) {
-    this.metadata.stats.result_count = statistics.results ?? null;
-    this.metadata.stats.aux_graph_count = statistics.auxiliary_graphs ?? null;
+    this.metadata.stats.result_count = statistics.result_count;
+    this.metadata.stats.aux_graph_count = statistics.aux_graph_count;
     this.time_updated = new Date();
     return this;
   }
@@ -131,7 +131,7 @@ function gen_user_query(uq_data) {
     aras: aras,
     query: uq_data.data.description,
     title: uq_data.data.title ?? null,
-    statistics: uq_data.metadata.statistics ?? new QueryStatistics(),
+    statistics: uq_data.metadata?.statistics ?? new QueryStatistics(),
     time_viewed: uq_data.data.last_seen ?? null,
     time_created: uq_data.time_created,
     time_updated: uq_data.time_updated,

@@ -67,7 +67,8 @@ function _test_finalize_nodes() {
               }
             }
           })
-        }
+        },
+        "q1"
       ],
       "expected": {
         "CHEBI:15365": {
@@ -95,7 +96,9 @@ function _test_finalize_nodes() {
               "clinical_trials": { "value": ["NCT01"], "metadata": { "sources": [] } }
             }
           },
-          "tags": {}
+          "tags": {
+            "n/q/q1": { "id": "n/q/q1", "description": { "name": "q1", "description": "" } }
+          }
         },
         "MONDO:0005148": {
           "id": "MONDO:0005148",
@@ -121,7 +124,9 @@ function _test_finalize_nodes() {
               }
             }
           },
-          "tags": {}
+          "tags": {
+            "n/q/q1": { "id": "n/q/q1", "description": { "name": "q1", "description": "" } }
+          }
         }
       },
       post: _tags_to_raw
@@ -149,7 +154,8 @@ function _test_finalize_nodes() {
               }
             }
           })
-        }
+        },
+        "q1"
       ],
       "expected": {
         "UniProtKB:P23219": {
@@ -175,6 +181,7 @@ function _test_finalize_nodes() {
             }
           },
           "tags": {
+            "n/q/q1": { "id": "n/q/q1", "description": { "name": "q1", "description": "" } },
             "n/tdl/tclin": { "id": "n/tdl/tclin", "description": { "name": "Tclin (approved drug)", "description": "" } }
           }
         }

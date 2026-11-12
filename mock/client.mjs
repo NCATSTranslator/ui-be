@@ -1,12 +1,23 @@
-export { ARSClient };
+export { ARSClient, MOCK_PK_NAMESPACE };
 import { logger } from "#lib/logger.mjs";
 import * as cmn from "#lib/common.mjs";
 import * as fs from "node:fs";
+import { v5 as uuidv5, validate as is_uuid } from "uuid";
+
+const MOCK_PK_NAMESPACE = "6f1c2b4e-8d3a-4f5b-9c7e-2a1d0b3e4f5c";
 
 class ARSClient {
   constructor(base_path) {
     this.data = {};
+    this.query_pks = new Map();
     this._assign_data_from([base_path]);
+    for (const [name, pk] of this.query_pks) {
+      if (name !== pk) logger.info(`[mock ARS] query ${name} is served as pk ${pk}`);
+    }
+  }
+
+  mock_queries() {
+    return [...this.query_pks.values()].map((pk) => ({ pk, query_graph: this.data[pk]?.trace?.query_graph ?? null }));
   }
 
   _assign_data_from(path) {
@@ -19,7 +30,9 @@ class ARSClient {
       const file_name_parts = path.at(-1).split(".");
       const extension = file_name_parts.at(-1);
       if (extension !== "json") return;
-      const pk = path.at(-2);
+      const name = path.at(-2);
+      const pk = is_uuid(name) ? name : uuidv5(name, MOCK_PK_NAMESPACE);
+      if (path.length === 3) this.query_pks.set(name, pk);
       if (this.data[pk] === undefined) {
         this.data[pk] = {};
       }
@@ -80,6 +93,16 @@ class ARSClient {
 
   async _collectMergedResults(pkey, fetchCompleted=false) {
     const ltype = fetchCompleted ? 'query-result' : 'query-status';
+    if (this.data[pkey] === undefined) {
+      logger.warn({ltype: ltype, pk: pkey}, '[mock ARS] no data for pk; reporting it as complete with no results');
+      return {
+        pk: pkey,
+        completed: [],
+        running: [],
+        errored: [],
+        meta: { fetch_ms: 0, parse_ms: 0, status: "done", headers: "", timestamp: new Date().toISOString() }
+      };
+    }
 
     // Get the top level message from the ARS. This contains the list of currently
     // merged PKs.
