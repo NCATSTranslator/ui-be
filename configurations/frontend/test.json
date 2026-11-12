@@ -13,13 +13,13 @@
       "id": "MONDO:0007254"
     },
     {
-      "name": "Adrenocortical Hypofunction, Chronic Primary Congenital",
+      "name": "Adrenocortical Insufficiency",
       "type": "drug",
       "allow_inbound": false,
       "allow_outbound": true,
       "direction": null,
-      "uuid": "8ea5ce82-753b-4d4c-af94-83f6c5a7a5a1",
-      "id": "MONDO:0007071"
+      "uuid": "40f27a0c-9728-4c0c-b0a8-9773c95b058f",
+      "id": "MONDO:0000004"
     },
     {
       "name": "Hypertensive Heart Disease",
