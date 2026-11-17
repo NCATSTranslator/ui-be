@@ -3,15 +3,23 @@ export {
   check_links,
   describe_check,
   describe_error,
+  describe_outcome,
   is_absolute_http_url,
   parse_args,
   run_pool,
+  write_csv_report,
   DEFAULT_CONCURRENCY,
+  DEFAULT_REPORT_DIR,
   DEFAULT_TIMEOUT_MS
 }
 
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 const DEFAULT_CONCURRENCY = 8;
+const DEFAULT_REPORT_DIR = 'test/results/links';
 const DEFAULT_TIMEOUT_MS = 20000;
+const REPORT_COLUMNS = Object.freeze(['link', 'source', 'status', 'reason']);
 const MAX_BODY_BYTES = 512 * 1024;
 const RETRY_STATUSES = new Set([429, 500, 502, 503, 504]);
 const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 translator-ui-link-check';
@@ -59,6 +67,19 @@ function describe_check(result) {
   return `${status} ${result.url}${redirect}${title}${problems}`;
 }
 
+function describe_outcome(result) {
+  const parts = result.ok ? [`HTTP ${result.status}`] : [...result.problems];
+  if (result.final_url && result.final_url !== result.url) {
+    parts.push(`redirected to ${result.final_url}`);
+  }
+  if (result.title && !parts.some(part => part.includes(result.title))) {
+    parts.push(`title "${result.title}"`);
+  } else if (result.ok && !result.title && result.content_type) {
+    parts.push(`content type ${result.content_type}`);
+  }
+  return parts.join('; ');
+}
+
 function describe_error(err) {
   if (err === null || err === undefined) return 'unknown error';
   if (err.status !== undefined && err.url !== undefined) return `HTTP ${err.status} ${err.method} ${err.url}`;
@@ -95,6 +116,21 @@ function parse_args(argv) {
     }
   }
   return args;
+}
+
+async function write_csv_report(report_dir, name, rows) {
+  const path = join(report_dir, `${name}.csv`);
+  const lines = [REPORT_COLUMNS.join(',')];
+  for (const row of rows) {
+    const record = { ...row, status: row.succeeded ? 'success' : 'failure' };
+    lines.push(REPORT_COLUMNS.map(column => {
+      const value = String(record[column] ?? '');
+      return /[",\n\r]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
+    }).join(','));
+  }
+  await mkdir(report_dir, { recursive: true });
+  await writeFile(path, `${lines.join('\n')}\n`);
+  return path;
 }
 
 async function _fetch_once(url, timeout_ms) {

@@ -1,5 +1,5 @@
 import { createHarness } from '../lib/api-harness.mjs';
-import { describe_error, parse_args, run_pool } from '../lib/link-check.mjs';
+import { describe_error, parse_args, run_pool, write_csv_report, DEFAULT_REPORT_DIR } from '../lib/link-check.mjs';
 import {
   group_diagnostics,
   has_result_data,
@@ -25,11 +25,14 @@ const { ok, fail, finish } = createHarness();
 const args = parse_args(process.argv.slice(2));
 const concurrency = Number(args.concurrency ?? DEFAULT_CONCURRENCY);
 const query_filter = typeof args.query === 'string' ? args.query : null;
+const report_dir = typeof args.report_dir === 'string' ? args.report_dir : DEFAULT_REPORT_DIR;
+const report_rows = [];
 
 const environments = select_environments(args.env);
 for (const [env_name, config_path] of environments) {
   await test_environment(env_name, config_path);
 }
+console.log(`\n  report: ${await write_csv_report(report_dir, 'example-queries', report_rows)}`);
 finish();
 
 function select_environments(requested) {
@@ -80,22 +83,27 @@ function matches_filter(query, filter) {
 }
 
 async function test_query(env_name, client, adapter, query) {
-  const label = `[${env_name}] ${query.name.trim()} <${query.type} ${query.id}> ${query.uuid}`;
+  const source = `[${env_name}] ${query.name.trim()} <${query.type} ${query.id}>`;
+  const label = `${source} ${query.uuid}`;
+  const record = (succeeded, reason) => {
+    ok(succeeded, `${label}: ${reason}`);
+    report_rows.push({ link: `${client.getURL}/${query.uuid}`, source, succeeded, reason });
+  };
   const started = Date.now();
   let message;
   try {
     message = await client.getQueryResults(query.uuid, ARA_FILTERS);
   } catch (err) {
-    fail(`${label}: cannot retrieve results: ${describe_error(err)}`);
+    record(false, `cannot retrieve results: ${describe_error(err)}`);
     return;
   }
   if (message.queuing) {
-    fail(`${label}: the ARS reports the query as still queuing`);
+    record(false, 'the ARS reports the query as still queuing');
     return;
   }
   const completed = message.completed.filter(has_result_data);
   if (completed.length === 0) {
-    fail(`${label}: no completed results (running: ${agents(message.running)}, errored: ${agents(message.errored)})`);
+    record(false, `no completed results (running: ${agents(message.running)}, errored: ${agents(message.errored)})`);
     return;
   }
   let summary;
@@ -103,13 +111,13 @@ async function test_query(env_name, client, adapter, query) {
   try {
     ({ value: summary, diagnostics } = await summarize(adapter, message));
   } catch (err) {
-    fail(`${label}: processing threw: ${describe_error(err)}`);
+    record(false, `processing threw: ${describe_error(err)}`);
     return;
   }
   const data = summary.data;
   const elapsed = ((Date.now() - started) / 1000).toFixed(1);
   const counts = `${data.results.length} results, ${Object.keys(data.nodes).length} nodes, ${Object.keys(data.edges).length} edges, ${Object.keys(data.provenance).length} sources in ${elapsed}s`;
-  ok(data.results.length > 0, `${label}: ${counts}`);
+  record(data.results.length > 0, data.results.length > 0 ? counts : `no results: ${counts}`);
   report_warnings(label, message, summary);
   report_diagnostics(label, diagnostics);
 }

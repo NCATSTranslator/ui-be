@@ -1,11 +1,14 @@
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { createHarness } from '../lib/api-harness.mjs';
 import {
   check_links,
   describe_check,
   describe_error,
+  describe_outcome,
   parse_args,
+  write_csv_report,
   DEFAULT_CONCURRENCY,
+  DEFAULT_REPORT_DIR,
   DEFAULT_TIMEOUT_MS
 } from '../lib/link-check.mjs';
 import { group_diagnostics, load_pipeline, summarize } from '../lib/summary-pipeline.mjs';
@@ -31,6 +34,7 @@ const concurrency = Number(args.concurrency ?? DEFAULT_CONCURRENCY);
 const timeout_ms = Number(args.timeout ?? DEFAULT_TIMEOUT_MS);
 const per_group = args.all === true ? Infinity : Number(args.per_group ?? DEFAULT_PER_GROUP);
 const mock_data_path = typeof args.mock_data === 'string' ? args.mock_data : null;
+const report_dir = typeof args.report_dir === 'string' ? args.report_dir : DEFAULT_REPORT_DIR;
 
 const links = new Map();
 collect_source_table_links(links);
@@ -38,7 +42,7 @@ await collect_mock_result_links(links);
 const selected = select_links(links);
 console.log(`\n# checking ${selected.length} of ${links.size} distinct annotation link(s) with concurrency ${concurrency}, timeout ${timeout_ms}ms\n`);
 const failed = [];
-await check_links(selected, {
+const results = await check_links(selected, {
   concurrency: concurrency,
   timeout_ms: timeout_ms,
   on_result: result => {
@@ -53,6 +57,13 @@ if (failed.length > 0) {
     console.log(`    ${describe_check(result)}  [${links.get(result.url).group}]`);
   }
 }
+const report_rows = results.map(result => ({
+  link: result.url,
+  source: links.get(result.url).group,
+  succeeded: result.ok,
+  reason: describe_outcome(result)
+}));
+console.log(`\n  report: ${await write_csv_report(report_dir, 'node-annotations', report_rows)}`);
 finish();
 
 function collect_source_table_links(links) {
@@ -87,7 +98,8 @@ async function collect_mock_result_links(links) {
   }
   const client = new ARSClient(data_path);
   const missing_prefixes = new Map();
-  for (const pk of mock_query_pks(data_path)) {
+  const before_mock = links.size;
+  for (const [name, pk] of client.query_pks) {
     const before = links.size;
     let summary;
     let diagnostics;
@@ -95,7 +107,7 @@ async function collect_mock_result_links(links) {
       const message = await client.getQueryResults(pk, {});
       ({ value: summary, diagnostics } = await summarize(adapter, message));
     } catch (err) {
-      console.warn(`  ! mock query ${pk} could not be summarized and was skipped: ${describe_error(err)}`);
+      console.warn(`  ! mock query ${name} could not be summarized and was skipped: ${describe_error(err)}`);
       continue;
     }
     for (const node of Object.values(summary.data.nodes)) {
@@ -103,17 +115,14 @@ async function collect_mock_result_links(links) {
     }
     const errors = group_diagnostics(diagnostics).filter(group => group.level === 'error');
     const error_note = errors.length > 0 ? `, ${errors.length} logged error group(s) during summarization` : '';
-    console.log(`  mock query ${pk}: ${Object.keys(summary.data.nodes).length} nodes, ${links.size - before} new link(s)${error_note}`);
+    console.log(`  mock query ${name}: ${Object.keys(summary.data.nodes).length} nodes, ${links.size - before} new link(s)${error_note}`);
+  }
+  if (links.size === before_mock) {
+    fail(`no annotation links were found in any mock result under ${data_path}`);
   }
   for (const [prefix, count] of missing_prefixes) {
     console.warn(`  ! prefix ${prefix}: ${count} curie(s) have no URL because the prefix catalog has no entry`);
   }
-}
-
-function mock_query_pks(data_path) {
-  return readdirSync(data_path)
-    .filter(name => statSync(`${data_path}/${name}`).isDirectory())
-    .sort();
 }
 
 function collect_node_links(node, links, missing_prefixes) {

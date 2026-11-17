@@ -3,9 +3,12 @@ import { createHarness } from '../lib/api-harness.mjs';
 import {
   check_links,
   describe_check,
+  describe_outcome,
   is_absolute_http_url,
   parse_args,
+  write_csv_report,
   DEFAULT_CONCURRENCY,
+  DEFAULT_REPORT_DIR,
   DEFAULT_TIMEOUT_MS
 } from '../lib/link-check.mjs';
 import { read_json } from '#lib/common.mjs';
@@ -26,6 +29,8 @@ const concurrency = Number(args.concurrency ?? DEFAULT_CONCURRENCY);
 const timeout_ms = Number(args.timeout ?? DEFAULT_TIMEOUT_MS);
 const link_filter = typeof args.filter === 'string' ? args.filter.toLowerCase() : null;
 const limit = typeof args.limit === 'string' ? Number(args.limit) : null;
+const report_dir = typeof args.report_dir === 'string' ? args.report_dir : DEFAULT_REPORT_DIR;
+const report_rows = [];
 
 console.log(`# infores catalog links (${CATALOG_DIR})`);
 const catalog_files = typeof args.catalog === 'string' ? [args.catalog] : await configured_catalog_files();
@@ -36,7 +41,7 @@ for (const file of catalog_files) {
 const selected = select_links(links);
 console.log(`  checking ${selected.length} distinct link(s) with concurrency ${concurrency}, timeout ${timeout_ms}ms\n`);
 const failed = [];
-await check_links(selected, {
+const results = await check_links(selected, {
   concurrency: concurrency,
   timeout_ms: timeout_ms,
   on_result: result => {
@@ -51,6 +56,15 @@ if (failed.length > 0) {
     console.log(`    ${describe_check(result)}  [${origins}]`);
   }
 }
+for (const result of results) {
+  report_rows.push({
+    link: result.url,
+    source: [...links.get(result.url)].join(', '),
+    succeeded: result.ok,
+    reason: describe_outcome(result)
+  });
+}
+console.log(`\n  report: ${await write_csv_report(report_dir, 'infores-catalog', report_rows)}`);
 finish();
 
 async function configured_catalog_files() {
@@ -79,6 +93,7 @@ async function collect_catalog_links(file, links) {
     return;
   }
   const catalog = await read_json(path);
+  const version = file.replace(/^infores-catalog-|\.json$/g, '');
   let unlinked = 0;
   let malformed = 0;
   for (const [infores, entry] of Object.entries(catalog)) {
@@ -89,11 +104,17 @@ async function collect_catalog_links(file, links) {
       if (!is_absolute_http_url(value)) {
         malformed += 1;
         fail(`${file} ${infores}.${field} is not an absolute http(s) URL: ${JSON.stringify(value)}`);
+        report_rows.push({
+          link: String(value),
+          source: `${infores}.${field}@${version}`,
+          succeeded: false,
+          reason: 'not an absolute http(s) URL'
+        });
         continue;
       }
       linked = true;
       const origins = links.get(value) ?? new Set();
-      origins.add(`${infores}.${field}`);
+      origins.add(`${infores}.${field}@${version}`);
       links.set(value, origins);
     }
     if (!linked) unlinked += 1;
