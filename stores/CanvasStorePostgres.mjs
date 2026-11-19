@@ -360,6 +360,59 @@ class CanvasStorePostgres {
     return res.rows.map((row) => row.id);
   }
 
+  async get_canvas_shares(share_ids) {
+    if (share_ids.length === 0) return [];
+    const res = await pgExec(this._db_pool, `
+      SELECT id, canvas_id, user_id, time_created
+      FROM canvas_share
+      WHERE id = ANY($1::uuid[])`, [share_ids]);
+    return res.rows;
+  }
+
+  async get_canvas_shares_by_user(user_id, canvas_id) {
+    const res = await pgExec(this._db_pool, `
+      SELECT
+        (SELECT COALESCE(json_agg(cs ORDER BY cs.time_created, cs.id), '[]'::json)
+         FROM canvas_share cs WHERE cs.canvas_id = canvas.id) AS shares
+      FROM user_to_canvas
+      JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+      WHERE user_to_canvas.user_id = $1 AND canvas.id = $2 AND canvas.time_deleted IS NULL`,
+      [user_id, canvas_id]);
+    if (res.rows.length === 0) return null;
+    return rows_from_json(res.rows[0].shares);
+  }
+
+  async create_canvas_shares(shares) {
+    if (shares.length === 0) return [];
+    const [params, args] = models_to_params_and_args(
+      shares,
+      ["id", "canvas_id", "user_id"],
+      [SQL_TYPES.UUID, SQL_TYPES.BIGINT, SQL_TYPES.UUID]);
+    const res = await pgExec(this._db_pool, `
+      INSERT INTO canvas_share (id, canvas_id, user_id)
+      SELECT v.id, v.canvas_id, v.user_id
+      FROM (VALUES ${params}) AS v(id, canvas_id, user_id)
+      JOIN user_to_canvas ON user_to_canvas.canvas_id = v.canvas_id AND user_to_canvas.user_id = v.user_id
+      JOIN canvas ON canvas.id = v.canvas_id
+      WHERE canvas.time_deleted IS NULL
+      RETURNING *`, args);
+    return res.rows;
+  }
+
+  async delete_canvas_shares_by_user(user_id, canvas_id, share_ids) {
+    if (share_ids.length === 0) return [];
+    const res = await pgExec(this._db_pool, `
+      DELETE FROM canvas_share
+      WHERE canvas_share.canvas_id = $1
+        AND canvas_share.id = ANY($2::uuid[])
+        AND EXISTS (
+          SELECT 1 FROM user_to_canvas
+          WHERE user_to_canvas.canvas_id = canvas_share.canvas_id
+            AND user_to_canvas.user_id = $3)
+      RETURNING id`, [canvas_id, share_ids, user_id]);
+    return res.rows.map((row) => row.id);
+  }
+
   async create_user_canvas(user_canvas, graph = new Graph()) {
     return this._write_trans(async (client) => {
       const canvas = await this._create_canvas(client, user_canvas);

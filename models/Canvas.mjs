@@ -13,10 +13,12 @@ export {
   CanvasNode,
   CanvasEdge,
   CanvasAnnotation,
+  CanvasShare,
   CanvasRequestError,
   CanvasConflictError
 }
 
+import { v4 as uuidv4 } from "uuid";
 import * as cmn from "#lib/common.mjs";
 import * as taglib from "#lib/taglib.mjs";
 import * as summary_tags from "#lib/summarization/tags.mjs";
@@ -442,6 +444,20 @@ class CanvasAnnotation {
     this.time_created = time_created;
     this.time_updated = time_updated;
     this.time_deleted = time_deleted;
+  }
+}
+
+class CanvasShare {
+  constructor({
+    id = uuidv4(),
+    canvas_id,
+    user_id,
+    time_created = new Date()
+  } = {}) {
+    this.id = id;
+    this.canvas_id = canvas_id;
+    this.user_id = user_id;
+    this.time_created = time_created;
   }
 }
 
