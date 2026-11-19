@@ -45,6 +45,15 @@
     "/api/v1/query/update": {
       "$ref": "paths/query.json#/~1api~1v1~1query~1update"
     },
+    "/api/v1/canvas/share/{share_id}/graph": {
+      "$ref": "paths/canvas-share.json#/~1api~1v1~1canvas~1share~1{share_id}~1graph"
+    },
+    "/api/v1/canvas/share/{share_id}/node/{id}": {
+      "$ref": "paths/canvas-share.json#/~1api~1v1~1canvas~1share~1{share_id}~1node~1{id}"
+    },
+    "/api/v1/canvas/share/{share_id}/edge/{id}": {
+      "$ref": "paths/canvas-share.json#/~1api~1v1~1canvas~1share~1{share_id}~1edge~1{id}"
+    },
     "/api/v1/users/me": {
       "$ref": "paths/users.json#/~1api~1v1~1users~1me"
     },
@@ -159,8 +168,14 @@
     "/api/v1/users/me/canvas/restore": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1restore"
     },
+    "/api/v1/users/me/canvas/share/{share_id}/copy": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1share~1{share_id}~1copy"
+    },
     "/api/v1/users/me/canvas/{canvas_id}": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{canvas_id}"
+    },
+    "/api/v1/users/me/canvas/{canvas_id}/copy": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{canvas_id}~1copy"
     },
     "/api/v1/users/me/canvas/{canvas_id}/graph": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{canvas_id}~1graph"
@@ -185,6 +200,12 @@
     },
     "/api/v1/users/me/canvas/{canvas_id}/annotation/{annotation_id}": {
       "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{canvas_id}~1annotation~1{annotation_id}"
+    },
+    "/api/v1/users/me/canvas/{canvas_id}/share": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{canvas_id}~1share"
+    },
+    "/api/v1/users/me/canvas/{canvas_id}/share/{share_id}": {
+      "$ref": "paths/user-canvases.json#/~1api~1v1~1users~1me~1canvas~1{canvas_id}~1share~1{share_id}"
     },
     "/api/v1/users/me/nodes": {
       "$ref": "paths/user-entities.json#/~1api~1v1~1users~1me~1nodes"
@@ -389,6 +410,12 @@
       },
       "CanvasAnnotation": {
         "$ref": "schemas/canvas.json#/CanvasAnnotation"
+      },
+      "CanvasShare": {
+        "$ref": "schemas/canvas.json#/CanvasShare"
+      },
+      "CopyCanvasRequest": {
+        "$ref": "schemas/canvas.json#/CopyCanvasRequest"
       },
       "GraphNode": {
         "$ref": "schemas/canvas.json#/GraphNode"

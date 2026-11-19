@@ -54,6 +54,21 @@
     },
     "minProperties": 1
   },
+  "CopyCanvasRequest": {
+    "type": "object",
+    "description": "Options for copying a Canvas. A body is required; an empty object copies with the defaults",
+    "properties": {
+      "label": {
+        "type": "string",
+        "description": "The label for the copy. Defaults to the label of the Canvas being copied"
+      },
+      "include_annotations": {
+        "type": "boolean",
+        "default": false,
+        "description": "Whether the active Canvas Annotations of the Canvas being copied are copied too"
+      }
+    }
+  },
   "CanvasGraph": {
     "type": "object",
     "properties": {
@@ -279,6 +294,32 @@
       }
     },
     "required": ["id", "canvas_id", "content", "x", "y", "width", "height"]
+  },
+  "CanvasShare": {
+    "type": "object",
+    "description": "A share link for a Canvas. Anyone who has the ID can read the Canvas and, when logged in, copy it",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The ID of this share link"
+      },
+      "canvas_id": {
+        "type": "integer",
+        "description": "The ID of the Canvas this share link gives access to"
+      },
+      "user_id": {
+        "type": "string",
+        "format": "uuid",
+        "description": "The ID of the User that created this share link"
+      },
+      "time_created": {
+        "type": "string",
+        "format": "date-time",
+        "description": "The time this share link was created"
+      }
+    },
+    "required": ["id", "canvas_id", "user_id", "time_created"]
   },
   "GraphNode": {
     "type": "object",

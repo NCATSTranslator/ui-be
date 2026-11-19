@@ -1,0 +1,137 @@
+{
+  "/api/v1/canvas/share/{share_id}/graph": {
+    "get": {
+      "summary": "Get the Nodes, Edges, Annotations, and Tags of a shared Canvas",
+      "description": "Open to anyone who has the share link ID, with or without a session, so a Canvas can be shared by URL. Returns the Canvas as it is now, the same graph its owner reads; trashed nodes, edges, and annotations are never included. The share routes are read-only.",
+      "parameters": [
+        {
+          "name": "share_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The share link ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Graph data retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasGraph"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The share_id is not a UUID"
+        },
+        "404": {
+          "description": "The share link does not exist or its Canvas is trashed"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/canvas/share/{share_id}/node/{id}": {
+    "get": {
+      "summary": "Get the underlying data entity for a Node of a shared Canvas",
+      "description": "Open to anyone who has the share link ID. Returns the underlying data-pool entity (the signed SummaryNode) for a Canvas Node. The node must belong to the Canvas the share link points at and have Translator data, and that Canvas must not be trashed; otherwise the response is 404.",
+      "parameters": [
+        {
+          "name": "share_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The share link ID"
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Node ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The underlying data entity for the node",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/summary.json#/SummaryNode"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The share_id is not a UUID or the id is not an integer"
+        },
+        "404": {
+          "description": "The share link does not exist, its Canvas is trashed, or the Canvas has no such node with Translator data"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/canvas/share/{share_id}/edge/{id}": {
+    "get": {
+      "summary": "Get the underlying data entity for an Edge of a shared Canvas",
+      "description": "Open to anyone who has the share link ID. Returns the underlying data-pool entity (the signed SummaryEdge) for a Canvas Edge. The edge must belong to the Canvas the share link points at and have Translator data, and that Canvas must not be trashed; otherwise the response is 404.",
+      "parameters": [
+        {
+          "name": "share_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The share link ID"
+        },
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas Edge ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The underlying data entity for the edge",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/summary.json#/SummaryEdge"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The share_id is not a UUID or the id is not an integer"
+        },
+        "404": {
+          "description": "The share link does not exist, its Canvas is trashed, or the Canvas has no such edge with Translator data"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  }
+}

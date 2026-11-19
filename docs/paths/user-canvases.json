@@ -237,6 +237,65 @@
       }
     }
   },
+  "/api/v1/users/me/canvas/{canvas_id}/copy": {
+    "post": {
+      "summary": "Copy a Canvas of the current user",
+      "description": "Creates a new Canvas for the current user from one of their Canvases. The copy keeps the source's layout, tag descriptions, and query and result refs, and gets new rows for the source's active nodes and edges; trashed nodes, edges, and annotations are not copied. Active annotations are copied only when include_annotations is true. Copied nodes and edges keep pointing at the same Translator data and the same user data. Returns the new Canvas.",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "canvas_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The ID of the Canvas to copy"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/CopyCanvasRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The new Canvas",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/UserCanvas"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The copy request is missing or malformed, or the canvas_id is not an integer"
+        },
+        "404": {
+          "description": "The Canvas does not exist, is trashed, or is not owned by the current user"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
   "/api/v1/users/me/canvas/{canvas_id}/graph": {
     "get": {
       "summary": "Get the Nodes, Edges, and Tags for a Canvas",
@@ -892,6 +951,217 @@
         },
         "409": {
           "description": "The user data is already on this canvas, or detaching it would leave the edge without Translator or user data"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas/{canvas_id}/share": {
+    "get": {
+      "summary": "Get the share links of a Canvas",
+      "description": "Returns every share link on one of the current user's Canvases, oldest first.",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "canvas_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The share links of the Canvas",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "../schemas/canvas.json#/CanvasShare"
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The canvas_id is not an integer"
+        },
+        "404": {
+          "description": "The Canvas does not exist, is trashed, or is not owned by the current user"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    },
+    "post": {
+      "summary": "Create a share link for a Canvas",
+      "description": "Creates a new share link on one of the current user's Canvases. Takes no request body. A Canvas can have any number of share links, and creating one does not change the Canvas's update time. Anyone who has the link's ID can read the Canvas through /api/v1/canvas/share/{share_id}. Returns the new share link.",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "canvas_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "The new share link",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/CanvasShare"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The canvas_id is not an integer"
+        },
+        "404": {
+          "description": "The Canvas does not exist, is trashed, or is not owned by the current user"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas/{canvas_id}/share/{share_id}": {
+    "delete": {
+      "summary": "Delete a share link of a Canvas",
+      "description": "Permanently deletes a share link on one of the current user's Canvases; the link stops working at once and cannot be restored. Other share links on the Canvas keep working. A share link can be deleted while its Canvas is trashed.",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "canvas_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "integer"
+          },
+          "description": "The Canvas ID"
+        },
+        {
+          "name": "share_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The share link ID"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Share link deleted successfully"
+        },
+        "400": {
+          "description": "The canvas_id is not an integer or the share_id is not a UUID"
+        },
+        "404": {
+          "description": "No share link with the given id exists on a Canvas the current user owns"
+        },
+        "401": {
+          "description": "Authentication Required"
+        },
+        "500": {
+          "description": "Internal Server Error"
+        }
+      }
+    }
+  },
+  "/api/v1/users/me/canvas/share/{share_id}/copy": {
+    "post": {
+      "summary": "Copy a shared Canvas for the current user",
+      "description": "Creates a new Canvas for the current user from the Canvas a share link points at. The copy is made the same way as copying one of the user's own Canvases, and it does not inherit the source's share links. When the current user is not the user that created the share link, the copy also gets its own duplicates of the User Nodes and User Edges used on the Canvas, owned by the current user, so it never points at another user's user data. Returns the new Canvas.",
+      "security": [
+        {
+          "cookieAuth": []
+        },
+        {
+          "apiKeyAuth": []
+        }
+      ],
+      "parameters": [
+        {
+          "name": "share_id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "The share link ID"
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "../schemas/canvas.json#/CopyCanvasRequest"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "The new Canvas",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "../schemas/canvas.json#/UserCanvas"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "The copy request is missing or malformed, or the share_id is not a UUID"
+        },
+        "404": {
+          "description": "The share link does not exist or its Canvas is trashed"
         },
         "401": {
           "description": "Authentication Required"
