@@ -716,6 +716,24 @@ class UserAPIController {
       (share_id) => this.user_service.get_shared_edge_data(share_id, req.entity_id));
   }
 
+  async copy_shared_canvas(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const share_id = req.share_id;
+    try {
+      const canvas = await this.user_service.copy_shared_canvas(user_id, share_id, req.body);
+      if (canvas === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No shared canvas found for share ${share_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(canvas);
+    } catch (err) {
+      if (err instanceof CanvasRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async get_user_nodes(req, res) {
     return this._get_user_entities(req, res,
       (user_id, include_deleted) => this.user_service.get_user_nodes(user_id, include_deleted));

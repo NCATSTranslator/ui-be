@@ -390,12 +390,12 @@ class UserService {
   }
 
   async copy_canvas(user_id, canvas_id, copy_req) {
-    const { label, include_annotations } = make_canvas_copy_from_req(copy_req);
-    const row = await this.canvasStore.copy_canvas_by_user(user_id, canvas_id, label, include_annotations);
-    if (row === null) return null;
-    const canvas = new UserCanvas({ user_id: user_id });
-    canvas.populate_from_raw(row);
-    return canvas;
+    return this._copy_canvas(user_id, canvas_id, user_id, copy_req);
+  }
+
+  async copy_shared_canvas(user_id, share_id, copy_req) {
+    return this._read_shared_canvas(share_id,
+      (owner_id, canvas_id) => this._copy_canvas(owner_id, canvas_id, user_id, copy_req));
   }
 
   async trash_canvases(user_id, canvas_ids) {
@@ -453,6 +453,16 @@ class UserService {
     if (filter_state_ref.filter_state_id !== null) return filter_state_ref.filter_state_id;
     const [filter_state] = await this.filterStateStore.create_filter_states([filter_state_ref.filter_state]);
     return filter_state.id;
+  }
+
+  async _copy_canvas(user_id, canvas_id, recipient_id, copy_req) {
+    const { label, include_annotations } = make_canvas_copy_from_req(copy_req);
+    const row = await this.canvasStore.copy_canvas_by_user(
+      user_id, canvas_id, recipient_id, label, include_annotations);
+    if (row === null) return null;
+    const canvas = new UserCanvas({ user_id: recipient_id });
+    canvas.populate_from_raw(row);
+    return canvas;
   }
 
   async _read_shared_canvas(share_id, read) {

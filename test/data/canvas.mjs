@@ -20,6 +20,7 @@ const suite = {
     UserCanvas: true,
     CanvasGraph: true,
     CanvasAnnotation: true,
+    CanvasShare: true,
     CanvasRequestError: true,
     CanvasConflictError: true,
     CanvasNode: true,

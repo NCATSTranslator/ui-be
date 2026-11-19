@@ -423,7 +423,7 @@ class CanvasStorePostgres {
     });
   }
 
-  async copy_canvas_by_user(user_id, canvas_id, label, include_annotations) {
+  async copy_canvas_by_user(user_id, canvas_id, recipient_id, label, include_annotations) {
     return pgExecTrans(this._db_pool, async (client) => {
       const source = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
       if (source === null) return null;
@@ -434,7 +434,7 @@ class CanvasStorePostgres {
         WHERE id = $1
         RETURNING *`, [canvas_id, label]);
       const copy = res.rows[0];
-      await this._create_user_to_canvas(client, user_id, copy.id);
+      await this._create_user_to_canvas(client, recipient_id, copy.id);
       await client.query(`
         INSERT INTO canvas_node (canvas_id, data_id, user_data_id, ref, label, type, x, y, hidden, tags)
         SELECT $2::bigint, data_id, user_data_id, ref, label, type, x, y, hidden, tags
@@ -460,8 +460,51 @@ class CanvasStorePostgres {
           FROM canvas_annotation
           WHERE canvas_id = $1 AND time_deleted IS NULL`, [canvas_id, copy.id]);
       }
+      if (recipient_id !== user_id) await this._duplicate_canvas_user_data(client, copy.id, recipient_id);
       return copy;
     });
+  }
+
+  async _duplicate_canvas_user_data(client, canvas_id, user_id) {
+    await client.query(`
+      WITH source AS (
+        SELECT un.id, nextval(pg_get_serial_sequence('user_node', 'id')) AS copy_id, un.label, un.type, un.data
+        FROM user_node un
+        WHERE un.id IN (SELECT user_data_id FROM canvas_node WHERE canvas_id = $1)
+      ),
+      inserted AS (
+        INSERT INTO user_node (id, user_id, label, type, data)
+        OVERRIDING SYSTEM VALUE
+        SELECT copy_id, $2::uuid, label, type, data FROM source
+      )
+      UPDATE canvas_node cn
+      SET user_data_id = source.copy_id
+      FROM source
+      WHERE cn.canvas_id = $1 AND cn.user_data_id = source.id`, [canvas_id, user_id]);
+    await client.query(`
+      WITH source AS (
+        SELECT ue.id, nextval(pg_get_serial_sequence('user_edge', 'id')) AS copy_id, ue.label, ue.data,
+               ue.subject_ref,
+               CASE WHEN ue.subject_user_node_id IS NOT NULL THEN s.user_data_id END AS subject_user_node_id,
+               ue.object_ref,
+               CASE WHEN ue.object_user_node_id IS NOT NULL THEN o.user_data_id END AS object_user_node_id
+        FROM canvas_edge ce
+        JOIN user_edge ue ON ue.id = ce.user_data_id
+        JOIN canvas_node s ON s.id = ce.subject_id
+        JOIN canvas_node o ON o.id = ce.object_id
+        WHERE ce.canvas_id = $1
+      ),
+      inserted AS (
+        INSERT INTO user_edge
+          (id, user_id, label, data, subject_ref, subject_user_node_id, object_ref, object_user_node_id)
+        OVERRIDING SYSTEM VALUE
+        SELECT copy_id, $2::uuid, label, data, subject_ref, subject_user_node_id, object_ref, object_user_node_id
+        FROM source
+      )
+      UPDATE canvas_edge ce
+      SET user_data_id = source.copy_id
+      FROM source
+      WHERE ce.canvas_id = $1 AND ce.user_data_id = source.id`, [canvas_id, user_id]);
   }
 
   async merge_canvas_graph(user_id, canvas_id, graph, tag_descriptions) {

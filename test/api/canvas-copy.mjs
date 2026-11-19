@@ -1,6 +1,9 @@
 import { createHarness, postJson, putJson, getJson, BASE_URL, TEST_USER_ID } from '../lib/api-harness.mjs';
 import { postCanvas, signNode, signEdge, testNode, testEdge, CANVAS_PATH } from '../lib/api-canvas.mjs';
 
+const NODES_PATH = '/api/v1/users/me/nodes';
+const EDGES_PATH = '/api/v1/users/me/edges';
+
 const { ok, fail, finish } = createHarness();
 
 function node_fields(nodes) {
@@ -169,6 +172,90 @@ try {
   const plain_survives = await getJson(`${CANVAS_PATH}/${plain_id}/graph`);
   ok(plain_survives.res.status === 200 && plain_survives.json.nodes.length === 2,
     'trashing the source leaves its copy intact');
+
+  const ref_d = `API_TEST:copy-D-${stamp}`;
+  const ref_e = `API_TEST:copy-E-${stamp}`;
+  const ref_de = `${ref_d}->${ref_e}`;
+  const ref_ed = `${ref_e}->${ref_d}`;
+  const note = await postJson(NODES_PATH, { label: `api-test copy note ${stamp}`, data: { text: 'note' } });
+  const attached = await postJson(NODES_PATH, { label: `api-test copy attached ${stamp}`, data: { text: 'attached' } });
+  const note_link = await postJson(EDGES_PATH,
+    { label: `api-test copy note link ${stamp}`, data: {}, subject_user_node_id: note.json.id, object_ref: ref_d });
+  const attached_link = await postJson(EDGES_PATH,
+    { label: `api-test copy attached link ${stamp}`, data: {}, subject_ref: ref_d, object_ref: ref_e });
+  ok([note, attached, note_link, attached_link].every((created) => created.res.status === 200),
+    'create the user nodes and user edges for the user data source responds 200');
+  const user_source = await postCanvas({
+    label: `api-test copy user data ${stamp}`,
+    layout: 'custom',
+    graph: {
+      nodes: [
+        {
+          ...signNode(ref_d, testNode(ref_d, 'Copy D', 'biolink:Disease', 1, 2,
+            { tags: { 'r/cc/drug': { id: 'r/cc/drug', description: { name: 'Drug', description: '' } } } })),
+          user_data_id: attached.json.id,
+        },
+        signNode(ref_e, testNode(ref_e, 'Copy E', 'biolink:Gene', 3, 4)),
+        { x: 5, y: 6, user_data_id: note.json.id },
+      ],
+      edges: [
+        {
+          ...signEdge(ref_de, testEdge(ref_d, ref_e, 'biolink:treats', { hidden: true })),
+          user_data_id: attached_link.json.id,
+        },
+        signEdge(ref_ed, testEdge(ref_e, ref_d, 'biolink:treats')),
+        { user_data_id: note_link.json.id },
+      ],
+      tag_descriptions: { 'r/cc/drug': { id: 'r/cc/drug', description: { name: 'Drug', description: '' } } },
+      source: { query_ref: 'API_TEST_COPY_QID', result_ref: 'API_TEST_COPY_RID' },
+    },
+  });
+  ok(user_source.res.status === 200, `create a source canvas with user data responds 200 (got ${user_source.res.status})`);
+  const user_source_path = `${CANVAS_PATH}/${user_source.json.id}`;
+  const user_source_graph = await getJson(`${user_source_path}/graph`);
+  const user_source_d = user_source_graph.json.nodes.find((node) => node.ref === ref_d);
+  const user_source_note = user_source_graph.json.nodes.find((node) => node.user_data_id === note.json.id);
+  const trash_edge = await putJson(`${user_source_path}/graph/trash`,
+    { edges: [user_source_graph.json.edges.find((edge) => edge.ref === ref_ed).id] });
+  ok(trash_edge.res.status === 200, `trash one edge between two active nodes responds 200 (got ${trash_edge.res.status})`);
+
+  const user_nodes_before = (await getJson(`${NODES_PATH}?include_deleted=true`)).json.length;
+  const user_edges_before = (await getJson(`${EDGES_PATH}?include_deleted=true`)).json.length;
+  const user_copy = await postJson(`${user_source_path}/copy`, {});
+  ok(user_copy.res.status === 200, `copy a canvas with user data responds 200 (got ${user_copy.res.status})`);
+  const user_nodes_after = (await getJson(`${NODES_PATH}?include_deleted=true`)).json.length;
+  const user_edges_after = (await getJson(`${EDGES_PATH}?include_deleted=true`)).json.length;
+  ok(user_nodes_after === user_nodes_before && user_edges_after === user_edges_before,
+    'copying your own canvas creates no user nodes or user edges');
+
+  const user_copy_graph = await getJson(`${CANVAS_PATH}/${user_copy.json.id}/graph?include_deleted=true`);
+  ok(user_copy_graph.res.status === 200, `user data copy graph responds 200 (got ${user_copy_graph.res.status})`);
+  const copy_d = user_copy_graph.json.nodes.find((node) => node.ref === ref_d);
+  const copy_e = user_copy_graph.json.nodes.find((node) => node.ref === ref_e);
+  const copy_note = user_copy_graph.json.nodes.find((node) => node.user_data_id === note.json.id);
+  ok(user_copy_graph.json.nodes.length === 3 && copy_d && copy_e && copy_note, 'the copy has all three source nodes');
+  ok(copy_d && copy_d.user_data_id === attached.json.id && copy_d.data_id === user_source_d.data_id
+    && copy_d.id !== user_source_d.id,
+    'a copied Translator node keeps its Translator data and its attached user data as a new row');
+  ok(copy_d && same(copy_d.tags, { 'r/cc/drug': null }), 'a copied node keeps its tags');
+  ok(copy_e && copy_e.user_data_id === null, 'a copied node without user data stays without user data');
+  ok(copy_note && copy_note.ref === null && copy_note.data_id === null
+    && copy_note.label === `api-test copy note ${stamp}` && copy_note.type === 'Other'
+    && copy_note.x === 5 && copy_note.y === 6 && copy_note.id !== user_source_note.id,
+    'a user-only node is copied as a new row with its user data, label, type and placement');
+  ok(same(user_copy_graph.json.tags, { 'r/cc/drug': { id: 'r/cc/drug', description: { name: 'Drug', description: '' } } }),
+    'the copy keeps the source tag descriptions');
+  const copy_de = user_copy_graph.json.edges.find((edge) => edge.ref === ref_de);
+  const copy_note_link = user_copy_graph.json.edges.find((edge) => edge.user_data_id === note_link.json.id);
+  ok(user_copy_graph.json.edges.length === 2 && !user_copy_graph.json.edges.find((edge) => edge.ref === ref_ed),
+    'an edge trashed on its own is not copied');
+  ok(copy_de && copy_de.hidden === true && copy_de.user_data_id === attached_link.json.id
+    && copy_de.subject_id === copy_d.id && copy_de.object_id === copy_e.id,
+    "a copied Translator edge keeps its hidden flag and user data and connects the copy's own nodes");
+  ok(copy_note_link && copy_note_link.ref === null && copy_note_link.data_id === null
+    && copy_note_link.label === `api-test copy note link ${stamp}`
+    && copy_note_link.subject_id === copy_note.id && copy_note_link.object_id === copy_d.id,
+    "a user-only edge is copied and connects the copy's own user-only node to the copy's own Translator node");
 } catch (err) {
   fail(`request failed: ${err.message} -- is the server running with auth_check=false?`);
 }
