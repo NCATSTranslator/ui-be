@@ -184,9 +184,9 @@ try {
   ok((await store.restore_query_views(user.id, query_b.pk, [recreated.id])).length === 0,
     "restore affects only the views of the given query");
 
-  await filter_store.trash_filter_states(user.id, [hidden.id]);
-  const on_trashed_filter = await store.create_query_view(user.id, query_b.pk, hidden.id);
-  ok(on_trashed_filter.id === from_id.id && on_trashed_filter.filter_state.time_deleted instanceof Date,
+  await filter_store.trash_filter_states(user.id, [preset.id]);
+  const on_trashed_filter = await store.create_query_view(user.id, query_b.pk, preset.id);
+  ok(on_trashed_filter.id === view_b.id && on_trashed_filter.filter_state.time_deleted instanceof Date,
     "a view keeps using a trashed filter state and reports it as trashed");
 } catch (err) {
   fail(`unexpected error: ${err.stack}`);
