@@ -220,6 +220,7 @@ export function start_server(config, services) {
   canvas_router.put('/trash', user_api_controller.trash_user_canvases.bind(user_api_controller));
   canvas_router.put('/restore', user_api_controller.restore_user_canvases.bind(user_api_controller));
   canvas_router.put('/:canvas_id', user_api_controller.update_user_canvas.bind(user_api_controller));
+  canvas_router.post('/:canvas_id/copy', user_api_controller.copy_user_canvas.bind(user_api_controller));
   canvas_router.get('/:canvas_id/graph', user_api_controller.get_user_canvas_graph.bind(user_api_controller));
   canvas_router.post('/:canvas_id/graph', user_api_controller.merge_user_canvas_graph.bind(user_api_controller));
   canvas_router.put('/:canvas_id/graph/geometry', user_api_controller.set_user_canvas_graph_geometry.bind(user_api_controller));

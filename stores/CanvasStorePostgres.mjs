@@ -370,6 +370,47 @@ class CanvasStorePostgres {
     });
   }
 
+  async copy_canvas_by_user(user_id, canvas_id, label, include_annotations) {
+    return pgExecTrans(this._db_pool, async (client) => {
+      const source = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
+      if (source === null) return null;
+      const res = await client.query(`
+        INSERT INTO canvas (label, layout, data)
+        SELECT COALESCE($2::text, label), layout, data
+        FROM canvas
+        WHERE id = $1
+        RETURNING *`, [canvas_id, label]);
+      const copy = res.rows[0];
+      await this._create_user_to_canvas(client, user_id, copy.id);
+      await client.query(`
+        INSERT INTO canvas_node (canvas_id, data_id, user_data_id, ref, label, type, x, y, hidden, tags)
+        SELECT $2::bigint, data_id, user_data_id, ref, label, type, x, y, hidden, tags
+        FROM canvas_node
+        WHERE canvas_id = $1 AND time_deleted IS NULL`, [canvas_id, copy.id]);
+      const is_copy_of = (copied, original) =>
+        `${copied}.canvas_id = $2
+          AND ${copied}.data_id IS NOT DISTINCT FROM ${original}.data_id
+          AND ${copied}.user_data_id IS NOT DISTINCT FROM ${original}.user_data_id`;
+      await client.query(`
+        INSERT INTO canvas_edge (canvas_id, data_id, user_data_id, subject_id, object_id, ref, label, hidden, tags)
+        SELECT $2::bigint, ce.data_id, ce.user_data_id, s_copy.id, o_copy.id, ce.ref, ce.label, ce.hidden, ce.tags
+        FROM canvas_edge ce
+        JOIN canvas_node s ON s.id = ce.subject_id
+        JOIN canvas_node o ON o.id = ce.object_id
+        JOIN canvas_node s_copy ON ${is_copy_of("s_copy", "s")}
+        JOIN canvas_node o_copy ON ${is_copy_of("o_copy", "o")}
+        WHERE ce.canvas_id = $1 AND ce.time_deleted IS NULL`, [canvas_id, copy.id]);
+      if (include_annotations) {
+        await client.query(`
+          INSERT INTO canvas_annotation (canvas_id, content, x, y, width, height)
+          SELECT $2::bigint, content, x, y, width, height
+          FROM canvas_annotation
+          WHERE canvas_id = $1 AND time_deleted IS NULL`, [canvas_id, copy.id]);
+      }
+      return copy;
+    });
+  }
+
   async merge_canvas_graph(user_id, canvas_id, graph, tag_descriptions) {
     const merged = await this._write_trans(async (client) => {
       const canvas = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
