@@ -16,6 +16,7 @@ import {
   CanvasShare,
   make_user_canvas_from_req,
   make_canvas_update_from_req,
+  make_canvas_copy_from_req,
   make_canvas_element_update_from_req,
   make_graph_merge_from_req,
   make_graph_selection_from_req,
@@ -382,6 +383,15 @@ class UserService {
   async update_canvas(user_id, canvas_id, canvas_req) {
     const fields = make_canvas_update_from_req(canvas_req);
     const row = await this.canvasStore.update_canvas_by_user(user_id, canvas_id, fields);
+    if (row === null) return null;
+    const canvas = new UserCanvas({ user_id: user_id });
+    canvas.populate_from_raw(row);
+    return canvas;
+  }
+
+  async copy_canvas(user_id, canvas_id, copy_req) {
+    const { label, include_annotations } = make_canvas_copy_from_req(copy_req);
+    const row = await this.canvasStore.copy_canvas_by_user(user_id, canvas_id, label, include_annotations);
     if (row === null) return null;
     const canvas = new UserCanvas({ user_id: user_id });
     canvas.populate_from_raw(row);

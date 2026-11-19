@@ -1,6 +1,7 @@
 export {
   make_user_canvas_from_req,
   make_canvas_update_from_req,
+  make_canvas_copy_from_req,
   make_canvas_element_update_from_req,
   make_graph_merge_from_req,
   make_graph_selection_from_req,
@@ -60,6 +61,23 @@ function make_canvas_update_from_req(canvas_req) {
     throw new CanvasRequestError("Canvas update must include at least one of: label, layout");
   }
   return update;
+}
+
+function make_canvas_copy_from_req(copy_req) {
+  if (!cmn.is_object(copy_req)) {
+    throw new CanvasRequestError(`Canvas copy is malformed: ${JSON.stringify(copy_req)}`);
+  }
+  if (copy_req.label !== undefined && "string" !== typeof copy_req.label) {
+    throw new CanvasRequestError(`Canvas label must be a string: ${JSON.stringify(copy_req.label)}`);
+  }
+  if (copy_req.include_annotations !== undefined && "boolean" !== typeof copy_req.include_annotations) {
+    throw new CanvasRequestError(
+      `Canvas copy include_annotations must be a boolean: ${JSON.stringify(copy_req.include_annotations)}`);
+  }
+  return {
+    label: copy_req.label ?? null,
+    include_annotations: copy_req.include_annotations ?? false
+  };
 }
 
 function make_canvas_element_update_from_req(element_req) {

@@ -410,6 +410,24 @@ class UserAPIController {
     }
   }
 
+  async copy_user_canvas(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const canvas_id = req.canvas_id;
+    try {
+      const canvas = await this.user_service.copy_canvas(user_id, canvas_id, req.body);
+      if (canvas === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No canvas found for id ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(canvas);
+    } catch (err) {
+      if (err instanceof CanvasRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async trash_user_canvases(req, res) {
     const user_id = wutil.request_to_user_id(req);
     const canvas_ids = req.body;
