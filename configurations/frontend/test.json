@@ -2,6 +2,9 @@
   "name_resolver": {
     "endpoint": "https://name-lookup.test.transltr.io"
   },
+  "publication_metadata": {
+    "endpoint": "https://annotator.test.transltr.io/publications"
+  },
   "cached_queries": [
     {
       "name": "Breast Cancer",
