@@ -17,6 +17,16 @@
         "type": "string",
         "description": "Name resolver endpoint"
       },
+      "publication_metadata": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "description": "Full URL of the annotator publications endpoint for this environment"
+          }
+        },
+        "description": "Publication metadata (annotator) service used by the frontend"
+      },
       "social_providers": {
         "type": "object",
         "description": "Social authentication providers configuration"
