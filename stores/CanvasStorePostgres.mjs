@@ -360,6 +360,59 @@ class CanvasStorePostgres {
     return res.rows.map((row) => row.id);
   }
 
+  async get_canvas_shares(share_ids) {
+    if (share_ids.length === 0) return [];
+    const res = await pgExec(this._db_pool, `
+      SELECT id, canvas_id, user_id, time_created
+      FROM canvas_share
+      WHERE id = ANY($1::uuid[])`, [share_ids]);
+    return res.rows;
+  }
+
+  async get_canvas_shares_by_user(user_id, canvas_id) {
+    const res = await pgExec(this._db_pool, `
+      SELECT
+        (SELECT COALESCE(json_agg(cs ORDER BY cs.time_created, cs.id), '[]'::json)
+         FROM canvas_share cs WHERE cs.canvas_id = canvas.id) AS shares
+      FROM user_to_canvas
+      JOIN canvas ON user_to_canvas.canvas_id = canvas.id
+      WHERE user_to_canvas.user_id = $1 AND canvas.id = $2 AND canvas.time_deleted IS NULL`,
+      [user_id, canvas_id]);
+    if (res.rows.length === 0) return null;
+    return rows_from_json(res.rows[0].shares);
+  }
+
+  async create_canvas_shares(shares) {
+    if (shares.length === 0) return [];
+    const [params, args] = models_to_params_and_args(
+      shares,
+      ["id", "canvas_id", "user_id"],
+      [SQL_TYPES.UUID, SQL_TYPES.BIGINT, SQL_TYPES.UUID]);
+    const res = await pgExec(this._db_pool, `
+      INSERT INTO canvas_share (id, canvas_id, user_id)
+      SELECT v.id, v.canvas_id, v.user_id
+      FROM (VALUES ${params}) AS v(id, canvas_id, user_id)
+      JOIN user_to_canvas ON user_to_canvas.canvas_id = v.canvas_id AND user_to_canvas.user_id = v.user_id
+      JOIN canvas ON canvas.id = v.canvas_id
+      WHERE canvas.time_deleted IS NULL
+      RETURNING *`, args);
+    return res.rows;
+  }
+
+  async delete_canvas_shares_by_user(user_id, canvas_id, share_ids) {
+    if (share_ids.length === 0) return [];
+    const res = await pgExec(this._db_pool, `
+      DELETE FROM canvas_share
+      WHERE canvas_share.canvas_id = $1
+        AND canvas_share.id = ANY($2::uuid[])
+        AND EXISTS (
+          SELECT 1 FROM user_to_canvas
+          WHERE user_to_canvas.canvas_id = canvas_share.canvas_id
+            AND user_to_canvas.user_id = $3)
+      RETURNING id`, [canvas_id, share_ids, user_id]);
+    return res.rows.map((row) => row.id);
+  }
+
   async create_user_canvas(user_canvas, graph = new Graph()) {
     return this._write_trans(async (client) => {
       const canvas = await this._create_canvas(client, user_canvas);
@@ -368,6 +421,90 @@ class CanvasStorePostgres {
       await this._write_graph(client, user_canvas.user_id, canvas.id, graph);
       return canvas;
     });
+  }
+
+  async copy_canvas_by_user(user_id, canvas_id, recipient_id, label, include_annotations) {
+    return pgExecTrans(this._db_pool, async (client) => {
+      const source = await this._lock_active_canvas_for_user(client, user_id, canvas_id);
+      if (source === null) return null;
+      const res = await client.query(`
+        INSERT INTO canvas (label, layout, data)
+        SELECT COALESCE($2::text, label), layout, data
+        FROM canvas
+        WHERE id = $1
+        RETURNING *`, [canvas_id, label]);
+      const copy = res.rows[0];
+      await this._create_user_to_canvas(client, recipient_id, copy.id);
+      await client.query(`
+        INSERT INTO canvas_node (canvas_id, data_id, user_data_id, ref, label, type, x, y, hidden, tags)
+        SELECT $2::bigint, data_id, user_data_id, ref, label, type, x, y, hidden, tags
+        FROM canvas_node
+        WHERE canvas_id = $1 AND time_deleted IS NULL`, [canvas_id, copy.id]);
+      const is_copy_of = (copied, original) =>
+        `${copied}.canvas_id = $2
+          AND ${copied}.data_id IS NOT DISTINCT FROM ${original}.data_id
+          AND ${copied}.user_data_id IS NOT DISTINCT FROM ${original}.user_data_id`;
+      await client.query(`
+        INSERT INTO canvas_edge (canvas_id, data_id, user_data_id, subject_id, object_id, ref, label, hidden, tags)
+        SELECT $2::bigint, ce.data_id, ce.user_data_id, s_copy.id, o_copy.id, ce.ref, ce.label, ce.hidden, ce.tags
+        FROM canvas_edge ce
+        JOIN canvas_node s ON s.id = ce.subject_id
+        JOIN canvas_node o ON o.id = ce.object_id
+        JOIN canvas_node s_copy ON ${is_copy_of("s_copy", "s")}
+        JOIN canvas_node o_copy ON ${is_copy_of("o_copy", "o")}
+        WHERE ce.canvas_id = $1 AND ce.time_deleted IS NULL`, [canvas_id, copy.id]);
+      if (include_annotations) {
+        await client.query(`
+          INSERT INTO canvas_annotation (canvas_id, content, x, y, width, height)
+          SELECT $2::bigint, content, x, y, width, height
+          FROM canvas_annotation
+          WHERE canvas_id = $1 AND time_deleted IS NULL`, [canvas_id, copy.id]);
+      }
+      if (recipient_id !== user_id) await this._duplicate_canvas_user_data(client, copy.id, recipient_id);
+      return copy;
+    });
+  }
+
+  async _duplicate_canvas_user_data(client, canvas_id, user_id) {
+    await client.query(`
+      WITH source AS (
+        SELECT un.id, nextval(pg_get_serial_sequence('user_node', 'id')) AS copy_id, un.label, un.type, un.data
+        FROM user_node un
+        WHERE un.id IN (SELECT user_data_id FROM canvas_node WHERE canvas_id = $1)
+      ),
+      inserted AS (
+        INSERT INTO user_node (id, user_id, label, type, data)
+        OVERRIDING SYSTEM VALUE
+        SELECT copy_id, $2::uuid, label, type, data FROM source
+      )
+      UPDATE canvas_node cn
+      SET user_data_id = source.copy_id
+      FROM source
+      WHERE cn.canvas_id = $1 AND cn.user_data_id = source.id`, [canvas_id, user_id]);
+    await client.query(`
+      WITH source AS (
+        SELECT ue.id, nextval(pg_get_serial_sequence('user_edge', 'id')) AS copy_id, ue.label, ue.data,
+               ue.subject_ref,
+               CASE WHEN ue.subject_user_node_id IS NOT NULL THEN s.user_data_id END AS subject_user_node_id,
+               ue.object_ref,
+               CASE WHEN ue.object_user_node_id IS NOT NULL THEN o.user_data_id END AS object_user_node_id
+        FROM canvas_edge ce
+        JOIN user_edge ue ON ue.id = ce.user_data_id
+        JOIN canvas_node s ON s.id = ce.subject_id
+        JOIN canvas_node o ON o.id = ce.object_id
+        WHERE ce.canvas_id = $1
+      ),
+      inserted AS (
+        INSERT INTO user_edge
+          (id, user_id, label, data, subject_ref, subject_user_node_id, object_ref, object_user_node_id)
+        OVERRIDING SYSTEM VALUE
+        SELECT copy_id, $2::uuid, label, data, subject_ref, subject_user_node_id, object_ref, object_user_node_id
+        FROM source
+      )
+      UPDATE canvas_edge ce
+      SET user_data_id = source.copy_id
+      FROM source
+      WHERE ce.canvas_id = $1 AND ce.user_data_id = source.id`, [canvas_id, user_id]);
   }
 
   async merge_canvas_graph(user_id, canvas_id, graph, tag_descriptions) {

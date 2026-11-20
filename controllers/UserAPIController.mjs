@@ -410,6 +410,24 @@ class UserAPIController {
     }
   }
 
+  async copy_user_canvas(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const canvas_id = req.canvas_id;
+    try {
+      const canvas = await this.user_service.copy_canvas(user_id, canvas_id, req.body);
+      if (canvas === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No canvas found for id ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(canvas);
+    } catch (err) {
+      if (err instanceof CanvasRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async trash_user_canvases(req, res) {
     const user_id = wutil.request_to_user_id(req);
     const canvas_ids = req.body;
@@ -636,6 +654,86 @@ class UserAPIController {
     }
   }
 
+  async get_user_canvas_shares(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const canvas_id = req.canvas_id;
+    try {
+      const shares = await this.user_service.get_canvas_shares(user_id, canvas_id);
+      if (shares === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No canvas found for id ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(shares);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async create_user_canvas_share(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const canvas_id = req.canvas_id;
+    try {
+      const [share] = await this.user_service.create_canvas_shares(user_id, [canvas_id]);
+      if (share === undefined) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No canvas found for id ${canvas_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(share);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async delete_user_canvas_share(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const canvas_id = req.canvas_id;
+    const share_id = req.share_id;
+    try {
+      const [deleted_id] = await this.user_service.delete_canvas_shares(user_id, canvas_id, [share_id]);
+      if (deleted_id === undefined) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND,
+          `No share found for id ${share_id} on canvas ${canvas_id}`);
+      }
+      return res.sendStatus(cmn.HTTP_CODE.SUCCESS);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
+  async get_shared_canvas_graph(req, res) {
+    return this._get_shared_canvas_data(req, res,
+      (share_id) => this.user_service.get_shared_canvas_graph(share_id));
+  }
+
+  async get_shared_canvas_node_data(req, res) {
+    return this._get_shared_canvas_data(req, res,
+      (share_id) => this.user_service.get_shared_node_data(share_id, req.entity_id));
+  }
+
+  async get_shared_canvas_edge_data(req, res) {
+    return this._get_shared_canvas_data(req, res,
+      (share_id) => this.user_service.get_shared_edge_data(share_id, req.entity_id));
+  }
+
+  async copy_shared_canvas(req, res) {
+    const user_id = wutil.request_to_user_id(req);
+    const share_id = req.share_id;
+    try {
+      const canvas = await this.user_service.copy_shared_canvas(user_id, share_id, req.body);
+      if (canvas === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No shared canvas found for share ${share_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(canvas);
+    } catch (err) {
+      if (err instanceof CanvasRequestError) {
+        return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, err.message);
+      }
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
+    }
+  }
+
   async get_user_nodes(req, res) {
     return this._get_user_entities(req, res,
       (user_id, include_deleted) => this.user_service.get_user_nodes(user_id, include_deleted));
@@ -827,6 +925,20 @@ class UserAPIController {
       return res.status(cmn.HTTP_CODE.SUCCESS).json(query_view);
     } catch (err) {
       return this._send_query_view_error(req, res, err);
+    }
+  }
+
+  async _get_shared_canvas_data(req, res, get_data) {
+    const share_id = req.share_id;
+    try {
+      const data = await get_data(share_id);
+      if (data === null) {
+        return wutil.send_error(res, cmn.HTTP_CODE.NOT_FOUND, `No shared canvas data found for share ${share_id}`);
+      }
+      return res.status(cmn.HTTP_CODE.SUCCESS).json(data);
+    } catch (err) {
+      wutil.log_internal_server_error(req, err);
+      return wutil.send_internal_server_error(res);
     }
   }
 

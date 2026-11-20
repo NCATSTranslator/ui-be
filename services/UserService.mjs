@@ -13,8 +13,10 @@ import {
 import {
   UserCanvas,
   CanvasGraph,
+  CanvasShare,
   make_user_canvas_from_req,
   make_canvas_update_from_req,
+  make_canvas_copy_from_req,
   make_canvas_element_update_from_req,
   make_graph_merge_from_req,
   make_graph_selection_from_req,
@@ -214,6 +216,37 @@ class UserService {
     return this.canvasStore.update_canvas_annotation_content_by_user(user_id, canvas_id, annotation_id, content);
   }
 
+  async get_canvas_shares(user_id, canvas_id) {
+    const rows = await this.canvasStore.get_canvas_shares_by_user(user_id, canvas_id);
+    if (rows === null) return null;
+    return rows.map((row) => new CanvasShare(row));
+  }
+
+  async create_canvas_shares(user_id, canvas_ids) {
+    const shares = canvas_ids.map((canvas_id) => new CanvasShare({ canvas_id: canvas_id, user_id: user_id }));
+    const rows = await this.canvasStore.create_canvas_shares(shares);
+    return rows.map((row) => new CanvasShare(row));
+  }
+
+  async delete_canvas_shares(user_id, canvas_id, share_ids) {
+    return this.canvasStore.delete_canvas_shares_by_user(user_id, canvas_id, share_ids);
+  }
+
+  async get_shared_canvas_graph(share_id) {
+    return this._read_shared_canvas(share_id,
+      (user_id, canvas_id) => this.get_canvas_graph(user_id, canvas_id));
+  }
+
+  async get_shared_node_data(share_id, id) {
+    return this._read_shared_canvas(share_id,
+      (user_id, canvas_id) => this.canvasStore.get_node_data(user_id, canvas_id, id));
+  }
+
+  async get_shared_edge_data(share_id, id) {
+    return this._read_shared_canvas(share_id,
+      (user_id, canvas_id) => this.canvasStore.get_edge_data(user_id, canvas_id, id));
+  }
+
   async get_user_nodes(user_id, include_deleted=false, ids=null) {
     const rows = await this.userEntityStore.get_user_nodes(user_id, include_deleted, ids);
     return rows.map((row) => new UserNode(row));
@@ -356,6 +389,15 @@ class UserService {
     return canvas;
   }
 
+  async copy_canvas(user_id, canvas_id, copy_req) {
+    return this._copy_canvas(user_id, canvas_id, user_id, copy_req);
+  }
+
+  async copy_shared_canvas(user_id, share_id, copy_req) {
+    return this._read_shared_canvas(share_id,
+      (owner_id, canvas_id) => this._copy_canvas(owner_id, canvas_id, user_id, copy_req));
+  }
+
   async trash_canvases(user_id, canvas_ids) {
     return this.canvasStore.trash_canvases_by_user(user_id, canvas_ids);
   }
@@ -411,6 +453,22 @@ class UserService {
     if (filter_state_ref.filter_state_id !== null) return filter_state_ref.filter_state_id;
     const [filter_state] = await this.filterStateStore.create_filter_states([filter_state_ref.filter_state]);
     return filter_state.id;
+  }
+
+  async _copy_canvas(user_id, canvas_id, recipient_id, copy_req) {
+    const { label, include_annotations } = make_canvas_copy_from_req(copy_req);
+    const row = await this.canvasStore.copy_canvas_by_user(
+      user_id, canvas_id, recipient_id, label, include_annotations);
+    if (row === null) return null;
+    const canvas = new UserCanvas({ user_id: recipient_id });
+    canvas.populate_from_raw(row);
+    return canvas;
+  }
+
+  async _read_shared_canvas(share_id, read) {
+    const [share] = await this.canvasStore.get_canvas_shares([share_id]);
+    if (share === undefined) return null;
+    return read(share.user_id, share.canvas_id);
   }
 
   async _retain_graph_queries(graph) {

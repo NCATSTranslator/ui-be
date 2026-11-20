@@ -7,6 +7,7 @@ const suite = {
   tests: {
     make_user_canvas_from_req: _test_make_user_canvas_from_req(),
     make_canvas_update_from_req: _test_make_canvas_update_from_req(),
+    make_canvas_copy_from_req: _test_make_canvas_copy_from_req(),
     make_canvas_element_update_from_req: _test_make_canvas_element_update_from_req(),
     make_graph_merge_from_req: _test_make_graph_merge_from_req(),
     make_graph_selection_from_req: _test_make_graph_selection_from_req(),
@@ -19,6 +20,7 @@ const suite = {
     UserCanvas: true,
     CanvasGraph: true,
     CanvasAnnotation: true,
+    CanvasShare: true,
     CanvasRequestError: true,
     CanvasConflictError: true,
     CanvasNode: true,
@@ -116,6 +118,67 @@ function _test_make_canvas_update_from_req() {
     },
     "invalid_layout_throws": {
       "args": [{ layout: "spiral" }],
+      "expected": CanvasRequestError
+    }
+  });
+}
+
+function _test_make_canvas_copy_from_req() {
+  return test.make_function_test({
+    "empty_request_uses_defaults": {
+      "args": [{}],
+      "expected": { label: null, include_annotations: false }
+    },
+    "label_only": {
+      "args": [{ label: "Second draft" }],
+      "expected": { label: "Second draft", include_annotations: false }
+    },
+    "empty_label_is_kept": {
+      "args": [{ label: "" }],
+      "expected": { label: "", include_annotations: false }
+    },
+    "include_annotations_true": {
+      "args": [{ include_annotations: true }],
+      "expected": { label: null, include_annotations: true }
+    },
+    "include_annotations_false": {
+      "args": [{ include_annotations: false }],
+      "expected": { label: null, include_annotations: false }
+    },
+    "label_and_include_annotations": {
+      "args": [{ label: "Second draft", include_annotations: true }],
+      "expected": { label: "Second draft", include_annotations: true }
+    },
+    "unknown_fields_are_ignored": {
+      "args": [{ label: "Second draft", layout: "vertical" }],
+      "expected": { label: "Second draft", include_annotations: false }
+    },
+    "missing_throws": {
+      "args": [undefined],
+      "expected": CanvasRequestError
+    },
+    "non_object_throws": {
+      "args": ["not-an-object"],
+      "expected": CanvasRequestError
+    },
+    "array_throws": {
+      "args": [[]],
+      "expected": CanvasRequestError
+    },
+    "non_string_label_throws": {
+      "args": [{ label: 5 }],
+      "expected": CanvasRequestError
+    },
+    "null_label_throws": {
+      "args": [{ label: null }],
+      "expected": CanvasRequestError
+    },
+    "non_boolean_include_annotations_throws": {
+      "args": [{ include_annotations: "true" }],
+      "expected": CanvasRequestError
+    },
+    "null_include_annotations_throws": {
+      "args": [{ include_annotations: null }],
       "expected": CanvasRequestError
     }
   });

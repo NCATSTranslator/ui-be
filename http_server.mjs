@@ -159,6 +159,15 @@ export function start_server(config, services) {
     query_api_controller.get_query_view.bind(query_api_controller));
   app.use(`${API_PATH_V1}/query`, query_view_share_router);
 
+  const canvas_share_router = express.Router();
+  canvas_share_router.use(session_controller.authenticateUnprivilegedRequest.bind(session_controller));
+  canvas_share_router.param('share_id', wutil.parse_uuid_param('share_id'));
+  canvas_share_router.param('id', wutil.parse_int_param('entity_id'));
+  canvas_share_router.get('/:share_id/graph', user_api_controller.get_shared_canvas_graph.bind(user_api_controller));
+  canvas_share_router.get('/:share_id/node/:id', user_api_controller.get_shared_canvas_node_data.bind(user_api_controller));
+  canvas_share_router.get('/:share_id/edge/:id', user_api_controller.get_shared_canvas_edge_data.bind(user_api_controller));
+  app.use(`${API_PATH_V1}/canvas/share`, canvas_share_router);
+
   // User routes: privileged
   app.use(`${API_PATH_V1}/users`, session_controller.authenticatePrivilegedRequest.bind(session_controller));
   app.get(`${API_PATH_V1}/users/me`, user_api_controller.get_user.bind(user_api_controller));
@@ -215,11 +224,14 @@ export function start_server(config, services) {
   canvas_router.param('canvas_id', wutil.parse_int_param('canvas_id'));
   canvas_router.param('id', wutil.parse_int_param('entity_id'));
   canvas_router.param('annotation_id', wutil.parse_int_param('annotation_id'));
+  canvas_router.param('share_id', wutil.parse_uuid_param('share_id'));
   canvas_router.get('/', user_api_controller.get_user_canvases.bind(user_api_controller));
   canvas_router.post('/', user_api_controller.create_user_canvas.bind(user_api_controller));
   canvas_router.put('/trash', user_api_controller.trash_user_canvases.bind(user_api_controller));
   canvas_router.put('/restore', user_api_controller.restore_user_canvases.bind(user_api_controller));
+  canvas_router.post('/share/:share_id/copy', user_api_controller.copy_shared_canvas.bind(user_api_controller));
   canvas_router.put('/:canvas_id', user_api_controller.update_user_canvas.bind(user_api_controller));
+  canvas_router.post('/:canvas_id/copy', user_api_controller.copy_user_canvas.bind(user_api_controller));
   canvas_router.get('/:canvas_id/graph', user_api_controller.get_user_canvas_graph.bind(user_api_controller));
   canvas_router.post('/:canvas_id/graph', user_api_controller.merge_user_canvas_graph.bind(user_api_controller));
   canvas_router.put('/:canvas_id/graph/geometry', user_api_controller.set_user_canvas_graph_geometry.bind(user_api_controller));
@@ -231,6 +243,9 @@ export function start_server(config, services) {
   canvas_router.put('/:canvas_id/edge/:id', user_api_controller.update_user_canvas_edge.bind(user_api_controller));
   canvas_router.post('/:canvas_id/annotation', user_api_controller.create_user_canvas_annotation.bind(user_api_controller));
   canvas_router.put('/:canvas_id/annotation/:annotation_id', user_api_controller.update_user_canvas_annotation_content.bind(user_api_controller));
+  canvas_router.get('/:canvas_id/share', user_api_controller.get_user_canvas_shares.bind(user_api_controller));
+  canvas_router.post('/:canvas_id/share', user_api_controller.create_user_canvas_share.bind(user_api_controller));
+  canvas_router.delete('/:canvas_id/share/:share_id', user_api_controller.delete_user_canvas_share.bind(user_api_controller));
   app.use(`${API_PATH_V1}/users/me/canvas`, canvas_router);
 
   const user_node_router = express.Router();
