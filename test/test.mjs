@@ -32,6 +32,7 @@ import {test_api_key} from "#test/ApiKey.mjs";
 import {test_api_key_auth} from "#test/api-key-auth.mjs";
 import {test_common} from "#test/common.mjs";
 import {test_query_submission} from "#test/query-submission.mjs";
+import {test_query_reconcile} from "#test/query-reconcile.mjs";
 
 logger.level = "silent";
 await test_trapi_core();
@@ -67,3 +68,4 @@ await test_api_key();
 await test_api_key_auth();
 await test_common();
 await test_query_submission();
+await test_query_reconcile();

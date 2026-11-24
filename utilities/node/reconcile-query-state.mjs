@@ -1,3 +1,7 @@
+export { main };
+
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { pg } from "../../lib/postgres_preamble.mjs";
 import { bootstrapConfig } from "../../lib/config.mjs";
 import * as cmn from "../../lib/common.mjs";
@@ -62,39 +66,41 @@ function _ars_status_to_query_status(ars_status) {
   }
 }
 
-const SERVER_CONFIG = await (async function() {
-  let basefile, overrides = null;
-  if (process.argv.length === 3) {
-    basefile = process.argv[2];
-  } else if (process.argv.length === 4) {
-    basefile = process.argv[2];
-    overrides = process.argv[3];
-  } else {
-    throw new Error(`Unsupported number of args (${process.argv.length}) at startup. Exiting.`);
+if (realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const SERVER_CONFIG = await (async function() {
+    let basefile, overrides = null;
+    if (process.argv.length === 3) {
+      basefile = process.argv[2];
+    } else if (process.argv.length === 4) {
+      basefile = process.argv[2];
+      overrides = process.argv[3];
+    } else {
+      throw new Error(`Unsupported number of args (${process.argv.length}) at startup. Exiting.`);
+    }
+    return bootstrapConfig(basefile, overrides);
+  })();
+
+  const translator_service = await (async function (config) {
+    return new TranslatorService(new ARSClient(config.ars_endpoint, config.secrets.hmac.key));
+  })(SERVER_CONFIG);
+
+  const query_service = (function (config) {
+    const dbPool = new pg.Pool({
+      ...config.storage.pg,
+      password: config.secrets.pg.password,
+      ssl: config.db_conn.ssl
+    });
+    return new QueryService(new QueryStorePostgres(dbPool), null);
+  })(SERVER_CONFIG);
+
+  try {
+    const { update_count, delete_count } = await main(translator_service, query_service);
+    console.log(`Updated ${update_count} rows`);
+    console.log(`Deleted ${delete_count} lost queries`);
+  } catch (err) {
+    console.error(`Error occurred: ${err}`);
+    process.exitCode = 1;
+  } finally {
+    await query_service.stop();
   }
-  return bootstrapConfig(basefile, overrides);
-})();
-
-const translator_service = await (async function (config) {
-  return new TranslatorService(new ARSClient(config.ars_endpoint, config.secrets.hmac.key));
-})(SERVER_CONFIG);
-
-const query_service = (function (config) {
-  const dbPool = new pg.Pool({
-    ...config.storage.pg,
-    password: config.secrets.pg.password,
-    ssl: config.db_conn.ssl
-  });
-  return new QueryService(new QueryStorePostgres(dbPool), null);
-})(SERVER_CONFIG);
-
-try {
-  const { update_count, delete_count } = await main(translator_service, query_service);
-  console.log(`Updated ${update_count} rows`);
-  console.log(`Deleted ${delete_count} lost queries`);
-} catch (err) {
-  console.error(`Error occurred: ${err}`);
-  process.exitCode = 1;
-} finally {
-  await query_service.stop();
 }
