@@ -33,6 +33,7 @@ function _test_finalize_edges() {
             "object": "nb2",
             "predicate": "treats",
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [{ "infores": "infores:gtopdb", "records": [] }],
             "publications": {
               "trusted": [
@@ -64,6 +65,7 @@ function _test_finalize_edges() {
             "object": "nb2",
             "predicate": "treats",
             "predicate_url": "https://biolink.github.io/biolink-model/treats/",
+            "predicate_rank": 3,
             "provenance": [{ "infores": "infores:gtopdb", "records": [] }],
             "publications": {
               "trusted": [
@@ -125,6 +127,7 @@ function _test_finalize_edges() {
             "object": "nb2",
             "predicate": "treats",
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [{ "infores": "infores:gtopdb", "records": [] }],
             "publications": {},
             "metadata": { "edge_bindings": ["eb1"], "inverted_id": "e1-inv", "is_root": true },
@@ -151,6 +154,7 @@ function _test_finalize_edges() {
             "object": "nb1",
             "predicate": "treated by",
             "predicate_url": "https://biolink.github.io/biolink-model/treats/",
+            "predicate_rank": 3,
             "provenance": [{ "infores": "infores:gtopdb", "records": [] }],
             "publications": {},
             "metadata": { "edge_bindings": ["eb1"], "inverted_id": "e1-inv", "is_root": true },
@@ -190,6 +194,7 @@ function _test_finalize_edges() {
             "object": "nb2",
             "predicate": "treats",
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": { "edge_bindings": ["eb1"], "inverted_id": null, "is_root": true },
@@ -222,6 +227,7 @@ function _test_finalize_edges() {
             "object": "nb2",
             "predicate": "treats",
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [{ "infores": "infores:not-real", "records": [] }],
             "publications": {},
             "metadata": { "edge_bindings": ["eb1"], "inverted_id": null, "is_root": true },

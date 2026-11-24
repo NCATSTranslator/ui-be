@@ -353,6 +353,11 @@
         "type": "string",
         "description": "URL for the predicate in the Biolink model"
       },
+      "predicate_rank": {
+        "type": "integer",
+        "nullable": true,
+        "description": "Specificity of the unqualified predicate: its distance from 'related to' in the Biolink hierarchy. Higher is more specific; null if the predicate is not in the model"
+      },
       "provenance": {
         "type": "array",
         "items": {

@@ -56,22 +56,22 @@ function _test_generate_results() {
         {
           "e1": SummaryEdge.from_object({
             "id": "e1", "aras": [], "is_root": true, "knowledge_level": null, "description": null, "subject": null,
-            "object": null, "predicate": null, "predicate_url": null, "provenance": [], "publications": {},
+            "object": null, "predicate": null, "predicate_url": null, "predicate_rank": null, "provenance": [], "publications": {},
             "metadata": null, "trials": [], "tags": {}
           }),
           "e2": SummaryEdge.from_object({
             "id": "e2", "aras": [], "is_root": false, "knowledge_level": null, "description": null, "subject": null,
-            "object": null, "predicate": null, "predicate_url": null, "provenance": [], "publications": {},
+            "object": null, "predicate": null, "predicate_url": null, "predicate_rank": null, "provenance": [], "publications": {},
             "metadata": null, "trials": [], "tags": {}
           }),
           "e3": SummaryEdge.from_object({
             "id": "e3", "aras": [], "is_root": true, "knowledge_level": null, "description": null, "subject": null,
-            "object": null, "predicate": null, "predicate_url": null, "provenance": [], "publications": {},
+            "object": null, "predicate": null, "predicate_url": null, "predicate_rank": null, "provenance": [], "publications": {},
             "metadata": null, "trials": [], "tags": {}
           }),
           "e9": SummaryEdge.from_object({
             "id": "e9", "aras": [], "is_root": true, "knowledge_level": null, "description": null, "subject": null,
-            "object": null, "predicate": null, "predicate_url": null, "provenance": [], "publications": {},
+            "object": null, "predicate": null, "predicate_url": null, "predicate_rank": null, "provenance": [], "publications": {},
             "metadata": null, "trials": [], "tags": {}
           })
         },
@@ -124,7 +124,7 @@ function _test_generate_results() {
         {
           "e1": SummaryEdge.from_object({
             "id": "e1", "aras": [], "is_root": true, "knowledge_level": null, "description": null, "subject": null,
-            "object": null, "predicate": null, "predicate_url": null, "provenance": [], "publications": {},
+            "object": null, "predicate": null, "predicate_url": null, "predicate_rank": null, "provenance": [], "publications": {},
             "metadata": null, "trials": [], "tags": {}
           })
         },

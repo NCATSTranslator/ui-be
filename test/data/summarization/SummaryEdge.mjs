@@ -20,6 +20,7 @@ function _test_SummaryEdge() {
     object: null,
     predicate: null,
     predicate_url: null,
+    predicate_rank: null,
     provenance: [],
     publications: {},
     metadata: null,
@@ -125,7 +126,8 @@ function _test_SummaryEdge() {
         subject: "subj_a",
         predicate: "pred_a",
         object: "obj_a",
-        predicate_url: "http://example.com/a"
+        predicate_url: "http://example.com/a",
+        predicate_rank: 0
       },
       steps: [
         {
@@ -137,7 +139,8 @@ function _test_SummaryEdge() {
             subject: "ignored_subj",
             predicate: "ignored_pred",
             object: "ignored_obj",
-            predicate_url: "http://ignored"
+            predicate_url: "http://ignored",
+            predicate_rank: 5
           }],
           expected: {
             ...default_state,
@@ -146,7 +149,8 @@ function _test_SummaryEdge() {
             subject: "subj_a",
             predicate: "pred_a",
             object: "obj_a",
-            predicate_url: "http://example.com/a"
+            predicate_url: "http://example.com/a",
+            predicate_rank: 0
           }
         }
       ]
@@ -163,7 +167,8 @@ function _test_SummaryEdge() {
             subject: "subj_b",
             predicate: "pred_b",
             object: "obj_b",
-            predicate_url: "http://example.com/b"
+            predicate_url: "http://example.com/b",
+            predicate_rank: 3
           }],
           expected: {
             ...default_state,
@@ -172,7 +177,8 @@ function _test_SummaryEdge() {
             subject: "subj_b",
             predicate: "pred_b",
             object: "obj_b",
-            predicate_url: "http://example.com/b"
+            predicate_url: "http://example.com/b",
+            predicate_rank: 3
           }
         }
       ]

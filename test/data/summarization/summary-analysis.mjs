@@ -321,6 +321,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -369,6 +370,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -391,6 +393,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -468,6 +471,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -490,6 +494,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -512,6 +517,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -534,6 +540,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -556,6 +563,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -578,6 +586,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -600,6 +609,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -648,6 +658,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
@@ -670,6 +681,7 @@ async function _test_summary_analysis_to_summary_paths_and_edges() {
             "object": null,
             "predicate": null,
             "predicate_url": null,
+            "predicate_rank": null,
             "provenance": [],
             "publications": {},
             "metadata": {
