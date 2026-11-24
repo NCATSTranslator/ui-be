@@ -44,15 +44,6 @@ class QueryStorePostgres {
     return query;
   }
 
-  async addQueryUserRelationship(queryModel, userQueryModel) {
-    const res = await pgExec(this.pool, `
-      INSERT INTO query_to_user (qid, uid)
-      VALUES ($1, $2)
-      RETURNING *
-    `, [queryModel.id, userQueryModel.user_id]);
-    return res.rows.length === 1;
-  }
-
   async get_stale_queries() {
     const res = await pgExec(this.pool, `
       SELECT *

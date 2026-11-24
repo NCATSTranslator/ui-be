@@ -139,7 +139,7 @@ class QueryAPIController {
       if (cmn.is_missing(query)) {
         return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Unknown PK: ${pk}`);
       }
-      const _user_query = await this._create_user_query(user_id, query);
+      const _user_query = await this.user_service.create_user_query(user_id, query);
       return res.status(cmn.HTTP_CODE.SUCCESS).send("OK");
     } catch (err) {
       wutil.log_internal_server_error(req, err);
@@ -210,7 +210,10 @@ class QueryAPIController {
       //TODO: verify subscribe response
       const _subscribe_resp = await this.translator_service.subscribeQuery(pk);
       if (user_id !== null) {
-        const _user_query = await this._create_user_query(user_id, query);
+        const user_query = await this.user_service.create_user_query(user_id, query);
+        if (user_query === null) {
+          throw new Error(`User service failed to create entry for query ${query.id} and user ${user_id}`);
+        }
       }
       if (pid) {
         project.data.pks.push(pk);
@@ -286,8 +289,11 @@ class QueryAPIController {
       req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submit_resp}, 'Query submission and response');
       const pk = trapi.get_pk(submit_resp);
       if (user_id !== null) {
-        const user_query_model = this.user_service.createUserQuery(user_id, pk, req.body);
-        if (!user_query_model) throw new Error(`User service failed to create entry for query ${pk} and user ${user_id}`);
+        const query = await this.query_service.createQuery(pk, req.body);
+        const user_query = await this.user_service.create_user_query(user_id, query);
+        if (user_query === null) {
+          throw new Error(`User service failed to create entry for query ${query.id} and user ${user_id}`);
+        }
       }
       if (pid) {
         project.data.pks.push(pk);
@@ -381,19 +387,6 @@ class QueryAPIController {
     user_saved_data = await this.user_service.updateUserSave(user_saved_data, is_deleted);
     if (!user_saved_data) throw Error('PANIC: Database failed to update user query but did not throw');
     return user_saved_data;
-  }
-
-  async _create_user_query(user_id, query) {
-    const query_request = query.metadata.query;
-    const user_query = await this.user_service.createUserQuery(user_id, query.pk, query_request);
-    if (cmn.is_missing(user_query)) {
-      throw new Error(`User service failed to create entry for query ${query.id} and user ${user_id}`);
-    }
-    const is_user_assigned_query = await this.query_service.addQueryUserRelationship(query, user_query);
-    if (!is_user_assigned_query) {
-      throw new Error(`Query service failed to associate query ${query.id} with user save ${user_query.id}`);
-    }
-    return user_query;
   }
 
   _log_query_submission_request(req) {

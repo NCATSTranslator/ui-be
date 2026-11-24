@@ -14,7 +14,7 @@ const SESSION_PARAMS = {
 };
 
 function make_fixture(use_pubsub) {
-  const calls = { submitted: [], created: [], user_queries: [], relationships: [], project_updates: [] };
+  const calls = { submitted: [], created: [], user_queries: [], project_updates: [] };
   const config = { secrets: { hmac: { key: 'test-key' } }, ars_endpoint: { use_pubsub: use_pubsub } };
   const translator_service = {
     inputToQuery(query_request) { return { message: query_request }; },
@@ -31,15 +31,11 @@ function make_fixture(use_pubsub) {
     async createQuery(pk, query_request) {
       calls.created.push({ pk: pk, query_request: query_request });
       return { id: 7, pk: pk, metadata: { query: query_request } };
-    },
-    async addQueryUserRelationship(query, user_query) {
-      calls.relationships.push({ qid: query.id, uid: user_query.user_id });
-      return true;
     }
   };
   const user_service = {
-    async createUserQuery(user_id, pk, query_request) {
-      calls.user_queries.push({ user_id: user_id, pk: pk, query_request: query_request });
+    async create_user_query(user_id, query) {
+      calls.user_queries.push({ user_id: user_id, query: query });
       return { id: 3, user_id: user_id };
     },
     async getUserSavesBy() { return [{ id: 5, data: { pks: [] } }]; },
@@ -80,7 +76,6 @@ async function test_anonymous_submit_creates_only_the_query() {
     query_request: { type: 'drug', curie: 'MONDO:0005148', pid: null }
   }], 'an anonymous submission must still create the query');
   ast.deepStrictEqual(calls.user_queries, [], 'an anonymous submission must not create a user query');
-  ast.deepStrictEqual(calls.relationships, [], 'an anonymous submission must not create an ownership row');
 }
 
 async function test_logged_in_submit_creates_the_user_query() {
@@ -95,11 +90,12 @@ async function test_logged_in_submit_creates_the_user_query() {
   ast.strictEqual(res.code, 200, 'a logged in submission must be accepted');
   ast.deepStrictEqual(calls.user_queries, [{
     user_id: 'u1',
-    pk: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    query_request: { type: 'drug', curie: 'MONDO:0005148', pid: null }
-  }], 'a logged in submission must create a user query for the session user');
-  ast.deepStrictEqual(calls.relationships, [{ qid: 7, uid: 'u1' }],
-    'a logged in submission must record the session user as an owner');
+    query: {
+      id: 7,
+      pk: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      metadata: { query: { type: 'drug', curie: 'MONDO:0005148', pid: null } }
+    }
+  }], 'a logged in submission must create a user query owned by the session user');
 }
 
 async function test_expired_session_submits_as_anonymous() {
@@ -118,8 +114,6 @@ async function test_expired_session_submits_as_anonymous() {
   }], 'a submission on an expired session must still create the query');
   ast.deepStrictEqual(calls.user_queries, [],
     'an expired session must not write to the history of the user it names');
-  ast.deepStrictEqual(calls.relationships, [],
-    'an expired session must not make the user it names an owner');
 }
 
 async function test_anonymous_submit_to_a_project_is_unauthorized() {
@@ -162,6 +156,7 @@ async function test_anonymous_polling_submit_creates_no_user_query() {
   ast.strictEqual(res.code, 200, 'an anonymous polling submission must be accepted');
   ast.deepStrictEqual(res.body, { status: 'complete', data: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' },
     'an anonymous polling submission must return the query pk');
+  ast.deepStrictEqual(calls.created, [], 'an anonymous polling submission must not create a query');
   ast.deepStrictEqual(calls.user_queries, [], 'an anonymous polling submission must not create a user query');
 }
 
@@ -175,11 +170,18 @@ async function test_logged_in_polling_submit_creates_the_user_query() {
   }, res);
 
   ast.strictEqual(res.code, 200, 'a logged in polling submission must be accepted');
-  ast.deepStrictEqual(calls.user_queries, [{
-    user_id: 'u1',
+  ast.deepStrictEqual(calls.created, [{
     pk: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     query_request: { type: 'drug', curie: 'MONDO:0005148', pid: null }
-  }], 'a logged in polling submission must create a user query for the session user');
+  }], 'a logged in polling submission must create the query');
+  ast.deepStrictEqual(calls.user_queries, [{
+    user_id: 'u1',
+    query: {
+      id: 7,
+      pk: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+      metadata: { query: { type: 'drug', curie: 'MONDO:0005148', pid: null } }
+    }
+  }], 'a logged in polling submission must create a user query owned by the session user');
 }
 
 async function test_query_submission() {

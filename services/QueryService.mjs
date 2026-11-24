@@ -44,10 +44,6 @@ class QueryService {
     return storeQueryModel;
   }
 
-  async addQueryUserRelationship(queryModel, userQueryModel) {
-    return this._queryStore.addQueryUserRelationship(queryModel, userQueryModel);
-  }
-
   async get_stale_queries() {
     return this._queryStore.get_stale_queries();
   }
