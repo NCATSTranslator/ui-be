@@ -2,8 +2,9 @@
   "/api/v1/query": {
     "post": {
       "summary": "Submit a query",
-      "description": "Submit a new query for processing",
+      "description": "Submit a new query for processing. Authentication is optional. A query submitted with a valid session or API key is added to that user's query history. A query submitted without one is not associated with any user and can only be reached by its PK. Adding the query to a project (pid) requires authentication.",
       "security": [
+        {},
         {
           "cookieAuth": []
         },
@@ -36,7 +37,10 @@
           "description": "Malformed request"
         },
         "401": {
-          "description": "Authentication required"
+          "description": "The request includes a pid without a valid session or API key, or presents an invalid API key"
+        },
+        "413": {
+          "description": "The request body exceeds 16 KiB"
         },
         "500": {
           "description": "Internal server error"

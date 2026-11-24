@@ -69,7 +69,7 @@
     "/api/v1/users/me/queries/copy": {
       "post": {
         "summary": "Copy user query",
-        "description": "Create a new user query referencing an existing query PK",
+        "description": "Create a new user query referencing an existing query PK. Copying a query the user already has is a no-op that still responds 200; a trashed user query is left trashed",
         "security": [
           {
             "cookieAuth": []
