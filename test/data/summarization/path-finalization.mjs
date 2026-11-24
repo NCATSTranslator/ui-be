@@ -45,13 +45,13 @@ function _test_finalize_paths() {
         {
           "e1": SummaryEdge.from_object({
             "id": "e1", "aras": [], "is_root": true, "knowledge_level": null, "description": null,
-            "subject": null, "object": null, "predicate": null, "predicate_url": null, "provenance": [],
+            "subject": null, "object": null, "predicate": null, "predicate_url": null, "predicate_rank": null, "provenance": [],
             "publications": {}, "metadata": null, "trials": [],
             "tags": { "e/ev/other": { "id": "e/ev/other", "description": { "name": "Other", "description": "" } } }
           }),
           "e2": SummaryEdge.from_object({
             "id": "e2", "aras": [], "is_root": true, "knowledge_level": null, "description": null,
-            "subject": null, "object": null, "predicate": null, "predicate_url": null, "provenance": [],
+            "subject": null, "object": null, "predicate": null, "predicate_url": null, "predicate_rank": null, "provenance": [],
             "publications": {}, "metadata": null, "trials": [],
             "tags": { "e/ev/publications": { "id": "e/ev/publications", "description": { "name": "Publications", "description": "" } } }
           })
@@ -95,7 +95,7 @@ function _test_finalize_paths() {
         {
           "e1": SummaryEdge.from_object({
             "id": "e1", "aras": [], "is_root": true, "knowledge_level": null, "description": null,
-            "subject": null, "object": null, "predicate": null, "predicate_url": null, "provenance": [],
+            "subject": null, "object": null, "predicate": null, "predicate_url": null, "predicate_rank": null, "provenance": [],
             "publications": {}, "metadata": null, "trials": [], "tags": {}
           })
         },

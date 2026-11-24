@@ -17,6 +17,7 @@ const suite = {
     invert_biolink_pred: _test_invert_biolink_pred(),
     is_canonical_pred: _test_is_canonical_pred(),
     get_predicate_description: _test_get_predicate_description(),
+    get_predicate_rank: _test_get_predicate_rank(),
     get_node_type_description: _test_get_node_type_description(),
     is_valid_curie: _test_is_valid_curie(),
     curie_to_url: _test_curie_to_url(),
@@ -297,6 +298,31 @@ function _test_get_predicate_description() {
       config_loader: () => load_biolink(_test_biolink_config()),
       "args": ["biolink:related_to"],
       "expected": "*"
+    },
+    "unknown_predicate": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["unknown predicate"],
+      "expected": null
+    }
+  });
+}
+
+function _test_get_predicate_rank() {
+  return test.make_function_test({
+    "root_predicate_is_rank_zero": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["related to"],
+      "expected": 0
+    },
+    "child_of_instance_level": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["affects"],
+      "expected": 2
+    },
+    "deeper_predicate_ranks_higher": {
+      config_loader: () => load_biolink(_test_biolink_config()),
+      "args": ["biolink:regulates"],
+      "expected": 3
     },
     "unknown_predicate": {
       config_loader: () => load_biolink(_test_biolink_config()),
