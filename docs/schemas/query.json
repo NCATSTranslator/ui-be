@@ -15,7 +15,7 @@
     "properties": {
       "pid": {
         "type": "integer",
-        "description": "Project ID to associate with the query",
+        "description": "Project ID to associate with the query. Requires authentication",
         "nullable": true
       },
       "type": {
@@ -52,7 +52,7 @@
     "properties": {
       "pid": {
         "type": "integer",
-        "description": "Project ID to associate with the query",
+        "description": "Project ID to associate with the query. Requires authentication",
         "nullable": true
       },
       "type": {

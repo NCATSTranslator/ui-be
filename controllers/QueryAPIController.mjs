@@ -10,8 +10,9 @@ import { logger } from "../lib/logger.mjs";
 
 class QueryAPIController {
   constructor(config, translator_service, translator_service_fe_adapter,
-      query_service, query_service_fe_adapter, user_service, filters) {
+      query_service, query_service_fe_adapter, user_service, filters, auth_service) {
     this.config = config;
+    this.auth_service = auth_service;
     this.api_key = config.secrets.hmac.key;
     this.translator_service = translator_service;
     this.translator_service_fe_adapter = translator_service_fe_adapter;
@@ -138,7 +139,7 @@ class QueryAPIController {
       if (cmn.is_missing(query)) {
         return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, `Unknown PK: ${pk}`);
       }
-      const _user_query = await this._create_user_query(user_id, query);
+      const _user_query = await this.user_service.create_user_query(user_id, query);
       return res.status(cmn.HTTP_CODE.SUCCESS).send("OK");
     } catch (err) {
       wutil.log_internal_server_error(req, err);
@@ -182,11 +183,14 @@ class QueryAPIController {
     if (!this._is_valid_query_submission_request(req)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
     }
+    const query_request = req.body;
+    const pid = query_request.pid;
+    const user_id = this._request_to_optional_user_id(req);
+    if (pid && user_id === null) {
+      return wutil.send_error(res, cmn.HTTP_CODE.UNAUTHORIZED, 'Log in to add a query to a project');
+    }
     try {
-      const query_request = req.body;
-      const pid = query_request.pid;
       let project = null;
-      const user_id = wutil.request_to_user_id(req);
       if (pid) {
         const projects = await this.user_service.getUserSavesBy(user_id, {id: pid});
         if (!projects || cmn.is_array_empty(projects)) {
@@ -205,7 +209,12 @@ class QueryAPIController {
       if (!query) throw new Error(`Failed to create query with PK: ${pk}`);
       //TODO: verify subscribe response
       const _subscribe_resp = await this.translator_service.subscribeQuery(pk);
-      const _user_query = await this._create_user_query(user_id, query);
+      if (user_id !== null) {
+        const user_query = await this.user_service.create_user_query(user_id, query);
+        if (user_query === null) {
+          throw new Error(`User service failed to create entry for query ${query.id} and user ${user_id}`);
+        }
+      }
       if (pid) {
         project.data.pks.push(pk);
         const updated_project = await this.user_service.updateUserSave(project);
@@ -259,10 +268,13 @@ class QueryAPIController {
     if (!this._is_valid_query_submission_request(req)) {
       return wutil.send_error(res, cmn.HTTP_CODE.BAD_REQUEST, 'Malformed request');
     }
+    const query_request = req.body;
+    const pid = parseInt(query_request.pid, 10);
+    const user_id = this._request_to_optional_user_id(req);
+    if (pid && user_id === null) {
+      return wutil.send_error(res, cmn.HTTP_CODE.UNAUTHORIZED, 'Log in to add a query to a project');
+    }
     try {
-      const query_request = req.body;
-      const pid = parseInt(query_request.pid, 10);
-      const user_id = wutil.request_to_user_id(req);
       let project = null;
       if (pid) {
         const projects = await this.user_service.getUserSavesBy(user_id, {id: pid});
@@ -276,8 +288,13 @@ class QueryAPIController {
       const submit_resp = await this.translator_service.submitQuery(trapi_query);
       req.log.info({ltype: 'query-submission', query_params: req.body, ars_response: submit_resp}, 'Query submission and response');
       const pk = trapi.get_pk(submit_resp);
-      const user_query_model = this.user_service.createUserQuery(user_id, pk, req.body);
-      if (!user_query_model) throw new Error(`User service failed to create entry for query ${pk} and user ${user_id}`);
+      if (user_id !== null) {
+        const query = await this.query_service.createQuery(pk, req.body);
+        const user_query = await this.user_service.create_user_query(user_id, query);
+        if (user_query === null) {
+          throw new Error(`User service failed to create entry for query ${query.id} and user ${user_id}`);
+        }
+      }
       if (pid) {
         project.data.pks.push(pk);
         const updated_project = await this.user_service.updateUserSave(project);
@@ -331,7 +348,12 @@ class QueryAPIController {
   }
 
   _is_valid_query_submission_request(req) {
-    return cmn.is_object(req.body) && wutil.request_to_user_id(req);
+    return cmn.is_object(req.body);
+  }
+
+  _request_to_optional_user_id(req) {
+    if (!this.auth_service.isSessionStatusValid(req.sessionData.status)) return null;
+    return wutil.request_to_user_id(req);
   }
 
   _is_valid_query_result_request(req) {
@@ -365,19 +387,6 @@ class QueryAPIController {
     user_saved_data = await this.user_service.updateUserSave(user_saved_data, is_deleted);
     if (!user_saved_data) throw Error('PANIC: Database failed to update user query but did not throw');
     return user_saved_data;
-  }
-
-  async _create_user_query(user_id, query) {
-    const query_request = query.metadata.query;
-    const user_query = await this.user_service.createUserQuery(user_id, query.pk, query_request);
-    if (cmn.is_missing(user_query)) {
-      throw new Error(`User service failed to create entry for query ${query.id} and user ${user_id}`);
-    }
-    const is_user_assigned_query = await this.query_service.addQueryUserRelationship(query, user_query);
-    if (!is_user_assigned_query) {
-      throw new Error(`Query service failed to associate query ${query.id} with user save ${user_query.id}`);
-    }
-    return user_query;
   }
 
   _log_query_submission_request(req) {

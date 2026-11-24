@@ -1,4 +1,4 @@
-import { pg, pgExec } from '../lib/postgres_preamble.mjs';
+import { pg, pgExec, pgExecTrans } from '../lib/postgres_preamble.mjs';
 import { UserSavedData } from '../models/UserSavedData.mjs'; // assuming UserSavedData is exported from this module
 import { gen_user_query } from '../models/Query.mjs';
 import * as cmn from '../lib/common.mjs';
@@ -52,17 +52,23 @@ class UserSavedDataStorePostgres {
 
   async createUserSavedData(userSavedDataModel) {
     userSavedDataModel.time_updated = new Date();
-    const res = await pgExec(this.pool, `
-      INSERT INTO user_saved_data
-        (user_id, save_type, label, notes, ars_pkey, object_ref,
-        time_created, time_updated, data, deleted)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      RETURNING *
-    `, [userSavedDataModel.user_id, userSavedDataModel.save_type, userSavedDataModel.label,
-        userSavedDataModel.notes, userSavedDataModel.ars_pkey, userSavedDataModel.object_ref,
-        userSavedDataModel.time_created, userSavedDataModel.time_updated,
-        userSavedDataModel.data, userSavedDataModel.deleted]);
+    const res = await pgExec(this.pool, _SQL_INSERT_USER_SAVED_DATA, _insert_params(userSavedDataModel));
     return res.rows.length > 0 ? new UserSavedData(res.rows[0]) : null;
+  }
+
+  async create_user_query(user_saved_data, query_id) {
+    user_saved_data.time_updated = new Date();
+    return pgExecTrans(this.pool, async (client) => {
+      const owned = await client.query(`
+        INSERT INTO query_to_user (qid, uid)
+        VALUES ($1, $2)
+        ON CONFLICT (qid, uid) DO NOTHING
+        RETURNING qid
+      `, [query_id, user_saved_data.user_id]);
+      if (owned.rows.length === 0) return null;
+      const res = await client.query(_SQL_INSERT_USER_SAVED_DATA, _insert_params(user_saved_data));
+      return new UserSavedData(res.rows[0]);
+    });
   }
 
   async updateUserSavedDataBatch(userSavedDataModels) {
@@ -236,6 +242,20 @@ class UserSavedDataStorePostgres {
     if (res === null || res.rows.length === 0) return [];
     return res.rows;
   }
+}
+
+const _SQL_INSERT_USER_SAVED_DATA = `
+  INSERT INTO user_saved_data
+    (user_id, save_type, label, notes, ars_pkey, object_ref,
+    time_created, time_updated, data, deleted)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+  RETURNING *`;
+
+function _insert_params(user_saved_data) {
+  return [user_saved_data.user_id, user_saved_data.save_type, user_saved_data.label,
+          user_saved_data.notes, user_saved_data.ars_pkey, user_saved_data.object_ref,
+          user_saved_data.time_created, user_saved_data.time_updated,
+          user_saved_data.data, user_saved_data.deleted];
 }
 
 const _SAVED_DATA_TYPES = ['INT', 'UUID', 'TEXT', 'TEXT', 'TEXT', 'UUID', 'TEXT', 'TIMESTAMP', 'TIMESTAMP', 'JSONB', 'BOOLEAN'];

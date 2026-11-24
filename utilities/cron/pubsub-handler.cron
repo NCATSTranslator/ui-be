@@ -1,3 +1,4 @@
 SHELL=/bin/sh
 
 */5 * * * * root /usr/local/bin/node /app/utilities/node/reconcile-query-state.mjs /app/configurations/dev.json /app/configurations/local-overrides.json >> /var/log/cron.log 2>&1
+17 3 * * * root /usr/local/bin/node /app/utilities/node/purge-unowned-queries.mjs /app/configurations/dev.json /app/configurations/local-overrides.json >> /var/log/cron.log 2>&1

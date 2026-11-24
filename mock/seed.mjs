@@ -18,8 +18,7 @@ async function seed_mock_queries(ars_client, query_service, user_service, user_i
     try {
       const query = (await query_service.getQueryByPk(pk))
         ?? (await query_service.createQuery(pk, query_request, cmn.QUERY_STATUS.COMPLETE));
-      const user_query = await user_service.createUserQuery(user_id, pk, query_request);
-      await query_service.addQueryUserRelationship(query, user_query);
+      await user_service.create_user_query(user_id, query);
       logger.info(`[mock ARS] seeded query ${pk} (${query_request.curie}) for user ${user_id}`);
     } catch (err) {
       logger.warn(err, `[mock ARS] failed to seed query ${pk} for user ${user_id}`);

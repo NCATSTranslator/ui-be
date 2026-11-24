@@ -19,6 +19,7 @@ import { SessionController } from './controllers/SessionController.mjs';
 import { UserAPIController } from './controllers/UserAPIController.mjs';
 import { BiolinkAPIController } from './controllers/BiolinkAPIController.mjs';
 import { FILTER_STATE_MAX_BYTES } from './models/FilterState.mjs';
+import { QUERY_REQUEST_MAX_BYTES } from './models/Query.mjs';
 
 // Adapters
 import { TranslatorServicexFEAdapter } from './adapters/TranslatorServicexFEAdapter.mjs';
@@ -65,7 +66,8 @@ export function start_server(config, services) {
     query_service,
     query_servicex_fe_adapter,
     user_service,
-    filters);
+    filters,
+    auth_service);
   const config_api_controller = new ConfigAPIController(config);
   const user_api_controller = new UserAPIController(config, user_service, translator_service);
   const session_controller = new SessionController(config, auth_service);
@@ -76,6 +78,7 @@ export function start_server(config, services) {
   app.use(`${API_PATH_V1}/users/me/filters`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
   app.use(`${API_PATH_V1}/users/me/queries/:qid/views`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
   app.use(`${API_PATH_V1}/users/me/queries/:qid/working-view`, express.json({ limit: FILTER_STATE_MAX_BYTES }));
+  app.post(`${API_PATH_V1}/query`, express.json({ limit: QUERY_REQUEST_MAX_BYTES }));
   app.use(express.json({
     limit: config.json_payload_limit,
     verify: (req, _res, buf, _encoding) => {req.rawBody = buf;}
@@ -137,11 +140,10 @@ export function start_server(config, services) {
     session_controller.authenticateUnprivilegedRequest.bind(session_controller),
     biolink_api_controller.get_infores_catalog_entry.bind(biolink_api_controller));
 
-  // Submit query route: privileged session
+  // Query submit and request routes: unprivileged session
   app.post(`${API_PATH_V1}/query`,
-    session_controller.authenticatePrivilegedRequest.bind(session_controller),
+    session_controller.authenticateUnprivilegedRequest.bind(session_controller),
     query_api_controller.submit_query.bind(query_api_controller));
-  // Query request routes: unprivileged session
   app.get(`${API_PATH_V1}/query/:qid/status`,
     session_controller.authenticateUnprivilegedRequest.bind(session_controller),
     query_api_controller.get_query_status.bind(query_api_controller));

@@ -106,14 +106,14 @@ class UserService {
   }
 
   // Queries
-  async createUserQuery(uid, pk, query) {
+  async create_user_query(uid, query) {
     const userSavedData = new UserSavedData({
       user_id: uid,
       save_type: SAVE_TYPE.QUERY,
-      ars_pkey: pk,
-      data: new UserQueryData(query)
+      ars_pkey: query.pk,
+      data: new UserQueryData(query.metadata.query)
     });
-    return this.saveUserData(userSavedData);
+    return this.savedDataStore.create_user_query(userSavedData, query.id);
   }
 
   async get_user_queries_map(uid, include_deleted, use_status) {

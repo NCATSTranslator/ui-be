@@ -44,12 +44,16 @@ class QueryService {
     return storeQueryModel;
   }
 
-  async addQueryUserRelationship(queryModel, userQueryModel) {
-    return this._queryStore.addQueryUserRelationship(queryModel, userQueryModel);
-  }
-
   async get_stale_queries() {
     return this._queryStore.get_stale_queries();
+  }
+
+  async delete_unowned_queries() {
+    return this._queryStore.delete_unowned_queries();
+  }
+
+  async delete_lost_queries(pks) {
+    return this._queryStore.delete_lost_queries(pks);
   }
 
   // Query writes should normally occur due to the ARS publishing an update. Only use this function
