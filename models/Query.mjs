@@ -1,6 +1,8 @@
-export { Query, QueryMetadata, gen_user_query };
+export { Query, QueryMetadata, gen_user_query, QUERY_REQUEST_MAX_BYTES };
 
 import * as cmn from '../lib/common.mjs';
+
+const QUERY_REQUEST_MAX_BYTES = 16 * 1024;
 
 class Query {
   constructor({

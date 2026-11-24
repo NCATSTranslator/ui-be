@@ -62,6 +62,14 @@ class QueryStorePostgres {
     return res.rows.map(row => new Query(row));
   }
 
+  async delete_unowned_queries() {
+    const res = await pgExec(this.pool, `
+      DELETE FROM queries AS q
+      WHERE q.time_created < NOW() - INTERVAL '30 days'
+        AND NOT EXISTS (SELECT 1 FROM query_to_user AS qtu WHERE qtu.qid = q.id);`);
+    return res.rowCount;
+  }
+
   async UNSAFE_batch_update(queries) {
     const sql_values = [];
     const params = [];
