@@ -1,5 +1,5 @@
 export { QueryStorePostgres };
-import { pg, pgExec } from '../lib/postgres_preamble.mjs';
+import { pg, pgExec, pgExecTrans } from '../lib/postgres_preamble.mjs';
 import { Query } from '../models/Query.mjs';
 
 class QueryStorePostgres {
@@ -59,6 +59,42 @@ class QueryStorePostgres {
       WHERE q.time_created < NOW() - INTERVAL '30 days'
         AND NOT EXISTS (SELECT 1 FROM query_to_user AS qtu WHERE qtu.qid = q.id);`);
     return res.rowCount;
+  }
+
+  async delete_lost_queries(pks) {
+    return pgExecTrans(this.pool, async (client) => {
+      const lost = await client.query(`
+        SELECT id, pk
+        FROM queries
+        WHERE pk = ANY($1::uuid[])
+          AND status = 'running'
+          AND time_created < NOW() - INTERVAL '24 hours'
+        FOR UPDATE
+      `, [pks]);
+      if (lost.rows.length === 0) return 0;
+      const lost_ids = lost.rows.map(row => row.id);
+      const lost_pks = lost.rows.map(row => row.pk);
+      await client.query(`DELETE FROM query_working_view WHERE qid = ANY($1::int[])`, [lost_ids]);
+      await client.query(`DELETE FROM query_view WHERE qid = ANY($1::int[])`, [lost_ids]);
+      await client.query(`DELETE FROM query_to_user WHERE qid = ANY($1::int[])`, [lost_ids]);
+      await client.query(`
+        DELETE FROM user_saved_data
+        WHERE save_type = 'query'
+          AND ars_pkey = ANY($1::uuid[])
+      `, [lost_pks]);
+      await client.query(`
+        UPDATE user_saved_data
+        SET data = jsonb_set(data, '{pks}', (
+          SELECT COALESCE(jsonb_agg(project_pk ORDER BY position), '[]'::jsonb)
+          FROM jsonb_array_elements(data->'pks') WITH ORDINALITY AS project_pks(project_pk, position)
+          WHERE NOT ((project_pk #>> '{}') = ANY($1::text[]))
+        ))
+        WHERE save_type = 'project'
+          AND data->'pks' ?| $1::text[]
+      `, [lost_pks]);
+      const res = await client.query(`DELETE FROM queries WHERE id = ANY($1::int[])`, [lost_ids]);
+      return res.rowCount;
+    });
   }
 
   async UNSAFE_batch_update(queries) {

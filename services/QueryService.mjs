@@ -52,6 +52,10 @@ class QueryService {
     return this._queryStore.delete_unowned_queries();
   }
 
+  async delete_lost_queries(pks) {
+    return this._queryStore.delete_lost_queries(pks);
+  }
+
   // Query writes should normally occur due to the ARS publishing an update. Only use this function
   // in very special cases.
   async UNSAFE_batch_update(queries) {
